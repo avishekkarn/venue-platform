@@ -161,6 +161,114 @@ If yes: the session stops. ROADMAP.md is updated to match reality, or reality is
 
 The log is appended below. Newest entries at the top.
 
+### ENTRY-0020 — 2026-10-14 — Task 1.3.2 — Button reconciled to DESIGN.md §4.6.1
+
+**Status:** PASS
+
+**Task:** 1.3.2
+
+**Summary:**
+The shadcn-generated Button was replaced with one that matches DESIGN.md §4.6.1. The shadcn Button was functional but wrong for our design system in nine ways: variant names, size names, sizes, focus ring, press motion, missing loading state, unnecessary aria-invalid styling, wrong radius, and world-agnostic colors. The reconciled Button uses our variant set (primary, secondary, ghost, danger), our size set (sm 32px, md 40px, lg 52px, xl 60px), the correct focus ring (2px in brand color, 2px offset), a loading state with three pulsing dots and aria-busy, and world-specific colors via the Tailwind 4 parent variant `[data-world=staff]_&:`. The press-feedback motion lives in app/globals.css. Verified in the browser: guest Primary renders olive; staff Primary renders forest green.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/components/ui/button.tsx` | Replaced | Reconciled against DESIGN.md §4.6.1 |
+| `app/globals.css` | Edited | Appended the WORLD-SCOPED PRESS FEEDBACK block |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0.
+- `pnpm build` — compiled successfully, 3 pages.
+- `pnpm dev` — served both worlds, verified visually.
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The Button compiles under strict TypeScript | PASS | tsc exit 0 |
+| 2 | The build passes | PASS | pnpm build output |
+| 3 | All four variants render | PASS | Browser screenshots |
+| 4 | All four sizes render | PASS | Browser screenshot |
+| 5 | World separation works | PASS | Guest primary olive, staff primary forest green |
+| 6 | Loading state works | PASS | Three dots visible |
+| 7 | Only scoped files changed | PASS | git show --stat HEAD |
+
+**Deviations from Contract:**
+- The Tailwind parent-variant syntax `[data-world='staff']&:` (with a quote and `&`) did not compile. Tailwind 4 silently dropped the variant. Corrected to `[data-world=staff]_&:` (no quote, underscore before `&`). This is now the project's pattern for world-scoped variants.
+- The press feedback was moved from the component's class list into `app/globals.css` because Tailwind cannot cleanly branch a single class string on a parent `[data-world]` attribute without a `group` class we do not want to mandate.
+
+**Noticed but Out of Scope:**
+- `hover:brightness-95` on primary and danger is a CSS filter. For very dark brand colors, the brightness reduction may be imperceptible.
+- The `lg` and `xl` sizes are guest-only per DESIGN.md §4.6.1. Not enforceable at the type level in a single component.
+- Task 1.4.1 (cn helper) is now redundant.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | Task 1.3.2 complete | Updated |
+| PROGRESS.md | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found. The component matches DESIGN.md §4.6.1.
+
+**Next:**
+Task 1.3.3 — Input, Textarea, Select, Label.
+
+**Awaiting Human Verification:** YES
+
+
+### ENTRY-0021 — 2026-10-14 — Task 1.3.3 — Input, Textarea, Select, Label
+
+**Status:** PASS
+
+**Task:** 1.3.3
+
+**Summary:**
+Created four form primitives from scratch, matching DESIGN.md §4.6.2 (Input, Textarea) and §4.6.3 (Select). The Input and Textarea support optional label, helper, and error props, with correct accessibility (aria-invalid, aria-describedby). The Select wraps `@base-ui/react/select` and matches the Input's height, border, focus ring, and error state. Verified visually in both worlds.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/components/ui/label.tsx` | Created | Label wrapper |
+| `src/components/ui/input.tsx` | Created | Text input with label / helper / error |
+| `src/components/ui/textarea.tsx` | Created | Multi-line variant |
+| `src/components/ui/select.tsx` | Created | Composition over @base-ui/react/select |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0.
+- `pnpm build` — compiled successfully, 3 pages.
+- `pnpm dev` — served both worlds.
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | TypeScript strict | PASS | tsc exit 0 |
+| 2 | Build passes | PASS | pnpm build |
+| 3 | All six states render | PASS | Browser |
+| 4 | Clicking a label moves focus | PASS | Manual |
+| 5 | Tab shows 2px focus ring | PASS | Manual |
+| 6 | Select opens, fades in, updates on select | PASS | Manual |
+| 7 | Only scoped files changed | PASS | git show --stat HEAD |
+
+**Deviations from Contract:**
+- The Select menu's fade uses `duration-staff-fast` (140ms) in both worlds. DESIGN.md §4.6.3 specifies 140ms without a world-scope. Deliberate.
+
+**Noticed but Out of Scope:**
+- The `@base-ui/react/select` API surface was guessed at for Task 1.3.3 (import path, sub-component names). It compiled successfully on the first attempt, so the API matched the guess. Now confirmed for future form components (Radio, Checkbox).
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | Task 1.3.3 complete | Updated |
+| PROGRESS.md | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 1.3.4 — Dialog, Sheet, Drawer.
+
+**Awaiting Human Verification:** YES
+
 ### ENTRY-0022 — 2026-10-14 — Task 1.3.8 — Milestone 1.3 base component kit verified
 
 **Status:** PASS
