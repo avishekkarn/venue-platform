@@ -571,3 +571,33 @@ body {
     @apply font-sans;
   }
 }
+
+/* ============================================================
+ * WORLD-SCOPED PRESS FEEDBACK — DESIGN.md §4.5.4 and §4.5.5.
+ *
+ * The Button component's class list cannot branch on its
+ * ancestor's [data-world] attribute without fragile cascade
+ * tricks. So the two behaviors live here, where the two worlds
+ * are already declared.
+ *
+ * Guest: scale(0.98), 120ms, --guest-ease-out.
+ * Staff: background darkens 4% via brightness(0.96), 80ms.
+ * ============================================================ */
+
+[data-world="guest"] [data-slot="button"] {
+  transition-property: transform, background-color, color, border-color, filter;
+  transition-duration: var(--guest-motion-instant);
+  transition-timing-function: var(--guest-ease-out);
+}
+[data-world="guest"] [data-slot="button"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+[data-world="staff"] [data-slot="button"] {
+  transition-property: transform, background-color, color, border-color, filter;
+  transition-duration: var(--staff-motion-instant);
+  transition-timing-function: var(--staff-ease-out);
+}
+[data-world="staff"] [data-slot="button"]:active:not(:disabled) {
+  filter: brightness(0.96);
+}
