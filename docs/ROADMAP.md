@@ -135,20 +135,20 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 
 | ID    | Task                                                       | Status | Depends on |
 | ----- | ---------------------------------------------------------- | ------ | ---------- |
-| 1.4.1 | Add the `cn` helper for class name composition             | ⬜     | 1.3.8      |
-| 1.4.2 | Add the money formatting utility                           | ⬜     | 1.4.1      |
-| 1.4.3 | Add the date and time formatting utility                   | ⬜     | 1.4.1      |
-| 1.4.4 | Add the motion utilities, one per atmosphere               | ⬜     | 1.4.1      |
-| 1.4.5 | Verify: each utility has a small unit test; the tests pass | ⬜     | 1.4.4      |
+| 1.4.1 | Add the `cn` helper for class name composition             | ✅ Complete     | 1.3.8      |
+| 1.4.2 | Add the money formatting utility                           | ✅ Complete     | 1.4.1      |
+| 1.4.3 | Add the date and time formatting utility                   | ✅ Complete     | 1.4.1      |
+| 1.4.4 | Add the motion utilities, one per atmosphere               | ✅ Complete     | 1.4.1      |
+| 1.4.5 | Verify: each utility has a small unit test; the tests pass | ✅ Complete     | 1.4.4      |
 
 ### Milestone 1.5 — The development server
 
 | ID    | Task                                                                            | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------- | ------ | ---------- |
-| 1.5.1 | Configure the root layout with the design tokens applied                        | ⬜     | 1.4.5      |
-| 1.5.2 | Configure the guest and staff atmosphere wrappers                               | ⬜     | 1.5.1      |
-| 1.5.3 | Add the 404 and error screens                                                   | ⬜     | 1.5.2      |
-| 1.5.4 | Verify: the dev server starts, the scratch page renders, the 404 screen renders | ⬜     | 1.5.3      |
+| 1.5.1 | Configure the root layout with the design tokens applied                        | ✅ Complete     | 1.4.5      |
+| 1.5.2 | Configure the guest and staff atmosphere wrappers                               | ✅ Complete     | 1.5.1      |
+| 1.5.3 | Add the 404 and error screens                                                   | ✅ Complete     | 1.5.2      |
+| 1.5.4 | Verify: the dev server starts, the scratch page renders, the 404 screen renders | ✅ Complete     | 1.5.3      |
 
 **Acceptance for Phase 1:** The dev server starts. The type checker passes. The build passes. The base components render. The design tokens are visible on a scratch page. No product feature works yet, and that is the point.
 
