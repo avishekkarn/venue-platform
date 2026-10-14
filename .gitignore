@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+
+# Turbopack
+.turbo/
+
+# Build artifacts
+dist/
+# Source material
+MASTER PLAN.docx
+MASTER PLAN.pdf

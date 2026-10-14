@@ -1,0 +1,455 @@
+@import "tailwindcss";
+
+/*
+ * Global stylesheet.
+ *
+ * The design tokens are authored here, per DESIGN.md §4.15.
+ * The primitives are the only raw hex values in the codebase (DESIGN.md §4.2.1),
+ * with the documented exception of the four status colors (DESIGN.md §4.2.3).
+ * The font families are the only font-family values in the codebase (DESIGN.md §4.3.1).
+ *
+ * The @theme block registers every token as a Tailwind 4 namespace entry, so
+ * tokens are usable as utilities: bg-guest-surface, text-staff-text-primary,
+ * rounded-lg, shadow-md, font-display, duration-guest-base, ease-guest-out, etc.
+ * The @theme block must be at the TOP LEVEL of the stylesheet, not inside :root.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+ * TAILWIND 4 THEME — every entry below becomes a utility.
+ * Points at primitives (or literal values) so that class
+ * generation does not depend on scoped selectors resolving.
+ * ============================================================ */
+
+@theme {
+  /* Colors — guest world */
+  --color-guest-surface:          var(--color-sand-50);
+  --color-guest-surface-raised:   var(--color-neutral-0);
+  --color-guest-surface-sunken:   var(--color-sand-100);
+  --color-guest-text-primary:     var(--color-forest-700);
+  --color-guest-text-secondary:   var(--color-olive-600);
+  --color-guest-text-muted:       var(--color-sand-600);
+  --color-guest-text-inverse:     var(--color-neutral-0);
+  --color-guest-border-subtle:    var(--color-sand-200);
+  --color-guest-border-strong:    var(--color-sand-400);
+  --color-guest-brand:            var(--color-olive-500);
+  --color-guest-brand-contrast:   var(--color-neutral-0);
+  --color-guest-brand-muted:      var(--color-olive-100);
+  --color-guest-accent:           var(--color-peach-500);
+
+  /* Colors — staff world */
+  --color-staff-surface:          var(--color-neutral-50);
+  --color-staff-surface-raised:   var(--color-neutral-0);
+  --color-staff-surface-sunken:   var(--color-neutral-100);
+  --color-staff-text-primary:     var(--color-neutral-900);
+  --color-staff-text-secondary:   var(--color-neutral-600);
+  --color-staff-text-muted:       var(--color-neutral-400);
+  --color-staff-text-inverse:     var(--color-neutral-0);
+  --color-staff-border-subtle:    var(--color-neutral-200);
+  --color-staff-border-strong:    var(--color-neutral-300);
+  --color-staff-brand:            var(--color-forest-700);
+  --color-staff-brand-contrast:   var(--color-neutral-0);
+  --color-staff-accent:           var(--color-sage-500);
+
+  /* Colors — status */
+  --color-status-waiting:         var(--color-neutral-500);
+  --color-status-waiting-bg:      var(--color-neutral-100);
+  --color-status-active:          #c2810f;
+  --color-status-active-bg:       #fbf0d7;
+  --color-status-ready:           #3d7a4a;
+  --color-status-ready-bg:        #ddeede;
+  --color-status-done:            var(--color-sage-600);
+  --color-status-done-bg:         var(--color-sage-100);
+  --color-status-cancelled:       #8a3a34;
+  --color-status-cancelled-bg:    #f3dbd8;
+
+  /* Spacing — the 8px grid, with a 4px half-step. */
+  --spacing-0:   0;
+  --spacing-px:  1px;
+  --spacing-0-5: 2px;
+  --spacing-1:   4px;
+  --spacing-1-5: 6px;
+  --spacing-2:   8px;
+  --spacing-3:   12px;
+  --spacing-4:   16px;
+  --spacing-5:   20px;
+  --spacing-6:   24px;
+  --spacing-8:   32px;
+  --spacing-10:  40px;
+  --spacing-12:  48px;
+  --spacing-16:  64px;
+  --spacing-20:  80px;
+  --spacing-24:  96px;
+  --spacing-32:  128px;
+  --spacing-40:  160px;
+
+  /* Radius */
+  --radius-xs:   2px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px 0 rgb(20 20 19 / 0.04);
+  --shadow-sm: 0 2px 4px -1px rgb(20 20 19 / 0.05), 0 1px 2px -1px rgb(20 20 19 / 0.04);
+  --shadow-md: 0 4px 8px -2px rgb(20 20 19 / 0.06), 0 2px 4px -2px rgb(20 20 19 / 0.04);
+  --shadow-lg: 0 12px 24px -8px rgb(20 20 19 / 0.08), 0 4px 8px -4px rgb(20 20 19 / 0.05);
+  --shadow-xl: 0 24px 48px -16px rgb(20 20 19 / 0.10), 0 8px 16px -8px rgb(20 20 19 / 0.06);
+
+  /* Fonts */
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans:    var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono:    var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  /* Motion — durations */
+  --transition-duration-guest-instant:  120ms;
+  --transition-duration-guest-fast:     200ms;
+  --transition-duration-guest-base:     320ms;
+  --transition-duration-guest-slow:     480ms;
+  --transition-duration-guest-entrance: 600ms;
+
+  --transition-duration-staff-instant: 80ms;
+  --transition-duration-staff-fast:    140ms;
+  --transition-duration-staff-base:    200ms;
+  --transition-duration-staff-flash:   320ms;
+
+  /* Motion — easings */
+  --ease-guest-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-guest-in-out:   cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-guest-entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-guest-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-staff-out:      cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-staff-in:       cubic-bezier(0.4, 0, 1, 1);
+
+  /* Breakpoints */
+  --breakpoint-sm:  640px;
+  --breakpoint-md:  768px;
+  --breakpoint-lg:  1024px;
+  --breakpoint-xl:  1280px;
+  --breakpoint-2xl: 1536px;
+  --breakpoint-3xl: 1920px;
+}
+
+/* ============================================================
+ * RUNTIME TOKENS — declared in :root so they are available to
+ * any element. These are what the scoped [data-world] blocks
+ * below override, and what component code reads at runtime.
+ * ============================================================ */
+
+:root {
+  /* ============================================================
+   * PRIMITIVES — the only raw hex values in the codebase.
+   * DESIGN.md §4.2.1 and §4.15.1.
+   * ============================================================ */
+
+  /* Olive — brand primary. */
+  --color-olive-50:  #f4f5f0;
+  --color-olive-100: #e4e7db;
+  --color-olive-200: #c9cfb9;
+  --color-olive-300: #aeb796;
+  --color-olive-400: #929f74;
+  --color-olive-500: #626542;
+  --color-olive-600: #4f5235;
+  --color-olive-700: #3c3f28;
+  --color-olive-800: #2a2c1c;
+  --color-olive-900: #181a10;
+
+  /* Sand — warm neutral. */
+  --color-sand-50:  #faf7f2;
+  --color-sand-100: #f2ece1;
+  --color-sand-200: #e6d9c4;
+  --color-sand-300: #d9c6a7;
+  --color-sand-400: #ccb38a;
+  --color-sand-500: #ab9170;
+  --color-sand-600: #8b7458;
+  --color-sand-700: #6b5942;
+  --color-sand-800: #4b3e2d;
+  --color-sand-900: #2b2319;
+
+  /* Peach — accent. */
+  --color-peach-50:  #fdf7f3;
+  --color-peach-100: #fbece1;
+  --color-peach-200: #f7d9c5;
+  --color-peach-300: #f3c5a6;
+  --color-peach-400: #eebdaf;
+  --color-peach-500: #ddb69e;
+  --color-peach-600: #c99880;
+  --color-peach-700: #a87a62;
+  --color-peach-800: #7c5947;
+  --color-peach-900: #523a2e;
+
+  /* Sage — cool neutral. */
+  --color-sage-50:  #f4f7f6;
+  --color-sage-100: #e6ecea;
+  --color-sage-200: #ccd7d4;
+  --color-sage-300: #b3c2be;
+  --color-sage-400: #99aca8;
+  --color-sage-500: #849894;
+  --color-sage-600: #6b7d79;
+  --color-sage-700: #525f5c;
+  --color-sage-800: #3a4240;
+  --color-sage-900: #232826;
+
+  /* Forest — deep contrast. */
+  --color-forest-50:  #eef2ef;
+  --color-forest-100: #d6dfd9;
+  --color-forest-200: #aebfb4;
+  --color-forest-300: #869f8f;
+  --color-forest-400: #5d7e6a;
+  --color-forest-500: #45604f;
+  --color-forest-600: #3d5748;
+  --color-forest-700: #344b3c;
+  --color-forest-800: #243329;
+  --color-forest-900: #141c17;
+
+  /* Neutral — staff world grayscale. */
+  --color-neutral-0:   #fbfbfa;
+  --color-neutral-50:  #f5f5f4;
+  --color-neutral-100: #ebebe9;
+  --color-neutral-200: #dededb;
+  --color-neutral-300: #c4c4c0;
+  --color-neutral-400: #9a9a96;
+  --color-neutral-500: #71716d;
+  --color-neutral-600: #4a4a47;
+  --color-neutral-700: #333330;
+  --color-neutral-800: #1f1f1d;
+  --color-neutral-900: #141413;
+  --color-neutral-950: #0b0b0a;
+
+  /* ============================================================
+   * STATUS — functional only. DESIGN.md §4.2.3.
+   * ============================================================ */
+
+  --color-status-waiting:      var(--color-neutral-500);
+  --color-status-waiting-bg:   var(--color-neutral-100);
+  --color-status-active:       #c2810f;
+  --color-status-active-bg:    #fbf0d7;
+  --color-status-ready:        #3d7a4a;
+  --color-status-ready-bg:     #ddeede;
+  --color-status-done:         var(--color-sage-600);
+  --color-status-done-bg:      var(--color-sage-100);
+  --color-status-cancelled:    #8a3a34;
+  --color-status-cancelled-bg: #f3dbd8;
+
+  /* ============================================================
+   * FONT FAMILIES — DESIGN.md §4.3.1 and §4.15.1.
+   * ============================================================ */
+
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans:    var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono:    var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  /* ============================================================
+   * SPACING — the 8px grid, with a 4px half-step for tight cases.
+   * ============================================================ */
+
+  --space-0:   0;
+  --space-px:  1px;
+  --space-0-5: 2px;
+  --space-1:   4px;
+  --space-1-5: 6px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+  --space-40:  160px;
+
+  /* ============================================================
+   * RADIUS — DESIGN.md §4.4.2.
+   * ============================================================ */
+
+  --radius-xs:   2px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-full: 9999px;
+
+  /* ============================================================
+   * ELEVATION — DESIGN.md §4.4.3.
+   * ============================================================ */
+
+  --shadow-xs:   0 1px 2px 0 rgb(20 20 19 / 0.04);
+  --shadow-sm:   0 2px 4px -1px rgb(20 20 19 / 0.05),
+                 0 1px 2px -1px rgb(20 20 19 / 0.04);
+  --shadow-md:   0 4px 8px -2px rgb(20 20 19 / 0.06),
+                 0 2px 4px -2px rgb(20 20 19 / 0.04);
+  --shadow-lg:   0 12px 24px -8px rgb(20 20 19 / 0.08),
+                 0 4px 8px -4px rgb(20 20 19 / 0.05);
+  --shadow-xl:   0 24px 48px -16px rgb(20 20 19 / 0.10),
+                 0 8px 16px -8px rgb(20 20 19 / 0.06);
+
+  /* Reserved for the guest hero card only. DESIGN.md §4.4.3. */
+  --shadow-brand-glow: 0 0 40px -8px var(--guest-brand);
+
+  /* ============================================================
+   * MOTION — durations and easings.
+   * ============================================================ */
+
+  --guest-motion-instant:  120ms;
+  --guest-motion-fast:     200ms;
+  --guest-motion-base:     320ms;
+  --guest-motion-slow:     480ms;
+  --guest-motion-entrance: 600ms;
+
+  --guest-ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --guest-ease-in-out:   cubic-bezier(0.65, 0, 0.35, 1);
+  --guest-ease-entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --guest-ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --staff-motion-instant: 80ms;
+  --staff-motion-fast:    140ms;
+  --staff-motion-base:    200ms;
+  --staff-motion-flash:   320ms;
+
+  --staff-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --staff-ease-in:  cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ============================================================
+ * GUEST WORLD — warm surfaces, display serif, light only.
+ * ============================================================ */
+
+[data-world="guest"] {
+  --guest-surface:         var(--color-sand-50);
+  --guest-surface-raised:  var(--color-neutral-0);
+  --guest-surface-sunken:  var(--color-sand-100);
+
+  --guest-text-primary:    var(--color-forest-700);
+  --guest-text-secondary:  var(--color-olive-600);
+  --guest-text-muted:      var(--color-sand-600);
+  --guest-text-inverse:    var(--color-neutral-0);
+
+  --guest-border-subtle:   var(--color-sand-200);
+  --guest-border-strong:   var(--color-sand-400);
+
+  --guest-brand:           var(--color-olive-500);
+  --guest-brand-contrast:  var(--color-neutral-0);
+  --guest-brand-muted:     var(--color-olive-100);
+
+  --guest-accent:          var(--color-peach-500);
+
+  /* Type scale — DESIGN.md §4.3.2. Desktop values. */
+  --guest-text-hero:     500 56px/60px var(--font-display);
+  --guest-text-h1:       500 40px/46px var(--font-display);
+  --guest-text-h2:       500 28px/34px var(--font-display);
+  --guest-text-h3:       600 22px/28px var(--font-sans);
+  --guest-text-h4:       600 18px/24px var(--font-sans);
+  --guest-text-body-lg:  400 18px/30px var(--font-sans);
+  --guest-text-body:     400 16px/26px var(--font-sans);
+  --guest-text-body-sm:  400 14px/22px var(--font-sans);
+  --guest-text-label:    600 13px/18px var(--font-sans);
+  --guest-text-caption:  500 12px/16px var(--font-sans);
+}
+
+@media (max-width: 639px) {
+  [data-world="guest"] {
+    --guest-text-hero: 500 40px/44px var(--font-display);
+    --guest-text-h1:   500 32px/38px var(--font-display);
+  }
+}
+
+/* ============================================================
+ * STAFF WORLD — neutral surfaces, no display serif.
+ * ============================================================ */
+
+[data-world="staff"] {
+  --staff-surface:         var(--color-neutral-50);
+  --staff-surface-raised:  var(--color-neutral-0);
+  --staff-surface-sunken:  var(--color-neutral-100);
+
+  --staff-text-primary:    var(--color-neutral-900);
+  --staff-text-secondary:  var(--color-neutral-600);
+  --staff-text-muted:      var(--color-neutral-400);
+  --staff-text-inverse:    var(--color-neutral-0);
+
+  --staff-border-subtle:   var(--color-neutral-200);
+  --staff-border-strong:   var(--color-neutral-300);
+
+  --staff-brand:           var(--color-forest-700);
+  --staff-brand-contrast:  var(--color-neutral-0);
+  --staff-accent:          var(--color-sage-500);
+
+  --staff-text-h1:       600 28px/36px var(--font-sans);
+  --staff-text-h2:       600 22px/30px var(--font-sans);
+  --staff-text-h3:       600 18px/26px var(--font-sans);
+  --staff-text-body-lg:  500 18px/26px var(--font-sans);
+  --staff-text-body:     400 16px/24px var(--font-sans);
+  --staff-text-body-sm:  400 14px/20px var(--font-sans);
+  --staff-text-label:    600 13px/18px var(--font-sans);
+  --staff-text-mono:     500 14px/20px var(--font-mono);
+  --staff-text-mono-lg:  600 20px/24px var(--font-mono);
+  --staff-text-place:    600 40px/44px var(--font-sans);
+}
+
+/* ============================================================
+ * STAFF DARK MODE — kitchen default. DESIGN.md §4.15.4.
+ * ============================================================ */
+
+[data-world="staff"][data-theme="dark"] {
+  --staff-surface:         var(--color-neutral-900);
+  --staff-surface-raised:  var(--color-neutral-800);
+  --staff-surface-sunken:  var(--color-neutral-950);
+
+  --staff-text-primary:    var(--color-neutral-50);
+  --staff-text-secondary:  var(--color-neutral-300);
+  --staff-text-muted:      var(--color-neutral-500);
+  --staff-text-inverse:    var(--color-neutral-900);
+
+  --staff-border-subtle:   var(--color-neutral-700);
+  --staff-border-strong:   var(--color-neutral-600);
+
+  --staff-brand:           var(--color-sage-400);
+  --staff-accent:          var(--color-sage-300);
+}
+
+/* ============================================================
+ * REDUCED MOTION — DESIGN.md §4.5.7.
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --guest-motion-instant:  0ms;
+    --guest-motion-fast:     0ms;
+    --guest-motion-base:     0ms;
+    --guest-motion-slow:     0ms;
+    --guest-motion-entrance: 0ms;
+
+    --staff-motion-instant: 0ms;
+    --staff-motion-fast:    0ms;
+    --staff-motion-base:    0ms;
+    --staff-motion-flash:   0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
