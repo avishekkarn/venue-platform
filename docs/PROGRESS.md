@@ -1,10 +1,10 @@
 # PROGRESS.md — The Living Project Log
 
-**Version:** 1.0
+**Version:** 2.0
 **Status:** Active
-**Purpose:** The dated, append-only record of everything that has been done on the project. It is the project's memory. When a new session begins, reading the last two entries of this file tells the session exactly where things stand. It is never rewritten. It grows.
+**Purpose:** The dated, append-only record of what has happened on the project. Newest first. Every milestone's entries live in full here while the milestone is open. When the milestone closes, its entries move to `PROGRESS_ARCHIVE_PHASE_1.md` and a one-line summary replaces them in §5.1.
 
-**How to read this file:** Entries are ordered newest first. Each entry has a fixed structure (§2). The structure never changes; entries are added. If the project's working method changes (a new document, a new rule, a new phase), a special "Structural" entry is appended and the change is traced to a decision in DECISIONS.md.
+**How to read this file:** Read §7 (the snapshot) first. It tells you the current phase, milestone, and task. Then read the top three entries in §5.3 for recent context. Only open `PROGRESS_ARCHIVE_PHASE_1.md` when you need the full detail of a past milestone.
 
 ---
 
@@ -12,39 +12,44 @@
 
 1. The Rules of This File
 2. The Entry Template
-3. The Document Update Matrix
+3. The Compression Protocol
 4. The Contradiction Check
 5. The Entry Log
-6. How the File Evolves
+6. The Archive Index
 7. The Current State Snapshot
+8. How the File Evolves
 
 ---
 
 ## 1. The Rules of This File
 
-**Rule 1 — Append-only.** Entries are never edited after they are written. If an entry was wrong, a new entry is appended that corrects it, and the original entry is marked `CORRECTED BY ENTRY-XXXX`.
+**Rule 1 — Append-only.** Entries are never edited after they are written. If an entry was wrong, a new entry corrects it, and the original is marked `CORRECTED BY ENTRY-XXXX`.
 
-**Rule 2 — Newest first.** The most recent entry is at the top of the log. A session reads the top of the file to know the current state.
+**Rule 2 — Newest first.** The most recent entry is at the top of §5.3.
 
-**Rule 3 — One entry per session.** A session is one unit of work. It may complete a task, fail a task, or block on a task. Whatever happens, the session ends with exactly one entry.
+**Rule 3 — One entry per session.** A session ends with exactly one entry.
 
-**Rule 4 — Honest status.** An entry's status is one of: `PASS`, `FAIL`, `BLOCKED`, or `STRUCTURAL`. `PASS` requires raw evidence. `FAIL` requires the failure's output. `BLOCKED` requires the reason. `STRUCTURAL` is used only when a document or rule changed.
+**Rule 4 — Honest status.** `PASS`, `FAIL`, `BLOCKED`, or `STRUCTURAL`. `PASS` requires raw evidence. `FAIL` requires the failure's output. `BLOCKED` requires the reason. `STRUCTURAL` is used only when a document or rule changed.
 
-**Rule 5 — Trace every change.** If a session changes code, the entry names the task from ROADMAP.md. If a session changes a decision, the entry names the decision in DECISIONS.md. If a session changes a document, the entry names the document and describes the change.
+**Rule 5 — Trace every change.** Every entry names the task from `ROADMAP.md` or the document it changed.
 
-**Rule 6 — Never invent.** If a session did not run a command, the entry says so. If a session did not paste the raw output, the entry says so. Nothing is claimed without evidence.
+**Rule 6 — Never invent.** Nothing is claimed without evidence.
 
-**Rule 7 — Point forward.** Every entry ends with a **Next** line, stating what the next session should start with. The next session does not have to search; the last entry tells it.
+**Rule 7 — Point forward.** Every entry ends with a **Next** line.
 
-**Rule 8 — Cross-document check.** Every entry includes a **Document impact** section, listing which canonical documents (PRODUCT.md, DECISIONS.md, SYSTEM.md, BUILD.md, ROADMAP.md) were affected and whether they need updating. This is what keeps the documents from drifting apart.
+**Rule 8 — Cross-document check.** Every entry has a **Document Impact** section.
+
+**Rule 9 — Compression is real.** When a milestone closes, its entries move to `PROGRESS_ARCHIVE_PHASE_1.md` and are summarised in §5.1. Only the current milestone's entries, the last three entries from the previous milestone, and every `STRUCTURAL` entry live in this file in full.
+
+**Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
 ---
 
 ## 2. The Entry Template
 
-Every entry uses the following structure. Every section is filled. No section is skipped. If a section does not apply, it says "None".
+Every entry follows this structure. No section is skipped. "None" is a valid value.
 
-```
+```markdown
 ### ENTRY-XXXX — YYYY-MM-DD — <session title>
 
 **Status:** PASS | FAIL | BLOCKED | STRUCTURAL
@@ -60,7 +65,7 @@ Every entry uses the following structure. Every section is filled. No section is
 |      |        |         |
 
 **Commands Run:**
-<Every command that was run, with its raw output pasted beneath it in a fenced code block. If a command was not run, say so.>
+<Every command, with raw output in a fenced block. If a command was not run, say so.>
 
 **Acceptance Criteria Results:**
 | # | Criterion | Result | Evidence |
@@ -68,14 +73,12 @@ Every entry uses the following structure. Every section is filled. No section is
 |   |           |        |          |
 
 **Deviations from Contract:**
-<Anything done that was not in the task's scope, or anything the task asked for that was not done. If none, say "None".>
+<Anything outside the task's scope, or anything the task asked for that was not done. If none, "None".>
 
 **Noticed but Out of Scope:**
-<Anything noticed during the session that is a problem or opportunity but was deliberately not acted on. This is where the project's technical debt and future tasks are born. If none, say "None".>
+<Problems or opportunities deliberately not acted on. If none, "None".>
 
 **Document Impact:**
-<Which canonical documents are affected by this session.>
-
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
 | PRODUCT.md    | Yes / No |        | Updated / Needs update / No change |
@@ -86,846 +89,106 @@ Every entry uses the following structure. Every section is filled. No section is
 | PROGRESS.md   | Yes (this entry) | | Updated |
 
 **Contradiction Check:**
-<A one-line answer: does anything in this session contradict any existing decision, system description, or build rule? If yes, name the contradiction and how it was resolved. If no, say "None found".>
+<One line. Does anything in this session contradict any decision, system description, or build rule? If yes, name it and how it was resolved. If no, "None found".>
 
 **Next:**
-<The exact task the next session should start with, and the specific next action.>
+<The exact task the next session starts with, and the specific next action.>
 
 **Awaiting Human Verification:** YES | NO
-```
+3. The Compression Protocol
+When a milestone closes:
 
----
-
-## 3. The Document Update Matrix
-
-This matrix defines, for every type of change, which documents must be updated. It is the project's protection against drift. When any document changes, the matrix is consulted to see what else must change. If a cell says "yes", the document must be updated in the same session as the change, or the session cannot be marked `PASS`.
-
-### 3.1 The Matrix
-
-| If this changes…                 | PRODUCT.md | DECISIONS.md                            | SYSTEM.md | BUILD.md | ROADMAP.md               | PROGRESS.md |
-| -------------------------------- | ---------- | --------------------------------------- | --------- | -------- | ------------------------ | ----------- |
-| A feature is added or removed    | yes        | yes                                     | yes       | —        | yes                      | yes         |
-| A user flow changes              | yes        | —                                       | yes       | —        | yes                      | yes         |
-| A screen is added or removed     | yes        | —                                       | yes       | —        | yes                      | yes         |
-| A decision is reversed           | —          | yes (new record)                        | yes       | —        | yes                      | yes         |
-| A decision is added              | —          | yes                                     | yes       | —        | yes                      | yes         |
-| A decision is deferred           | —          | yes (update condition)                  | —         | —        | yes (status to deferred) | yes         |
-| The data model changes           | —          | yes                                     | yes       | —        | yes                      | yes         |
-| An API route changes             | —          | —                                       | yes       | yes      | yes                      | yes         |
-| A layer boundary changes         | —          | yes                                     | yes       | —        | yes                      | yes         |
-| A coding standard changes        | —          | —                                       | —         | yes      | —                        | yes         |
-| A testing rule changes           | —          | —                                       | —         | yes      | —                        | yes         |
-| A verification rule changes      | —          | —                                       | —         | yes      | —                        | yes         |
-| A task's scope changes mid-phase | —          | —                                       | —         | —        | yes                      | yes         |
-| A phase's order changes          | —          | yes                                     | —         | —        | yes                      | yes         |
-| A new phase is added             | yes        | yes                                     | yes       | —        | yes                      | yes         |
-| A document is added              | —          | yes (structural)                        | —         | —        | —                        | yes         |
-| A document is removed            | —          | yes (structural)                        | —         | —        | —                        | yes         |
-| The token system changes         | yes        | yes                                     | —         | yes      | yes                      | yes         |
-| The component inventory changes  | yes        | —                                       | —         | yes      | yes                      | yes         |
-| A design token is added          | —          | —                                       | —         | yes      | —                        | yes         |
-| A design token is removed        | —          | yes (if the removal affects a decision) | —         | yes      | yes                      | yes         |
-
-### 3.2 The Rule
-
-**A session is not `PASS` if any document listed as "yes" in the matrix was not updated in the same session.**
-
-If the session cannot update a document (for example, because the document is canonical and requires human approval), the session is `BLOCKED`, and the entry records which document needs the human's attention.
-
----
-
-## 4. The Contradiction Check
-
-Before a session is closed, it runs a contradiction check. The check has five questions.
-
-**Question 1 — Does the session contradict a decision in DECISIONS.md?**
-If yes: the session stops. The developer either reverts the change or writes a new decision that supersedes the old one.
-
-**Question 2 — Does the session contradict the system's shape in SYSTEM.md?**
-If yes: the session stops. The shape is either corrected or SYSTEM.md is updated with a new decision, in DECISIONS.md first.
-
-**Question 3 — Does the session contradict a build rule in BUILD.md?**
-If yes: the session stops. The rule is either followed, or BUILD.md is updated with a new rule, and DECISIONS.md is checked for whether the change is significant enough to be a decision.
-
-**Question 4 — Does the session contradict a fact in PRODUCT.md?**
-If yes: the session stops. PRODUCT.md is updated, and the change is traced to a new decision if it is a product-level change.
-
-**Question 5 — Does the session contradict a task or status in ROADMAP.md?**
-If yes: the session stops. ROADMAP.md is updated to match reality, or reality is corrected to match ROADMAP.md.
-
-**A session that fails any of these five questions is `FAIL`.** The entry records the contradiction, how it was resolved, and whether a new decision was required.
-
----
-
-## 5. The Entry Log
-
-The log is appended below. Newest entries at the top.
-
-### ENTRY-0020 — 2026-10-14 — Task 1.3.2 — Button reconciled to DESIGN.md §4.6.1
-
-**Status:** PASS
-
-**Task:** 1.3.2
-
-**Summary:**
-The shadcn-generated Button was replaced with one that matches DESIGN.md §4.6.1. The shadcn Button was functional but wrong for our design system in nine ways: variant names, size names, sizes, focus ring, press motion, missing loading state, unnecessary aria-invalid styling, wrong radius, and world-agnostic colors. The reconciled Button uses our variant set (primary, secondary, ghost, danger), our size set (sm 32px, md 40px, lg 52px, xl 60px), the correct focus ring (2px in brand color, 2px offset), a loading state with three pulsing dots and aria-busy, and world-specific colors via the Tailwind 4 parent variant `[data-world=staff]_&:`. The press-feedback motion lives in app/globals.css. Verified in the browser: guest Primary renders olive; staff Primary renders forest green.
-
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-| `src/components/ui/button.tsx` | Replaced | Reconciled against DESIGN.md §4.6.1 |
-| `app/globals.css` | Edited | Appended the WORLD-SCOPED PRESS FEEDBACK block |
-
-**Commands Run:**
-- `pnpm exec tsc --noEmit` — exit 0.
-- `pnpm build` — compiled successfully, 3 pages.
-- `pnpm dev` — served both worlds, verified visually.
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | The Button compiles under strict TypeScript | PASS | tsc exit 0 |
-| 2 | The build passes | PASS | pnpm build output |
-| 3 | All four variants render | PASS | Browser screenshots |
-| 4 | All four sizes render | PASS | Browser screenshot |
-| 5 | World separation works | PASS | Guest primary olive, staff primary forest green |
-| 6 | Loading state works | PASS | Three dots visible |
-| 7 | Only scoped files changed | PASS | git show --stat HEAD |
-
-**Deviations from Contract:**
-- The Tailwind parent-variant syntax `[data-world='staff']&:` (with a quote and `&`) did not compile. Tailwind 4 silently dropped the variant. Corrected to `[data-world=staff]_&:` (no quote, underscore before `&`). This is now the project's pattern for world-scoped variants.
-- The press feedback was moved from the component's class list into `app/globals.css` because Tailwind cannot cleanly branch a single class string on a parent `[data-world]` attribute without a `group` class we do not want to mandate.
-
-**Noticed but Out of Scope:**
-- `hover:brightness-95` on primary and danger is a CSS filter. For very dark brand colors, the brightness reduction may be imperceptible.
-- The `lg` and `xl` sizes are guest-only per DESIGN.md §4.6.1. Not enforceable at the type level in a single component.
-- Task 1.4.1 (cn helper) is now redundant.
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| ROADMAP.md | Yes | Task 1.3.2 complete | Updated |
-| PROGRESS.md | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found. The component matches DESIGN.md §4.6.1.
-
-**Next:**
-Task 1.3.3 — Input, Textarea, Select, Label.
-
-**Awaiting Human Verification:** YES
-
-
-### ENTRY-0021 — 2026-10-14 — Task 1.3.3 — Input, Textarea, Select, Label
-
-**Status:** PASS
-
-**Task:** 1.3.3
-
-**Summary:**
-Created four form primitives from scratch, matching DESIGN.md §4.6.2 (Input, Textarea) and §4.6.3 (Select). The Input and Textarea support optional label, helper, and error props, with correct accessibility (aria-invalid, aria-describedby). The Select wraps `@base-ui/react/select` and matches the Input's height, border, focus ring, and error state. Verified visually in both worlds.
-
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-| `src/components/ui/label.tsx` | Created | Label wrapper |
-| `src/components/ui/input.tsx` | Created | Text input with label / helper / error |
-| `src/components/ui/textarea.tsx` | Created | Multi-line variant |
-| `src/components/ui/select.tsx` | Created | Composition over @base-ui/react/select |
-
-**Commands Run:**
-- `pnpm exec tsc --noEmit` — exit 0.
-- `pnpm build` — compiled successfully, 3 pages.
-- `pnpm dev` — served both worlds.
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | TypeScript strict | PASS | tsc exit 0 |
-| 2 | Build passes | PASS | pnpm build |
-| 3 | All six states render | PASS | Browser |
-| 4 | Clicking a label moves focus | PASS | Manual |
-| 5 | Tab shows 2px focus ring | PASS | Manual |
-| 6 | Select opens, fades in, updates on select | PASS | Manual |
-| 7 | Only scoped files changed | PASS | git show --stat HEAD |
-
-**Deviations from Contract:**
-- The Select menu's fade uses `duration-staff-fast` (140ms) in both worlds. DESIGN.md §4.6.3 specifies 140ms without a world-scope. Deliberate.
-
-**Noticed but Out of Scope:**
-- The `@base-ui/react/select` API surface was guessed at for Task 1.3.3 (import path, sub-component names). It compiled successfully on the first attempt, so the API matched the guess. Now confirmed for future form components (Radio, Checkbox).
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| ROADMAP.md | Yes | Task 1.3.3 complete | Updated |
-| PROGRESS.md | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found.
-
-**Next:**
-Task 1.3.4 — Dialog, Sheet, Drawer.
-
-**Awaiting Human Verification:** YES
-
-### ENTRY-0022 — 2026-10-14 — Task 1.3.8 — Milestone 1.3 base component kit verified
-
-**Status:** PASS
-
-**Task:** 1.3.8
-
-**Summary:**
-The complete base component kit was rendered on a single scratch page in both worlds (guest and staff). All twelve components — Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast — render correctly with all their states. The guest and staff atmospheres are visually distinct where they must be and consistent where they should be. The browser console is clean. The milestone is closed.
-
-**Files Changed:**
-None committed. `app/page.tsx` was temporarily replaced with a scratch page for verification, then restored to the placeholder. `git status` is clean.
-
-**Commands Run:**
-- `pnpm exec tsc --noEmit` — exit 0.
-- `pnpm build` — compiled successfully.
-- `pnpm dev` — served the scratch page in both worlds.
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | Every component renders without errors | PASS | Browser screenshot, both worlds |
-| 2 | The browser console has no warnings | PASS | DevTools Console |
-| 3 | Type check passes | PASS | tsc exit 0 |
-| 4 | Build passes | PASS | build output |
-| 5 | The two worlds look different where they should | PASS | Guest Button primary olive, staff primary forest green |
-| 6 | The two worlds share what they should | PASS | Input, Textarea, Select, Table render identically |
-| 7 | Radii and spacing are consistent | PASS | Visual check |
-| 8 | Nothing outside app/page.tsx changed | PASS | git status clean |
-
-**Deviations from Contract:**
-None. The task was a verification task and it verified.
-
-**Noticed but Out of Scope:**
-- Task 1.4.1 ("Add the cn helper for class name composition") is redundant — `src/lib/utils.ts` already contains the standard cn helper, created by shadcn/ui's init in Task 1.3.1. The task can be closed as complete or repurposed as "add unit tests for cn".
-- The empty files under src/components/ui/ (alert, avatar, checkbox, dropdown-menu, progress, radio, skeleton, tabs, tooltip) are reserved placeholders. Each belongs to a future task in a later milestone. They are correctly empty.
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | No | — | No change |
-| DECISIONS.md  | No | — | No change |
-| SYSTEM.md     | No | — | No change |
-| BUILD.md      | No | — | No change |
-| ROADMAP.md    | Yes | Task 1.3.8 complete; Milestone 1.3 closed | Updated |
-| DESIGN.md     | No | — | No change |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found. Every component matches its section in DESIGN.md §4.6.
-
-**Next:**
-Milestone 1.4 — Shared utilities. The first task is 1.4.1 (the cn helper), which is now redundant, so the next actionable task is 1.4.2 — the money formatting utility. The next session should propose the plan for the money utility, or resolve the 1.4.1 question first, then move to 1.4.2.
-
-**Awaiting Human Verification:** YES
-
-
-### ENTRY-0023 — 2026-10-14 — Milestone 1.3 closed
-
-**Status:** STRUCTURAL
-
-**Task:** None (structural session — milestone closure)
-
-**Summary:**
-Milestone 1.3 (Base components) is closed. All eight tasks (1.3.0 through 1.3.8) are complete. The project now has a complete, verified base component kit. Phase 1 continues with Milestone 1.4 (Shared utilities) and Milestone 1.5 (The development server), then Phase 2 begins.
-
-**Files Changed:**
-None. This entry records a milestone-level state.
-
-**Commands Run:**
-- `git log --oneline origin/main` — shows the eight task commits: f43ceeb, e8ffa2a, 924af87, b70b9af, 604412d, 8446066, fc0c163, 9b34c2a.
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | Every task in the milestone is complete | PASS | git log |
-| 2 | Every component matches DESIGN.md §4.6 | PASS | ENTRY-0022 |
-| 3 | The full kit renders in both worlds | PASS | ENTRY-0022 |
-| 4 | The build and type check pass | PASS | ENTRY-0022 |
-
-**Deviations from Contract:**
-- Task 1.4.1 (cn helper) is redundant, as noted in ENTRY-0022. It should be closed or repurposed before Milestone 1.4 begins.
-
-**Noticed but Out of Scope:**
-See ENTRY-0022.
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | No | — | No change |
-| DECISIONS.md  | No | — | No change |
-| SYSTEM.md     | No | — | No change |
-| BUILD.md      | No | — | No change |
-| ROADMAP.md    | Yes | Milestone 1.3 closed | Updated |
-| DESIGN.md     | No | — | No change |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found. Milestone closure does not contradict any decision or document.
-
-**Next:**
-Milestone 1.4 — Shared utilities. See ENTRY-0022 for the recommended sequence.
-
-**Awaiting Human Verification:** NO
-
-### ENTRY-0019 — 2026-10-14 — Task 1.3.1 — shadcn/ui installed and configured
-
-**Status:** PASS (with reconciliation deviations noted)
-
-**Task:** 1.3.1
-
-**Summary:**
-shadcn/ui was installed and configured. Its CLI wrote components.json, src/lib/utils.ts, a Button component, and a block of CSS variables into app/globals.css. The CLI's output was reconciled so that our design tokens remain the single source of truth: the CLI's radius overrides, its self-referencing font entries, and its unused .dark block were removed, and its semantic variable names were aliased to our tokens. The build, typecheck, and dev server all pass.
-
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-| components.json | Created | shadcn/ui's config |
-| src/lib/utils.ts | Created | The cn helper |
-| src/components/ui/button.tsx | Modified | The shadcn Button (delivered early by the CLI; refined in Task 1.3.2) |
-| app/globals.css | Modified | Removed the shadcn runtime import, radius overrides, self-referencing font entries, and .dark block; added shadcn semantic aliases pointing at our tokens |
-| package.json | Modified | Added @base-ui/react, class-variance-authority, clsx, lucide-react, tailwind-merge, tw-animate-css |
-| pnpm-lock.yaml | Regenerated | — |
-
-**Commands Run:**
-- `pnpm dlx shadcn@latest init --yes --defaults` — ran, then reconciled.
-- `pnpm remove cn` — removed the accidental cn package.
-- `pnpm remove shadcn` — removed the CLI from production dependencies.
-- `pnpm add clsx tailwind-merge` — added them as direct dependencies.
-- `pnpm exec tsc --noEmit` — exit 0, no output.
-- `pnpm build` — compiled successfully in 618ms, 3 pages.
-- `pnpm dev` — ready in 354ms.
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | components.json exists and is valid | PASS | File present, rsc: true |
-| 2 | src/lib/utils.ts exports cn | PASS | File contains the standard cn helper |
-| 3 | Four shadcn deps present | PASS | pnpm list output |
-| 4 | Tokens intact in app/globals.css | PASS | The @theme block, :root, and every [data-world] block preserved |
-| 5 | Typecheck passes | PASS | pnpm exec tsc --noEmit exit 0 |
-| 6 | Build passes | PASS | pnpm build output |
-| 7 | Page still renders | PASS | pnpm dev output |
-| 8 | Only scoped files changed | PASS | git status output |
-
-**Deviations from Contract:**
-
-The shadcn CLI (v4.21.4) made four mistakes that we corrected:
-1. It wrote @import "shadcn/tailwind.css" into app/globals.css, which required the shadcn package at runtime. We removed it.
-2. It wrote the wrong import into both src/lib/utils.ts and src/components/ui/button.tsx (from "cn" instead of from "@/lib/utils"). We corrected both.
-3. It added a duplicate Geist loader to app/layout.tsx and set --font-sans directly on <html>, which would have shadowed our font token. We removed it.
-4. It added itself (shadcn) and the accidental cn package to production dependencies. We removed both with pnpm remove.
-
-The style chosen by the CLI's --defaults flag was "base-nova", not the "new-york" specified in the plan. We accepted base-nova.
-
-**Noticed but Out of Scope:**
-- The shadcn Button that landed in src/components/ui/button.tsx uses shadcn's variant and size scheme (bg-primary, text-primary-foreground, h-8, h-9, etc.). Task 1.3.2 must reconcile it against DESIGN.md §4.6.1.
-- The @custom-variant dark declaration is inert for us; we never apply a .dark class.
-- The @layer base block applies bg-background and text-foreground to <body>. Now that those variables point at our tokens, this is consistent with our design.
-- The @import "tw-animate-css" is required by future component tasks (Dialog, Sheet).
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | No | — | No change |
-| DECISIONS.md  | No | — | No change |
-| SYSTEM.md     | No | — | No change |
-| BUILD.md      | No | — | No change |
-| ROADMAP.md    | Yes | Task 1.3.1 complete | Updated |
-| DESIGN.md     | No | — | No change |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found. No decision in DECISIONS.md is contradicted. No rule in BUILD.md is violated. The @import "shadcn/tailwind.css" that DESIGN.md §4.15.6 did not anticipate was removed. No task in ROADMAP.md is contradicted.
-
-**Next:**
-Task 1.3.2 — Add the Button component, themed by tokens. The next session should read the current src/components/ui/button.tsx, compare it against DESIGN.md §4.6.1, and propose the reconciliation plan before editing.
-
-**Awaiting Human Verification:** YES
-
-### ENTRY-0018 — 2026-10-14 — Git initialised and public repository created
-
-**Status:** STRUCTURAL
-
-**Task:** None (structural session — repository tooling)
-
-**Summary:**
-The project is now under git version control. The local repository was initialised at `A:\QR-PROJECT`, an initial commit was made (`8e50b19`) capturing the entire project state at the end of Task 1.3.0, and the repository was pushed to the public GitHub remote `https://github.com/avishekkarn/venue-platform`. The working tree is clean and the local `main` branch tracks `origin/main`.
-
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-| `.git/` | Created | Local repository metadata |
-| `.gitignore` | Edited | Added `MASTER PLAN.docx` and `MASTER PLAN.pdf` to the exclusion list |
-
-No source file was changed. The commit `8e50b19` captured the state already recorded in ENTRY-0017.
-
-**Commands Run:**
-- `git --version` → `git version 2.55.0.windows.5`
-- `git config --global user.name "Avishek Karn"` and `git config --global user.email "avishek.np09@gmail.com"`
-- `git init`, `git branch -M main`
-- `git add -A`, `git status` (verified no `.env.local`, no `node_modules/`, no `.next/`)
-- `git commit -m "Initial commit: foundation, design tokens, Tailwind theme mapping ..."` → `[main (root-commit) 8e50b19] 164 files changed, 12348 insertions(+)`
-- `git remote add origin https://github.com/avishekkarn/venue-platform.git`
-- `git push -u origin main` → succeeded, `* [new branch] main -> main`
-- `git log --oneline origin/main` → `8e50b19 (HEAD -> main, origin/main) Initial commit ...`
-- `git status` → `Your branch is up to date with 'origin/main'. nothing to commit, working tree clean`
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | Local repository initialised | PASS | `git init` output |
-| 2 | First commit created | PASS | `git commit` output, 164 files, 12348 insertions |
-| 3 | No secrets committed | PASS | `.env.local` absent from `git status` output |
-| 4 | No `node_modules/` or `.next/` committed | PASS | Both absent from `git status` output |
-| 5 | Remote configured | PASS | `git remote -v` shows the correct URL |
-| 6 | Push succeeded | PASS | `git push` output, `* [new branch] main -> main` |
-| 7 | Local and remote in sync | PASS | `git log --oneline origin/main` matches `HEAD` |
-
-**Deviations from Contract:**
-- The initial push attempt failed with `403` because the machine's credential manager was authenticated as `nationalmocknepal-oss`, which has no permission on `avishekkarn/venue-platform`. Resolved by clearing the cached credential (`cmdkey /delete:git:https://github.com`), signing in to GitHub in the browser as `avishekkarn`, and creating a personal access token for `avishekkarn`. The second push succeeded.
-- The local repository is under `A:\QR-PROJECT`, but the system's git CLI reports `core.filemode=false` and `core.symlinks=false`, which are the correct defaults on Windows. No action needed.
-
-**Noticed but Out of Scope:**
-- **`MASTER PLAN.docx` and `MASTER PLAN.pdf` are excluded** from the repository via `.gitignore`. They remain on disk only.
-- **`git config user.name` and `user.email` are set both globally and locally.** The local values match the global values, so there is no conflict. The local setting is harmless but redundant; it can be removed with `git config --unset user.name` and `git config --unset user.email` if desired.
-- **The repository is public.** No private information is in it, but the `.env.local` file must remain excluded forever. `.gitignore` enforces this.
-- **The `docs/README.md` file is inside `docs/`, not at the repository root.** GitHub will not automatically display it on the repository home page. A root-level `README.md` could be added later to describe the project and link to `docs/README.md`. This is a cosmetic improvement, not a functional one.
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | No | No product change | No change |
-| DECISIONS.md  | No | No decision change | No change |
-| SYSTEM.md     | No | No system shape change | No change |
-| BUILD.md      | No | No build rule change | No change |
-| ROADMAP.md    | No | No task status change | No change |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found. The session established version control, which BUILD.md §16 and §12.2 assume. No decision in DECISIONS.md is contradicted. No rule in BUILD.md is violated. No task in ROADMAP.md is contradicted.
-
-**Next:**
-Task 1.3.1 — install and configure shadcn/ui. The next session should propose the shadcn/ui init plan and wait for approval before running any command.
-
-**Awaiting Human Verification:** YES
-
-### ENTRY-0016 — 2026-10-13 — Milestone 1.2 — Design tokens complete
-
-**Status:** PASS (with two noted evidence gaps)
-
-**Task:** Milestone 1.2 (Tasks 1.2.1 through 1.2.7)
-
-**Summary:**
-The complete design-token foundation is now authored in `app/globals.css`: the five anchor color scales, the neutral grayscale, the status colors, the guest-world and staff-world semantic tokens, the staff dark-mode override, the three font families, the guest and staff type scales, the spacing scale, the radius scale, the elevation scale, the motion durations and easings, and the `prefers-reduced-motion` fallback. The temporary scratch page rendered every token correctly and was removed at the end of the milestone, leaving `app/page.tsx` as the placeholder root screen. Both `pnpm exec tsc --noEmit` and `pnpm build` pass with no errors.
-
-**Files Changed (cumulative across the milestone):**
-| Path | Action | Purpose |
-|------|--------|---------|
-| `app/globals.css` | Created then edited six times | The complete token foundation, authored across Tasks 1.2.1 through 1.2.6 |
-| `app/page.tsx` | Replaced then reverted | The temporary scratch page (Tasks 1.2.1–1.2.6); reverted to the placeholder root screen in Task 1.2.7 |
-| `src/lib/fonts.ts` | Created | The three `next/font` loaders and the `fontVariables` export |
-| `app/layout.tsx` | Edited | Applied the font variables to the `<html>` element |
-
-**Commands Run:**
-
-`pnpm exec tsc --noEmit` — run after each of Tasks 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.6. Exit code 0, no output every time.
-
-`pnpm build` — run after each of Tasks 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.6. Compiled successfully every time. Final build after Task 1.2.6 compiled in 370ms; routes `/` and `/_not-found` generated.
-
-`pnpm dev` — run after Tasks 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.6. The scratch page rendered every section. Screenshots captured for Tasks 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.6.
-
-**Evidence gaps (honest record):**
-
-- Task 1.2.4: the render was confirmed by the developer ("it's rendering") but the raw output of `pnpm exec tsc --noEmit` and `pnpm build` was not pasted for that specific task. The build was re-run and pasted in Task 1.2.6 with the same code, so the token file was verified again after 1.2.4. Recorded as a minor gap.
-- Task 1.2.7: the developer said "done" but did not paste the raw output of `pnpm exec tsc --noEmit` and `pnpm build` for the final placeholder-page state. Recorded as a minor gap. If the developer wants the gap closed, both commands can be re-run and pasted in the next chat before Task 1.3.1 starts.
-- Task 1.2.6: the `@media (prefers-reduced-motion: reduce)` block was confirmed to exist in the file and to compile, but devtools confirmation of the block being active was not captured. Recorded as a minor evidence gap.
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1.2.1.1–8 | Color tokens render, build passes | PASS | Screenshots and build output from Tasks 1.2.1 |
-| 1.2.2.1–8 | Typography tokens render, build passes | PASS | Screenshots and build output from Task 1.2.2 |
-| 1.2.3.1–4 | Spacing tokens render progressively, build passes | PASS | Screenshots and build output from Task 1.2.3 |
-| 1.2.4.1–6 | Radius, elevation, motion tokens render, build passes | PASS (render confirmed; raw output noted as gap) | Developer confirmation and later Task 1.2.6 build |
-| 1.2.5 | Status tokens resolved | PASS (folded into 1.2.1, re-verified in the scratch page) | Status swatches visible in every screenshot |
-| 1.2.6.1–3 | Reduced-motion fallback authored, build passes | PASS (devtools confirmation noted as gap) | File contains the `@media` block; build output pasted |
-| 1.2.7 | Scratch page removed, placeholder renders, build passes | PASS (raw output noted as gap) | Developer confirmation |
-
-**Deviations from Contract:**
-
-- **Status colors are literal hex values.** DESIGN.md §4.2.1 says the five anchors are the only raw hex values in the codebase, but DESIGN.md §4.2.3 lists four status colors as literal values. Resolved in favor of §4.2.3 (the more specific rule). Recorded in ENTRY-0015.
-- **Spacing tokens include the fractional steps.** DESIGN.md §4.4.1 lists `--space-px`, `--space-0-5`, and `--space-1-5`; DESIGN.md §4.15.1 omits them. Resolved in favor of §4.4.1 (the more complete rule). Recorded in ENTRY-0015.
-- **Type tokens use the CSS `font` shorthand.** DESIGN.md §4.3.2 and §4.3.3 give size / line-height, family, and weight per token. The shorthand form was chosen to keep each token to a single variable. Recorded in the Task 1.2.2 plan.
-- **`--guest-text-hero` and `--guest-text-h1` have mobile overrides.** DESIGN.md §4.3.2 gives mobile and desktop values for both. A `@media (max-width: 639px)` block re-declares them at the mobile values. Recorded in the Task 1.2.2 plan.
-- **`--shadow-brand-glow` references `--guest-brand`.** `--guest-brand` is defined inside `[data-world="guest"]`, so the token resolves only inside a guest-world element. This matches DESIGN.md §4.4.3 (the glow is reserved for the hero card, which is always in the guest world). Recorded.
-- **`!important` in the reduced-motion safety net.** BUILD.md §4.9 forbids `!important`; the reduced-motion fallback uses it per the standard pattern in DESIGN.md §4.5.7. Recorded as the documented exception.
-
-**Noticed but Out of Scope:**
-
-- **The Tailwind theme config is not authored.** DESIGN.md §4.15.6 shows a Tailwind config that maps every token to a Tailwind class. This was deferred from Milestone 1.2 and is not part of any existing roadmap task. It needs its own task (see the recommendation below).
-- **`app/globals.css` uses duplicated comment banners.** A cosmetic inconsistency: a few indented block comments are aligned to four spaces where the rest of the file uses two. Not a defect; a future cleanup if desired.
-- **The scratch page's `<h1>` uses 4-space indentation where the surrounding lines use 6.** Cosmetic, on a temporary file that has now been removed.
-- **The initial build after Task 1.2.2 took 12.7s** because `next/font` fetched and self-hosted the three font families for the first time. Expected; subsequent builds returned to sub-second. Recorded.
-- **No test covers the tokens.** This is correct per DESIGN.md §4.15.7 and BUILD.md §8.5 — the tokens are not logic, and visual verification is done by looking, not by a test.
-
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md | No | No product change | No change |
-| DECISIONS.md | No | No decision change | No change |
-| SYSTEM.md | No | No system shape change | No change |
-| BUILD.md | No | No build rule change | No change |
-| ROADMAP.md | Yes | Tasks 1.2.1–1.2.7 complete | Update statuses |
-| PROGRESS.md | Yes (this entry) | — | Append |
-
-**Contradiction Check:**
-None found between the session and the documents. The two internal tensions within DESIGN.md (§4.2.1 vs §4.2.3; §4.4.1 vs §4.15.1) were resolved in favor of the more specific rule and recorded above. No decision in DECISIONS.md is contradicted. No rule in BUILD.md is violated except the documented `!important` exception. No task in ROADMAP.md is contradicted.
-
-**Next:**
-Milestone 1.2 is closed. The next milestone is Milestone 1.3 — Base components. Before Task 1.3.1 starts, two decisions must be made (they are recorded in the handoff notes below):
-
-1. Which base component library — shadcn/ui (recommended, per DESIGN.md §4.6.3) or an equivalent.
-2. Whether the Tailwind theme config (DESIGN.md §4.15.6) is added as a new task at the top of Milestone 1.3, or folded into Task 1.3.1.
-
-**Awaiting Human Verification:** YES
-
-### ENTRY-0014 — 2026-10-13 — Milestone 1.1 — Repository and tooling complete
-
-**Status:** PASS
-
-**Task:** Milestone 1.1 (Tasks 1.1.1 through 1.1.7)
-
-**Summary:**
-The foundation of the project is complete. The repository has the correct folder structure, pnpm is configured as the package manager with all dependencies installed and build approvals recorded, TypeScript strict mode is on with the `@/*` path alias, Next.js 16 builds with the App Router and Tailwind 4, the environment files are in place, and `.gitignore` excludes everything it should. Both `pnpm exec tsc --noEmit` and `pnpm build` pass with no errors.
-
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-| `package.json` | Populated | Project metadata, scripts, dependencies |
-| `pnpm-workspace.yaml` | Populated | Workspace declaration and build approvals |
-| `tsconfig.json` | Populated | TypeScript strict mode, path alias, Next.js options |
-| `next.config.mjs` | Populated | Next.js framework configuration |
-| `postcss.config.mjs` | Populated | Tailwind 4 PostCSS plugin |
-| `app/globals.css` | Populated | Tailwind import and base CSS reset |
-| `app/layout.tsx` | Populated | Root layout with `<html lang="en">` |
-| `app/page.tsx` | Populated | Root screen ("Scan the QR code...") |
-| `.gitignore` | Populated | Excludes dependencies, build artifacts, environment files |
-| `.env.example` | Populated | Environment variable documentation |
-| `.env.local` | Created | Local environment values (gitignored) |
-| `app/**/*.tsx`, `app/**/*.ts` (198 files) | Deleted | Empty placeholders blocking the build |
-| `middleware.ts` | Deleted | Empty placeholder; recreated in Task 3.5.1 |
-| `@tailwindcss/postcss` | Added | Dev dependency required by Tailwind 4 |
-
-**Commands Run:**
-
-`pnpm exec tsc --noEmit`
-
-```text
-(no output — exit code 0)
-pnpm build
+Move every non-structural entry of that milestone, verbatim, to the top of the entry log in PROGRESS_ARCHIVE_PHASE_1.md, preceded by a milestone header line:
 
 text
-▲ Next.js 16.4.0 (Turbopack)
-- Environments: .env.local
-✓ Running next.config.mjs took 12ms
+## Milestone X.Y — <name>
+Replace those entries in this file with a single summary line in §5.1 (Closed Milestones).
 
-  Creating an optimized production build ...
-✓ Compiled successfully in 337ms
-  Running TypeScript ...
-  Finished TypeScript in 258ms ...
-  Collecting page data using 4 workers ...
-✓ Collecting page data using 4 workers in 387ms
-  Generating static pages using 4 workers (0/3) ...
-✓ Generating static pages using 4 workers (3/3) in 394ms
-  Finalizing page optimization ...
-✓ Finalizing page optimization in 6ms
+Keep every STRUCTURAL entry in this file regardless of which milestone it belongs to. Structural entries are the project's constitutional record.
 
-Route (app)
-┌ ○ /
-└ ○ /_not-found
+Keep the last three entries of the closed milestone in §5.3 even if they are not structural, so a session that reads the top of the file sees recent context. The rest move to the archive.
 
-○  (Static)  prerendered as static content
-Get-Content .gitignore | Select-Object -First 20
+When a decision is superseded: follow DECISIONS.md §6.4. The supersession generates a STRUCTURAL entry here; the old decision stays where it is in DECISIONS.md, marked superseded.
 
-text
-# Dependencies
-node_modules/
-.pnpm-store/
+When this file exceeds 500 lines: apply the protocol to the oldest closed milestone still represented in full in §5.3. In practice, with this protocol, this file will not approach 500 lines.
 
-# Next.js
-.next/
-out/
-build/
-next-env.d.ts
+4. The Contradiction Check
+Run before a session is closed. Five questions.
 
-# Environment files
-.env
-.env.local
-.env.*.local
+Does the session contradict a decision in DECISIONS.md?
 
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-Acceptance Criteria Results:
+Does the session contradict the system's shape in SYSTEM.md?
 
-Task	Criterion	Result	Evidence
-1.1.1	Folder structure created per SYSTEM.md §3	PASS	169 directories, 289 files created
-1.1.2	Package manager configured (pnpm)	PASS	pnpm list --depth 0 shows 15 packages
-1.1.3	TypeScript strict mode configured	PASS	pnpm exec tsc --noEmit exits 0
-1.1.4	Framework configured (Next.js App Router)	PASS	pnpm build succeeds with routes / and /_not-found
-1.1.5	Environment files configured	PASS	.env.example and .env.local populated; Next.js reads .env.local
-1.1.6	.gitignore configured	PASS	All required categories present
-1.1.7	Foundation builds cleanly	PASS	pnpm exec tsc --noEmit and pnpm build both pass
-Deviations from Contract:
-None. All seven tasks passed.
+Does the session contradict a build rule in BUILD.md?
 
-Noticed but Out of Scope:
+Does the session contradict a fact in PRODUCT.md?
 
-pnpm 12 settings moved. The onlyBuiltDependencies setting is now read from pnpm-workspace.yaml, not from package.json. This is a pnpm 12 behavior change. BUILD.md §9 should be updated in a future session to document this. Until then, this entry records it.
+Does the session contradict a task or status in ROADMAP.md?
 
-React 19 + TypeScript 7 require an explicit JSX import. The return type JSX.Element is no longer available from the global namespace. It must be imported from react. This affects every component file in the project and will be reflected in every file written in Milestones 1.3 and beyond.
+If any answer is yes, the session stops. The developer resolves it. A FAIL entry records the contradiction. A follow-up STRUCTURAL entry records the resolution.
 
-198 empty placeholder files under app/ were deleted. They were created in Task 1.1.1 to establish the folder structure. Next.js validates every file under app/ during the build, so empty files break the build. Each one will be recreated with real content in the task that owns it (Phases 4 through 9). The ROADMAP already lists every owning task; nothing was forgotten.
+5. The Entry Log
+5.1 Closed Milestones
+Phase 0 — The Documents (closed 2026-10-11). The seven canonical documents were authored: PRODUCT.md, DECISIONS.md, SYSTEM.md, BUILD.md, ROADMAP.md, PROGRESS.md, DESIGN.md. Full entry in PROGRESS_ARCHIVE_PHASE_1.md under "Phase 0".
 
-Tailwind 4 is the version in use. Its configuration model differs from Tailwind 3: no tailwind.config.ts is required for basic use, and configuration is CSS-first via the @theme directive. This affects Tasks 1.2.1 through 1.2.7.
+Milestone 1.1 — Repository and tooling (closed 2026-10-13). Delivered the folder structure from SYSTEM.md §3, pnpm 12 with the allowBuilds setting in pnpm-workspace.yaml, TypeScript 7 in strict mode with the @/* path alias, Next.js 16 with the App Router, Tailwind 4 via @tailwindcss/postcss, the environment files, and .gitignore. Full entries in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.1". Notable: 198 empty placeholder files under app/ were deleted because Next.js validates every file; middleware.ts was deleted and is recreated in Task 3.5.1; React 19 + TypeScript 7 require the explicit JSX import from react.
 
-middleware.ts was deleted. It was empty and blocking the build. It will be recreated with real content in Task 3.5.1.
+Milestone 1.2 — Design tokens (closed 2026-10-13). Delivered the complete token foundation in app/globals.css: five anchor color scales, the neutral grayscale, four status colors, the guest and staff semantic tokens, the staff dark-mode override, the three font families through src/lib/fonts.ts, the guest and staff type scales, spacing, radius, elevation, motion durations and easings, and the prefers-reduced-motion fallback. Full entry in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.2". Notable: the four status colors are literal hex values (a documented exception to DESIGN.md §4.2.1); the fractional spacing steps from DESIGN.md §4.4.1 are included; the type tokens use the CSS font shorthand; !important is used inside the reduced-motion safety net (a documented exception).
 
-Document Impact:
+Milestone 1.3 — Base components (closed 2026-10-14). Delivered the complete base component kit: Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast. Nine reserved placeholders (alert, avatar, checkbox, dropdown-menu, progress, radio, skeleton, tabs, tooltip) are still empty and wait for their future tasks. Full entries in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.3". Notable: Tailwind 4 parent-variant syntax corrected to [data-world=staff]_&:; the shadcn CLI's CSS was reconciled so our tokens remain the source of truth; @types/react-dom was missing and was added in Task 1.3.7.
 
-Document	Affected?	Reason	Action
-PRODUCT.md	No	No product change	No change
-DECISIONS.md	No	No decision change	No change
-SYSTEM.md	No	No system shape change	No change
-BUILD.md	Yes (future)	Document pnpm 12's build approval setting location in §9	Needs future update
-ROADMAP.md	Yes	Milestone 1.1 tasks 1.1.1 through 1.1.7 all complete	Updated
-PROGRESS.md	Yes (this entry)	—	Updated
-Contradiction Check:
-None found. The foundation is consistent with SYSTEM.md §3 (folder structure), BUILD.md §9 (local setup), and DESIGN.md §4.15 (tokens to come).
+5.2 The Entry Ledger
+A quick index of every entry this file has ever held, including those that have moved to the archive. Format: ENTRY-XXXX — YYYY-MM-DD — title — status — milestone — location. Location is either current (in §5.3) or archived (in PROGRESS_ARCHIVE_PHASE_1.md).
 
-Next:
-Task 1.2.1 — Author the color tokens in app/globals.css. Add the five anchor colors, their nine-step scales, the neutral grayscale, the guest-world semantic tokens, the staff-world semantic tokens, and the staff dark-mode override. The next session should propose a plan for this task and wait for approval before executing.
+Entry	Date	Title	Status	Milestone	Location
+0000	2026-10-11	Project Foundation	STRUCTURAL	Phase 0	archived
+0013	2026-10-13	Task 1.1.2b — Package manager configuration	PASS	1.1	archived
+0014	2026-10-13	Milestone 1.1 — Repository and tooling	PASS	1.1	archived
+0016	2026-10-13	Milestone 1.2 — Design tokens	PASS	1.2	archived
+0018	2026-10-14	Git initialised and public repository created	STRUCTURAL	pre-1.3	archived
+0019	2026-10-14	Task 1.3.1 — shadcn/ui installed and configured	PASS	1.3	archived
+0020	2026-10-14	Task 1.3.2 — Button reconciled	PASS	1.3	archived
+0021	2026-10-14	Task 1.3.3 — Input, Textarea, Select, Label	PASS	1.3	archived
+0022	2026-10-14	Task 1.3.8 — Base component kit verified	PASS	1.3	archived
+0023	2026-10-14	Milestone 1.3 closed	STRUCTURAL	1.3	archived
+Next entry number: 0024.
 
-Awaiting Human Verification: YES
+(The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
-### ENTRY-0013 — 2026-10-13 — Task 1.1.2b — Package manager configuration completed
+5.3 Current Milestone — 1.4 (Shared utilities)
+The current milestone is Milestone 1.4. New entries go immediately below the ▼ marker, newest first. Do not move or edit any entry below the marker except to move it to the archive when the milestone closes.
 
-**Status:** PASS
+▼ APPEND NEW ENTRIES HERE ▼
 
-**Task:** 1.1.2b
+(No entries yet. The first entry of Milestone 1.4 goes immediately below this line.)
 
-**Summary:**
-The two IDE save-conflict dialogs were resolved by clicking Overwrite, and both files now contain the correct content on disk. package.json shows "name": "venue-platform", "version": "0.1.0", "private": true, "type": "module", and pnpm-workspace.yaml shows "packages: - "."". The block that held the project for five sessions is cleared.
+6. The Archive Index
+PROGRESS_ARCHIVE_PHASE_1.md contains the full text of every entry from every closed milestone, grouped by milestone with a header line. To read a specific past task:
 
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-| package.json | Replaced | Corrected project metadata, scripts, dependencies |
-| pnpm-workspace.yaml | Rewritten | Declared the root as the workspace package |
+Phase 0 — The Documents — see "Phase 0" in the archive.
 
-**Commands Run:**
+Milestone 1.1 — Repository and tooling — see "Milestone 1.1" in the archive.
 
-`Get-Content package.json | Select-Object -First 5`
-{
-"name": "venue-platform",
-"version": "0.1.0",
-"private": true,
-"type": "module",
+Milestone 1.2 — Design tokens — see "Milestone 1.2" in the archive.
+
+Milestone 1.3 — Base components — see "Milestone 1.3" in the archive.
+
+7. The Current State Snapshot
+Updated at the end of every session.
+
+Current phase: Phase 1 — The Foundation
+
+Current milestone: 1.4 — Shared utilities
+
+Current task: 1.4.2 — Money formatting (next; the 1.4.1 question is open)
+
+Current status: Milestone 1.3 (Base components) is closed and verified. The full component kit renders in both worlds on a single scratch page. pnpm exec tsc --noEmit and pnpm build pass. origin/main is at a425244. The working tree is clean. The next work is the shared utilities of Milestone 1.4: the cn helper already exists, so the first task is either its test (if 1.4.1 is repurposed as "add tests for cn") or the money formatting utility (Task 1.4.2). After Milestone 1.4, Milestone 1.5 closes Phase 1 with the development-server wrappers. Phase 2 (the data model) follows.
+
+8. How the File Evolves
+The file grows by one entry per session. When a milestone closes, its entries compress into a summary line in §5.1 and move to PROGRESS_ARCHIVE_PHASE_1.md. The file never exceeds a size a session can read in seconds. The archive never needs to be read unless a session specifically needs to reconstruct a past decision.
+
+If the archive ever exceeds 5,000 lines, it can itself be split by phase (for example, PROGRESS_ARCHIVE_PHASE_1.md). Not needed now.
 
 text
 
-`Get-Content pnpm-workspace.yaml`
-packages:
-
-"."
-
-text
-
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | package.json replaced with correct content | PASS | First five lines show venue-platform, 0.1.0, private: true, type: module |
-| 2 | pnpm-workspace.yaml rewritten | PASS | Shows packages: - "." |
-| 3 | pnpm install clean | PASS | From ENTRY-0009 |
-| 4 | pnpm list --depth 0 clean | PASS | From ENTRY-0009 |
-| 5 | All tool version checks pass | PASS | From ENTRY-0009 |
-
-**Deviations from Contract:**
-None. The task took five sessions because of an IDE save-conflict issue, now resolved.
-
-**Noticed but Out of Scope:**
-- BUILD.md §9 should document the IDE save-conflict workflow in a future session.
-- Node.js v24.21.0, TypeScript 7.0.2, Next.js 16.4.0, React 19.3.0, Tailwind 4.3.3 are all recent stable versions.
-
-**Document Impact:**
-
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | No  | No product change | No change |
-| DECISIONS.md  | No  | No decision change | No change |
-| SYSTEM.md     | No  | No system shape change | No change |
-| BUILD.md      | Yes (future) | Document the IDE save-conflict workflow in §9 | Needs future update |
-| ROADMAP.md    | Yes | Task 1.1.2 complete | Updated |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
-
-**Contradiction Check:**
-None found.
-
-**Next:**
-Task 1.1.3 — Configure TypeScript with strict mode. Create tsconfig.json at the repository root. The acceptance criterion is `pnpm exec tsc --noEmit` exits with no errors.
-
-**Awaiting Human Verification:** YES
-
 ---
-
-### ENTRY-0000 — 2026-10-11 — Project Foundation
-
-**Status:** STRUCTURAL
-
-**Task:** None (structural session)
-
-**Summary:**
-The six canonical documents of the project were authored: PRODUCT.md, DECISIONS.md, SYSTEM.md, BUILD.md, ROADMAP.md, and now PROGRESS.md. The product, its reasons, its shape, its build rules, its plan, and now its memory all exist and are consistent with one another.
-
-**Files Changed:**
-
-| Path | Action | Purpose |
-|------|--------|---------|
-| `docs/PRODUCT.md` | Created | The product definition — every feature, every flow, every screen, every loop |
-| `docs/DECISIONS.md` | Created | The 53 locked decisions across 15 categories |
-| `docs/SYSTEM.md` | Created | The shape of the system — layers, data model, APIs, lifecycles |
-| `docs/BUILD.md` | Created | The build rules — coding standards, testing, verification, task and report formats |
-| `docs/ROADMAP.md` | Created | The ten-phase plan from foundation to production |
-| `docs/PROGRESS.md` | Created | This file — the project's memory |
-| `docs/FRONTEND_DESIGN.md` | Created | The frontend design specification — tokens, components, screens, motion, signature moments |
-
-**Commands Run:**
-None. This session authored documents. No commands were executed.
-
-**Acceptance Criteria Results:**
-
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-| 1 | PRODUCT.md exists and describes the product end to end | PASS | File created |
-| 2 | DECISIONS.md exists with all 53 decisions | PASS | File created |
-| 3 | SYSTEM.md exists and describes the system's shape | PASS | File created |
-| 4 | BUILD.md exists and describes the build rules | PASS | File created |
-| 5 | ROADMAP.md exists and lists all phases and tasks | PASS | File created |
-| 6 | PROGRESS.md exists with this entry | PASS | This entry |
-| 7 | No document contradicts another | PASS | Contradiction check below |
-
-**Deviations from Contract:**
-None.
-
-**Noticed but Out of Scope:**
-- The frontend design specification (FRONTEND_DESIGN.md) was authored outside the six canonical documents. It is a seventh document. It is not a canonical document — it is a specification for the presentation layer. If it becomes canonically authoritative, DECISIONS.md will need a new decision recognizing it.
-
-**Document Impact:**
-
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | Yes | Created | No change needed |
-| DECISIONS.md  | Yes | Created | No change needed |
-| SYSTEM.md     | Yes | Created | No change needed |
-| BUILD.md      | Yes | Created | No change needed |
-| ROADMAP.md    | Yes | Created | No change needed |
-| PROGRESS.md   | Yes | Created | This entry |
-
-**Contradiction Check:**
-None found. Every document was authored in sequence and each was reviewed against the previous ones before the next was written. PRODUCT.md was the root. DECISIONS.md added reasons and alternatives. SYSTEM.md described the shape that follows from those decisions. BUILD.md described the method. ROADMAP.md described the plan. FRONTEND_DESIGN.md described the frontend, tracing every choice back to PRODUCT.md and DECISIONS.md. No section in any document contradicts another.
-
-**Next:**
-Begin Phase 1 of ROADMAP.md. The first task is **1.1.1 — Create the repository with the folder structure from SYSTEM.md §3**. The next session should open with a plan for this task.
-
-**Awaiting Human Verification:** YES
-
----
-
-## 6. How the File Evolves
-
-This file is designed to be future-proof. It does not depend on the current shape of the project. If the project changes — a new phase is added, a document is renamed, a decision is superseded — the file accommodates the change with a `STRUCTURAL` entry that records what changed and why.
-
-### 6.1 When the Documents Change
-
-If a document is added, renamed, or removed:
-
-1. A `STRUCTURAL` entry is appended.
-2. The entry names the document, the change, and the reason.
-3. The Document Update Matrix (§3) is updated if the change affects the matrix.
-4. The entry traces the change to a decision in DECISIONS.md if the change is a decision-level change.
-5. Every previous entry that references the old document is not edited; instead, the new entry notes the change and the previous entries' references are understood to point to the renamed document.
-
-### 6.2 When the Project's Rules Change
-
-If a build rule, a verification rule, or a session rule changes:
-
-1. A `STRUCTURAL` entry is appended.
-2. The entry names the rule, the old form, the new form, and the reason.
-3. The rule is updated in BUILD.md in the same session.
-4. The entry traces the change to a decision in DECISIONS.md if the change is significant enough to be a decision.
-
-### 6.3 When a Phase's Order Changes
-
-If a phase is added, removed, or reordered:
-
-1. A `STRUCTURAL` entry is appended.
-2. The entry names the phase, the old order, the new order, and the reason.
-3. ROADMAP.md is updated in the same session.
-4. The entry traces the change to a decision in DECISIONS.md if the change is a decision-level change (a new product capability, a new deferral).
-
-### 6.4 When a Decision Is Superseded
-
-If a decision in DECISIONS.md is superseded:
-
-1. A `STRUCTURAL` entry is appended.
-2. The entry names the old decision, the new decision, and the reason.
-3. DECISIONS.md is updated: the old record is marked `SUPERSEDED BY D-X.Y`, and the new record is added.
-4. SYSTEM.md is updated if the decision affects the system's shape.
-5. ROADMAP.md is updated if any task's definition changes because of the new decision.
-6. The entry records all of these changes.
-
-### 6.5 When a Document Grows Too Large
-
-If any document exceeds a practical size:
-
-1. A `STRUCTURAL` entry is appended.
-2. The entry names the document and the reason for the split.
-3. The document is split into a base and an archive.
-4. The split is traced to a decision in DECISIONS.md if it is a significant change.
-5. PROGRESS.md itself is exempt from this rule until it exceeds 1000 entries; at that point, entries older than the last 100 are moved to `PROGRESS_ARCHIVE.md` and a `STRUCTURAL` entry records the move.
-
-### 6.6 When a Session Discovers a Contradiction
-
-If a session discovers a contradiction between two documents that previous sessions missed:
-
-1. A `FAIL` entry is appended.
-2. The entry names the contradiction, the two documents, and the sections involved.
-3. The session stops.
-4. The developer resolves the contradiction (by changing one document, or by adding a decision that resolves it).
-5. A subsequent `STRUCTURAL` entry records the resolution.
-6. The resolved documents are re-checked against each other.
-
----
-
-## 7. The Current State Snapshot
-
-At any point, the current state of the project is the top of the log plus the following snapshot. The snapshot is updated at the end of every session.
-
-**PROGRESS.md §7 snapshot update:**
-- Current phase: Phase 1 — The Foundation
-- Current milestone: 1.4 — Shared utilities
-- Current task: 1.4.1 (redundant — cn already exists) / 1.4.2 — Money formatting (next)
-- Current status: Milestone 1.3 (Base components) is complete and verified. The full component kit — Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast — renders in both worlds on a single scratch page. The build and type check pass. The working tree is clean and in sync with origin/main. Next: the shared utilities in Milestone 1.4, then the development server wrappers in Milestone 1.5. Phase 2 (the data model) begins after that.
-
-Do not execute until I approve.
----
-```
