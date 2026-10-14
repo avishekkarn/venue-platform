@@ -161,6 +161,81 @@ If yes: the session stops. ROADMAP.md is updated to match reality, or reality is
 
 The log is appended below. Newest entries at the top.
 
+### ENTRY-0019 — 2026-10-14 — Task 1.3.1 — shadcn/ui installed and configured
+
+**Status:** PASS (with reconciliation deviations noted)
+
+**Task:** 1.3.1
+
+**Summary:**
+shadcn/ui was installed and configured. Its CLI wrote components.json, src/lib/utils.ts, a Button component, and a block of CSS variables into app/globals.css. The CLI's output was reconciled so that our design tokens remain the single source of truth: the CLI's radius overrides, its self-referencing font entries, and its unused .dark block were removed, and its semantic variable names were aliased to our tokens. The build, typecheck, and dev server all pass.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| components.json | Created | shadcn/ui's config |
+| src/lib/utils.ts | Created | The cn helper |
+| src/components/ui/button.tsx | Modified | The shadcn Button (delivered early by the CLI; refined in Task 1.3.2) |
+| app/globals.css | Modified | Removed the shadcn runtime import, radius overrides, self-referencing font entries, and .dark block; added shadcn semantic aliases pointing at our tokens |
+| package.json | Modified | Added @base-ui/react, class-variance-authority, clsx, lucide-react, tailwind-merge, tw-animate-css |
+| pnpm-lock.yaml | Regenerated | — |
+
+**Commands Run:**
+- `pnpm dlx shadcn@latest init --yes --defaults` — ran, then reconciled.
+- `pnpm remove cn` — removed the accidental cn package.
+- `pnpm remove shadcn` — removed the CLI from production dependencies.
+- `pnpm add clsx tailwind-merge` — added them as direct dependencies.
+- `pnpm exec tsc --noEmit` — exit 0, no output.
+- `pnpm build` — compiled successfully in 618ms, 3 pages.
+- `pnpm dev` — ready in 354ms.
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | components.json exists and is valid | PASS | File present, rsc: true |
+| 2 | src/lib/utils.ts exports cn | PASS | File contains the standard cn helper |
+| 3 | Four shadcn deps present | PASS | pnpm list output |
+| 4 | Tokens intact in app/globals.css | PASS | The @theme block, :root, and every [data-world] block preserved |
+| 5 | Typecheck passes | PASS | pnpm exec tsc --noEmit exit 0 |
+| 6 | Build passes | PASS | pnpm build output |
+| 7 | Page still renders | PASS | pnpm dev output |
+| 8 | Only scoped files changed | PASS | git status output |
+
+**Deviations from Contract:**
+
+The shadcn CLI (v4.21.4) made four mistakes that we corrected:
+1. It wrote @import "shadcn/tailwind.css" into app/globals.css, which required the shadcn package at runtime. We removed it.
+2. It wrote the wrong import into both src/lib/utils.ts and src/components/ui/button.tsx (from "cn" instead of from "@/lib/utils"). We corrected both.
+3. It added a duplicate Geist loader to app/layout.tsx and set --font-sans directly on <html>, which would have shadowed our font token. We removed it.
+4. It added itself (shadcn) and the accidental cn package to production dependencies. We removed both with pnpm remove.
+
+The style chosen by the CLI's --defaults flag was "base-nova", not the "new-york" specified in the plan. We accepted base-nova.
+
+**Noticed but Out of Scope:**
+- The shadcn Button that landed in src/components/ui/button.tsx uses shadcn's variant and size scheme (bg-primary, text-primary-foreground, h-8, h-9, etc.). Task 1.3.2 must reconcile it against DESIGN.md §4.6.1.
+- The @custom-variant dark declaration is inert for us; we never apply a .dark class.
+- The @layer base block applies bg-background and text-foreground to <body>. Now that those variables point at our tokens, this is consistent with our design.
+- The @import "tw-animate-css" is required by future component tasks (Dialog, Sheet).
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md    | No | — | No change |
+| DECISIONS.md  | No | — | No change |
+| SYSTEM.md     | No | — | No change |
+| BUILD.md      | No | — | No change |
+| ROADMAP.md    | Yes | Task 1.3.1 complete | Updated |
+| DESIGN.md     | No | — | No change |
+| PROGRESS.md   | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found. No decision in DECISIONS.md is contradicted. No rule in BUILD.md is violated. The @import "shadcn/tailwind.css" that DESIGN.md §4.15.6 did not anticipate was removed. No task in ROADMAP.md is contradicted.
+
+**Next:**
+Task 1.3.2 — Add the Button component, themed by tokens. The next session should read the current src/components/ui/button.tsx, compare it against DESIGN.md §4.6.1, and propose the reconciliation plan before editing.
+
+**Awaiting Human Verification:** YES
+
 ### ENTRY-0018 — 2026-10-14 — Git initialised and public repository created
 
 **Status:** STRUCTURAL
@@ -636,8 +711,8 @@ At any point, the current state of the project is the top of the log plus the fo
 **PROGRESS.md §7 snapshot update:**
 - Current phase: Phase 1 — The Foundation
 - Current milestone: 1.3 — Base components
-- Current task: 1.3.1 — Install and configure shadcn/ui (next)
-- Current status: Task 1.3.0 (Tailwind 4 @theme token mapping) is complete and verified. The project is now under git version control with a public GitHub repository at https://github.com/avishekkarn/venue-platform. The initial commit is 8e50b19. pnpm exec tsc --noEmit and pnpm build both pass. The next work is the shadcn/ui installation.
+- Current task: 1.3.2 — Add the Button component, themed by tokens (next)
+- Current status: Task 1.3.1 (shadcn/ui installation) is complete and verified. shadcn/ui is configured with style base-nova, baseColor neutral, rsc true, cssVariables true. Its semantic variables are aliased to our tokens in app/globals.css. The build, typecheck, and dev server all pass. The next work is the Button component, reconciling shadcn's generated Button against DESIGN.md §4.6.1.
 
 Do not execute until I approve.
 ---
