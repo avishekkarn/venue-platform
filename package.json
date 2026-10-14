@@ -14,6 +14,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "test": "vitest",
+    "test:unit": "vitest run --config vitest.config.ts",
     "test:integration": "vitest --config vitest.integration.config.ts",
     "test:e2e": "playwright test"
   },
