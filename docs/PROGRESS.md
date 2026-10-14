@@ -161,6 +161,110 @@ If yes: the session stops. ROADMAP.md is updated to match reality, or reality is
 
 The log is appended below. Newest entries at the top.
 
+### ENTRY-0022 — 2026-10-14 — Task 1.3.8 — Milestone 1.3 base component kit verified
+
+**Status:** PASS
+
+**Task:** 1.3.8
+
+**Summary:**
+The complete base component kit was rendered on a single scratch page in both worlds (guest and staff). All twelve components — Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast — render correctly with all their states. The guest and staff atmospheres are visually distinct where they must be and consistent where they should be. The browser console is clean. The milestone is closed.
+
+**Files Changed:**
+None committed. `app/page.tsx` was temporarily replaced with a scratch page for verification, then restored to the placeholder. `git status` is clean.
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0.
+- `pnpm build` — compiled successfully.
+- `pnpm dev` — served the scratch page in both worlds.
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Every component renders without errors | PASS | Browser screenshot, both worlds |
+| 2 | The browser console has no warnings | PASS | DevTools Console |
+| 3 | Type check passes | PASS | tsc exit 0 |
+| 4 | Build passes | PASS | build output |
+| 5 | The two worlds look different where they should | PASS | Guest Button primary olive, staff primary forest green |
+| 6 | The two worlds share what they should | PASS | Input, Textarea, Select, Table render identically |
+| 7 | Radii and spacing are consistent | PASS | Visual check |
+| 8 | Nothing outside app/page.tsx changed | PASS | git status clean |
+
+**Deviations from Contract:**
+None. The task was a verification task and it verified.
+
+**Noticed but Out of Scope:**
+- Task 1.4.1 ("Add the cn helper for class name composition") is redundant — `src/lib/utils.ts` already contains the standard cn helper, created by shadcn/ui's init in Task 1.3.1. The task can be closed as complete or repurposed as "add unit tests for cn".
+- The empty files under src/components/ui/ (alert, avatar, checkbox, dropdown-menu, progress, radio, skeleton, tabs, tooltip) are reserved placeholders. Each belongs to a future task in a later milestone. They are correctly empty.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md    | No | — | No change |
+| DECISIONS.md  | No | — | No change |
+| SYSTEM.md     | No | — | No change |
+| BUILD.md      | No | — | No change |
+| ROADMAP.md    | Yes | Task 1.3.8 complete; Milestone 1.3 closed | Updated |
+| DESIGN.md     | No | — | No change |
+| PROGRESS.md   | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found. Every component matches its section in DESIGN.md §4.6.
+
+**Next:**
+Milestone 1.4 — Shared utilities. The first task is 1.4.1 (the cn helper), which is now redundant, so the next actionable task is 1.4.2 — the money formatting utility. The next session should propose the plan for the money utility, or resolve the 1.4.1 question first, then move to 1.4.2.
+
+**Awaiting Human Verification:** YES
+
+
+### ENTRY-0023 — 2026-10-14 — Milestone 1.3 closed
+
+**Status:** STRUCTURAL
+
+**Task:** None (structural session — milestone closure)
+
+**Summary:**
+Milestone 1.3 (Base components) is closed. All eight tasks (1.3.0 through 1.3.8) are complete. The project now has a complete, verified base component kit. Phase 1 continues with Milestone 1.4 (Shared utilities) and Milestone 1.5 (The development server), then Phase 2 begins.
+
+**Files Changed:**
+None. This entry records a milestone-level state.
+
+**Commands Run:**
+- `git log --oneline origin/main` — shows the eight task commits: f43ceeb, e8ffa2a, 924af87, b70b9af, 604412d, 8446066, fc0c163, 9b34c2a.
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Every task in the milestone is complete | PASS | git log |
+| 2 | Every component matches DESIGN.md §4.6 | PASS | ENTRY-0022 |
+| 3 | The full kit renders in both worlds | PASS | ENTRY-0022 |
+| 4 | The build and type check pass | PASS | ENTRY-0022 |
+
+**Deviations from Contract:**
+- Task 1.4.1 (cn helper) is redundant, as noted in ENTRY-0022. It should be closed or repurposed before Milestone 1.4 begins.
+
+**Noticed but Out of Scope:**
+See ENTRY-0022.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md    | No | — | No change |
+| DECISIONS.md  | No | — | No change |
+| SYSTEM.md     | No | — | No change |
+| BUILD.md      | No | — | No change |
+| ROADMAP.md    | Yes | Milestone 1.3 closed | Updated |
+| DESIGN.md     | No | — | No change |
+| PROGRESS.md   | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found. Milestone closure does not contradict any decision or document.
+
+**Next:**
+Milestone 1.4 — Shared utilities. See ENTRY-0022 for the recommended sequence.
+
+**Awaiting Human Verification:** NO
+
 ### ENTRY-0019 — 2026-10-14 — Task 1.3.1 — shadcn/ui installed and configured
 
 **Status:** PASS (with reconciliation deviations noted)
@@ -710,9 +814,9 @@ At any point, the current state of the project is the top of the log plus the fo
 
 **PROGRESS.md §7 snapshot update:**
 - Current phase: Phase 1 — The Foundation
-- Current milestone: 1.3 — Base components
-- Current task: 1.3.2 — Add the Button component, themed by tokens (next)
-- Current status: Task 1.3.1 (shadcn/ui installation) is complete and verified. shadcn/ui is configured with style base-nova, baseColor neutral, rsc true, cssVariables true. Its semantic variables are aliased to our tokens in app/globals.css. The build, typecheck, and dev server all pass. The next work is the Button component, reconciling shadcn's generated Button against DESIGN.md §4.6.1.
+- Current milestone: 1.4 — Shared utilities
+- Current task: 1.4.1 (redundant — cn already exists) / 1.4.2 — Money formatting (next)
+- Current status: Milestone 1.3 (Base components) is complete and verified. The full component kit — Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast — renders in both worlds on a single scratch page. The build and type check pass. The working tree is clean and in sync with origin/main. Next: the shared utilities in Milestone 1.4, then the development server wrappers in Milestone 1.5. Phase 2 (the data model) begins after that.
 
 Do not execute until I approve.
 ---
