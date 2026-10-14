@@ -161,6 +161,73 @@ If yes: the session stops. ROADMAP.md is updated to match reality, or reality is
 
 The log is appended below. Newest entries at the top.
 
+### ENTRY-0018 — 2026-10-14 — Git initialised and public repository created
+
+**Status:** STRUCTURAL
+
+**Task:** None (structural session — repository tooling)
+
+**Summary:**
+The project is now under git version control. The local repository was initialised at `A:\QR-PROJECT`, an initial commit was made (`8e50b19`) capturing the entire project state at the end of Task 1.3.0, and the repository was pushed to the public GitHub remote `https://github.com/avishekkarn/venue-platform`. The working tree is clean and the local `main` branch tracks `origin/main`.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `.git/` | Created | Local repository metadata |
+| `.gitignore` | Edited | Added `MASTER PLAN.docx` and `MASTER PLAN.pdf` to the exclusion list |
+
+No source file was changed. The commit `8e50b19` captured the state already recorded in ENTRY-0017.
+
+**Commands Run:**
+- `git --version` → `git version 2.55.0.windows.5`
+- `git config --global user.name "Avishek Karn"` and `git config --global user.email "avishek.np09@gmail.com"`
+- `git init`, `git branch -M main`
+- `git add -A`, `git status` (verified no `.env.local`, no `node_modules/`, no `.next/`)
+- `git commit -m "Initial commit: foundation, design tokens, Tailwind theme mapping ..."` → `[main (root-commit) 8e50b19] 164 files changed, 12348 insertions(+)`
+- `git remote add origin https://github.com/avishekkarn/venue-platform.git`
+- `git push -u origin main` → succeeded, `* [new branch] main -> main`
+- `git log --oneline origin/main` → `8e50b19 (HEAD -> main, origin/main) Initial commit ...`
+- `git status` → `Your branch is up to date with 'origin/main'. nothing to commit, working tree clean`
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Local repository initialised | PASS | `git init` output |
+| 2 | First commit created | PASS | `git commit` output, 164 files, 12348 insertions |
+| 3 | No secrets committed | PASS | `.env.local` absent from `git status` output |
+| 4 | No `node_modules/` or `.next/` committed | PASS | Both absent from `git status` output |
+| 5 | Remote configured | PASS | `git remote -v` shows the correct URL |
+| 6 | Push succeeded | PASS | `git push` output, `* [new branch] main -> main` |
+| 7 | Local and remote in sync | PASS | `git log --oneline origin/main` matches `HEAD` |
+
+**Deviations from Contract:**
+- The initial push attempt failed with `403` because the machine's credential manager was authenticated as `nationalmocknepal-oss`, which has no permission on `avishekkarn/venue-platform`. Resolved by clearing the cached credential (`cmdkey /delete:git:https://github.com`), signing in to GitHub in the browser as `avishekkarn`, and creating a personal access token for `avishekkarn`. The second push succeeded.
+- The local repository is under `A:\QR-PROJECT`, but the system's git CLI reports `core.filemode=false` and `core.symlinks=false`, which are the correct defaults on Windows. No action needed.
+
+**Noticed but Out of Scope:**
+- **`MASTER PLAN.docx` and `MASTER PLAN.pdf` are excluded** from the repository via `.gitignore`. They remain on disk only.
+- **`git config user.name` and `user.email` are set both globally and locally.** The local values match the global values, so there is no conflict. The local setting is harmless but redundant; it can be removed with `git config --unset user.name` and `git config --unset user.email` if desired.
+- **The repository is public.** No private information is in it, but the `.env.local` file must remain excluded forever. `.gitignore` enforces this.
+- **The `docs/README.md` file is inside `docs/`, not at the repository root.** GitHub will not automatically display it on the repository home page. A root-level `README.md` could be added later to describe the project and link to `docs/README.md`. This is a cosmetic improvement, not a functional one.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md    | No | No product change | No change |
+| DECISIONS.md  | No | No decision change | No change |
+| SYSTEM.md     | No | No system shape change | No change |
+| BUILD.md      | No | No build rule change | No change |
+| ROADMAP.md    | No | No task status change | No change |
+| PROGRESS.md   | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found. The session established version control, which BUILD.md §16 and §12.2 assume. No decision in DECISIONS.md is contradicted. No rule in BUILD.md is violated. No task in ROADMAP.md is contradicted.
+
+**Next:**
+Task 1.3.1 — install and configure shadcn/ui. The next session should propose the shadcn/ui init plan and wait for approval before running any command.
+
+**Awaiting Human Verification:** YES
+
 ### ENTRY-0016 — 2026-10-13 — Milestone 1.2 — Design tokens complete
 
 **Status:** PASS (with two noted evidence gaps)
@@ -569,13 +636,8 @@ At any point, the current state of the project is the top of the log plus the fo
 **PROGRESS.md §7 snapshot update:**
 - Current phase: Phase 1 — The Foundation
 - Current milestone: 1.3 — Base components
-- Current task: 1.3.1 — Install and configure the base component library (next)
-- Current status: Milestone 1.2 (Design tokens) is complete. The token foundation exists in `app/globals.css`, the fonts load through `src/lib/fonts.ts`, and the placeholder root page renders. `pnpm exec tsc --noEmit` and `pnpm build` both pass. The next work is the base components.
-
-Read the seven documents plus app/globals.css, app/layout.tsx, app/page.tsx, and src/lib/fonts.ts. Confirm the current state from the top of PROGRESS.md. Then propose a plan for Task 1.3.1 — install and configure the base component library. Before proposing, confirm two decisions:
-
-1. Which base component library: shadcn/ui (recommended, per DESIGN.md §4.6.3) or an equivalent?
-2. Is the Tailwind theme config (DESIGN.md §4.15.6) added as a new task at the top of Milestone 1.3, or folded into Task 1.3.1?
+- Current task: 1.3.1 — Install and configure shadcn/ui (next)
+- Current status: Task 1.3.0 (Tailwind 4 @theme token mapping) is complete and verified. The project is now under git version control with a public GitHub repository at https://github.com/avishekkarn/venue-platform. The initial commit is 8e50b19. pnpm exec tsc --noEmit and pnpm build both pass. The next work is the shadcn/ui installation.
 
 Do not execute until I approve.
 ---
