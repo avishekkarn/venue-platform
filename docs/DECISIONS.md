@@ -1576,12 +1576,18 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 **What would make us revisit:** Never.
 
+## 16. Motion Implementation
+
+### D-16.1 — Motion is implemented at the point of consumption, not as a shared library
+
+[the rest of D-16.1]
+
 ---
 
 ## Appendix — The Record Set as of Version 1.0
 
-**Total decisions:** 53
-**Categories:** 15
+**Total decisions:** 54
+**Categories:** 16
 **Status:** All locked.
 
 **Decisions deferred to a later version, with the trigger that would reopen them:**
@@ -1629,5 +1635,6 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 | Manager notifications (D-13.3) | A venue asks for them |
 | Staging environment (D-14.2) | The product is offered as a SaaS, or more than one developer joins |
 | Automatic deployments (D-14.3) | The product stabilises, or more than one developer joins |
+| Motion implementation strategy (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented |
 
 ---
