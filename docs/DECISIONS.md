@@ -1574,13 +1574,39 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 - The product is testable end-to-end from the first milestone.
 - Refinements are per-organisation changes to a stable foundation.
 
-**What would make us revisit:** Never.
-
 ## 16. Motion Implementation
 
 ### D-16.1 — Motion is implemented at the point of consumption, not as a shared library
 
-[the rest of D-16.1]
+**Decision:** Motion in the product is implemented where it is used, not pre-built as a shared abstraction.
+
+- **Simple transitions** — the hero fade-and-rise, the section scroll reveal, the card hover-lift, the button press, the cart drawer slide, the modal fade, the toast slide — are expressed as Tailwind class strings composed from the motion tokens already declared in `app/globals.css` (`--guest-motion-*`, `--guest-ease-*`, `--staff-motion-*`, `--staff-ease-*`). A component writes `cn("transition-transform duration-guest-fast ease-guest-out hover:-translate-y-[2px]")`, or whatever the specific motion requires, using the tokens. No shared module wraps them.
+- **Complex or keyframed motion** — the hero's drawn-in venue name (DESIGN.md §4.12.1, "The Draw"), the cart badge pulse (§4.12.3, "The Confirm"), the status-change flash (§4.12.4, "The Flash"), the loading dots (§4.5.5) — is implemented when the first component that needs it is built. For the hero, that is Phase 5. For the kitchen ticket, that is Phase 6. For the staff queue row, that is Phase 7.
+- **`src/motion/guest.ts` and `src/motion/staff.ts` remain empty** until their first consumer exists. They are reserved by the folder structure (SYSTEM.md §3), not by a commitment to fill them now.
+
+**Context:** DESIGN.md §4.5 defines the motion language — durations, easings, permitted interactions, forbidden interactions, and the reduced-motion contract. It does not choose an implementation library or strategy. The folder structure reserves `src/motion/` for motion code, and ROADMAP.md §4 lists "Add the motion utilities, one per atmosphere" as Task 1.4.4. But no component that consumes motion exists yet. The guest hero is Phase 5. The kitchen ticket is Phase 6. The staff queue row is Phase 7.
+
+Building the motion abstraction before its first consumer would mean inventing infrastructure whose shape is unknowable until a real caller exists. Choosing an animation library now would commit every future animated component to that library without a single component to validate the choice against.
+
+**Alternatives considered:**
+
+- **Framer Motion (`motion`) variants.** Install `framer-motion` and export variant objects (`guestMotion.heroEntrance`, `staffMotion.statusFlash`, and so on). Rejected for now. It adds approximately 30 KB to the guest bundle, against D-15.5's 1-second landing-page target. It commits every animated component to one library and one API surface (`motion.div`, `motion.path`). It has zero current consumers. It is not rejected forever: if The Draw (§4.12.1) genuinely requires SVG path animation and the CSS approach cannot deliver the stroke-reveal effect cleanly, this becomes the correct tool at the moment the hero is built. The choice is recorded then, in a new decision that supersedes this record's complex-motion clause.
+
+- **Pure CSS keyframes, every motion as a named animation.** Declare every motion as a `@keyframes` block in `app/globals.css` and export the animation names as class strings from `src/motion/`. Rejected. It forces even the simple transitions — a card hover, a button press — into named animations, and every `animation` shorthand hardcodes the duration and easing, which duplicates the values already in the motion tokens. The tokens would no longer be the single source of truth for motion timing. It has all the duplication of the CSS approach and none of the convenience of writing a transition directly.
+
+- **A pre-built shared motion module** (`src/motion/guest.ts`, `src/motion/staff.ts` exporting named constants for every motion in the design). Rejected for now. Same reasoning as the first alternative: no consumer, and the correct shape of each export depends on which animation strategy the consuming component needs. The exports would be guesses.
+
+**Consequences:**
+
+- Simple motion is available to every component today, via the Tailwind utilities derived from the motion tokens already in `app/globals.css`. A component that needs a hover-lift writes three classes and gets it. No shared module is on the critical path.
+- Complex motion — The Draw, The Confirm, The Flash, the loading dots — is unimplemented. This is deliberate. It does not block any Phase 1, Phase 2, Phase 3, or Phase 4 task. It is on the critical path only from Phase 5 onward, and the decision is made in Phase 5 with a real consumer.
+- `src/motion/guest.ts` and `src/motion/staff.ts` stay empty. The folder structure (SYSTEM.md §3) already reserves the location. The files being empty is not a defect; it is the correct state until there is something to put in them.
+- The reduced-motion contract in `app/globals.css` covers every CSS transition and every `@keyframes` declared there, because it zeroes both `transition-duration` and `animation-duration` under `prefers-reduced-motion: reduce`. Any motion expressed as Tailwind classes over the tokens is automatically reduced-motion safe. A JavaScript animation library would not inherit this; if one is added later, its reduced-motion handling must be wired explicitly, and that wiring is part of the decision to add it.
+- When the guest hero is built in Phase 5, the developer decides, at that moment, whether The Draw is implementable with CSS (`clip-path`, `mask-image`, or a stroke-dashoffset animation on an inline SVG whose path is animated by a CSS `@keyframes` rule) or requires JavaScript animation. If CSS suffices, no new dependency is added and the implementation is added to `app/globals.css` and the hero component. If it does not, a new decision record supersedes this one's complex-motion clause, and the chosen library is added then.
+
+**What would make us revisit:** The construction of the guest hero in Phase 5, at the point The Draw must be implemented. Also, any component that requires a motion the CSS approach cannot express without duplicating the token values into an `animation` shorthand. At the first such consumer, this record is superseded by a new one that names the library and the strategy.
+
+**Traces to:** DESIGN.md §4.5 (the motion language), §4.12.1 through §4.12.6 (the signature moments), D-9.2 (the two atmospheres), D-15.5 (the guest landing's 1-second target), D-15.7 (structure correct from the beginning), ROADMAP.md §4 (Milestone 1.4 — Task 1.4.4).
 
 ---
 
