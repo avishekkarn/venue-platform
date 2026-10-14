@@ -122,14 +122,14 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 | ID    | Task                                                                       | Status | Depends on |
 | ----- | -------------------------------------------------------------------------- | ------ | ---------- |
 | 1.3.0 | Author the Tailwind 4 `@theme` token mapping in `app/globals.css` | ✅     | 1.2.7      |
-| 1.3.1 | Install and configure the base component library (shadcn/ui or equivalent) | ⬜     | 1.3.0      |
-| 1.3.2 | Add the Button component, themed by tokens                                 | ⬜     | 1.3.1      |
-| 1.3.3 | Add the Input, Textarea, and Select components, themed by tokens           | ⬜     | 1.3.2      |
-| 1.3.4 | Add the Dialog, Sheet, and Drawer components                               | ⬜     | 1.3.2      |
-| 1.3.5 | Add the Badge, Card, and Separator components                              | ⬜     | 1.3.2      |
-| 1.3.6 | Add the Table component (for staff and manager views)                      | ⬜     | 1.3.2      |
-| 1.3.7 | Add the Toast or notification component                                    | ⬜     | 1.3.2      |
-| 1.3.8 | Verify: every base component renders on a scratch page; the build passes   | ⬜     | 1.3.7      |
+| 1.3.1 | Install and configure the base component library (shadcn/ui or equivalent) | ✅ Complete     | 1.3.0      |
+| 1.3.2 | Add the Button component, themed by tokens                                 | ✅ Complete     | 1.3.1      |
+| 1.3.3 | Add the Input, Textarea, and Select components, themed by tokens           | ✅ Complete     | 1.3.2      |
+| 1.3.4 | Add the Dialog, Sheet, and Drawer components                               | ✅ Complete     | 1.3.2      |
+| 1.3.5 | Add the Badge, Card, and Separator components                              | ✅ Complete     | 1.3.2      |
+| 1.3.6 | Add the Table component (for staff and manager views)                      | ✅ Complete     | 1.3.2      |
+| 1.3.7 | Add the Toast or notification component                                    | ✅ Complete     | 1.3.2      |
+| 1.3.8 | Verify: every base component renders on a scratch page; the build passes   | ✅ Complete     | 1.3.7      |
 
 ### Milestone 1.4 — Shared utilities
 
