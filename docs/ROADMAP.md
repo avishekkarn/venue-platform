@@ -164,34 +164,34 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 2.1 — The schema
 
-| ID     | Task                                                                         | Status | Depends on |
-| ------ | ---------------------------------------------------------------------------- | ------ | ---------- |
-| 2.1.1  | Configure the database client and the migration tool                         | ⬜     | 1.5.4      |
-| 2.1.2  | Add the venue, configuration, and module-toggle tables                       | ⬜     | 2.1.1      |
-| 2.1.3  | Add the table, room, and counter tables                                      | ⬜     | 2.1.2      |
-| 2.1.4  | Add the QR token table                                                       | ⬜     | 2.1.3      |
-| 2.1.5  | Add the staff member, staff session, and role tables                         | ⬜     | 2.1.2      |
-| 2.1.6  | Add the menu category, menu item, modifier group, and modifier option tables | ⬜     | 2.1.2      |
-| 2.1.7  | Add the order, order item, and order state-change tables                     | ⬜     | 2.1.6      |
-| 2.1.8  | Add the service request and service request state-change tables              | ⬜     | 2.1.2      |
-| 2.1.9  | Add the payment ticket and receipt tables                                    | ⬜     | 2.1.7      |
-| 2.1.10 | Add every index required by the queries in SYSTEM.md §12                     | ⬜     | 2.1.9      |
-| 2.1.11 | Generate and review the migration                                            | ⬜     | 2.1.10     |
-| 2.1.12 | Verify: the migration applies cleanly; the schema matches SYSTEM.md §11      | ⬜     | 2.1.11     |
+| ID     | Task                                                                         | Status      | Depends on |
+| ------ | ---------------------------------------------------------------------------- | ----------- | ---------- |
+| 2.1.1  | Configure the database client and the migration tool                         | ✅ Complete | 1.5.4      |
+| 2.1.2  | Add the venue, configuration, and module-toggle tables                       | ✅ Complete | 2.1.1      |
+| 2.1.3  | Add the table, room, and counter tables                                      | ✅ Complete | 2.1.2      |
+| 2.1.4  | Add the QR token table                                                       | ✅ Complete | 2.1.3      |
+| 2.1.5  | Add the staff member, staff session, and role tables                         | ✅ Complete | 2.1.2      |
+| 2.1.6  | Add the menu category, menu item, modifier group, and modifier option tables | ✅ Complete | 2.1.2      |
+| 2.1.7  | Add the order, order item, and order state-change tables                     | ✅ Complete | 2.1.6      |
+| 2.1.8  | Add the service request and service request state-change tables              | ✅ Complete | 2.1.2      |
+| 2.1.9  | Add the payment ticket and receipt tables                                    | ✅ Complete | 2.1.7      |
+| 2.1.10 | Add every index required by the queries in SYSTEM.md §12                     | ✅ Complete | 2.1.9      |
+| 2.1.11 | Generate and review the migration                                            | ✅ Complete | 2.1.10     |
+| 2.1.12 | Verify: the migration applies cleanly; the schema matches SYSTEM.md §11      | ✅ Complete | 2.1.11     |
 
 ### Milestone 2.2 — The repositories
 
 | ID    | Task                                                                                | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------- | ------ | ---------- |
-| 2.2.1 | Add the venue repository (read the venue and its modules)                           | ⬜     | 2.1.12     |
-| 2.2.2 | Add the table and room repositories                                                 | ⬜     | 2.2.1      |
-| 2.2.3 | Add the QR token repository                                                         | ⬜     | 2.2.2      |
-| 2.2.4 | Add the staff and staff session repositories                                        | ⬜     | 2.2.1      |
-| 2.2.5 | Add the menu repositories                                                           | ⬜     | 2.2.1      |
-| 2.2.6 | Add the order repository (create, read, list, advance)                              | ⬜     | 2.2.5      |
-| 2.2.7 | Add the service request repository                                                  | ⬜     | 2.2.1      |
-| 2.2.8 | Add the payment ticket and receipt repositories                                     | ⬜     | 2.2.6      |
-| 2.2.9 | Verify: each repository has an integration test that reads and writes a real record | ⬜     | 2.2.8      |
+| 2.2.1 | Add the venue repository (read the venue and its modules)                           | ✅ Complete | 2.1.12     |
+| 2.2.2 | Add the table and room repositories                                                 | ✅ Complete | 2.2.1      |
+| 2.2.3 | Add the QR token repository                                                         | ✅ Complete | 2.2.2      |
+| 2.2.4 | Add the staff and staff session repositories                                        | ✅ Complete | 2.2.1      |
+| 2.2.5 | Add the menu repositories                                                           | ✅ Complete | 2.2.1      |
+| 2.2.6 | Add the order repository (create, read, list, advance)                              | ✅ Complete | 2.2.5      |
+| 2.2.7 | Add the service request repository                                                  | ✅ Complete | 2.2.1      |
+| 2.2.8 | Add the payment ticket and receipt repositories                                     | ✅ Complete | 2.2.6      |
+| 2.2.9 | Verify: each repository has an integration test that reads and writes a real record | ✅ Complete | 2.2.8      |
 
 ### Milestone 2.3 — The seed
 

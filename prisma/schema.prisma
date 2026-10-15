@@ -1,0 +1,568 @@
+// ============================================================
+// schema.prisma — The complete data model for the venue platform
+//
+// This schema is the authoritative translation of SYSTEM.md §11 into
+// Prisma's schema language. Every table, every column, and every index
+// here traces back to an entity, a relationship, or a rule in SYSTEM.md §11.
+//
+// Rules:
+//   - No table is deleted. Soft-delete (state changes) only (SYSTEM.md §11.3).
+//   - Money is stored as Decimal, never Float (BUILD.md §7.1).
+//   - Idempotency key is unique; the unique constraint is the enforcement
+//     layer for D-4.12 (SYSTEM.md §9.7).
+//   - Indexes are added for every column that SYSTEM.md §12 uses in a
+//     filter, a join, or a sort (Task 2.1.10).
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ------------------------------------------------------------
+// Enums
+// ------------------------------------------------------------
+
+enum VenueModule {
+  TABLE
+  ROOM
+  COUNTER
+  KITCHEN
+}
+
+enum HotelService {
+  ROOM_SERVICE_FOOD
+  HOUSEKEEPING
+  MAINTENANCE
+  CONCIERGE
+  LAUNDRY
+  SPA
+  LATE_CHECKOUT
+  WAKE_UP_CALL
+  DO_NOT_DISTURB
+}
+
+enum TableState {
+  FREE
+  OCCUPIED
+  OUT_OF_SERVICE
+}
+
+enum RoomState {
+  OCCUPIED
+  VACANT
+  CLEANING
+  OUT_OF_SERVICE
+}
+
+enum QrTokenState {
+  ACTIVE
+  REVOKED
+}
+
+enum PlaceType {
+  TABLE
+  ROOM
+  COUNTER
+}
+
+enum StaffRole {
+  OWNER
+  MANAGER
+  CHEF
+  TABLE_SERVICE
+  ROOM_SERVICE
+  HOUSEKEEPING
+  MAINTENANCE
+  CONCIERGE
+  LAUNDRY
+  SPA
+  FRONT_DESK
+}
+
+enum StaffState {
+  ACTIVE
+  DEACTIVATED
+}
+
+enum MenuItemState {
+  AVAILABLE
+  UNAVAILABLE
+  HIDDEN
+}
+
+enum ModifierChoiceType {
+  SINGLE
+  MULTIPLE
+}
+
+enum OrderState {
+  PLACED
+  APPROVED
+  PREPARING
+  READY
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum RequestState {
+  SUBMITTED
+  ACKNOWLEDGED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DECLINED
+}
+
+enum PaymentState {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+// ------------------------------------------------------------
+// Venue — one per installation (D-10.1)
+// Tasks 2.1.2: venue, configuration, and module-toggle tables
+// ------------------------------------------------------------
+
+model Venue {
+  id             String   @id @default(uuid())
+  name           String
+  slug           String   @unique
+  brandColor     String   @default("#1a1a1a")
+  logoUrl        String?
+  heroImageUrl   String?
+  welcomeMessage String   @default("Welcome")
+  language       String   @default("en")
+  currency       String   @default("USD")
+  taxRate        Decimal  @db.Decimal(5, 4)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  modules        VenueModuleToggle[]
+  services       VenueServiceToggle[]
+  tables         Table[]
+  rooms          Room[]
+  counter        Counter?
+  qrTokens       QrToken[]
+  staffMembers   StaffMember[]
+  menuCategories MenuCategory[]
+  orders         Order[]
+  requests       ServiceRequest[]
+  payments       PaymentTicket[]
+
+  @@map("venues")
+}
+
+// Operator-controlled module toggles (SYSTEM.md §17.3)
+model VenueModuleToggle {
+  id        String      @id @default(uuid())
+  venueId   String
+  module    VenueModule
+  isEnabled Boolean     @default(false)
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, module])
+  @@map("venue_module_toggles")
+}
+
+// Operator-controlled hotel service toggles
+model VenueServiceToggle {
+  id        String       @id @default(uuid())
+  venueId   String
+  service   HotelService
+  isEnabled Boolean      @default(false)
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, service])
+  @@map("venue_service_toggles")
+}
+
+// ------------------------------------------------------------
+// Places — Table, Room, Counter (Task 2.1.3)
+// ------------------------------------------------------------
+
+model Table {
+  id        String     @id @default(uuid())
+  venueId   String
+  number    String
+  state     TableState @default(FREE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  qrTokens QrToken[]
+  orders   Order[]
+
+  @@unique([venueId, number])
+  @@index([venueId])
+  @@index([venueId, state])
+  @@map("tables")
+}
+
+model Room {
+  id        String    @id @default(uuid())
+  venueId   String
+  number    String
+  state     RoomState @default(VACANT)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  venue    Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  qrTokens QrToken[]
+  orders   Order[]
+  requests ServiceRequest[]
+
+  @@unique([venueId, number])
+  @@index([venueId])
+  @@index([venueId, state])
+  @@map("rooms")
+}
+
+model Counter {
+  id        String   @id @default(uuid())
+  venueId   String   @unique
+  name      String   @default("Counter")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  qrTokens QrToken[]
+  orders   Order[]
+
+  @@map("counters")
+}
+
+// ------------------------------------------------------------
+// QR Tokens — permanent, opaque UUIDs (Task 2.1.4)
+// D-1.2: tokens are never deleted, only revoked.
+// ------------------------------------------------------------
+
+model QrToken {
+  id        String       @id @default(uuid())
+  token     String       @unique @default(uuid())
+  venueId   String
+  placeType PlaceType
+  tableId   String?
+  roomId    String?
+  counterId String?
+  state     QrTokenState @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  revokedAt DateTime?
+
+  venue   Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  table   Table?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  room    Room?    @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  counter Counter? @relation(fields: [counterId], references: [id], onDelete: SetNull)
+
+  guestSessions GuestSession[]
+
+  @@index([token])
+  @@index([venueId])
+  @@index([venueId, state])
+  @@map("qr_tokens")
+}
+
+// ------------------------------------------------------------
+// Staff — members, sessions, roles (Task 2.1.5)
+// D-3.7: staff are never deleted; they are deactivated.
+// ------------------------------------------------------------
+
+model StaffMember {
+  id           String      @id @default(uuid())
+  venueId      String
+  name         String
+  username     String
+  passwordHash String
+  roles        StaffRole[]
+  state        StaffState  @default(ACTIVE)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  venue          Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  sessions       StaffSession[]
+  orderChanges   OrderStateChange[]
+  requestChanges RequestStateChange[]
+
+  @@unique([venueId, username])
+  @@index([venueId])
+  @@index([venueId, state])
+  @@map("staff_members")
+}
+
+model StaffSession {
+  id            String    @id @default(uuid())
+  staffMemberId String
+  token         String    @unique @default(uuid())
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime?
+  endedAt       DateTime?
+
+  staffMember StaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([staffMemberId])
+  @@map("staff_sessions")
+}
+
+// Guest sessions — anonymous, tied to a QR token (D-2.1)
+model GuestSession {
+  id        String    @id @default(uuid())
+  qrTokenId String
+  venueId   String
+  placeType PlaceType
+  tableId   String?
+  roomId    String?
+  counterId String?
+  token     String    @unique @default(uuid())
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  qrToken QrToken @relation(fields: [qrTokenId], references: [id], onDelete: Cascade)
+  orders  Order[]
+
+  @@index([token])
+  @@index([qrTokenId])
+  @@map("guest_sessions")
+}
+
+// ------------------------------------------------------------
+// Menu — categories, items, modifier groups/options (Task 2.1.6)
+// D-4.2: items are never deleted; they are marked HIDDEN.
+// ------------------------------------------------------------
+
+model MenuCategory {
+  id        String   @id @default(uuid())
+  venueId   String
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  items MenuItem[]
+
+  @@index([venueId, sortOrder])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String        @id @default(uuid())
+  venueId     String
+  categoryId  String
+  name        String
+  description String?
+  photoUrl    String?
+  price       Decimal       @db.Decimal(10, 2)
+  state       MenuItemState @default(AVAILABLE)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  category       MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  modifierGroups ModifierGroup[]
+  orderItems     OrderItem[]
+
+  @@index([venueId])
+  @@index([categoryId])
+  @@index([venueId, state])
+  @@map("menu_items")
+}
+
+model ModifierGroup {
+  id         String             @id @default(uuid())
+  menuItemId String
+  name       String
+  choiceType ModifierChoiceType @default(SINGLE)
+  isRequired Boolean            @default(false)
+  sortOrder  Int                @default(0)
+  createdAt  DateTime           @default(now())
+
+  menuItem MenuItem         @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  options  ModifierOption[]
+
+  @@index([menuItemId])
+  @@map("modifier_groups")
+}
+
+model ModifierOption {
+  id              String   @id @default(uuid())
+  modifierGroupId String
+  name            String
+  additionalPrice Decimal  @db.Decimal(10, 2) @default(0)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  modifierGroup ModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@index([modifierGroupId])
+  @@map("modifier_options")
+}
+
+// ------------------------------------------------------------
+// Orders — Task 2.1.7
+// D-4.1: names, prices, modifiers are frozen at creation.
+// D-4.12: idempotency key is unique (one write exactly once).
+// ------------------------------------------------------------
+
+model Order {
+  id             String     @id @default(uuid())
+  venueId        String
+  guestSessionId String?
+  placeType      PlaceType
+  tableId        String?
+  roomId         String?
+  counterId      String?
+  pickupName     String?
+  state          OrderState @default(PLACED)
+  subtotal       Decimal    @db.Decimal(10, 2)
+  taxRate        Decimal    @db.Decimal(5, 4)
+  taxAmount      Decimal    @db.Decimal(10, 2)
+  total          Decimal    @db.Decimal(10, 2)
+  notes          String?
+  idempotencyKey String     @unique
+  placedAt       DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  venue          Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  guestSession   GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
+  table          Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  room           Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  counter        Counter?      @relation(fields: [counterId], references: [id], onDelete: SetNull)
+  items          OrderItem[]
+  stateChanges   OrderStateChange[]
+  paymentTickets PaymentTicket[]
+
+  @@index([venueId, state])
+  @@index([venueId, placedAt])
+  @@index([guestSessionId])
+  @@index([tableId])
+  @@index([roomId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id            String   @id @default(uuid())
+  orderId       String
+  menuItemId    String?
+  itemName      String
+  itemPrice     Decimal  @db.Decimal(10, 2)
+  quantity      Int
+  modifiersJson Json     @default("[]")
+  modifierPrice Decimal  @db.Decimal(10, 2) @default(0)
+  lineTotal     Decimal  @db.Decimal(10, 2)
+  notes         String?
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderStateChange {
+  id            String     @id @default(uuid())
+  orderId       String
+  state         OrderState
+  staffMemberId String?
+  note          String?
+  occurredAt    DateTime   @default(now())
+
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  staffMember StaffMember? @relation(fields: [staffMemberId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_state_changes")
+}
+
+// ------------------------------------------------------------
+// Service Requests — Task 2.1.8
+// ------------------------------------------------------------
+
+model ServiceRequest {
+  id          String       @id @default(uuid())
+  venueId     String
+  roomId      String?
+  serviceType HotelService
+  state       RequestState @default(SUBMITTED)
+  detailsJson Json         @default("{}")
+  submittedAt DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  venue        Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  room         Room?                @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  stateChanges RequestStateChange[]
+
+  @@index([venueId, state])
+  @@index([venueId, serviceType])
+  @@index([venueId, submittedAt])
+  @@map("service_requests")
+}
+
+model RequestStateChange {
+  id            String       @id @default(uuid())
+  requestId     String
+  state         RequestState
+  staffMemberId String?
+  note          String?
+  occurredAt    DateTime     @default(now())
+
+  request     ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  staffMember StaffMember?   @relation(fields: [staffMemberId], references: [id], onDelete: SetNull)
+
+  @@index([requestId])
+  @@map("request_state_changes")
+}
+
+// ------------------------------------------------------------
+// Payments — Task 2.1.9
+// D-7.7: cash-at-counter is the only path in v1.
+// D-7.1: the bridge interface exists for future providers.
+// ------------------------------------------------------------
+
+model PaymentTicket {
+  id          String       @id @default(uuid())
+  venueId     String
+  orderId     String
+  amount      Decimal      @db.Decimal(10, 2)
+  currency    String
+  state       PaymentState @default(PENDING)
+  providerRef   String?
+  failureReason String?
+  createdAt     DateTime     @default(now())
+  confirmedAt DateTime?
+
+  venue   Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receipt Receipt?
+
+  @@index([orderId])
+  @@index([venueId, state])
+  @@map("payment_tickets")
+}
+
+model Receipt {
+  id              String   @id @default(uuid())
+  paymentTicketId String   @unique
+  orderId         String
+  subtotal        Decimal  @db.Decimal(10, 2)
+  taxAmount       Decimal  @db.Decimal(10, 2)
+  tipAmount       Decimal  @db.Decimal(10, 2) @default(0)
+  total           Decimal  @db.Decimal(10, 2)
+  currency        String
+  paymentMethod   String   @default("CASH")
+  guestEmail      String?
+  issuedAt        DateTime @default(now())
+
+  paymentTicket PaymentTicket @relation(fields: [paymentTicketId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("receipts")
+}

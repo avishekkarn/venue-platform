@@ -17,7 +17,7 @@
 4. Order Identity — D-4.1 to D-4.12
 5. Service Request Identity — D-5.1 to D-5.7
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
-7. Payments — D-7.1 to D-7.7
+7. Payments — D-7.1 to D-7.8
 8. Real-Time, Offline, and Reliability — D-8.1 to D-8.5
 9. Branding and Theming — D-9.1 to D-9.6
 10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.5
@@ -26,7 +26,7 @@
 13. Notifications — D-13.1 to D-13.3
 14. Deployment — D-14.1 to D-14.3
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
-16. Motion Implementation — D-16.1 to D-16.2
+16. Implementation Contracts — D-16.1 to D-16.4
 17. Development Process — D-17.1
 
 ---
@@ -998,6 +998,24 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ---
 
+### D-7.8 — The receipt inherits the venue from its ticket, not from its own column
+
+**Decision:** The Receipt model has no venueId column. A receipt's venue is the venue of the PaymentTicket it belongs to. Every receipt read is scoped by joining to the ticket and filtering on the ticket's venueId.
+
+**Context:** SYSTEM.md §11.1 lists the Receipt entity but does not give it a venueId. SYSTEM.md §15.4 requires every venue-scoped entity to be scoped by venue. The receipt is venue-scoped by association.
+
+**Alternatives considered:**
+- Add a venueId column to Receipt (rejected — duplicate data, risk of drift).
+- Trust the caller to verify the ticket's venue (rejected — the repository is the boundary).
+
+**Consequences:**
+- The receipt adapter joins to payment_tickets on every read and write.
+- A cross-venue receipt read returns NOT_FOUND, never FORBIDDEN.
+
+**What would make us revisit:** Never.
+
+---
+
 ## 8. Real-Time, Offline, and Reliability
 
 ### D-8.1 — Polling every 5 seconds for kitchen, staff, and guest tracking screens
@@ -1739,7 +1757,7 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ---
 
-## 16. Motion Implementation
+## 16. Implementation Contracts
 
 ### D-16.1 — Motion is implemented at the point of consumption, not as a shared library
 
@@ -1807,6 +1825,47 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ---
 
+### D-16.3 — Direct PostgreSQL connections use the @prisma/adapter-pg driver adapter
+
+**Decision:** The application connects to PostgreSQL using the `@prisma/adapter-pg` driver adapter backed by `pg.Pool`. The PrismaClient constructor in `src/infrastructure/db/client.ts` instantiates a `Pool` with the connection string from `DATABASE_URL` (or `TEST_DATABASE_URL` during tests) and passes `new PrismaPg(pool)` as the driver adapter.
+
+**Context:** Prisma ORM v7 enforces the driver adapter architecture for all direct database connections outside Prisma Accelerate. Without a driver adapter, PrismaClient throws `PrismaClientConstructorValidationError`. While Prisma 7 CLI tools (such as `prisma migrate`) communicate directly via the connection URL defined in `prisma.config.ts`, runtime database queries from PrismaClient require `@prisma/adapter-pg`.
+
+**Alternatives considered:**
+- Prisma Accelerate — rejected because the application is designed to run self-hosted and locally against standard PostgreSQL (per D-10.1 and D-14.1) without an external cloud proxy.
+- Dropping Prisma in favor of raw SQL (`pg` alone) — rejected because the data model, types, and migrations are governed by Prisma schema (SYSTEM.md §11).
+
+**Consequences:**
+- `@prisma/adapter-pg` and `pg` (with `@types/pg`) are declared dependencies in `package.json`.
+- `src/infrastructure/db/client.ts` manages a singleton `Pool` alongside `PrismaClient` in development to prevent connection exhaustion during Next.js reloads.
+- Runtime database performance benefits from `pg` connection pooling.
+
+**What would make us revisit:** If Prisma introduces native direct engine connection without driver adapters in a future major version, or if a different SQL engine is adopted.
+
+**Traces to:** SYSTEM.md §2 (the infrastructure layer), SYSTEM.md §11 (the data model), BUILD.md §7.3 (one client), BUILD.md §10.3 (configuring the connection).
+
+---
+
+### D-16.4 — Deferral of global test engine error log suppression to Phase 3
+
+**Decision:** The cosmetic `prisma:error` logging produced during negative-path integration tests (unique constraint and foreign key error tests in repository tests) is preserved in the integration test output and deferred to Phase 3 test harness hardening. It is not suppressed by globally overriding stdout or silencing Prisma's error logger in Milestone 2.2.
+
+**Context:** Six repository integration test files (`venue.test.ts`, `table.test.ts`, `room.test.ts`, `staff.test.ts`, `order.repo.test.ts`, and `payment.test.ts`) deliberately test unique constraint violations, which causes Prisma's query engine to emit diagnostic error blocks before the repository catches `PrismaClientKnownRequestError` and converts it into domain `CONFLICT` results. Suppressing error logging globally at the test harness level in Milestone 2.2 risks masking unexpected runtime database failures and schema mismatches during active development.
+
+**Alternatives considered:**
+- Globally silence error logs in `src/infrastructure/db/client.ts` during tests — rejected because it would hide genuine database configuration errors and query faults throughout the test run.
+- Monkey-patch `process.stdout.write` in `tests/integration/setup.ts` — rejected as a brittle global interceptor that could swallow unintended diagnostic output.
+
+**Consequences:**
+- Integration test runs print expected `prisma:error` blocks during negative constraint tests; tests still pass with clean exit codes.
+- Phase 3 will introduce granular, per-assertion logger suppression or test log interceptors when service and route error boundaries are tested.
+
+**What would make us revisit:** Phase 3 auth route testing, or when a clean-stdout reporting requirement is enforced.
+
+**Traces to:** BUILD.md §8.8 (the mandatory test level), BUILD.md §11 (verification protocol), Task 2.2.9 close.
+
+---
+
 ## 17. Development Process
 
 ### D-17.1 — The documentation is approved as of 2026-10-15, version 2.0
@@ -1832,7 +1891,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 88
+**Total decisions:** 91
 **Categories:** 17
 **Status:** All locked.
 
@@ -1888,5 +1947,6 @@ Building the motion abstraction before its first consumer would mean inventing i
 | Staging environment (D-14.2) | The product is offered as a SaaS, or more than one developer joins |
 | Automatic deployments (D-14.3) | The product stabilises, or more than one developer joins |
 | Motion implementation strategy for complex motion (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented |
+| Test engine error log suppression (D-16.4) | Phase 3 test harness hardening or clean-stdout requirement |
 
 ---
