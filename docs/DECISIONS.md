@@ -1,7 +1,8 @@
 # DECISIONS.md — The Complete Record of Every Locked Choice
 
-**Version:** 1.0
-**Status:** Locked
+**Version:** 2.0
+**Status:** Approved
+**Approved:** 2026-10-15
 **Purpose:** Every choice that shapes the product, recorded once, with its reason, its alternatives, and the conditions that would reopen it. Append-only. Nothing here is edited after the fact; a changed decision becomes a new record that supersedes the old one.
 
 **How to read this file:** Each record has six parts. **The decision** is what we chose. **The context** is the problem that forced the choice. **The alternatives** are what else was on the table and why we did not pick it. **The consequences** are what we now live with — both the benefits and the costs. **What would make us revisit** is the specific event or condition that reopens the record. If a decision is later changed, the old record is marked `SUPERSEDED BY D-X.Y` and a new record takes its place; the old one is never deleted.
@@ -13,18 +14,20 @@
 1. Venue Identity — D-1.1 to D-1.3
 2. Guest Identity — D-2.1 to D-2.5
 3. Staff Identity — D-3.1 to D-3.8
-4. Order Identity — D-4.1 to D-4.10
+4. Order Identity — D-4.1 to D-4.12
 5. Service Request Identity — D-5.1 to D-5.7
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
-7. Payments — D-7.1 to D-7.6
+7. Payments — D-7.1 to D-7.7
 8. Real-Time, Offline, and Reliability — D-8.1 to D-8.5
-9. Branding and Theming — D-9.1 to D-9.5
-10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.4
-11. Languages, Currencies, and Regions — D-11.1 to D-11.3
+9. Branding and Theming — D-9.1 to D-9.6
+10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.5
+11. Languages, Currencies, and Regions — D-11.1 to D-11.4
 12. Reporting — D-12.1 to D-12.4
 13. Notifications — D-13.1 to D-13.3
 14. Deployment — D-14.1 to D-14.3
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
+16. Motion Implementation — D-16.1 to D-16.2
+17. Development Process — D-17.1
 
 ---
 
@@ -548,6 +551,50 @@ No additional states are introduced in the first version.
 
 ---
 
+### D-4.11 — The first version has no SLA targets and no SLA alerts
+
+**Decision:** The first version has no service-level-agreement (SLA) targets and no SLA alerts on orders or service requests. The admin panel has no SLA configuration field. The elapsed time is shown to the staff (per D-4.10 and D-5.5), and the staff judge urgency themselves. There are no automatic alerts, no thresholds, no escalation rules.
+
+**Context:** D-4.10 and D-5.5 already establish that no automatic timers or alerts fire on orders or requests. PRODUCT.md §8.12 nonetheless lists "the default SLA targets per service" as a manager setting. That is a contradiction: a setting the manager can configure implies a feature the product does not have. This decision closes the contradiction by removing the setting.
+
+**Alternatives considered:**
+- Add SLA targets and alerts now — rejected because it contradicts D-4.10, D-5.5, and the first-version scope. The venue has not asked for it.
+- Keep the setting but hide the alerts — rejected because a setting that does nothing is worse than no setting at all.
+- Defer SLA to a per-venue configuration in the admin panel — deferred. If a venue asks for SLA-based alerts, we add them as an optional per-venue setting, per D-4.10 and D-5.5.
+
+**Consequences:**
+- The admin panel has no SLA configuration section.
+- The service catalog has no SLA field per service.
+- The staff rely on the elapsed time and their own judgement.
+- PRODUCT.md §8.12 is corrected to remove the SLA line.
+
+**What would make us revisit:** If a venue asks for SLA-based alerts, we add them as an optional per-venue setting, in a version after the first. The trigger is a venue request; the reopen path is the "What would make us revisit" of D-4.10 and D-5.5.
+
+---
+
+### D-4.12 — Every order carries a client-generated idempotency key
+
+**Decision:** Every create-order request carries a client-generated idempotency key — a UUID the guest's phone generates once per order, before the request is sent. The key is sent with the request, stored with the order under a unique constraint, and checked before the order is written. A create-order request whose key already exists returns the existing order rather than creating a second one. A create-order request with a new key creates the order and stores the key with it.
+
+**Context:** D-8.2 says the guest's order is queued locally when the connection drops and resent when it returns. Without an idempotency key, a retry whose first attempt actually reached the server would create a duplicate order — the guest would see two orders, the kitchen would cook twice, and the guest would be charged twice if online payment is enabled. This is the specific failure mode the key prevents.
+
+**Alternatives considered:**
+- A server-side dedupe window (reject a repeat submission from the same guest session within N seconds) — rejected because the guest session is anonymous and the timing window is arbitrary. It also fails if the retry is delayed past the window.
+- Do nothing; accept that a lost response may produce a duplicate — rejected because the duplicate is expensive: real food cooked twice, real money charged twice. The cost of the key is one UUID column and one uniqueness check.
+- Ask the guest to confirm before retrying — rejected because the guest cannot know whether the first attempt reached the server, and a confirm dialog adds friction the product promise forbids.
+
+**Consequences:**
+- The order table has a unique `idempotency_key` column.
+- Every create-order API request includes the key.
+- The domain's `createOrder` function enforces the constraint.
+- A retry with the same key returns the same order; the response is `{ "data": { ... existing order ... } }`.
+- The guest sees one order on the tracking screen, whether the first attempt succeeded silently or a retry succeeded loudly.
+- The kitchen sees one ticket. The bill reflects one order.
+
+**What would make us revisit:** Never. This is a correctness requirement for the queued-retry flow D-8.2 already promises.
+
+---
+
 ## 5. Service Request Identity
 
 ### D-5.1 — One generic request structure for all services
@@ -929,6 +976,28 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ---
 
+### D-7.7 — The first version's guest payment is cash at the counter only
+
+**Decision:** In the first version, the guest's only payment path is cash at the counter. The guest sees "Ask your waiter for the bill" or "Pay at the counter" on the tracking screen — never a "Pay now" button that redirects to a provider. The staff mark the order as paid when the cash is taken. When a venue's provider is connected (per D-7.1 and D-7.2), the "Pay now" flow is enabled for that venue in a later version.
+
+**Context:** D-7.1 says the payment bridge is built but no live provider is connected in the first version. D-7.3 says the guest can pay online through the bridge or in cash at the counter. These two together imply that the "Pay now" path exists in the first version — but a bridge with no provider cannot deliver a payment. PRODUCT.md §5.11 and §16.1 describe the "Pay now" flow as if it works on day one. That is a contradiction: the product spec promises a flow the decisions forbid. This decision closes the contradiction by stating plainly which path is live in the first version.
+
+**Alternatives considered:**
+- Keep the "Pay now" button visible but non-functional — rejected because a button that does nothing is worse than no button. The guest would tap it and hit a dead end.
+- Show the "Pay now" button only when a placeholder provider is connected — rejected because the placeholder adapter is not a real payment path. It records an attempt; it does not take money. Showing a pay button that records an attempt and takes no money would be worse than showing cash-only.
+- Enable the bridge with the placeholder in the first version — rejected. The bridge is testable; it is not a payment method. A venue cannot accept money through the placeholder.
+
+**Consequences:**
+- The guest's tracking screen shows "Ask your waiter for the bill" or "Pay at the counter".
+- The staff panel has a "Mark as paid" action. The staff take the cash and mark the order paid.
+- The payment bridge, the ticket, and the receipt flow exist and are tested, but they are only exercised by the test suite in the first version, not by a live guest.
+- When a venue's real provider is connected (per D-7.2), the guest's tracking screen shows a "Pay now" button for that venue.
+- PRODUCT.md §5.11 and §16.1 are corrected to describe the cash-at-counter path as the first version's only path.
+
+**What would make us revisit:** When the first venue that wants online payment is onboarded, and its real provider is connected, the "Pay now" path is enabled for that venue. That is the same trigger as D-7.1's reopen condition.
+
+---
+
 ## 8. Real-Time, Offline, and Reliability
 
 ### D-8.1 — Polling every 5 seconds for kitchen, staff, and guest tracking screens
@@ -951,7 +1020,7 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ### D-8.2 — If the connection drops, the guest's order is queued locally
 
-**Decision:** If the guest's connection drops while they are placing an order, the order is queued on the guest's phone and sent when the connection returns. The guest sees a "Sending…" state and then either a confirmation or an error.
+**Decision:** If the guest's connection drops while they are placing an order, the order is queued on the guest's phone and sent when the connection returns. The guest sees a "Sending…" state and then either a confirmation or an error. The retry is safe because the order carries a client-generated idempotency key, per D-4.12.
 
 **Context:** Guests on flaky wifi, especially in hotels, should not lose their cart just because the connection hiccupped.
 
@@ -963,6 +1032,7 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 - The guest's order is not lost if the connection drops briefly.
 - The guest sees a clear "Sending…" state while the order is queued.
 - If the connection is down for a long time, the guest sees an error and can retry.
+- The idempotency key (D-4.12) guarantees that a retry whose first attempt reached the server returns the existing order rather than creating a second one.
 
 **What would make us revisit:** If a venue's network is unreliable in a way that breaks this, we add a stronger offline queue.
 
@@ -1045,6 +1115,8 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 **What would make us revisit:** When the product is offered to other organisations as a self-service product, we add self-service branding.
 
+**Note:** This decision is superseded in part by D-9.6. D-9.1 remains the rule for branding, font choices, and language. D-9.6 clarifies the boundary between developer-managed configuration and operator-managed settings. Read them together.
+
 ---
 
 ### D-9.2 — The brand color affects only the guest screens
@@ -1118,6 +1190,52 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 - The preference is remembered per device.
 
 **What would make us revisit:** Never.
+
+---
+
+### D-9.6 — The operator manages operations; the developer sets branding, provider, and deployment
+
+**Decision:** The boundary between what the developer sets and what the operator (manager) manages is fixed:
+
+**The developer sets, per venue, in code, at onboarding:**
+- The venue's display name.
+- The venue's logo, brand color, hero image, and welcome message.
+- The venue's font choices and language.
+- The venue's currency and tax rate.
+- The venue's enabled modules (table, room, counter, kitchen).
+- The venue's enabled services (the hotel service catalog).
+- The venue's payment provider credentials (when a provider is connected).
+- The venue's deployment.
+
+**The operator manages, from the admin panel:**
+- The menu — categories, items, modifiers, prices.
+- The tables and rooms — adding, editing, and status.
+- The QR codes — generating, printing, revoking.
+- The staff — creating, editing, deactivating, resetting passwords, assigning roles and queues.
+- The active and completed orders.
+- The service requests.
+- The module toggles and the service toggles within the limits the developer has enabled (the operator can turn an enabled module off; they cannot turn on a module the developer did not enable).
+- The reports.
+
+**The operator cannot change** the branding, the language, the currency, the tax rate, the payment provider, or the deployment. Those are developer settings.
+
+**Context:** D-9.1 says the branding is developer-controlled and the admin panel has no branding tab. PRODUCT.md §8.1 describes the owner performing a setup flow that sets the branding, and §8.10 describes a Branding tab that lets the manager change the logo, the color, the welcome message, and the hero image. PRODUCT.md §8.12 lists the language, the currency, and the tax rate as manager-adjustable settings. Those descriptions contradict D-9.1. They also describe a self-service flow that D-10.3 forbids. This decision resolves the contradiction by stating the boundary plainly and by naming which side of the boundary each item falls on.
+
+**Alternatives considered:**
+- Give the operator full control of branding — rejected. It contradicts D-9.1 and D-9.3, and it means the developer cannot guarantee a readable brand color or a consistent look across an organisation's venues.
+- Give the developer nothing and the operator everything — rejected. It would require a self-service onboarding flow (D-10.3 defers this), and it would remove the developer's role in aligning per organisation.
+- Split branding between developer and operator (developer picks the color family, operator picks the exact shade) — rejected. It introduces a third configuration surface without a benefit. Simpler is better: the developer owns branding, the operator owns operations.
+
+**Consequences:**
+- Onboarding a venue remains a developer task (per D-9.1 and D-10.3).
+- The admin panel has no Branding tab.
+- The admin panel's Settings tab shows the venue's address, contact, tax rate, and currency as **read-only**, and it shows the module toggles and service toggles as **editable within the limits the developer has enabled**.
+- The operator can turn off a module the developer turned on. The operator cannot turn on a module the developer did not enable. This gives the operator control of their daily operations without letting them take the venue into a shape the developer has not tested.
+- PRODUCT.md §8.1 is corrected to describe the operator's first login as "confirming the venue", not "setting up the venue".
+- PRODUCT.md §8.10 is removed.
+- PRODUCT.md §8.12 no longer lists the language or the tax rate as editable; those are read-only.
+
+**What would make us revisit:** When the product is offered as a general SaaS (per D-9.1's reopen condition), we add a self-service branding flow for organisations that want it. That is the same trigger as D-9.1's reopen.
 
 ---
 
@@ -1198,6 +1316,28 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ---
 
+### D-10.5 — There is no multi-venue switcher in the first version
+
+**Decision:** The first version has no multi-venue switcher and no multi-venue admin. An operator logs in to exactly one venue. There is no control in the admin panel to switch between venues, and no "owner" role that spans venues. If an organisation operates more than one venue, each venue runs its own installation (per D-10.1), and the organisation's owner logs in to each installation separately with its own account.
+
+**Context:** D-10.1 says one venue per installation in the first version. PRODUCT.md §3.7 describes the owner as someone who "may manage more than one venue under the same ownership", and §8.13 describes a venue switcher at the top of the admin panel. Those descriptions contradict D-10.1 and D-10.3. This decision closes the contradiction by naming the boundary.
+
+**Alternatives considered:**
+- Build a multi-venue switcher now — rejected. It contradicts D-10.1, and it implies a shared identity across venues that D-10.2 forbids. Building it now would require a cross-venue account system the product does not have.
+- Hide the switcher but keep the owner role as a multi-venue role — rejected because the role would have nothing to switch to. The role and the switcher are the same decision.
+- Defer the whole multi-venue question to a later version — this is what we are doing. The deferral is recorded here so that no product description implies a capability that does not exist.
+
+**Consequences:**
+- The admin panel has no venue switcher.
+- Every operator is scoped to one venue.
+- The "Owner" role exists per venue, not across venues (see D-3.6 and SYSTEM.md §7). A venue's owner is the venue's operator with the highest permission level; they are not a cross-venue identity.
+- PRODUCT.md §3.7 is corrected to remove the multi-venue sentence.
+- PRODUCT.md §8.13 is removed.
+
+**What would make us revisit:** When the product is offered as a general SaaS, or when a franchise asks for multi-venue support. That is the same trigger as D-10.1's reopen condition.
+
+---
+
 ## 11. Languages, Currencies, and Regions
 
 ### D-11.1 — The product is in English only
@@ -1252,6 +1392,27 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 - All orders use the same rate.
 
 **What would make us revisit:** See D-4.3.
+
+---
+
+### D-11.4 — The venue's language is fixed at onboarding by the developer
+
+**Decision:** The venue's language is fixed at onboarding by the developer. It is not editable by the operator from the admin panel. There is no language setting in the admin panel, no language picker, and no runtime language switch. The first version ships in English (per D-11.1); a venue that needs another language has that language set in code by the developer at onboarding, before the operator's first login.
+
+**Context:** PRODUCT.md §8.12 lists "the default language (if multi-language is enabled)" as a manager-adjustable setting. D-11.1 says the product is English only and there is no per-venue language setting. The two contradict. This decision closes the contradiction by stating plainly that the language is a developer setting, not an operator setting, and that D-9.6's boundary applies to it.
+
+**Alternatives considered:**
+- Let the operator change the language — rejected. It contradicts D-11.1, and it would require a language setting the product does not build.
+- Remove the language line from PRODUCT.md without a decision — rejected because the removal must trace to a decision. This is that decision.
+- Add a multi-language picker now — rejected. It is out of scope for the first version (per D-11.1's alternatives).
+
+**Consequences:**
+- The admin panel's Settings tab does not list a language field.
+- Every guest and staff screen shows strings in the language the developer set at onboarding.
+- A venue that needs a different language is onboarded by editing the code, per D-11.1's consequence.
+- PRODUCT.md §8.12 is corrected to remove the language line.
+
+**What would make us revisit:** If a venue asks for a second language as a first-class feature, we add a language setting. That is the same trigger as D-11.1's reopen condition.
 
 ---
 
@@ -1574,6 +1735,10 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 - The product is testable end-to-end from the first milestone.
 - Refinements are per-organisation changes to a stable foundation.
 
+**What would make us revisit:** Never.
+
+---
+
 ## 16. Motion Implementation
 
 ### D-16.1 — Motion is implemented at the point of consumption, not as a shared library
@@ -1610,11 +1775,68 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ---
 
-## Appendix — The Record Set as of Version 1.0
+### D-16.2 — The QR implementation contract
 
-**Total decisions:** 54
-**Categories:** 16
+**Decision:** The QR implementation contract is fixed:
+
+- The QR code encodes a URL whose path segment is an **opaque, unguessable token** — a UUID generated by the server. It is never a sequential database ID. It is never a human-readable name. It is never a signed payload.
+- The server resolves the token to a venue and to a place (table, room, or counter), per SYSTEM.md §8.3.
+- The token's state is `active` or `revoked`. Revocation is a state change, not a delete. The row remains, with a `revoked_at` timestamp.
+- When a token is revoked, any active guest sessions tied to it are invalidated immediately. The next scan shows the "This QR is no longer active" screen.
+- A revoked token is never reused. Reissuing a QR for the same table, room, or counter creates a new token with a new UUID. The old token stays in the table for history.
+- The token carries the venue's internal identifier and the place's internal identifier, so that the resolution does not need to trust anything the guest supplies.
+
+**Context:** D-1.2 says the QR is permanent and tied to the venue's internal identity. SYSTEM.md §8 describes the resolution flow, the revocation, and the generation. Together they imply a contract, but they do not spell it out in one place. This decision spells it out so that the Phase 4 implementation has a single authoritative reference.
+
+**Alternatives considered:**
+- Sequential database IDs — rejected. A sequential ID is guessable. If the QR encoded `table/42`, a guest could change the URL to `table/43` and reach a different table's context. The whole promise of the QR as the sole entry point (D-1.1, D-1.3) depends on the token being unguessable.
+- A signed payload (for example, a JWT) — rejected. A signed payload would let the server avoid a database lookup, but it would also make revocation impossible: a signed token stays valid until it expires. Revocation is a real requirement (D-1.2, D-2.5, SYSTEM.md §8.4), and it needs a server-side state change. The database lookup is cheap and correct.
+- A human-readable slug (`table-12-juniper`) — rejected. It exposes the venue's name (contradicting D-1.1) and it invites guessing.
+- Reuse a revoked token when reissuing for the same place — rejected. Reuse would break the revocation history. A new UUID is created every time.
+
+**Consequences:**
+- The QR token table has a `token` column, unique, indexed, of the UUID type.
+- The token's `state` is an enum: `active`, `revoked`.
+- The token's `revoked_at` is nullable. It is set when the state becomes `revoked`.
+- The token's `venue_id` and `place_id` and `place_type` are stored with the row.
+- The resolution path is a single indexed lookup by `token`. It is fast.
+- The revocation path is a single-row update plus a session invalidation. It is immediate.
+- Phase 4's implementation (Tasks 4.1.1 through 4.1.5 and 4.3.1 through 4.3.4) is written against this contract.
+
+**What would make us revisit:** Never. This is the contract that makes D-1.2 and D-1.3 work.
+
+---
+
+## 17. Development Process
+
+### D-17.1 — The documentation is approved as of 2026-10-15, version 2.0
+
+**Decision:** The seven canonical documents — PRODUCT.md, DECISIONS.md, SYSTEM.md, BUILD.md, ROADMAP.md, PROGRESS.md, DESIGN.md — and the README are approved as of 2026-10-15, at version 2.0. From this date forward, the documents are the contract. Nothing is built that contradicts them. If a contradiction is found, the documents are corrected and a new decision record is added; the correction is the work.
+
+**Context:** The documents were marked "Draft for approval" through Phase 0 and Phase 1, while the developer built against them and they held up. The documentation correction milestone (C-01 through C-08j) resolved every contradiction the audit found and every gap that was identified. The milestone closes on the same date the version 2.0 approval is recorded. The approval is a real change in the standing of the documents: before, a statement in the documents was a proposal; after, it is a requirement.
+
+**Alternatives considered:**
+- Leave the documents as "Draft" and continue — rejected. A working repository governed by drafts has no contract. Every session would have to decide for itself whether a statement was binding.
+- Approve without correcting — rejected. Approving a document with a known contradiction would make the contradiction part of the contract. The correction milestone exists to remove every contradiction before approval.
+- Approve incrementally, one document at a time — rejected. The documents reference each other. A document is not approved until every document it references is approved. Approving one at a time would leave a window in which approved documents cite unapproved ones.
+
+**Consequences:**
+- Every document's header reads `**Version:** 2.0`, `**Status:** Approved`, `**Approved:** 2026-10-15`.
+- A later change to a document requires a new version number and a new decision record (for a decision change) or a STRUCTURAL entry in PROGRESS.md (for a non-decision correction).
+- The documentation correction milestone is closed by this decision, and Phase 2 begins.
+- No work goes forward on an unapproved document.
+
+**What would make us revisit:** Never. The documents being approved is the state the project is designed to be in. A change to a document does not reopen this decision; it creates a new version and a new record.
+
+---
+
+## Appendix — The Record Set as of Version 2.0
+
+**Total decisions:** 88
+**Categories:** 17
 **Status:** All locked.
+
+**How the count is derived:** the count in this appendix is the number of decisions whose `### D-` heading appears in this file. It is not a hand-maintained number; it is the count of the file's own records. Before version 2.0, this number was stale (it read 54 while the file contained 80). The correction is recorded in C-02's STRUCTURAL entry.
 
 **Decisions deferred to a later version, with the trigger that would reopen them:**
 
@@ -1630,6 +1852,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 | Guest-initiated cancel window (D-4.7) | A venue asks for it |
 | Additional order states (D-4.8) | A venue asks for finer granularity |
 | SLA alerts on orders (D-4.10) | A venue asks for them |
+| SLA targets and SLA alerts (D-4.11) | A venue asks for SLA-based alerts as an optional per-venue setting |
 | Dedicated flow per hotel service (D-5.1) | A service needs a fundamentally different flow |
 | SLA alerts on requests (D-5.5) | A venue asks for them |
 | Guest-staff messaging inside a request (D-5.6) | A venue (concierge) asks for it |
@@ -1642,14 +1865,17 @@ Building the motion abstraction before its first consumer would mean inventing i
 | eSewa and UPI adapters (D-7.1) | A venue in Nepal or India is onboarded |
 | Self-service payment configuration (D-7.2) | The product is offered as a general SaaS |
 | In-product refunds (D-7.5) | A venue asks for them |
+| Guest online payment — the "Pay now" path (D-7.7) | A venue's real payment provider is connected |
 | Stronger offline queue (D-8.2) | A venue's network is unreliable in a way that breaks this |
 | Continuous backup (D-8.5) | A venue's data volume grows, or a catastrophic loss occurs |
-| Self-service branding (D-9.1) | The product is offered as a general SaaS |
+| Self-service branding (D-9.1, D-9.6) | The product is offered as a general SaaS |
 | Automatic brand-colour adjustment (D-9.3) | The developer wants a "make it readable" tool |
 | Multi-venue per installation (D-10.1) | A franchise asks for it |
 | Shared menus between venues (D-10.2) | A franchise asks for shared menus |
 | Self-service venue onboarding (D-10.3) | The product is offered as a general SaaS |
+| Multi-venue switcher (D-10.5) | A franchise asks for multi-venue support, or the product is offered as a general SaaS |
 | Multi-language (D-11.1) | A venue asks for a second language as a first-class feature |
+| Per-venue language setting (D-11.4) | A venue asks for a second language as a first-class feature |
 | Multiple currencies (D-11.2) | A venue has international pricing |
 | Multiple tax rules (D-11.3) | See D-4.3 |
 | Reports beyond 6 months (D-12.1) | A venue asks for a longer range |
@@ -1661,6 +1887,6 @@ Building the motion abstraction before its first consumer would mean inventing i
 | Manager notifications (D-13.3) | A venue asks for them |
 | Staging environment (D-14.2) | The product is offered as a SaaS, or more than one developer joins |
 | Automatic deployments (D-14.3) | The product stabilises, or more than one developer joins |
-| Motion implementation strategy (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented |
+| Motion implementation strategy for complex motion (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented |
 
 ---

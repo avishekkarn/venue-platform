@@ -1,5 +1,9 @@
 # FRONTEND DESIGN — COMPLETE SPECIFICATION
 
+**Version:** 2.0
+**Status:** Approved
+**Approved:** 2026-10-15
+
 ---
 
 # PART ONE — FIRST PRINCIPLES
@@ -1377,7 +1381,7 @@ Each service form follows the same template:
 
 ### 4.9.6 What the Room Flow Does Not Include
 
-- No menu of the hotel's restaurant unless the venue has explicitly enabled it as a service.
+- No menu of the hotel's restaurant. A hotel that also operates a restaurant (per PRODUCT.md §4.4) enables the table module alongside the room module. The guest in a room uses the room flow and sees the room service catalog; the guest at a restaurant table uses the table flow. The two flows share a kitchen queue but not a guest menu. The room flow never surfaces the table flow's menu.
 - No multi-language picker.
 - No identity collection (no name, no email, no phone).
 - No cross-referencing with the guest's booking.
@@ -1483,7 +1487,7 @@ An admin's day on this screen looks like:
 - Currency (read-only).
 - Module toggles: table, room, counter, kitchen.
 - Service toggles: room service food, housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb.
-- Payment bridge configuration (provider selection, when a provider is connected).
+- No payment bridge configuration. The payment provider is set by the developer in code (per D-9.6 and D-7.2), not in the admin panel.
 
 ### 4.10.14 Motion
 
@@ -2255,26 +2259,51 @@ The frontend build is sequenced so that every task depends only on completed tas
 
 ---
 
-# PART THREE — OPEN QUESTIONS FOR THE HUMAN
+# PART THREE — PER-VENUE ONBOARDING DATA
 
-## Decisions I Made Without Full Confidence
+## What this part is
 
-1. **The five-color palette.** I chose olive, sand, peach, sage, and forest because they feel like the natural materials of hospitality. If the venue's own brand is out of step with these (for example, a venue with a bright blue identity), the developer's per-venue override only affects `--guest-brand`. The rest of the palette stays. I am confident this is right for the product's identity; I am less confident that every venue will feel at home inside it.
+This part is not a list of open design questions. The design language — the palette, the typography, the components, the motion, the two atmospheres, the screen specifications — is settled. It is written out in Parts One and Two, and it is approved as of 2026-10-15 at version 2.0.
 
-2. **Fraunces as the display font.** Fraunces is beautiful and unusual. It is also not free of fashion risk — it was widely adopted in 2023 and 2024. If you want a display serif that will look at home in ten years, I would suggest a discussion between Fraunces and a serif like Newsreader or Source Serif. I chose Fraunces because it has the warmth and the optical-size axis that lets it work at both hero and heading sizes.
+What remains is not a design question. It is a set of facts the developer needs from each venue at the time of onboarding, so that the venue's configuration can be set correctly. Those facts are collected once per venue, they are recorded in code by the developer, and they do not change the design.
 
-3. **The absence of the guest dark mode.** I have committed to no guest dark mode in the design. This is correct for a warm, appetite-driven experience. It is also a decision the venue may want to override per-venue in the future. I have not built any token infrastructure for a guest dark mode.
+## The onboarding data a venue provides
 
-4. **The motion ceilings.** The guest ceiling (600ms) and staff ceiling (320ms) are calibrated to what I know of human perception. They are not scientifically derived. If you have data on how long a guest will tolerate an entrance animation before closing the browser, I would revisit these.
+The developer asks each venue for the following before onboarding. The answers are recorded in code (per D-9.1 and D-9.6), not in the admin panel.
 
-5. **The kitchen display's dark mode default.** I chose dark as the default because most kitchens are low-light. If your first venue has a bright kitchen, I would revisit this default (the toggle exists either way).
+1. **The venue's display name.** What appears in the guest header, on the landing hero, and in the page title.
+2. **The venue's logo.** An image file, or the decision to use the venue's name rendered in the display typeface. If a logo is provided, it replaces the hero's name typography. If it is not, the name stays as type.
+3. **The venue's brand colour.** A single hex value. The developer verifies it passes the contrast check in §4.2.7 (WCAG AA against the guest surface for text, 3:1 for UI components). If it does not, the developer chooses a shade within the venue's brand family that does.
+4. **The venue's hero image.** An image file, or the decision to use no hero image. The design supports both. If no image is provided, the hero is type only on the warm guest surface. If an image is provided, it is placed per §4.7.2.
+5. **The venue's welcome message.** One line, in the venue's voice. It appears under the hero name (per §4.7.2).
+6. **The venue's language.** English in the first version (per D-11.1 and D-11.4). If the venue needs another language, the developer sets it in code at onboarding.
+7. **The venue's currency.** The ISO 4217 code the venue's prices and reports use (per D-11.2).
+8. **The venue's tax rate.** The single rate applied to every order's subtotal (per D-4.3).
+9. **The venue's enabled modules.** Which of the four — table, room, counter, kitchen — the venue actually has (per PRODUCT.md §2).
+10. **The venue's enabled services.** Which of the hotel services the venue offers (per PRODUCT.md §6).
+11. **The venue's payment provider configuration.** Deferred in the first version (per D-7.1 and D-7.7). The cash-at-counter path is the only path in the first version.
 
-## Questions I Would Ask Before an Engineer Starts Building
+## What is not an onboarding question
 
-1. **Which package manager does the project use?** The design makes no assumption, but the engineer will need one.
-2. **What is the first venue's brand color?** The token override needs a real value to be tested with.
-3. **What is the first venue's name, and does it have a logo?** The hero's typography assumes a name. If there is a logo, the design needs to accommodate it.
-4. **Is there a photograph available for the hero, or should the hero remain type-only?** The design supports both, but I would test with the real thing.
-5. **Which of the hotel services are enabled at the first venue?** The room service catalog grid adjusts to the enabled services.
-6. **Is the first venue's table count closer to 10 or 100?** The table map design assumes a manageable grid; 100 tables would need a scrolling list view instead.
-7. **What are the first venue's tax rules?** The design assumes a single tax rate; if the venue has multiple, the cart summary needs to change.
+The five design questions in the previous version of this file are settled. They are recorded in DECISIONS.md and they are not open:
+
+- **The five-colour palette** (olive, sand, peach, sage, forest) — locked. Every venue uses it. The per-venue override affects only `--guest-brand`.
+- **Fraunces as the display typeface** — locked (per DESIGN.md §4.3.1 and the code that loads it). It is used in the guest world only.
+- **No guest dark mode** — locked (per D-9.4). The guest world is light only.
+- **The motion ceilings** (600ms guest, 320ms staff) — locked (per DESIGN.md §4.5.8). They are the language of the guest and staff motion.
+- **The kitchen dark mode default** — locked (per D-9.5). The kitchen screen starts dark and has a light-mode toggle.
+
+## What the design does not decide
+
+The design does not decide:
+
+- Which package manager the project uses. That is settled: pnpm (per BUILD.md §9).
+- The venue's table count, room count, or counter presence. Those are onboarding facts.
+- The number of staff the venue has. That is an operational fact the operator manages.
+- The shape of the menu, the price points, or the dish names. Those are operational facts the operator manages.
+
+## The point of this part
+
+Parts One and Two describe the design that the product **is**, for every venue. This part lists the facts the developer collects once per venue to make the venue's configuration correct. The design language does not change from venue to venue; only the values that are placed into it do.
+
+---

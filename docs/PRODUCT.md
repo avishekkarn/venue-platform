@@ -1,7 +1,8 @@
 # PRODUCT.md — The Complete Product Design
 
-**Version:** 1.0
-**Status:** Draft for approval
+**Version:** 2.0
+**Status:** Approved
+**Approved:** 2026-10-15
 **Scope:** What the product is, who uses it, every feature, every flow, every screen, every loop — from the guest's first scan to the manager's final report. No rules, no file paths, no technology choices, no implementation decisions. Only the product.
 
 ---
@@ -14,17 +15,18 @@
 4. The Venue Types and How the Product Adapts
 5. The Guest Journey — Restaurant (Table QR)
 6. The Guest Journey — Hotel (Room QR)
-7. The Owner / Manager Journey
-8. The Service Staff Journey — Table Service
-9. The Service Staff Journey — Room Service
-10. The Kitchen Journey
-11. The Complete Feature Set
-12. The Visual Character
-13. The Screen Map — Every Screen in the Product
-14. The Data the Product Works With — In Business Terms
-15. The Complete Loops, End to End
-16. What This Product Is Not
-17. Summary
+7. The Guest Journey — Counter (Counter QR)
+8. The Owner / Manager Journey
+9. The Service Staff Journey — Table Service
+10. The Service Staff Journey — Room Service
+11. The Kitchen Journey
+12. The Complete Feature Set
+13. The Visual Character
+14. The Screen Map — Every Screen in the Product
+15. The Data the Product Works With — In Business Terms
+16. The Complete Loops, End to End
+17. What This Product Is Not
+18. Summary — What We Are Building
 
 ---
 
@@ -49,13 +51,13 @@ The product is built around four modules. Each venue enables the modules it actu
 3. **Counter module** — for venues without tables or rooms. A single QR code at the counter or entrance opens a menu, the guest orders and pays, and picks up at the counter. No table number, no room number.
 4. **Kitchen module** — the fulfilment engine. Every order from any module passes through the kitchen module if it involves food preparation. A venue without a kitchen (a bar serving packaged drinks, a retail counter) marks the kitchen module as unavailable and the order flow skips the kitchen stage.
 
-**Every module is independently toggleable in the venue's configuration.** The manager checks which modules apply and the product adjusts every screen, every flow, and every queue to match.
+**Every module is independently toggleable in the venue's configuration.** The operator confirms which modules apply and the product adjusts every screen, every flow, and every queue to match.
 
 A restaurant with tables and a kitchen enables table + kitchen.
 A hotel with rooms and a kitchen enables room + kitchen.
 A hotel with rooms but no kitchen (a serviced apartment building) enables room only, with room service disabled.
 A food truck with only a counter enables counter + kitchen.
-A bar with no kitchen enables counter only.
+A bar with no kitchen enables counter only. In this case the counter's stages are Placed → Ready for pickup → Picked up; there is no "Preparing" stage, because there is no kitchen.
 A resort with tables, rooms, and a kitchen enables table + room + kitchen.
 
 The product never asks the guest to choose a module. The QR code they scanned decides which module they enter. A QR on a table opens the table flow. A QR in a room opens the room flow. A QR at the counter opens the counter flow. The guest never sees a menu of modules; they see the flow that belongs to where they are.
@@ -98,13 +100,13 @@ Their device is a mounted screen, always on, auto-refreshing. They never scroll 
 
 ### 3.6 The Manager / Owner
 
-At a desk, or walking the floor with a phone. Responsible for the venue. Manages the menu, the prices, the tables, the rooms, the QR codes, the staff accounts, the branding, the tax settings, the service catalog, and the day's numbers. Reviews orders completed, revenue collected, service requests closed, and problems that occurred. Sets up new tables or rooms when the venue changes. Prints QR codes and places them. Creates staff accounts and assigns roles. Changes the brand color when the season changes. Wants a single place to see everything and change anything. Does not want to be a developer. Does not want to touch the database. Wants a clean, quiet, well-organized control panel.
+At a desk, or walking the floor with a phone. Responsible for the venue. Manages the menu, the prices, the tables, the rooms, the QR codes, the staff accounts, the tax settings, the service catalog, and the day's numbers. Reviews orders completed, revenue collected, service requests closed, and problems that occurred. Sets up new tables or rooms when the venue changes. Prints QR codes and places them. Creates staff accounts and assigns roles. Wants a single place to see everything and change anything. Does not want to be a developer. Does not want to touch the database. Wants a clean, quiet, well-organized control panel.
 
 Their device is a laptop or desktop, occasionally a tablet. They use the product less frequently than staff but with more breadth. When they log in, they usually have a specific job in mind.
 
 ### 3.7 The Owner (Separate from Manager)
 
-In some venues, the person who owns the business is not the person who runs the day-to-day. The owner cares about revenue trends, staff activity, and brand consistency across multiple properties. They log in rarely, look at dashboards, and leave. They may manage more than one venue under the same ownership. Their screens emphasize numbers, trends, exports, and comparisons — not operations.
+In some venues, the person who owns the business is not the person who runs the day-to-day. The owner cares about revenue trends and brand consistency. They log in, look at dashboards, and leave. They see the one venue they own. Their screens emphasize numbers, trends, exports, and comparisons — not operations.
 
 ---
 
@@ -112,15 +114,15 @@ In some venues, the person who owns the business is not the person who runs the 
 
 ### 4.1 Restaurant with Tables
 
-A dining venue with seated guests. The venue enables the table module and the kitchen module. Each table gets its own QR code. Guests scan, browse the food menu, order, and track. Orders flow to the kitchen, then to service staff for delivery. Guests may pay online or at the counter.
+A dining venue with seated guests. The venue enables the table module and the kitchen module. Each table gets its own QR code. Guests scan, browse the food menu, order, and track. Orders flow to the kitchen, then to service staff for delivery. Guests pay at the counter (or online once a payment provider is connected for the venue).
 
-The manager configures the tables (their numbers, their zones), the menu, the modifiers, the tax rate, and the branding.
+The operator configures the tables (their numbers, their zones), the menu, the modifiers, and the pricing. The developer sets the tax rate and the branding at onboarding.
 
 ### 4.2 Hotel with Rooms
 
 A lodging venue with guests staying in rooms. The venue enables the room module and, if it has a kitchen, the kitchen module. Each room gets its own QR code. Guests scan and see a service catalog: room service food (if kitchen is enabled), housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb.
 
-Each service is handled by its own team. Room service food goes to the kitchen. Housekeeping goes to the housekeeping queue. Maintenance goes to the maintenance queue. Concierge goes to the concierge queue. The manager assigns the teams and the roles.
+Each service is handled by its own team. Room service food goes to the kitchen. Housekeeping goes to the housekeeping queue. Maintenance goes to the maintenance queue. Concierge goes to the concierge queue. The operator assigns the teams and the roles.
 
 ### 4.3 Restaurant with Tables and a Counter
 
@@ -149,9 +151,9 @@ In the manager's settings, there is a section called "Modules". It shows four to
 
 When a module is off, every screen, every menu item, every queue, and every endpoint that depends on it disappears from the product. The guest never sees a tab for a module that is off. The staff never see a queue for a module that is off. The manager never sees a configuration screen for a module that is off.
 
-The manager can turn a module on or off at any time. Turning on a module reveals its configuration screens. Turning off a module hides them, keeps all historical data, and pauses the flows that depend on it. This is not deletion — nothing is ever deleted.
+The operator can turn a module on or off within the limits the developer has enabled. Turning on a module reveals its configuration screens. Turning off a module hides them, keeps all historical data, and pauses the flows that depend on it. This is not deletion — nothing is ever deleted.
 
-This is how the product guarantees it fits every venue: every venue enables exactly the modules it has and disables the rest.
+The developer decides, at onboarding, which modules the venue is capable of. The operator decides, day to day, whether each enabled module is active. This is how the product guarantees it fits every venue: the developer enables exactly the modules the venue has, and the operator turns off a module on a day it is not needed without affecting the venue's shape.
 
 ---
 
@@ -264,8 +266,9 @@ Behind the scenes, but invisible to the guest:
 - The venue saves the order with the exact prices from the moment of ordering, so a price change tomorrow does not rewrite today's bill.
 - The venue records which table the order came from, and the exact time.
 - The order is now visible in the kitchen queue and the service staff queue.
+- If the connection dropped while the guest was placing the order, the order is queued on the phone and retried when the connection returns. The retry is safe: the order carries an idempotency key (a random identifier the phone generated once, before the first attempt), so a retry whose first attempt did reach the server returns the existing order rather than creating a second one. The guest sees one order on the tracking screen, the kitchen sees one ticket, and the bill reflects one order, whichever attempt reached the server first.
 
-If something failed — a dish just sold out, or the connection dropped — the guest sees a friendly message and their cart remains intact. They can retry.
+If something failed — a dish just sold out, or the connection dropped and did not return — the guest sees a friendly message and their cart remains intact. They can retry.
 
 ### 5.7 Order Confirmation
 
@@ -316,18 +319,11 @@ This is important because no software can replace the human gesture of catching 
 
 ### 5.11 Payment — End of the Meal
 
-If the venue has payments enabled, the guest sees a "Pay now" button on the tracking screen once the meal is served.
+In the first version, the guest pays in cash at the counter. The tracking screen shows **"Ask your waiter for the bill"** or **"Pay at the counter"** once the meal is served. The guest asks the waiter or walks to the counter, pays in cash, and the staff mark the order as paid from their panel. The order is then completed.
 
-The payment flow:
+When the developer connects a live payment provider for the venue (see §18 and the payment decisions), the guest's tracking screen shows a **"Pay now"** button instead. The guest taps it, the screen shows the full bill — all orders for this table, itemized, with tax — and the guest chooses a payment method. They are redirected to the venue's payment provider, complete the payment, and return. The screen updates to "Paid — thank you". A receipt is available to view or email. The table is marked as free in the venue's system.
 
-1. The guest taps "Pay now".
-2. The screen shows the full bill — all orders for this table, itemized, with tax.
-3. The guest chooses a payment method: card, wallet, or "pay at counter".
-4. If paying digitally, they are redirected to a secure payment page (the venue's payment provider), complete the payment, and return.
-5. The screen updates to "Paid — thank you". A receipt is available to view or email.
-6. The table is marked as free in the venue's system.
-
-If the venue has payments disabled, the guest sees "Ask your waiter for the bill" instead.
+**In the first version, the cash-at-counter path is the only path.** The online payment flow is described here so that the product's design is complete, but it is not live until a venue has a provider connected. A venue that has not had a provider connected sees only the cash-at-counter path, and that is the correct behaviour.
 
 ### 5.12 Leaving — After the Meal
 
@@ -413,7 +409,7 @@ Tapping "Concierge" opens a service request form with a few common options and a
 - Buy tickets.
 - Other.
 
-The guest fills in the details, submits, and tracks the request. The concierge responds either by completing the request or by messaging the guest through the tracking screen (a simple two-way text thread, if the venue enables it).
+The guest fills in the details, submits, and tracks the request.
 
 ### 6.7 The Laundry Flow
 
@@ -515,14 +511,14 @@ The menu behaves like the restaurant menu: categories, dishes, modifiers, search
 
 ### 7.4 The Cart and Order
 
-The cart works like the restaurant cart. At checkout, the guest confirms the pickup name, pays (if payments are enabled) or is told to pay at the counter, and the order is submitted.
+The cart works like the restaurant cart. At checkout, the guest confirms the pickup name, pays (cash at the counter in the first version; online when a provider is connected), and the order is submitted.
 
 ### 7.5 Tracking and Pickup
 
 The tracking screen shows the order number and the status:
 
 - **Placed** — the venue received the order.
-- **Preparing** — the kitchen or counter is making it.
+- **Preparing** — the kitchen or counter is making it. When the kitchen module is off — a bar with no kitchen, a retail counter — this stage is skipped; the order moves from Placed directly to Ready for pickup.
 - **Ready for pickup** — the order is ready at the counter.
 - **Picked up** — the guest has collected it.
 
@@ -534,25 +530,21 @@ The counter loop closes here. No delivery. No follow-up. No table clearing.
 
 ## 8. The Owner / Manager Journey
 
-### 8.1 First Login — Setting Up the Venue
+### 8.1 First Login — Confirming the Venue
 
-When the owner first logs in, they land on a setup flow:
+The operator does not set up the venue. The developer has already set it up before the operator's first login. The developer set the venue's display name, its logo, its brand color, its hero image, its welcome message, its font choices, its language, its currency, and its tax rate. The developer enabled the modules the venue actually has — table, room, counter, kitchen — and enabled the hotel services the venue offers. If the venue has a live payment provider, the developer connected it.
 
-1. **The venue's name.**
-2. **The venue's type** — restaurant, hotel, resort, café, food truck, other.
-3. **The modules to enable** — table, room, counter, kitchen. The product suggests defaults based on the venue type, and the owner can change them.
-4. **The venue's address, contact, currency, and tax rate.**
-5. **The brand color** — a color picker with live preview of the guest landing.
-6. **The logo** — an upload, or the venue name rendered in a display typeface.
-7. **The hero image** — an upload, or a default abstract in the brand color.
+When the operator logs in for the first time, they do not land on a setup flow. They land on the admin dashboard, and they see the venue as it will be: its name on the header, its modules active, its tables and rooms listed, its menu populated or ready to populate. The operator's first action is not "set up the venue" — it is "look at the venue and start operating it."
 
-When the setup is complete, the owner sees the admin dashboard.
+The operator can confirm what they see. If anything is wrong — a table number, a menu item, a staff name — the operator changes it from the admin panel, because operational data (menu, prices, tables, rooms, staff) is theirs to manage. If the branding is wrong, the operator asks the developer, because branding is developer-managed.
+
+When the operator is satisfied, they begin using the venue: they manage the menu, they add tables or rooms if needed, they create staff accounts, and they watch the day's orders.
 
 ### 8.2 The Admin Home
 
 The admin home is a calm, dense, well-organized page. It contains:
 
-1. **A header** with the venue's name, the manager's name, and a sign-out.
+1. **A header** with the venue's name, the operator's name, and a sign-out.
 2. **A row of live metric cards** at the top:
    - Orders waiting.
    - Orders in the kitchen.
@@ -561,22 +553,22 @@ The admin home is a calm, dense, well-organized page. It contains:
    - Today's order count.
    - Service requests open (if the room module is on).
    Each card is a small rectangle, labeled, with a number, and a subtle change indicator versus yesterday.
-3. **A tab bar** for the main sections: "Active Orders", "Completed Orders", "Menu", "Tables" (if enabled), "Rooms" (if enabled), "QR Codes", "Staff", "Branding", "Reports", "Settings".
+3. **A tab bar** for the main sections: "Active Orders", "Completed Orders", "Menu", "Tables" (if enabled), "Rooms" (if enabled), "QR Codes", "Staff", "Reports", "Settings".
 4. **A content area** that changes with the selected tab.
 
-Tabs that belong to a disabled module do not appear. If the room module is off, the "Rooms" tab is hidden. If the counter module is off, the counter-related settings are hidden. The manager sees only the sections that apply to their venue.
+Tabs that belong to a disabled module do not appear. If the room module is off, the "Rooms" tab is hidden. If the counter module is off, the counter-related settings are hidden. The operator sees only the sections that apply to their venue.
 
 ### 8.3 The Active Orders Tab
 
-A live list of every order currently in flight. Each row shows the order number, the table or room or pickup label, the items, the status, the elapsed time, and a single action. The manager can advance, cancel, or reassign an order.
+A live list of every order currently in flight. Each row shows the order number, the table or room or pickup label, the items, the status, the elapsed time, and a single action. The operator can advance, cancel, or reassign an order.
 
 ### 8.4 The Completed Orders Tab
 
-A historical list of every completed order. Filterable by date range: today, yesterday, this week, this month, custom. Each row shows the order number, the table or room, the total, and the closing time. A "export as CSV" action lets the manager download the filtered list for spreadsheets.
+A historical list of every completed order. Filterable by date range: today, yesterday, this week, this month, custom. Each row shows the order number, the table or room, the total, and the closing time. An "export as CSV" action lets the operator download the filtered list for spreadsheets.
 
 ### 8.5 The Menu Tab
 
-A list of every menu item, grouped by category. The manager can:
+A list of every menu item, grouped by category. The operator can:
 
 - Add a new item — a form with name, description, photo, price, category, availability toggle, and modifier groups.
 - Edit an item — change any field.
@@ -588,7 +580,7 @@ A list of every menu item, grouped by category. The manager can:
 
 ### 8.6 The Tables Tab (Restaurant)
 
-A grid or list of every table. For each one, the manager can:
+A grid or list of every table. For each one, the operator can:
 
 - Add a new table — set the number or name.
 - Edit the number or name.
@@ -600,12 +592,12 @@ A grid or list of every table. For each one, the manager can:
 
 ### 8.7 The Rooms Tab (Hotel)
 
-A grid or list of every room. For each one, the manager can:
+A grid or list of every room. For each one, the operator can:
 
 - Add a new room — set the number or name.
 - Edit the number or name.
 - Change the status (occupied, vacant, cleaning, out of service).
-- Set which services are available for this room (all, or a subset).
+- Set which services are available for this room (all, or a subset of the services the developer has enabled).
 - Generate a QR code for the room.
 - Preview the QR code.
 - Print the QR code.
@@ -613,7 +605,7 @@ A grid or list of every room. For each one, the manager can:
 
 ### 8.8 The QR Codes Tab
 
-A unified view of every QR code in the venue. The manager can:
+A unified view of every QR code in the venue. The operator can:
 
 - See which table, room, or counter each QR belongs to.
 - See the created date and the status (active or revoked).
@@ -623,9 +615,9 @@ A unified view of every QR code in the venue. The manager can:
 
 ### 8.9 The Staff Tab
 
-A list of every staff account. The manager can:
+A list of every staff account. The operator can:
 
-- Add a new staff member — name, username, email, password, role, and the modules the staff member works on.
+- Add a new staff member — name, username, email, password, role, and the queues the staff member works on.
 - Edit a staff member's details.
 - Change a staff member's role.
 - Assign a staff member to a queue — kitchen, table service, room service, housekeeping, maintenance, concierge, laundry, spa, front desk.
@@ -649,20 +641,9 @@ A list of every staff account. The manager can:
 
 A staff member can have more than one role. A housekeeping staff member who also handles laundry has both roles and sees both queues.
 
-### 8.10 The Branding Tab
+### 8.10 The Reports Tab
 
-The manager can:
-
-- Set the venue's display name.
-- Upload the venue's logo.
-- Choose the venue's brand color (with a preview of how it looks on the guest-facing screens).
-- Set the venue's welcome message on the guest landing.
-- Upload or choose the hero image on the guest landing.
-- Preview the guest experience with the current branding.
-
-### 8.11 The Reports Tab
-
-The manager can see:
+The operator can see:
 
 - **Sales today** — a running total, an hourly breakdown, and a comparison to the same day last week.
 - **Sales this week** — daily totals, a bar chart, a comparison to the previous week.
@@ -671,23 +652,36 @@ The manager can see:
 - **Custom range** — any two dates within the last 6 months.
 - **Export as CSV** — download any report for use in a spreadsheet.
 
-### 8.12 The Settings Tab
+### 8.11 The Settings Tab
 
-The manager can adjust:
+The operator can see and adjust:
 
-- The venue's address and contact.
-- The tax rate.
-- The currency format.
-- The modules enabled (table, room, counter, kitchen).
-- The service catalog (which services are enabled for hotel venues).
-- The opening hours.
-- The default language (if multi-language is enabled).
-- Notification preferences.
-- The default SLA targets per service.
+- **The venue's address and contact** — editable.
+- **The tax rate** — read-only. Set by the developer at onboarding.
+- **The currency** — read-only. Set by the developer at onboarding.
+- **The modules enabled** — the operator can toggle on or off the modules the developer has enabled. The operator cannot enable a module the developer has not enabled.
+- **The service catalog** — the operator can toggle on or off the services the developer has enabled. The operator cannot enable a service the developer has not enabled.
+- **The opening hours** — editable.
+- **Notification preferences** — editable.
+- **The default SLA targets per service** — not shown. The product has no SLA targets in the first version.
+- **The default language** — not shown. The language is set by the developer at onboarding and is not editable by the operator.
 
-### 8.13 Multi-Venue Owners
+The developer's settings — the venue's branding, the venue's font choices, the venue's language, the venue's payment provider, and the venue's deployment — are not shown in this tab. They are managed by the developer in code. The operator sees only the settings they are responsible for.
 
-If the owner manages more than one venue, they see a venue switcher at the top of the admin panel. Switching venues changes every screen, every report, and every setting to the selected venue. There is no data leakage between venues; the switcher is a convenience, not a shared view.
+### 8.12 What the Operator Cannot Change
+
+The operator cannot change:
+
+- The venue's display name.
+- The venue's logo, brand color, hero image, or welcome message.
+- The venue's font choices.
+- The venue's language.
+- The venue's currency.
+- The venue's tax rate.
+- The venue's payment provider.
+- The venue's deployment.
+
+These are developer settings. If the operator needs one of them changed, they ask the developer. This is by design: the venue's visual identity and its commercial configuration are aligned per organisation by the developer, and the operator's job is to run the venue inside that configuration.
 
 ---
 
@@ -780,8 +774,6 @@ Concierge staff log in and see their queue. Each row is a concierge request:
 - The elapsed time since the request arrived.
 - A single action button: "Acknowledge", "Acting", "Complete".
 
-Concierge may also message the guest through the tracking screen if the request needs back-and-forth.
-
 ### 10.6 The Laundry Queue
 
 Laundry staff see their queue. Each row is a laundry request:
@@ -872,14 +864,15 @@ This is every capability the product will have, described by what it does for a 
 10. **Add more items** — order again without leaving the flow.
 11. **Call a waiter** — a one-tap request for staff attention.
 12. **Request the bill** — a one-tap request for the bill.
-13. **Pay online** — a secure payment flow with a digital receipt.
-14. **Service catalog (hotel)** — a grid of services: room service, housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb.
-15. **Service request forms (hotel)** — one form per service, each with its own fields.
-16. **Parallel request tracking** — see all active requests in one place.
-17. **Request history** — a record of past requests.
-18. **Counter pickup** — for counter venues, a name or label and a pickup-ready notification.
-19. **Multi-language (future)** — the guest experience can be presented in the guest's preferred language.
-20. **Accessibility** — the guest experience works with screen readers, keyboard navigation, and reduced-motion preferences.
+13. **Pay in cash at the counter** — the guest asks for the bill and pays in cash.
+14. **Pay online (when a provider is connected)** — a secure payment flow with a digital receipt.
+15. **Service catalog (hotel)** — a grid of services: room service, housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb.
+16. **Service request forms (hotel)** — one form per service, each with its own fields.
+17. **Parallel request tracking** — see all active requests in one place.
+18. **Request history** — a record of past requests.
+19. **Counter pickup** — for counter venues, a name or label and a pickup-ready notification.
+20. **Multi-language (future)** — the guest experience can be presented in the guest's preferred language.
+21. **Accessibility** — the guest experience works with screen readers, keyboard navigation, and reduced-motion preferences.
 
 ### 12.2 Staff-Facing Features (Service Staff)
 
@@ -915,24 +908,22 @@ This is every capability the product will have, described by what it does for a 
 8. **QR code management** — generate, preview, print, revoke, and regenerate QR codes.
 9. **Batch QR printing** — print a sheet of QR codes for all tables or rooms at once.
 10. **Staff management** — add, edit, deactivate, and reset password for staff; assign roles and queues.
-11. **Branding** — set the venue's name, logo, brand color, welcome message, hero image; preview the guest experience.
-12. **Module configuration** — turn table, room, counter, and kitchen modules on or off.
-13. **Service catalog configuration** — enable or disable individual hotel services.
-14. **Reports** — sales by day, week, month, year, and custom range, up to 6 months; export as CSV.
-15. **Settings** — address, contact, tax, currency, hours, language, notifications, SLAs.
-16. **Role-based access** — staff see what their role allows; managers see more; owners see everything.
-17. **Multi-venue switching** — for owners managing more than one venue.
+11. **Module configuration** — toggle the modules the developer has enabled on or off.
+12. **Service catalog configuration** — toggle the services the developer has enabled on or off.
+13. **Reports** — sales by day, week, month, year, and custom range, up to 6 months; export as CSV.
+14. **Settings** — address, contact, hours, notifications.
+15. **Role-based access** — staff see what their role allows; managers see more; owners see everything.
 
 ### 12.5 Venue-Wide Features
 
-1. **Multi-tenancy** — one install per venue, with strict isolation between venues.
-2. **Per-venue branding** — each venue's guest experience is its own.
+1. **One venue per installation** — one install per venue, with strict isolation between venues.
+2. **Per-venue branding** — each venue's guest experience is its own, set by the developer.
 3. **Per-venue data** — orders, requests, staff, and menus are never shared across venues.
 4. **Real-time updates** — order and request status changes reflect on guest, staff, and kitchen screens within seconds.
 5. **Data retention** — every order, request, and action is recorded permanently.
 6. **Reporting** — sales, service requests, and staff activity can be reviewed and exported.
 7. **Backup and recovery** — the venue's data is backed up regularly and can be restored.
-8. **Module toggling** — every module can be enabled or disabled by the manager at any time without data loss.
+8. **Module toggling** — every module the developer has enabled can be turned on or off by the operator at any time without data loss.
 
 ---
 
@@ -967,7 +958,7 @@ A guest screen never looks like a staff screen. A staff screen never looks like 
 
 ### 13.4 The Brand Color
 
-Each venue chooses a brand color. That color is used on the guest-facing screens — the buttons, the highlights, the accents. It does not appear on the staff screens, which use a fixed, neutral palette so that all venues' staff tools feel the same.
+Each venue chooses a brand color. That color is used on the guest-facing screens — the buttons, the highlights, the accents. It does not appear on the staff screens, which use a fixed, neutral palette so that all venues' staff tools feel the same. The brand color is set by the developer at onboarding.
 
 ### 13.5 Dark Mode
 
@@ -990,11 +981,10 @@ This is every screen, described by what it is for.
 3. **Item detail / modifier sheet** — name, photo, description, options, quantity, notes, add to cart.
 4. **Cart** — items, quantity, notes, totals, place order.
 5. **Order confirmation** — success mark, order number, summary, track button.
-6. **Order tracking** — timeline, items, add more, call waiter, request bill, pay.
+6. **Order tracking** — timeline, items, add more, call waiter, request bill, pay at counter.
 7. **Call waiter / request bill** — a lightweight confirmation screen.
-8. **Payment** — bill, payment method choice, redirect to provider, success.
-9. **Receipt** — itemized view, download, email.
-10. **Help / call front desk** — a small help screen with contact info.
+8. **Receipt** — itemized view, download, email (when a provider is connected).
+9. **Help / call front desk** — a small help screen with contact info.
 
 ### Guest Screens — Room
 
@@ -1054,21 +1044,18 @@ This is every screen, described by what it is for.
 ### Manager Screens
 
 1. **Login**.
-2. **Setup flow** (first login only).
-3. **Dashboard** — live metrics and a compact order queue.
-4. **Active Orders** — a list.
-5. **Completed Orders** — a list, with filters and CSV export.
-6. **Menu** — a list; add/edit forms; category and modifier managers.
-7. **Tables** (if enabled) — a grid; add/edit; QR generation.
-8. **Rooms** (if enabled) — a grid; add/edit; per-room service settings; QR generation.
-9. **QR Codes** — a list; generation; batch printing; revocation.
-10. **Staff** — a list; add/edit; role assignment; queue assignment; deactivate; reset password.
-11. **Branding** — name, logo, color, welcome message, hero image, preview.
-12. **Modules** — table, room, counter, kitchen on/off.
-13. **Services** (if room module is on) — enable or disable individual services.
-14. **Reports** — sales by range, charts, CSV export.
-15. **Settings** — address, tax, currency, hours, language, notifications, SLAs.
-16. **Venue switcher** (if multi-venue owner).
+2. **Dashboard** — live metrics and a compact order queue.
+3. **Active Orders** — a list.
+4. **Completed Orders** — a list, with filters and CSV export.
+5. **Menu** — a list; add/edit forms; category and modifier managers.
+6. **Tables** (if enabled) — a grid; add/edit; QR generation.
+7. **Rooms** (if enabled) — a grid; add/edit; per-room service settings; QR generation.
+8. **QR Codes** — a list; generation; batch printing; revocation.
+9. **Staff** — a list; add/edit; role assignment; queue assignment; deactivate; reset password.
+10. **Modules** — toggle the modules the developer has enabled.
+11. **Services** (if room module is on) — toggle the services the developer has enabled.
+12. **Reports** — sales by range, charts, CSV export.
+13. **Settings** — address, contact, hours, notifications.
 
 ---
 
@@ -1082,10 +1069,10 @@ The product remembers the following about the venue. This list is written in bus
 - **The staff** — each has a name, a username, a password, a role, a set of queues they work on, and a history of logins and actions.
 - **The menu** — its categories, its dishes, each dish's name, description, photo, price, availability, and modifier groups.
 - **The modifiers** — each dish's options, each option's name, and each option's additional price.
-- **The service catalog (hotel)** — which services are offered, and each service's own configuration, including SLA targets.
-- **The orders** — each order remembers the place it came from (table, room, or counter pickup), the time it was placed, the items with their exact prices at that moment, the tax at that moment, the total, the notes, and the full history of status changes with the time of each change and the staff member who made it.
+- **The service catalog (hotel)** — which services are offered, and each service's own configuration.
+- **The orders** — each order remembers the place it came from (table, room, or counter pickup), the time it was placed, the items with their exact prices at that moment, the tax at that moment, the total, the notes, and the full history of status changes with the time of each change and the staff member who made it. Each order also carries the idempotency key that makes retried submissions safe.
 - **The service requests** — each request remembers the room, the type of service, the details entered by the guest, the time it was placed, the assigned staff, the status, and the full history of changes.
-- **The payments (if enabled)** — each payment remembers the order or bill it was for, the amount, the method, the time, and the provider's reference.
+- **The payments (when enabled)** — each payment remembers the order or bill it was for, the amount, the method, the time, and the provider's reference.
 - **The reports** — the product can look back over the last 6 months and produce summaries of sales and service activity by day, week, month, or custom range.
 
 Nothing is ever deleted. When a menu item is removed, the historical orders that included it keep their record. When a staff member leaves, their past actions remain. When a QR code is revoked, its history remains. The venue's record is permanent.
@@ -1122,8 +1109,8 @@ Nothing is ever deleted. When a menu item is removed, the historical orders that
 24. Guest finishes the meal. Taps "Add more items" if they want more.
 25. Guest taps "Request the bill".
 26. Service staff see the request, bring the bill.
-27. Guest taps "Pay now" (if payments enabled).
-28. Payment screen opens. Guest pays. Receipt appears.
+27. Guest pays in cash at the counter (or, when a provider is connected, taps "Pay now" and pays online).
+28. The staff mark the order as paid. The receipt is available if a provider was used.
 29. Guest closes the browser.
 30. The venue's record shows the whole visit — order, items, times, amount — visible to the manager in the admin panel.
 
@@ -1151,7 +1138,7 @@ Same shape as housekeeping, with the maintenance form and queue. The guest may u
 
 ### 16.5 The Hotel Room Loop — Concierge
 
-Same shape as housekeeping, with the concierge form and queue. Concierge may message the guest through the tracking screen if needed.
+Same shape as housekeeping, with the concierge form and queue.
 
 ### 16.6 The Hotel Room Loop — Laundry
 
@@ -1196,16 +1183,18 @@ To keep the scope honest and the product focused, the following are explicitly o
 
 - A mobile app. The product is the browser.
 - A public marketplace where guests discover venues. The guest only sees the venue they are physically inside.
-- Cross-venue login. There are no guest accounts.
+- Cross-venue login. There are no guest accounts, and there is no owner identity that spans venues.
 - Inventory management. The product tracks menu items and availability, not stock levels.
 - Table reservations. The product serves guests who are already seated.
 - Loyalty programs. The product does not track guest identities across visits.
 - Kitchen printer integration. The product uses screens, not printers.
 - Point-of-sale integration. The product is the point of sale for its own orders.
 - Multi-language UI (in the first version). The product ships in one language per venue, and multi-language is a later feature.
-- Offline operation. The product requires a connection.
+- Offline operation. The product requires a connection; the order queue is a short-lived retry, not full offline support.
 - Advanced analytics. The product provides sales and service summaries, not data science.
 - Booking systems beyond the venue's own services (e.g., no external hotel booking engine).
+- SLA targets and SLA alerts. The product shows elapsed time; the staff judge urgency. There are no automatic alerts.
+- A multi-venue switcher. One installation serves one venue; there is no control to switch between venues.
 
 These are excluded so the product stays sharp. Adding any of them would be a deliberate decision, not an accident.
 
@@ -1217,7 +1206,7 @@ We are building a hospitality platform that a restaurant, a hotel, a resort, a c
 
 The product is built around four modules — table, room, counter, and kitchen — that every venue enables or disables to match its own facilities. A venue with tables uses the table module. A venue with rooms uses the room module. A venue with neither uses the counter module. A venue without a kitchen disables the kitchen module. The product never forces a venue into a shape it does not have.
 
-The product handles food orders, service requests across many types, table and room management, staff management with role and queue assignment, branding, QR code generation and printing, module configuration, reporting, and payments. It handles restaurants and hotels with the same skeleton. It is deployed per venue, branded per venue, and isolated per venue.
+The product handles food orders, service requests across many types, table and room management, staff management with role and queue assignment, QR code generation and printing, module configuration, reporting, and payments. It handles restaurants and hotels with the same skeleton. It is deployed per venue, branded per venue by the developer, and isolated per venue. The operator manages everything operational; the developer sets the branding, the language, the currency, the tax rate, the payment provider, and the deployment.
 
 Every screen, every flow, every click, and every loop has been described in this document — from the guest's first scan to the manager's final report, and from the smallest venue (a single counter) to the largest (a resort with tables, rooms, and a full kitchen).
 

@@ -1,7 +1,9 @@
 # ROADMAP.md — The Complete Build Plan
 
-**Version:** 1.0
-**Status:** Draft for approval
+**Version:** 2.0
+**Status:** Approved
+**Approved:** 2026-10-15
+
 **Purpose:** The ordered list of every phase, milestone, and task needed to take the product from zero to a production-ready first version. It is the live board the developer consults at the start of every session. It answers three questions: what is being built, what is next, and what is blocking.
 
 **How to read this file:** Each phase has a goal, a list of milestones, and a list of tasks with a unique identifier. Each task has a status, a dependency, and an acceptance criterion. The status of every task is updated after each session. The order is fixed by dependency — a task never starts before the tasks it depends on are complete. Nothing here contradicts PRODUCT.md, DECISIONS.md, SYSTEM.md, or BUILD.md.
@@ -19,7 +21,7 @@
 ## Table of Contents
 
 1. How the Build Progresses
-2. The Ten Phases at a Glance
+2. The Eleven Phases at a Glance
 3. Phase 0 — The Documents
 4. Phase 1 — The Foundation
 5. Phase 2 — The Data Model
@@ -40,7 +42,7 @@
 
 ## 1. How the Build Progresses
 
-The build progresses in ten phases. Each phase has a goal — a thing that is working at the end of the phase that was not working at the start. Each phase is broken into milestones. Each milestone is broken into tasks. Each task is one session.
+The build progresses in eleven phases. Each phase has a goal — a thing that is working at the end of the phase that was not working at the start. Each phase is broken into milestones. Each milestone is broken into tasks. Each task is one session.
 
 **The rule of dependency.** A task never starts before the tasks it depends on are complete. The dependency is not administrative; it is real. A page cannot be built before the data it reads exists. A domain function cannot be built before the repository it queries exists. A repository cannot be built before the database schema exists. The order below reflects this reality.
 
@@ -52,11 +54,11 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 
 ---
 
-## 2. The Ten Phases at a Glance
+## 2. The Eleven Phases at a Glance
 
 | Phase | Goal                         | What works at the end                                                                              |
 | ----- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| 0     | The documents                | The six documents are written, approved, and stable                                                |
+| 0     | The documents                | The seven documents are written, approved, and stable                                              |
 | 1     | The foundation               | The project runs locally; the design tokens are in place; the base components render               |
 | 2     | The data model               | The database schema exists; the venue is seeded with real data                                     |
 | 3     | Authentication               | Staff and managers can log in and out; sessions work; roles are enforced                           |
@@ -72,7 +74,7 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 
 ## 3. Phase 0 — The Documents
 
-**Goal:** The six documents exist, are approved, and are stable. No code is written in this phase.
+**Goal:** The seven documents exist, are approved, and are stable. No code is written in this phase.
 
 | ID  | Task                              | Status      | Depends on |
 | --- | --------------------------------- | ----------- | ---------- |
@@ -195,13 +197,14 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 
 | ID    | Task                                                                                               | Status | Depends on |
 | ----- | -------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 2.3.1 | Seed the venue with the table and room modules enabled                                             | ⬜     | 2.2.9      |
+| 2.3.1 | Seed the venue with the table, room, and counter modules enabled                                   | ⬜     | 2.2.9      |
 | 2.3.2 | Seed the tables and rooms                                                                          | ⬜     | 2.3.1      |
-| 2.3.3 | Seed the QR tokens, one per table and one per room                                                 | ⬜     | 2.3.2      |
+| 2.3.3 | Seed the QR tokens, one per table, one per room, and one for the counter                           | ⬜     | 2.3.2      |
 | 2.3.4 | Seed the menu categories and menu items with modifiers                                             | ⬜     | 2.3.3      |
 | 2.3.5 | Seed the staff members with different roles                                                        | ⬜     | 2.3.4      |
 | 2.3.6 | Seed the enabled hotel services                                                                    | ⬜     | 2.3.5      |
-| 2.3.7 | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜     | 2.3.6      |
+| 2.3.7 | Seed the counter, its QR token, and its own pickup-labelled orders                                 | ⬜     | 2.3.6      |
+| 2.3.8 | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜     | 2.3.7      |
 
 **Acceptance for Phase 2:** The database schema matches SYSTEM.md §11 exactly. The migrations apply cleanly. The seed creates a fully populated venue. Every repository has at least one integration test that passes.
 
@@ -217,7 +220,7 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 
 | ID    | Task                                                                                            | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 3.1.1 | Add the password hashing service (hash and verify)                                              | ⬜     | 2.3.7      |
+| 3.1.1 | Add the password hashing service (hash and verify)                                              | ⬜     | 2.3.8      |
 | 3.1.2 | Add the session service (create, validate, delete, invalidate-all)                              | ⬜     | 3.1.1      |
 | 3.1.3 | Add the session cookie helpers (set, read, clear)                                               | ⬜     | 3.1.2      |
 | 3.1.4 | Verify: a session can be created, validated, and deleted; a password can be hashed and verified | ⬜     | 3.1.3      |
@@ -375,21 +378,22 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 
 ### Milestone 5.4 — The cart
 
-| ID    | Task                                                                      | Status | Depends on |
-| ----- | ------------------------------------------------------------------------- | ------ | ---------- |
-| 5.4.1 | Add the cart screen                                                       | ⬜     | 5.3.8      |
-| 5.4.2 | Add item-level adjustment (quantity, remove)                              | ⬜     | 5.4.1      |
-| 5.4.3 | Add the order-level notes field                                           | ⬜     | 5.4.1      |
-| 5.4.4 | Add the summary (subtotal, tax, total)                                    | ⬜     | 5.4.2      |
-| 5.4.5 | Add the "Place order" action                                              | ⬜     | 5.4.4      |
-| 5.4.6 | Add the empty cart state                                                  | ⬜     | 5.4.1      |
-| 5.4.7 | Verify: items can be added, adjusted, and removed; the totals are correct | ⬜     | 5.4.6      |
+| ID    | Task                                                                                                            | Status | Depends on |
+| ----- | --------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
+| 5.4.1 | Add the cart screen                                                                                             | ⬜     | 5.3.8      |
+| 5.4.2 | Add item-level adjustment (quantity, remove)                                                                    | ⬜     | 5.4.1      |
+| 5.4.3 | Add the order-level notes field                                                                                 | ⬜     | 5.4.1      |
+| 5.4.4 | Add the summary (subtotal, tax, total)                                                                          | ⬜     | 5.4.2      |
+| 5.4.5 | Add the "Place order" action                                                                                    | ⬜     | 5.4.4      |
+| 5.4.6 | Add the empty cart state                                                                                        | ⬜     | 5.4.1      |
+| 5.4.7 | Add the pickup-name field for the counter flow                                                                  | ⬜     | 5.4.5      |
+| 5.4.8 | Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | ⬜     | 5.4.7      |
 
 ### Milestone 5.5 — The order domain
 
 | ID    | Task                                                                                                                     | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ---------- |
-| 5.5.1 | Add the `createOrder` domain function                                                                                    | ⬜     | 5.4.7      |
+| 5.5.1 | Add the `createOrder` domain function                                                                                    | ⬜     | 5.4.8      |
 | 5.5.2 | Add the price and tax computation                                                                                        | ⬜     | 5.5.1      |
 | 5.5.3 | Add the price and tax snapshot on creation                                                                               | ⬜     | 5.5.2      |
 | 5.5.4 | Add the initial state change record                                                                                      | ⬜     | 5.5.3      |
@@ -415,12 +419,13 @@ The build progresses in ten phases. Each phase has a goal — a thing that is wo
 | 5.7.4 | Add the "call a waiter" and "request the bill" actions                                                                                      | ⬜     | 5.7.2      |
 | 5.7.5 | Add the polling on the tracking screen                                                                                                      | ⬜     | 5.7.2      |
 | 5.7.6 | Verify: an order placed from a phone appears on the tracking screen with the correct state; the state updates when it changes on the server | ⬜     | 5.7.5      |
+| 5.7.7 | Verify the counter loop: guest scans the counter QR, orders with a pickup name, staff marks ready for pickup, staff marks picked up         | ⬜     | 5.7.6      |
 
 ### Milestone 5.8 — Menu item state updates
 
 | ID    | Task                                                                                               | Status | Depends on |
 | ----- | -------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 5.8.1 | Add the admin action to change a menu item's state                                                 | ⬜     | 5.7.6      |
+| 5.8.1 | Add the admin action to change a menu item's state                                                 | ⬜     | 5.7.7      |
 | 5.8.2 | Add the guest-side refresh when the state changes                                                  | ⬜     | 5.8.1      |
 | 5.8.3 | Add the guest-side ping when an item's state changes                                               | ⬜     | 5.8.2      |
 | 5.8.4 | Verify: an item marked unavailable by the manager greys out on the guest's screen within 5 seconds | ⬜     | 5.8.3      |
@@ -769,7 +774,7 @@ The critical path — the sequence that cannot be shortened — is:
  → 1.5.4 (dev server)
  → 2.1.12 (schema)
  → 2.2.9 (repositories)
- → 2.3.7 (seed)
+ → 2.3.8 (seed)
  → 3.1.4 (session)
  → 3.6.4 (placeholder dashboards)
  → 4.1.5 (QR domain)

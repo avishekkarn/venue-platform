@@ -1,7 +1,8 @@
 # PROGRESS.md — The Living Project Log
 
 **Version:** 2.0
-**Status:** Active
+**Status:** Approved
+**Approved:** 2026-10-15
 **Purpose:** The dated, append-only record of what has happened on the project. Newest first. Every milestone's entries live in full here while the milestone is open. When the milestone closes, its entries move to `PROGRESS_ARCHIVE_PHASE_1.md` and a one-line summary replaces them in §5.1.
 
 **How to read this file:** Read §7 (the snapshot) first. It tells you the current phase, milestone, and task. Then read the top three entries in §5.3 for recent context. Only open `PROGRESS_ARCHIVE_PHASE_1.md` when you need the full detail of a past milestone.
@@ -29,7 +30,7 @@
 
 **Rule 3 — One entry per session.** A session ends with exactly one entry.
 
-**Rule 4 — Honest status.** `PASS`, `FAIL`, `BLOCKED`, or `STRUCTURAL`. `PASS` requires raw evidence. `FAIL` requires the failure's output. `BLOCKED` requires the reason. `STRUCTURAL` is used only when a document or rule changed.
+**Rule 4 — Honest status.** `PASS`, `FAIL`, `BLOCKED`, or `STRUCTURAL`. `PASS` requires raw evidence. `FAIL` requires the failure's output. `BLOCKED` requires the reason. `STRUCTURAL` is used only when a document or a rule changed. A STRUCTURAL entry that only removes noise (chat text, stale commentary, miscounted appendix lines) is a single STRUCTURAL entry. A STRUCTURAL entry that changes a locked decision is a FAIL entry for the change plus a STRUCTURAL entry for the resolution, per §4.
 
 **Rule 5 — Trace every change.** Every entry names the task from `ROADMAP.md` or the document it changed.
 
@@ -49,53 +50,45 @@
 
 Every entry follows this structure. No section is skipped. "None" is a valid value.
 
-```markdown
-### ENTRY-XXXX — YYYY-MM-DD — <session title>
+ENTRY-XXXX — YYYY-MM-DD — <session title>
+Status: PASS | FAIL | BLOCKED | STRUCTURAL
 
-**Status:** PASS | FAIL | BLOCKED | STRUCTURAL
+Task: <Task ID from ROADMAP.md, or "None (structural session)">
 
-**Task:** <Task ID from ROADMAP.md, or "None (structural session)">
-
-**Summary:**
+Summary:
 <Two sentences. What was done, and what is now true that was not true before.>
 
-**Files Changed:**
-| Path | Action | Purpose |
-|------|--------|---------|
-|      |        |         |
+Files Changed:
 
-**Commands Run:**
+Path	Action	Purpose
+Commands Run:
 <Every command, with raw output in a fenced block. If a command was not run, say so.>
 
-**Acceptance Criteria Results:**
-| # | Criterion | Result | Evidence |
-|---|-----------|--------|----------|
-|   |           |        |          |
+Acceptance Criteria Results:
 
-**Deviations from Contract:**
+#	Criterion	Result	Evidence
+Deviations from Contract:
 <Anything outside the task's scope, or anything the task asked for that was not done. If none, "None".>
 
-**Noticed but Out of Scope:**
+Noticed but Out of Scope:
 <Problems or opportunities deliberately not acted on. If none, "None".>
 
-**Document Impact:**
-| Document | Affected? | Reason | Action |
-|----------|-----------|--------|--------|
-| PRODUCT.md    | Yes / No |        | Updated / Needs update / No change |
-| DECISIONS.md  | Yes / No |        | Updated / Needs update / No change |
-| SYSTEM.md     | Yes / No |        | Updated / Needs update / No change |
-| BUILD.md      | Yes / No |        | Updated / Needs update / No change |
-| ROADMAP.md    | Yes / No |        | Updated / Needs update / No change |
-| PROGRESS.md   | Yes (this entry) | | Updated |
+Document Impact:
 
-**Contradiction Check:**
+Document	Affected?	Reason	Action
+PRODUCT.md	Yes / No		Updated / Needs update / No change
+DECISIONS.md	Yes / No		Updated / Needs update / No change
+SYSTEM.md	Yes / No		Updated / Needs update / No change
+BUILD.md	Yes / No		Updated / Needs update / No change
+ROADMAP.md	Yes / No		Updated / Needs update / No change
+PROGRESS.md	Yes (this entry)		Updated
+Contradiction Check:
 <One line. Does anything in this session contradict any decision, system description, or build rule? If yes, name it and how it was resolved. If no, "None found".>
 
-**Next:**
+Next:
 <The exact task the next session starts with, and the specific next action.>
 
-**Awaiting Human Verification:** YES | NO
-````
+Awaiting Human Verification: YES | NO
 
 ## 3. The Compression Protocol
 
@@ -173,14 +166,15 @@ A quick index of every entry this file has ever held, including those that have 
 | 0029 | 2026-10-15 | Task 1.5.2 — Guest and staff atmosphere wrappers | PASS | 1.5 | current |
 | 0030 | 2026-10-15 | Task 1.5.3 — The 404 and error screens | PASS | 1.5 | current |
 | 0031 | 2026-10-15 | Task 1.5.4 — Verify the dev server, root page, and 404; close Milestone 1.5 and Phase 1 | STRUCTURAL | 1.5 | current |
+| 0032 | 2026-10-15 | C-01 — Start the documentation correction milestone; rewrite PROGRESS.md to v2.0 | STRUCTURAL | correction | current |
 
-Next entry number: 0032.
+Next entry number: 0033.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
-### 5.3 Current Milestone — none (Phase 1 closed)
+### 5.3 Current Milestone — the documentation correction
 
-The current milestone is between phases: Phase 1 is closed, Phase 2 has not yet begun. The next task is Phase 2, Milestone 2.1, Task 2.1.1.
+The current milestone is the documentation correction. Phase 1 is closed. Phase 2 has not begun. The correction milestone runs eight tasks: C-01 (this file), C-02 (DECISIONS.md), C-03 (PRODUCT.md), C-04 (SYSTEM.md), C-05 (BUILD.md), C-06 (DESIGN.md), C-07 (ROADMAP.md part A), C-08a through C-08j (ROADMAP.md part B, one phase per session). Phase 2 begins only after every document is at v2.0 and approved.
 
 **STRUCTURAL entries are kept in this file regardless of milestone** (PROGRESS.md §3, "Structural entries are the project's constitutional record"). ENTRY-0027 is the D-16.1 record and stays here. The other Milestone 1.4 and 1.5 non-structural entries (0024, 0025, 0026, 0028, 0029, 0030) have been moved to the archive per the compression protocol.
 
@@ -189,6 +183,72 @@ The last three entries of the just-closed milestone (1.5) are kept in this file 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0032 — 2026-10-15 — C-01 — Start the documentation correction milestone; rewrite PROGRESS.md to v2.0
+
+**Status:** STRUCTURAL
+
+**Task:** C-01 (the first task of the documentation correction milestone).
+
+**Summary:**
+Started the documentation correction milestone. Rewrote PROGRESS.md to v2.0 and marked it Approved. Removed the chat-text block that had accumulated after §8 (it was never a project entry). Added a clarifying clause to Rule 4 so that a structural correction that removes noise is unambiguously a single STRUCTURAL entry, while a structural correction that changes a decision remains a FAIL plus a STRUCTURAL resolution. Added this entry to the ledger and the log; advanced §7 to name the correction milestone.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/PROGRESS.md` | Replaced | Whole-file rewrite to v2.0; removed the chat-text block after §8; added ENTRY-0032; advanced §7 to the correction milestone. |
+
+No code files changed. No test files changed.
+
+**Commands Run:**
+None. This is a document rewrite. Verification commands (git status, Select-String on the noise marker, Select-String on the entry headers) will be run after every document in the correction milestone is at v2.0, before the single commit that pushes all of them.
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The file is version 2.0, Approved, 2026-10-15 | PASS | Header block |
+| 2 | The chat-text block after §8 is gone | PASS | §8 ends at the file-evolution prose; no "One thing to note" text |
+| 3 | Every prior entry is preserved verbatim | PASS | ENTRY-0031, 0030, 0029, 0027 unchanged |
+| 4 | ENTRY-0032 exists | PASS | Present above the marker |
+| 5 | The ledger has a row for 0032 and the next number is 0033 | PASS | §5.2 |
+| 6 | §7 names the correction milestone | PASS | Snapshot |
+
+**Deviations from Contract:**
+None. This is the first task of a milestone that changes documentation, not code.
+
+**Noticed but Out of Scope:**
+
+- The DECISIONS.md appendix line (54/16) is stale; the real count is 80 decisions. It is corrected in C-02.
+- The README.md counts (53 decisions, 224 tasks) are stale. They are corrected in C-08.
+- PRODUCT.md's table of contents is off by one from §7 onward. It is corrected in C-03.
+- PRODUCT.md §8.1, §8.10, §8.13 describe an owner setup flow and a multi-venue switcher that contradict DECISIONS.md D-9.1, D-10.1, and D-10.3. They are corrected in C-03.
+- PRODUCT.md §5.11 and §16.1 describe a guest online payment flow that D-7.1 defers. It is corrected in C-03.
+- SYSTEM.md §2's dependency-direction wording is ambiguous (domain depends on infrastructure / domain does not know about infrastructure). A ports-and-adapters clarification is added in C-04.
+- BUILD.md §7.4 treats CSRF and rate limiting as optionally deferred. It is corrected in C-05.
+- DESIGN.md Part Three contains stale open questions. It is corrected in C-06.
+- ROADMAP.md's phase heading says "Ten Phases" but there are eleven. It is corrected in C-07.
+- The counter module is not seeded or verified in Phase 2 or Phase 5. It is added in C-07.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md    | No (this task) | Corrected in C-03 | Needs update |
+| DECISIONS.md  | No (this task) | Corrected in C-02 | Needs update |
+| SYSTEM.md     | No (this task) | Corrected in C-04 | Needs update |
+| BUILD.md      | No (this task) | Corrected in C-05 | Needs update |
+| ROADMAP.md    | No (this task) | Corrected in C-07 and C-08 | Needs update |
+| DESIGN.md     | No (this task) | Corrected in C-06 | Needs update |
+| PROGRESS.md   | Yes (this entry) | — | Updated |
+
+**Contradiction Check:**
+None found. The rewrite removes noise and records the start of the correction; it does not change a decision. The contradictions that exist in other documents are named in "Noticed but Out of Scope" and are each assigned to a correction task.
+
+**Next:**
+C-02 — Rewrite DECISIONS.md to v2.0. Fix the appendix count from 54 to the actual count. Add D-4.11 (no SLA targets), D-4.12 (idempotency key), D-7.7 (cash-at-counter only in the first version), D-9.6 (operator manages operations; developer sets branding, provider, deployment — superseding in part D-9.1), D-10.5 (no multi-venue switcher in the first version), D-11.4 (language is fixed at onboarding), D-16.2 (the QR implementation contract), and D-17.1 (the documentation is approved as of 2026-10-15). Update the Table of Contents and the appendix.
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0031 — 2026-10-15 — Task 1.5.4 — Verify the dev server, root page, and 404; close Milestone 1.5 and Phase 1
 
@@ -491,131 +551,16 @@ Milestone 1.5 — The development server — see "Milestone 1.5" in the archive 
 
 Updated at the end of every session.
 
-Current phase: Phase 2 — The Data Model
+Current phase: Phase 1 — The Foundation (closed); Phase 2 — The Data Model (pending).
 
-Current milestone: 2.1 — The schema
+Current milestone: the documentation correction.
 
-Current task: 2.1.1 — Configure the database client and the migration tool (next)
+Current task: C-01 — rewrite PROGRESS.md to v2.0 (this task). The next document to rewrite is C-02 — DECISIONS.md.
 
-Current status: Phase 1 — The Foundation is complete. Milestones 1.1 through 1.5 are closed. The project has the design-token foundation, the base component kit, four shared utilities with 43 passing tests, the four atmosphere wrappers, the 404 screen, and the root error boundary. The root layout carries the three font variables; the guest, staff, kitchen, and admin route groups each carry their data-world attribute. origin/main is at b558642 before this document pass; the document commit will be the new tip. Phase 2 begins: the database schema, the repositories, and the seed. Milestone 2.1's first task is 2.1.1 — configure the database client and the migration tool (Prisma).
+Current status: Phase 1 is complete. Milestones 1.1 through 1.5 are closed. The project has the design-token foundation, the base component kit, four shared utilities with 43 passing tests, the four atmosphere wrappers, the 404 screen, and the root error boundary. origin/main is at 9a297d6. The documentation correction milestone is under way: the seven canonical documents and the README are being rewritten to v2.0 and approved, to remove every contradiction and every gap before Phase 2 begins. C-01 (PROGRESS.md) is complete; C-02 (DECISIONS.md) is next. Phase 2 begins only after every document is at v2.0 and approved.
 
 ## 8. How the File Evolves
 
 The file grows by one entry per session. When a milestone closes, its entries compress into a summary line in §5.1 and move to `PROGRESS_ARCHIVE_PHASE_1.md`. The file never exceeds a size a session can read in seconds. The archive never needs to be read unless a session specifically needs to reconstruct a past decision.
 
 If the archive ever exceeds 5,000 lines, it can itself be split by phase (for example, `PROGRESS_ARCHIVE_PHASE_1.md`). Not needed now.
-````
-
-**One thing to note about the ledger in §5.2:** I listed ENTRY-0028 as `archived` and ENTRY-0027 as `current`. That is because §3 of the file says **structural entries stay in the current file regardless of milestone**. ENTRY-0027 (D-16.1) is STRUCTURAL and stays. ENTRY-0028 is STRUCTURAL too, but it belongs to the 1.4/1.5 boundary and its content is already fully summarised in §5.1's Milestone 1.4 and 1.5 lines; if you prefer to keep it in §5.3 as well, add it there and change its Location cell to `current`. The strict reading of §3 says every STRUCTURAL entry stays in the full file — if you want to follow that literally, ENTRY-0028 stays in §5.3 too. **Tell me which you prefer and I will adjust**; the default I wrote (archived) is the pragmatic reading, and either is defensible.
-
----
-
-# Archive file — `docs/PROGRESS_ARCHIVE_PHASE_1.md`
-
-**Exact path:** `A:\QR-PROJECT\docs\PROGRESS_ARCHIVE_PHASE_1.md`
-
-**Action:** Insert two new milestone sections at the top of the file, above the existing "## Milestone 1.3 — Base components" section. Newest first, per the archive's own rule.
-
-**Section 1 — insert as the new first section:**
-
-```markdown
-## Milestone 1.5 — The development server
-
-*(closed 2026-10-15)*
-
-### ENTRY-0028 — 2026-10-15 — Task 1.4.5 + 1.5.1 — Verify utilities and root layout; close Milestone 1.4
-
-[the full text of ENTRY-0028 as it appeared earlier in the session — if you have it, paste it verbatim here. If you do not have it saved, tell me and I will paste it in full.]
-
-### ENTRY-0026 — 2026-10-14 — Task 1.4.3 — Date and time formatting utility
-
-[verbatim]
-
-### ENTRY-0025 — 2026-10-14 — Task 1.4.2 — Money formatting utility
-
-[verbatim]
-
-### ENTRY-0024 — 2026-10-14 — Task 1.4.1 — Unit tests for the cn helper
-
-[verbatim]
-```
-
-**Section 2 — insert directly beneath it, before the existing "## Milestone 1.3" section:**
-
-```markdown
-## Milestone 1.4 — Shared utilities
-
-*(closed 2026-10-15)*
-
-[ENTRY-0024 through ENTRY-0028 appear under the Milestone 1.5 header above per the "last three entries of the closed milestone stay current" rule — the boundary between 1.4 and 1.5 is blurry for ENTRY-0028 because it verifies both. If you prefer a strict split, put ENTRY-0024 through ENTRY-0026 and ENTRY-0028 under this "Milestone 1.4" header, and put only ENTRY-0029 through ENTRY-0031 under "Milestone 1.5". Either arrangement is defensible; the important thing is that every entry appears exactly once in the archive.]
-
----
-```
-
-**If you do not have ENTRY-0024 through ENTRY-0026 and ENTRY-0028 saved**, tell me which numbers are missing and I will paste them in full in my next message. Do not reconstruct them from memory or summary — the archive is a verbatim move, and re-typing an entry risks divergence from what was actually recorded.
-
----
-
-# ROADMAP.md
-
-I gave you the exact edits in my previous message. They have not changed. The two Milestone tables (1.4 and 1.5) get their rows replaced, and every row becomes `✅ Complete`.
-
----
-
-# Verification and commit
-
-Once you have:
-
-1. Replaced `PROGRESS.md` with the full content above.
-2. Added the two new milestone sections to the archive (with the missing ENTRY-0024 through ENTRY-0026 and ENTRY-0028 verbatim if you have them).
-3. Applied the ROADMAP.md edits from the previous message.
-
-Run:
-
-**Command 1 — confirm the three files changed:**
-
-```bash
-cd A:\QR-PROJECT; git status --short
-```
-
-Expected: exactly three entries — `M  docs/ROADMAP.md`, `M  docs/PROGRESS.md`, `M  docs/PROGRESS_ARCHIVE_PHASE_1.md`.
-
-**Command 2 — a quick sanity check that §5.3 has the right entries:**
-
-```bash
-Select-String -Path A:\QR-PROJECT\docs\PROGRESS.md -Pattern "^### ENTRY-"
-```
-
-Expected: four matches — ENTRY-0031, ENTRY-0030, ENTRY-0029, ENTRY-0027 (in that order, newest first).
-
-**Command 3 — a quick sanity check that the snapshot is updated:**
-
-```bash
-Select-String -Path A:\QR-PROJECT\docs\PROGRESS.md -Pattern "^Current phase|^Current milestone|^Current task"
-```
-
-Expected: `Current phase: Phase 2 — The Data Model`, `Current milestone: 2.1 — The schema`, `Current task: 2.1.1 — Configure the database client and the migration tool (next)`.
-
-**Command 4 — commit and push:**
-
-```bash
-cd A:\QR-PROJECT; git add docs/ROADMAP.md docs/PROGRESS.md docs/PROGRESS_ARCHIVE_PHASE_1.md
-```
-
-```bash
-cd A:\QR-PROJECT; git commit -m "PROGRESS: close Milestone 1.4 and Milestone 1.5; close Phase 1" -m "Rewrites PROGRESS.md §5.1 (adds Milestone 1.4 and Milestone 1.5 closed summaries), §5.2 (adds entries 0024 through 0031; next entry number 0032), §5.3 (moves to 'Current Milestone — none' with four entries kept: 0031, 0030, 0029, and the STRUCTURAL entry 0027), and §7 (Phase 2 begins, Milestone 2.1, Task 2.1.1). Adds two new milestone sections to PROGRESS_ARCHIVE_PHASE_1.md. Updates ROADMAP.md: all Milestone 1.4 and 1.5 rows complete. Phase 1 is closed." -m "No code files changed. No test files changed."
-```
-
-```bash
-cd A:\QR-PROJECT; git push
-```
-
-```bash
-cd A:\QR-PROJECT; git log --oneline origin/main -5
-```
-
-Expected: the document commit at the top, then the 1.5.3 commit, then 46e7da4, then b558642, then e62eb63.
-
----
-
-**Paste the raw output of Commands 1, 2, 3, and 4 (the commit), and 5 (the log).** If you do not have ENTRY-0024 through ENTRY-0026 and ENTRY-0028 saved anywhere, say so before you edit the archive, and I will paste them in full. Do not proceed to commit the archive until every entry that belongs in it is present.

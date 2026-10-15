@@ -1,7 +1,8 @@
 # BUILD.md — How Code Is Written, Tested, and Verified
 
-**Version:** 1.0
-**Status:** Draft for approval
+**Version:** 2.0
+**Status:** Approved
+**Approved:** 2026-10-15
 **Purpose:** Describe how the developer writes code, tests it, verifies it, and closes a task. This file owns the coding standards, the testing strategy, the local setup, the verification protocol, the task format, the report format, the session hygiene, and the definition of done. It does not own the product (PRODUCT.md), the reasons (DECISIONS.md), or the shape (SYSTEM.md).
 
 **How to read this file:** Every rule here exists to prevent a specific class of mistake. A rule is not written because it is fashionable; it is written because ignoring it has a cost. If a rule becomes unnecessary, it is removed in a new version of this file. Nothing here contradicts DECISIONS.md or SYSTEM.md.
@@ -107,15 +108,16 @@ These rules apply to every file in the domain layer.
 1. **Every public function returns a `Result`.** If the function can fail for a business reason, the failure is returned, not thrown.
 2. **Never throw for an expected failure.** A missing record, an invalid transition, an unauthorized action — all returned as failures.
 3. **Never return null to signal failure.** Use the failure type.
-4. **Never import the database client.** The domain talks to the infrastructure through interfaces, never directly.
+4. **Never import the database client.** The domain talks to the infrastructure through interfaces, never directly. This is the ports-and-adapters pattern described in SYSTEM.md §2.
 5. **Never import React.** The domain is framework-agnostic.
 6. **Never import HTTP types.** Requests and responses belong to the API layer, not the domain.
 7. **Money is a decimal, never a floating-point number.** A price, a tax, a total, and a modifier price are all stored and computed with decimal arithmetic.
 8. **The venue's scope comes from the caller, never from the input.** A domain function receives the venue's identifier from the API layer (which resolved it from the session), never from a request body.
 9. **Snapshots are written once and never updated.** An order's item prices, an order's tax rate, and an order's line totals are written at order creation and never modified.
 10. **Multi-row writes use a transaction.** Creating an order writes the order, its items, and its first state-change record inside one transaction. Partial writes are forbidden.
+11. **A domain function that writes an order accepts the idempotency key.** The `createOrder` function takes the client-generated idempotency key (per SYSTEM.md §9.7 and D-4.12) as an input and passes it to the order repository. The repository enforces the unique constraint. A repeat with the same key returns the existing order rather than creating a new one. This is what makes the local retry (D-8.2) safe.
 
-*Traces to:* SYSTEM.md §2 (the layers), SYSTEM.md §5 (the Result contract), SYSTEM.md §9 (the order lifecycle), D-4.1 (frozen prices), D-4.4 (frozen tax), D-2.2 (guest cart), D-4.3 (one tax rate).
+*Traces to:* SYSTEM.md §2 (the layers), SYSTEM.md §5 (the Result contract), SYSTEM.md §9 (the order lifecycle), SYSTEM.md §9.7 (the idempotency contract), D-4.1 (frozen prices), D-4.4 (frozen tax), D-4.12 (the idempotency key), D-2.2 (guest cart), D-4.3 (one tax rate).
 
 ---
 
@@ -132,8 +134,9 @@ These rules apply to every file in the API layer.
 7. **A state transition is validated by the domain, never accepted from the client.** The client asks; the server decides.
 8. **Money is a string on the wire.** A price of 10.99 is sent as `"10.99"`, never as `10.99`. The client formats it for display; the client never computes with it.
 9. **Input is validated before the domain is called.** A request with missing or malformed fields returns `VALIDATION_FAILED` before touching the domain.
+10. **The create-order route accepts the idempotency key.** The `POST /api/guest/orders` route reads the client-generated idempotency key from the request body, validates it (a well-formed UUID), and passes it to the domain. A request whose key is missing or malformed returns `VALIDATION_FAILED` before the domain is called. This is what makes the local retry (D-8.2) safe.
 
-*Traces to:* SYSTEM.md §5 (the Result contract), SYSTEM.md §12 (the API surface), D-4.1 (frozen prices), D-4.4 (frozen tax).
+*Traces to:* SYSTEM.md §5 (the Result contract), SYSTEM.md §12 (the API surface), SYSTEM.md §9.7 (the idempotency contract), D-4.1 (frozen prices), D-4.4 (frozen tax), D-4.12 (the idempotency key).
 
 ---
 
@@ -166,8 +169,8 @@ These rules apply to every file in the API layer.
 - Passwords are hashed with a strong hashing function. The plain password is never stored, logged, or transmitted.
 - Sessions are stored server-side. The cookie carries only a random token.
 - XSS is prevented by React's default escaping. Dangerous HTML injection is never used with user data.
-- CSRF protection is applied to state-changing endpoints (deferred to a later version if needed).
-- Rate limiting is applied to the login endpoint (deferred to a later version if needed).
+- CSRF protection is applied to state-changing endpoints. **This is a Phase 10 release requirement, not optional.** A production release does not ship without CSRF protection.
+- Rate limiting is applied to the login endpoint. **This is a Phase 10 release requirement, not optional.** A production release does not ship without login rate limiting.
 
 *Traces to:* D-4.1 (frozen prices), D-4.4 (frozen tax), D-2.1 (guest anonymous), D-3.1 to D-3.8 (staff identity), D-10.2 (isolation), SYSTEM.md §15 (security boundaries).
 
@@ -199,6 +202,7 @@ The product has three levels of tests.
 ### 8.3 What the integration tests cover
 
 - The guest places an order and the order is stored with the correct prices and tax.
+- A duplicate create-order request with the same idempotency key returns the existing order and does not create a second one.
 - The staff advance the order through every state, and an invalid transition returns an error.
 - The kitchen sees the order after approval and moves it through its states.
 - The guest's tracking screen reads the current state.
@@ -230,6 +234,34 @@ The product has three levels of tests.
 ### 8.7 The coverage philosophy
 
 Coverage is measured but not targeted as a percentage. A high coverage number with weak assertions is worse than a low coverage number with strong ones. The tests focus on the areas where mistakes are expensive: money, tenancy, state transitions, and authentication.
+
+### 8.8 The mandatory test layer by change type
+
+The three levels of tests are defined in §8.1. The table below says which level is **mandatory** for which kind of change. A change that belongs to a row must be covered at that level, or the task is not done (per §15). The mandatory levels are a floor, not a ceiling; a task may add more tests than the table requires.
+
+| Change type | Mandatory test level | What must be proven |
+|-------------|----------------------|---------------------|
+| Domain logic (pricing, state machines, validation, permission checks) | Unit test | The function returns the correct `Result` for every input, including the failure cases. |
+| Database schema, migrations, repositories | Integration test | The schema applies cleanly to a test database; the repository reads and writes real rows; constraints (including the idempotency key uniqueness) are enforced. |
+| API route (request validation, response shape) | Integration test | The route returns the correct envelope and status for a valid request. **A negative test is also mandatory:** a request that is unauthorized, or that supplies a forbidden value (a client price, a client venue, a client order state, a missing idempotency key), is rejected with the correct error code. |
+| Authentication or permission change | Unit test + integration test + negative integration test | The function behaves correctly (unit); the route enforces it (integration); an unauthorized caller is rejected (negative). |
+| Guest-facing screen (a page or a component on a guest route) | Manual mobile check | The screen renders on a real phone or a phone viewport, and its empty, loading, error, and success states behave as specified in DESIGN.md. |
+| Staff-facing screen (a page or a component on a staff, kitchen, or admin route) | Manual desktop check | The screen renders at the staff world's target viewport, and its states behave as specified in DESIGN.md. |
+| Any change touching money, tax, or the order snapshot | Unit test + integration test | The arithmetic is exact (unit); the stored values are frozen at the moment of ordering (integration). |
+| Any change that adds or modifies a public API route | Integration test | The contract in SYSTEM.md §12 is honoured; the response envelope is correct; the route validates its input before the domain is called. |
+| Any change to a design token, a base component, or a layout wrapper | Manual check in both worlds | The change is visible in the correct world and not visible in the other; reduced-motion behaviour is unchanged. |
+
+**How to read the table.** Find the row that matches the change. That row's mandatory test level is the floor. If the change does not fit a row, use the closest row's level and note the choice in the report's Deviations.
+
+**What is never acceptable:**
+- A domain function with no unit test.
+- A repository with no integration test.
+- An API route with no integration test.
+- An authentication or permission change with no negative test.
+- A guest-facing screen change with no manual mobile check.
+- A staff-facing screen change with no manual desktop check.
+
+**What manual checks are.** A manual check is a step the developer performs in a browser or on a device, and records the observed result — a screenshot, or a precise description of what was seen. It is not a claim that "the screen looks fine". It is a specific observation of a specific state.
 
 *Traces to:* D-15.1 (complete loop working), D-15.7 (structure correct from the beginning), §15 (the definition of done).
 
@@ -269,10 +301,10 @@ No secret is committed to the repository. The example file contains placeholder 
 
 The seed script creates a fully populated venue:
 
-- One venue with both the table and room modules enabled.
+- One venue with the table, room, and counter modules enabled.
 - A set of tables with numbers.
 - A set of rooms with numbers.
-- A set of QR tokens, one per table and one per room.
+- A set of QR tokens, one per table, one per room, and one for the counter.
 - A set of menu categories and menu items with modifiers.
 - A set of staff members with different roles.
 - A set of hotel services enabled.
@@ -504,7 +536,7 @@ A task is done when every applicable condition is satisfied. A condition that do
 - Every acceptance criterion has raw evidence.
 - The type checker passes with no errors.
 - The build passes with no errors.
-- The new behaviour is covered by a test (unit, integration, or end-to-end, whichever is appropriate).
+- The new behaviour is covered by a test at the mandatory level for the change type (per §8.8).
 - The existing tests still pass.
 - No file outside the task's scope was changed.
 - The structure remains correct (the file is in its correct folder, the naming follows the conventions, the boundaries are respected).
@@ -522,7 +554,7 @@ A task is not done if any of the following is true:
 - A decision was made silently.
 - The report claims something that is not proven.
 
-*Traces to:* Principle 5 (the process is the guarantee), §11 (the verification protocol), §13 (the report format).
+*Traces to:* Principle 5 (the process is the guarantee), §11 (the verification protocol), §13 (the report format), §8.8 (the mandatory test layer).
 
 ---
 
