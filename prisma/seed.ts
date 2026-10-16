@@ -53,6 +53,7 @@ export const SEED_VENUE: CreateVenueInput = {
     "WAKE_UP_CALL",
     "DO_NOT_DISTURB",
   ],
+  counter: { name: "Counter" },
 };
 
 export const TABLE_NUMBERS = [
@@ -82,10 +83,13 @@ export const ROOM_NUMBERS = [
 ];
 
 /**
- * Resolves the seed venue by slug. If it exists, returns its ID.
- * If not, creates it via the venue repository and returns the newly generated ID.
+ * Resolves the seed venue by slug. If it exists, returns its ID and counter ID.
+ * If not, creates it via the venue repository and returns the newly generated IDs.
  */
-export async function seedVenue(): Promise<string> {
+export async function seedVenue(): Promise<{
+  venueId: string;
+  counterId: string;
+}> {
   const venueRepo = createPrismaVenueRepository(prisma);
 
   const existingResult = await venueRepo.findBySlug(SEED_VENUE.slug);
@@ -93,7 +97,11 @@ export async function seedVenue(): Promise<string> {
     console.log(
       `Venue already exists: ${existingResult.value.slug} (id: ${existingResult.value.id})`
     );
-    return existingResult.value.id;
+    const counterId = existingResult.value.counter?.id;
+    if (!counterId) {
+      throw new Error(`Venue ${existingResult.value.slug} has no counter`);
+    }
+    return { venueId: existingResult.value.id, counterId };
   }
 
   if (existingResult.error.code === DomainErrorCode.NOT_FOUND) {
@@ -107,7 +115,13 @@ export async function seedVenue(): Promise<string> {
     console.log(
       `Created venue: ${createResult.value.slug} (id: ${createResult.value.id})`
     );
-    return createResult.value.id;
+    const counterId = createResult.value.counter?.id;
+    if (!counterId) {
+      throw new Error(
+        `Created venue ${createResult.value.slug} has no counter`
+      );
+    }
+    return { venueId: createResult.value.id, counterId };
   }
 
   console.error(
@@ -290,6 +304,52 @@ export async function seedQrTokens(venueId: string): Promise<void> {
       `Seeded ${createdTablesCount} table tokens and ${createdRoomsCount} room tokens.`
     );
   }
+}
+
+/**
+ * Seeds a QR token for the counter.
+ * Idempotent: checks for active counter token via listForVenue before generating.
+ */
+export async function seedCounter(
+  venueId: string,
+  counterId: string
+): Promise<void> {
+  const qrRepo = createPrismaQrTokenRepository(prisma);
+
+  const activeTokensResult = await qrRepo.listForVenue(venueId, {
+    state: QrTokenState.ACTIVE,
+  });
+  if (!activeTokensResult.ok) {
+    console.error(
+      `Failed to list QR tokens: [${activeTokensResult.error.code}] ${activeTokensResult.error.message}`
+    );
+    return;
+  }
+
+  const hasActiveCounterToken = activeTokensResult.value.some(
+    (token) =>
+      token.placeType === PlaceType.COUNTER && token.counterId === counterId
+  );
+
+  if (hasActiveCounterToken) {
+    console.log("Counter already has an active token.");
+    return;
+  }
+
+  const generateResult = await qrRepo.generate({
+    venueId,
+    placeType: PlaceType.COUNTER,
+    counterId,
+  });
+
+  if (!generateResult.ok) {
+    console.error(
+      `Failed to generate token for counter: [${generateResult.error.code}] ${generateResult.error.message}`
+    );
+    return;
+  }
+
+  console.log(`Created token for counter: ${generateResult.value.token}.`);
 }
 
 async function seedMenu(venueId: string): Promise<void> {
@@ -604,9 +664,10 @@ async function seedMenu(venueId: string): Promise<void> {
 
 async function main(): Promise<void> {
   console.log("Seed starting.");
-  const venueId = await seedVenue();
+  const { venueId, counterId } = await seedVenue();
   await seedTablesAndRooms(venueId);
   await seedQrTokens(venueId);
+  await seedCounter(venueId, counterId);
   await seedMenu(venueId);
   console.log("Seed complete.");
 }

@@ -186,8 +186,9 @@ A quick index of every entry this file has ever held, including those that have 
 | 0048  | 2026-10-16 | Task 2.3.5 — Seed the enabled hotel services                                            | PASS       | 2.3        | current  |
 | 0049  | 2026-10-16 | Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3               | STRUCTURAL | 2.3        | current  |
 | 0050  | 2026-10-16 | Task 2.3.6.A — Extend CreateVenueInput and venue adapter for counter                    | PASS       | 2.3        | current  |
+| 0051  | 2026-10-16 | Task 2.3.6.B — Seed the counter and its QR token                                        | PASS       | 2.3        | current  |
 
-Next entry number: 0051.
+Next entry number: 0052.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
@@ -196,6 +197,467 @@ Next entry number: 0051.
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0051 — 2026-10-16 — Task 2.3.6.B — Seed the counter and its QR token
+
+**Status:** PASS
+
+**Task:** Task 2.3.6.B — Seed the counter and its QR token in prisma/seed.ts.
+
+**Summary:**
+Configured SEED_VENUE with counter: { name: "Counter" }, updated seedVenue() to unpack and return the venue and counter IDs, implemented seedCounter() to generate an active QR token for the counter place via QrTokenRepository.generate, and wired seedCounter() into main() following seedQrTokens(). Verified initial seeding creates 1 counter row and 1 active counter QR token, second run is strictly idempotent, no orders are seeded, all 43 unit and 78 integration tests pass, and TypeScript typecheck is clean.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `prisma/seed.ts` | Modified | Added counter: { name: "Counter" } to SEED_VENUE, updated seedVenue() to return counterId, added seedCounter() with idempotency check, and wired into main() after seedQrTokens() |
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.6.B as ✅ Complete |
+| `docs/PROGRESS.md` | Modified | Appended ENTRY-0051, updated §5.2 ledger, and advanced §7 snapshot to Task 2.3.7 |
+
+**Commands Run:**
+
+1. Reset the development database:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'qrproject' AND pid <> pg_backend_pid();"
+```
+
+```text
+ pg_terminate_backend 
+----------------------
+(0 rows)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "DROP DATABASE IF EXISTS qrproject;"
+```
+
+```text
+DROP DATABASE
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE qrproject;"
+```
+
+```text
+CREATE DATABASE
+```
+
+```powershell
+pnpm prisma migrate deploy
+```
+
+```text
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "qrproject", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20261015183749_phase2_initial_schema`
+Applying migration `20261015204426_add_note_to_order_state_change`
+Applying migration `20261015211847_add_failure_reason_to_payment_tickets`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261015183749_phase2_initial_schema/
+    └─ migration.sql
+  └─ 20261015204426_add_note_to_order_state_change/
+    └─ migration.sql
+  └─ 20261015211847_add_failure_reason_to_payment_tickets/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+```
+
+2. First seed run:
+
+```powershell
+pnpm db:seed
+```
+
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Created venue: juniper-house (id: e6754048-4c6b-41b1-bf07-bac6ab7a66c5)
+Seeding tables and rooms...
+Created table 1 (id: 4dbd6f7a-885e-4841-8ac3-e862b074c6aa).
+Created table 2 (id: 8118ea75-6a73-4951-bbfd-70d280012f5e).
+Created table 3 (id: ca7aee81-06ff-470d-a7f4-035dd8de1c14).
+Created table 4 (id: d9496b38-9aec-4924-8bba-6707b161dc93).
+Created table 5 (id: eba3036d-4f76-47ac-be4f-80971e75a58d).
+Created table 6 (id: e8135f30-4c42-4517-82d4-d8c6d560f868).
+Created table 7 (id: 3122df8b-e18f-4015-a3c6-47883d522ce9).
+Created table 8 (id: e8ee0929-56d3-4724-843d-caf61a2512ec).
+Created table 9 (id: 2af7c319-4966-4fc8-b612-3f471ffb2560).
+Created table 10 (id: 448f37d0-0932-4ff6-ad03-2b1423e4580a).
+Created table 11 (id: f26c9d21-4ba6-4cf6-9ae3-9302396d9631).
+Created table 12 (id: 6736d8db-eeab-4ae8-8fce-6dff0b89801c).
+Created room 401 (id: a00a5029-e16e-4973-8688-73fe2d585d92).
+Created room 402 (id: 646f5671-7bdb-403c-b0da-da9dbf0879c9).
+Created room 403 (id: 453d9a6f-6420-4409-8c75-cefecc9cc0d4).
+Created room 404 (id: d0b950dc-46de-47d5-a98e-c1b2f60571cd).
+Created room 411 (id: bff4d0f4-e04a-4ee4-aab6-6a4be0c95e75).
+Created room 412 (id: 9d59b3d7-4519-439d-8c9b-d0fc6cacbe84).
+Created room 413 (id: e4059da9-bb81-4506-9c6f-a560992c7131).
+Created room 414 (id: 26df2f9c-3d71-4221-9bdc-499c15d58f15).
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Created token for table 1: 100af438-9644-435c-a710-461ac839a242.
+Created token for table 2: 78bf79c2-21e6-496f-9b7b-cc00fda2a015.
+Created token for table 3: 99fb486e-4846-40c7-96cb-7c5170906860.
+Created token for table 4: 6015a3e2-ef35-416d-807c-8cc555689403.
+Created token for table 5: 1dda3280-66e7-4778-9ee7-822a87e27948.
+Created token for table 6: a3b256ea-cff4-473f-b325-ffdd3ccde1f6.
+Created token for table 7: 9f139581-0388-4367-bfc6-0a6c055198dd.
+Created token for table 8: feb5ad64-88d0-4a58-9db1-9dccb6403883.
+Created token for table 9: a2baf419-f55b-4d7c-ab5a-166d966c6d08.
+Created token for table 10: 27c62251-d3ce-4ba1-858a-504999a6ea36.
+Created token for table 11: 1620ad28-5095-4f1d-acfd-3ec2d8fc7c2c.
+Created token for table 12: 8bc45edc-0b96-4c73-a1b6-c69e46988ac3.
+Created token for room 401: 0f40567b-cb18-43b7-afb8-aa42cc4bb347.
+Created token for room 402: 6aa9e940-cba1-4379-9168-74fbcdfbe026.
+Created token for room 403: eeca7577-26d9-4c00-b098-a7d1234cff33.
+Created token for room 404: 7f4b4b06-5215-47e0-9184-3004c2bb6068.
+Created token for room 411: 352909ed-2ac7-48ab-a754-cf06497d9537.
+Created token for room 412: 204f0731-fc60-49f1-9a83-1530a96824c9.
+Created token for room 413: 0214e9c0-a1c2-4d0b-b317-c024db3a9398.
+Created token for room 414: 5e08973a-11d5-43ab-8a89-ef9b7a52f2d8.
+Seeded 12 table tokens and 8 room tokens.
+Created token for counter: 3142162f-c9c8-4a48-ac1b-c138236b8c0b.
+Seeding menu...
+Created category Starters (id: def7c6d1-bfd2-4400-84d8-63fa52a83b25).
+Created category Mains (id: 80005dcb-47b0-44d2-93b0-00aaae8a2d2b).
+Created category Desserts (id: 6ece363b-5ab5-484b-9185-8d6a787c7d84).
+Created item Soup of the Day (id: d8ef7ba8-4bb3-48bf-a254-2f27f8f3c287).
+Created item Garden Salad (id: b59c4f4d-b573-48cc-9981-04f3bd10f76b).
+Created item Bruschetta (id: 536c6571-ada0-4908-8995-2ee4f9fcfb9a).
+Created item Grilled Salmon (id: 407f4dcb-a9b3-4084-832e-08e5a175de94).
+Created item Ribeye Steak (id: 486b9084-bbde-4d0e-ba8c-19ff5e70690d).
+Created item Mushroom Risotto (id: 9cb455b4-6d25-490d-b2ab-d91540372259).
+Created item Roast Chicken (id: efe566e3-b2b4-49ff-b1be-36a6f6dcd008).
+Created item Chocolate Cake (id: 56abc55e-f920-4a1b-bf36-82647a9c9f3d).
+Created item Crème Brûlée (id: 3eb199d6-abd9-4f96-b33e-390be4cfd483).
+Created item Seasonal Fruit Plate (id: 504b0558-2818-494c-8a46-834ba1ec21ef).
+Created modifier group Doneness (id: 29f906a9-112f-41de-a1c6-c9dad42b2f69).
+Created modifier option Doneness/Rare.
+Created modifier option Doneness/Medium.
+Created modifier option Doneness/Well.
+Created modifier group Extras (id: 23bd9981-e7b0-42ae-bca6-8fec2227111d).
+Created modifier option Extras/Extra cheese.
+Created modifier option Extras/Bacon.
+Created modifier option Extras/Avocado.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+```
+
+3. Counter count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM counters;"
+```
+
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+4. Counter row details:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c 'SELECT id, name, \"venueId\" FROM counters;'
+```
+
+```text
+                  id                  |  name   |               venueId                
+--------------------------------------+---------+--------------------------------------
+ 53ad307d-98c8-45e4-93ca-3747ef7a8860 | Counter | e6754048-4c6b-41b1-bf07-bac6ab7a66c5
+(1 row)
+```
+
+5. Counter token count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM qr_tokens WHERE \`"placeType\`" = 'COUNTER' AND state = 'ACTIVE';"
+```
+
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+6. Counter token details:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT token, \`"counterId\`", \`"tableId\`", \`"roomId\`", state FROM qr_tokens WHERE \`"placeType\`" = 'COUNTER';"
+```
+
+```text
+                token                 |              counterId               | tableId | roomId | state  
+--------------------------------------+--------------------------------------+---------+--------+--------
+ 3142162f-c9c8-4a48-ac1b-c138236b8c0b | 53ad307d-98c8-45e4-93ca-3747ef7a8860 |         |        | ACTIVE
+(1 row)
+```
+
+7. Orders count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM orders;"
+```
+
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+8. Second seed run (idempotency):
+
+```powershell
+pnpm db:seed
+```
+
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Venue already exists: juniper-house (id: e6754048-4c6b-41b1-bf07-bac6ab7a66c5)
+Seeding tables and rooms...
+Table 1 already exists.
+Table 2 already exists.
+Table 3 already exists.
+Table 4 already exists.
+Table 5 already exists.
+Table 6 already exists.
+Table 7 already exists.
+Table 8 already exists.
+Table 9 already exists.
+Table 10 already exists.
+Table 11 already exists.
+Table 12 already exists.
+Room 401 already exists.
+Room 402 already exists.
+Room 403 already exists.
+Room 404 already exists.
+Room 411 already exists.
+Room 412 already exists.
+Room 413 already exists.
+Room 414 already exists.
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Table 1 already has an active token.
+Table 2 already has an active token.
+Table 3 already has an active token.
+Table 4 already has an active token.
+Table 5 already has an active token.
+Table 6 already has an active token.
+Table 7 already has an active token.
+Table 8 already has an active token.
+Table 9 already has an active token.
+Table 10 already has an active token.
+Table 11 already has an active token.
+Table 12 already has an active token.
+Room 401 already has an active token.
+Room 402 already has an active token.
+Room 403 already has an active token.
+Room 404 already has an active token.
+Room 411 already has an active token.
+Room 412 already has an active token.
+Room 413 already has an active token.
+Room 414 already has an active token.
+Seeded 0 table tokens and 0 room tokens; all places already have active tokens.
+Counter already has an active token.
+Seeding menu...
+Category Starters already exists.
+Category Mains already exists.
+Category Desserts already exists.
+Item Soup of the Day already exists.
+Item Garden Salad already exists.
+Item Bruschetta already exists.
+Item Grilled Salmon already exists.
+Item Ribeye Steak already exists.
+Item Mushroom Risotto already exists.
+Item Roast Chicken already exists.
+Item Chocolate Cake already exists.
+Item Crème Brûlée already exists.
+Item Seasonal Fruit Plate already exists.
+Modifier group Doneness already exists.
+Modifier option Doneness/Rare already exists.
+Modifier option Doneness/Medium already exists.
+Modifier option Doneness/Well already exists.
+Modifier group Extras already exists.
+Modifier option Extras/Extra cheese already exists.
+Modifier option Extras/Bacon already exists.
+Modifier option Extras/Avocado already exists.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+```
+
+9. Re-check counter count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM counters;"
+```
+
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+10. Re-check counter token count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM qr_tokens WHERE \`"placeType\`" = 'COUNTER' AND state = 'ACTIVE';"
+```
+
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+11. Typecheck:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+12. Unit test suite:
+
+```powershell
+pnpm test:unit
+```
+
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/date.test.ts (14 tests) 17ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 17ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  19:41:14
+   Duration  152ms (tests 45%, import 30%, transform 14%, worker 10%)
+```
+
+13. Integration suite:
+
+```powershell
+pnpm test:integration
+```
+
+```text
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  19:41:21
+   Duration  42.56s (tests 97%, setup 2%)
+```
+
+14. Boundary check:
+
+```powershell
+Select-String -Path prisma/seed.ts -Pattern "from\s+['""]@prisma/client['""]"
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+15. ROADMAP check:
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "2\.3\.6\.B"
+```
+
+```text
+docs\ROADMAP.md:206:| 2.3.6.B | Seed the counter and its QR token in prisma/seed.ts                                                | ✅ Complete | 2.3.6.A    |
+```
+
+16. Working tree check:
+
+```powershell
+git status --short
+```
+
+```text
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+ M prisma/seed.ts
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | SEED_VENUE contains counter: { name: "Counter" } | PASS | Verified in Command 2 execution / source inspection |
+| 2 | seedCounter() is defined in prisma/seed.ts | PASS | Defined at lines 313–352 of prisma/seed.ts |
+| 3 | main() calls seedCounter after seedQrTokens | PASS | Wired as `seedQrTokens` -> `seedCounter` -> `seedMenu` |
+| 4 | The first seed run creates the counter row | PASS | Command 3 returns `1` |
+| 5 | The first seed run creates the counter's QR token | PASS | Command 5 returns `1` |
+| 6 | The counter token's counterId references the counter row | PASS | Command 6 confirms `counterId = 53ad307d-98c8-45e4-93ca-3747ef7a8860` matches counter row |
+| 7 | The counter token is an opaque UUID | PASS | Command 6 confirms token is `3142162f-c9c8-4a48-ac1b-c138236b8c0b` |
+| 8 | The second seed run does not duplicate the counter | PASS | Command 8 logs `Venue already exists`; Command 9 returns `1` |
+| 9 | The second seed run does not duplicate the counter token | PASS | Command 8 logs `Counter already has an active token.`; Command 10 returns `1` |
+| 10 | No orders were seeded | PASS | Command 7 returns `0` |
+| 11 | No file outside the scope was changed | PASS | Command 16 shows exactly the 3 specified files |
+| 12 | The seed does not import @prisma/client | PASS | Command 14 returns clean empty output |
+| 13 | The typecheck passes | PASS | Command 11 clean exit code 0 |
+| 14 | The unit suite still passes with 43 tests | PASS | Command 12 passed 43/43 tests |
+| 15 | The integration suite still passes with 78 tests | PASS | Command 13 passed 78/78 tests across 15 files |
+| 16 | ROADMAP.md marks Task 2.3.6.B as complete | PASS | Command 15 confirms `✅ Complete` |
+| 17 | PROGRESS.md has ENTRY-0051 and §7 names Task 2.3.7 | PASS | Verified in current document update |
+
+**Deviations from Contract:**
+1. `listForVenue` filter: `QrTokenRepository.listForVenue(venueId, options)` in domain port accepts `{ state?: QrTokenState }` without a `placeType` property. Per §5.2's instruction to adapt without modifying the port, `seedCounter` queries `listForVenue(venueId, { state: QrTokenState.ACTIVE })` and checks in memory whether an active token exists matching `token.placeType === PlaceType.COUNTER && token.counterId === counterId`, identical to how `seedQrTokens` verifies table and room tokens.
+2. Placement in `main()`: `seedCounter` was wired immediately after `seedQrTokens` and before `seedMenu` (`await seedQrTokens(venueId); await seedCounter(venueId, counterId); await seedMenu(venueId);`), matching §5.3.
+
+**Noticed but Out of Scope:**
+`seedCounter` and `seedQrTokens` both call `qrRepo.listForVenue(venueId, { state: QrTokenState.ACTIVE })`. Because seeding is an onboarding/setup script rather than a hot runtime path, the separate queries preserve modularity and idempotency without coupling the token generators.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Satisfies D-1.1, D-1.2, D-16.2, D-17.3 | No change |
+| SYSTEM.md | No | Satisfies §8.6, §11.1, §11.2 | No change |
+| BUILD.md | No | Adheres to §5.5, §9.4, §10.5, §11, §13 | No change |
+| ROADMAP.md | Yes | Marked Task 2.3.6.B as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0051, updated ledger, advanced §7 snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 2.3.7 — Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data. The first action: run the seed twice on a fresh database and query every table's row count after the first and second runs, then compare.
+
+**Awaiting Human Verification:** NO
 
 ### ENTRY-0050 — 2026-10-16 — Task 2.3.6.A — Extend CreateVenueInput and venue adapter for counter
 
@@ -3499,9 +3961,9 @@ Current phase: Phase 2 — The Data Model.
 
 Current milestone: Milestone 2.3 — The seed.
 
-Current task: Task 2.3.6.B — Seed the counter and its QR token in prisma/seed.ts.
+Current task: Task 2.3.7 — Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data.
 
-Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), 2.3.5 (Seed the enabled hotel services), and 2.3.6.A (Extend CreateVenueInput and the venue adapter to support an optional counter) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles; venue repository port and adapter updated to support optional nested counter writes and reads with CounterSummary mapping. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (78/78 across 15 files) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.6.B.
+Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), 2.3.5 (Seed the enabled hotel services), 2.3.6.A (Extend CreateVenueInput and the venue adapter to support an optional counter), and 2.3.6.B (Seed the counter and its QR token) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 1 counter, 21 active QR tokens (12 table, 8 room, 1 counter), 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles; 0 seeded orders. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (78/78 across 15 files) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.7.
 
 ## 8. How the File Evolves
 
