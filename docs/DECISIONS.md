@@ -27,7 +27,7 @@
 14. Deployment — D-14.1 to D-14.3
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
 16. Implementation Contracts — D-16.1 to D-16.4
-17. Development Process — D-17.1
+17. Development Process — D-17.1 to D-17.3
 
 ---
 
@@ -2096,9 +2096,39 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ---
 
+### D-17.3 — The counter is a nested write of the venue's creation, and the seed does not create orders
+
+**Decision:** The counter is written as a nested create inside the venue's create call, exactly as the venue's modules and services are. CreateVenueInput gains an optional counter?: { name?: string } field. The venue adapter's create method writes the counter inside the same client.venue.create transaction. The seed's SEED_VENUE gains counter: { name: "Counter" }, and the seed creates the counter's QR token through the existing QrTokenRepository.generate method with placeType: COUNTER. The seed does not create orders — orders are runtime data with guest sessions, frozen prices, frozen tax rates, and client-generated idempotency keys, none of which a seed can honestly produce. Task 2.3.6 is split: 2.3.6.A extends the port and adapter; 2.3.6.B seeds the counter and its token. The third clause of the original Task 2.3.6 title ("and its own pickup-labelled orders") is removed.
+
+**Context:** Task 2.3.6 assumed a counter write path existed. Inspection on 2026-10-16 (commit 1b969c9) found that it does not: src/domain/organization/venue.repository.ts names "COUNTER" only as a VenueModule literal; src/infrastructure/db/repositories/organization.repo.ts has zero references to the counter; prisma/seed.ts names "COUNTER" only in the modules array. The Counter model exists in prisma/schema.prisma with venueId String @unique, and the venue's relation is counter Counter? — one per venue. The venue adapter already writes modules and services as nested creates inside client.venue.create. The counter is the same shape of thing: a one-per-venue configuration entity that exists when its module is on (SYSTEM.md §17.1) and never changes except its name. Meanwhile, BUILD.md §9.4 defines the seed's contents and does not include orders. Orders carry a guestSessionId and an idempotencyKey (SYSTEM.md §9.7) that a seed cannot honestly synthesize. A seeded order would either omit the idempotency key's meaning or invent one no client ever sent — both are dishonest per BUILD.md §11.2.
+
+**Alternatives considered:**
+
+- A separate CounterRepository port — rejected. It invents a top-level aggregate for an entity with no lifecycle and no state. SYSTEM.md §4 names eight domain modules; none of them has a counter repository. The counter is venue configuration.
+- A createCounter method on VenueRepository — rejected. It splits one atomic write (venue + counter) into two database calls that can fail between each other, leaving a venue with no counter. The venue adapter's existing nested-create pattern is the correct shape.
+- Seeding counter orders — rejected. Orders require a guest session, frozen prices, frozen tax, and a client-generated idempotency key. A seed cannot honestly produce any of these. Orders are proven by integration tests and phase tests, not by the seed.
+- Keeping Task 2.3.6 as one task and expanding its scope — rejected. BUILD.md §12.3 rule 6 forbids combining a structural change with a behavioural change. D-17.2's precedent is that a task whose premise fails is split and re-issued, not expanded.
+
+**Consequences:**
+
+- CreateVenueInput gains one optional field: counter?: { name?: string }.
+- The venue adapter's create writes the counter as a nested create inside the same client.venue.create call.
+- VenueWithModules (or a new return shape) surfaces the counter on read.
+- An integration test in tests/integration/repositories/venue.test.ts proves the counter is written when the input includes it, and not written when the input omits it.
+- The seed's SEED_VENUE gains counter: { name: "Counter" }, and a new seedCounter(venueId) function creates the counter's QR token.
+- Task 2.3.6 is split into 2.3.6.A (structural) and 2.3.6.B (behavioural).
+- Task 2.3.7's dependency moves from 2.3.6 to 2.3.6.B.
+- The counter QR token will be consumed by Phase 4's Task 4.4.7 (the guest landing verification for the counter flow) and Phase 5's Task 5.7.7 (the counter order loop verification).
+
+**What would make us revisit:** If a future venue needs more than one counter (a food truck with two service windows, a stadium with multiple ordering points), the Counter model's venueId String @unique must change to a many-to-one, and this decision is superseded.
+
+**Traces to:** SYSTEM.md §4 (the organization module owns venue configuration), §11.1 (the counter is a place), §17.1 (the counter module is developer-set configuration), PRODUCT.md §2 (one counter per venue), §15 (the counter is one of the three physical places), BUILD.md §9.4 (the seed's contents), §12.3 rule 6 (structural and behavioural changes are separate tasks), D-17.2 (the precedent for splitting a task whose premise fails).
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 92
+**Total decisions:** 93
 **Categories:** 17
 **Status:** All locked.
 

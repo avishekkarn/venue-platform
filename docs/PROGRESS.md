@@ -184,8 +184,9 @@ A quick index of every entry this file has ever held, including those that have 
 | 0046  | 2026-10-16 | Task 2.3.4 — Seed the menu categories and menu items with modifiers                     | PASS       | 2.3        | current  |
 | 0047  | 2026-10-16 | Reconcile staff seeding dependency: move staff seed to Phase 3 (D-17.2)                 | STRUCTURAL | 2.3        | current  |
 | 0048  | 2026-10-16 | Task 2.3.5 — Seed the enabled hotel services                                            | PASS       | 2.3        | current  |
+| 0049  | 2026-10-16 | Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3               | STRUCTURAL | 2.3        | current  |
 
-Next entry number: 0049.
+Next entry number: 0050.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
@@ -194,6 +195,247 @@ Next entry number: 0049.
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0049 — 2026-10-16 — Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3
+
+**Status:** STRUCTURAL
+
+**Task:** Task 2.3.6.S — Structural: split Task 2.3.6, correct its title, and record D-17.3.
+
+**Summary:**
+Addressed the architectural finding that `Counter` has no domain port or adapter write path and that seeds cannot honestly generate runtime orders by splitting Task 2.3.6 into Task 2.3.6.A (extending `CreateVenueInput` and the venue adapter with a nested counter write) and Task 2.3.6.B (seeding the counter and its QR token). Dropped the clause "and its own pickup-labelled orders" from the roadmap, updated Task 2.3.7's dependency to 2.3.6.B, recorded locked architectural decision D-17.3 in Category 17 of `docs/DECISIONS.md`, and advanced the §7 snapshot to Task 2.3.6.A without modifying any code, test, or seed files.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Modified | Split Task 2.3.6 into 2.3.6.A and 2.3.6.B, removed pickup orders clause, and pointed Task 2.3.7 dependency to 2.3.6.B |
+| `docs/DECISIONS.md` | Modified | Added decision D-17.3, updated Category 17 Table of Contents, and incremented total decisions count to 93 |
+| `docs/PROGRESS.md` | Modified | Appended ENTRY-0049, updated §5.2 ledger, and advanced §7 snapshot to Task 2.3.6.A |
+
+**Commands Run:**
+
+1. ROADMAP check:
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "2\.3\.6|2\.3\.7"
+```
+
+```text
+docs\ROADMAP.md:205:| 2.3.6.A | Extend CreateVenueInput and the venue adapter to support an optional counter                       | ⬜          | 2.3.5      |
+docs\ROADMAP.md:206:| 2.3.6.B | Seed the counter and its QR token in prisma/seed.ts                                                | ⬜          | 2.3.6.A    |
+docs\ROADMAP.md:207:| 2.3.7   | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜          | 2.3.6.B    |
+```
+
+2. The removed clause check:
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "pickup-labelled"
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+3. DECISIONS heading check:
+
+```powershell
+Select-String -Path docs/DECISIONS.md -Pattern "^### D-17\.3"
+```
+
+```text
+docs\DECISIONS.md:2098:### D-17.3 — The counter is a nested write of the venue's creation, and the seed does not create orders
+```
+
+4. DECISIONS six-part inspection:
+
+```powershell
+Select-String -Path docs/DECISIONS.md -Pattern "^### D-17\.3" -Context 0,80
+```
+
+```text
+> docs\DECISIONS.md:2098:### D-17.3 — The counter is a nested write of the venue's creation, and the seed does not create orders
+  docs\DECISIONS.md:2099:
+  docs\DECISIONS.md:2100:**Decision:** The counter is written as a nested create inside the venue's create call, exactly as the venue's modules and services are. CreateVenueInput gains an optional counter?: { name?: string } field. The venue adapter's create method writes the counter inside the same client.venue.create transaction. The seed's SEED_VENUE gains counter: { name: "Counter" }, and the seed creates the counter's QR token through the existing QrTokenRepository.generate method with placeType: COUNTER. The seed does not create orders — orders are runtime data with guest sessions, frozen prices, frozen tax rates, and client-generated idempotency keys, none of which a seed can honestly produce. Task 2.3.6 is split: 2.3.6.A extends the port and adapter; 2.3.6.B seeds the counter and its token. The third clause of the original Task 2.3.6 title ("and its own pickup-labelled orders") is removed.
+  docs\DECISIONS.md:2101:
+  docs\DECISIONS.md:2102:**Context:** Task 2.3.6 assumed a counter write path existed. Inspection on 2026-10-16 (commit 1b969c9) found that it does not: src/domain/organization/venue.repository.ts names "COUNTER" only as a VenueModule literal; src/infrastructure/db/repositories/organization.repo.ts has zero references to the counter; prisma/seed.ts names "COUNTER" only in the modules array. The Counter model exists in prisma/schema.prisma with venueId String @unique, and the venue's relation is counter Counter? — one per venue. The venue adapter already writes modules and services as nested creates inside client.venue.create. The counter is the same shape of thing: a one-per-venue configuration entity that exists when its module is on (SYSTEM.md §17.1) and never changes except its name. Meanwhile, BUILD.md §9.4 defines the seed's contents and does not include orders. Orders carry a guestSessionId and an idempotencyKey (SYSTEM.md §9.7) that a seed cannot honestly synthesize. A seeded order would either omit the idempotency key's meaning or invent one no client ever sent — both are dishonest per BUILD.md §11.2.
+  docs\DECISIONS.md:2103:
+  docs\DECISIONS.md:2104:**Alternatives considered:**
+  docs\DECISIONS.md:2105:
+  docs\DECISIONS.md:2106:- A separate CounterRepository port — rejected. It invents a top-level aggregate for an entity with no lifecycle and no state. SYSTEM.md §4 names eight domain modules; none of them has a counter repository. The counter is venue configuration.
+  docs\DECISIONS.md:2107:- A createCounter method on VenueRepository — rejected. It splits one atomic write (venue + counter) into two database calls that can fail between each other, leaving a venue with no counter. The venue adapter's existing nested-create pattern is the correct shape.
+  docs\DECISIONS.md:2108:- Seeding counter orders — rejected. Orders require a guest session, frozen prices, frozen tax, and a client-generated idempotency key. A seed cannot honestly produce any of these. Orders are proven by integration tests and phase tests, not by the seed.
+  docs\DECISIONS.md:2109:- Keeping Task 2.3.6 as one task and expanding its scope — rejected. BUILD.md §12.3 rule 6 forbids combining a structural change with a behavioural change. D-17.2's precedent is that a task whose premise fails is split and re-issued, not expanded.
+  docs\DECISIONS.md:2110:
+  docs\DECISIONS.md:2111:**Consequences:**
+  docs\DECISIONS.md:2112:
+  docs\DECISIONS.md:2113:- CreateVenueInput gains one optional field: counter?: { name?: string }.
+  docs\DECISIONS.md:2114:- The venue adapter's create writes the counter as a nested create inside the same client.venue.create call.
+  docs\DECISIONS.md:2115:- VenueWithModules (or a new return shape) surfaces the counter on read.
+  docs\DECISIONS.md:2116:- An integration test in tests/integration/repositories/venue.test.ts proves the counter is written when the input includes it, and not written when the input omits it.
+  docs\DECISIONS.md:2117:- The seed's SEED_VENUE gains counter: { name: "Counter" }, and a new seedCounter(venueId) function creates the counter's QR token.
+  docs\DECISIONS.md:2118:- Task 2.3.6 is split into 2.3.6.A (structural) and 2.3.6.B (behavioural).
+  docs\DECISIONS.md:2119:- Task 2.3.7's dependency moves from 2.3.6 to 2.3.6.B.
+  docs\DECISIONS.md:2120:- The counter QR token will be consumed by Phase 4's Task 4.4.7 (the guest landing verification for the counter flow) and Phase 5's Task 5.7.7 (the counter order loop verification).
+  docs\DECISIONS.md:2121:
+  docs\DECISIONS.md:2122:**What would make us revisit:** If a future venue needs more than one counter (a food truck with two service windows, a stadium with multiple ordering points), the Counter model's venueId String @unique must change to a many-to-one, and this decision is superseded.
+  docs\DECISIONS.md:2123:
+  docs\DECISIONS.md:2124:**Traces to:** SYSTEM.md §4 (the organization module owns venue configuration), §11.1 (the counter is a place), §17.1 (the counter module is developer-set configuration), PRODUCT.md §2 (one counter per venue), §15 (the counter is one of the three physical places), BUILD.md §9.4 (the seed's contents), §12.3 rule 6 (structural and behavioural changes are separate tasks), D-17.2 (the precedent for splitting a task whose premise fails).
+```
+
+5. DECISIONS count check:
+
+```powershell
+Select-String -Path docs/DECISIONS.md -Pattern "Total decisions"
+```
+
+```text
+docs\DECISIONS.md:2130:**Total decisions:** 93
+```
+
+6. DECISIONS Table of Contents check:
+
+```powershell
+Select-String -Path docs/DECISIONS.md -Pattern "17\. Development Process"
+```
+
+```text
+docs\DECISIONS.md:30:17. Development Process — D-17.1 to D-17.3
+```
+
+7. PROGRESS entry and ledger check:
+
+```powershell
+Select-String -Path docs/PROGRESS.md -Pattern "ENTRY-0049"
+```
+
+```text
+docs\PROGRESS.md:187:| 0049  | 2026-10-16 | Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3               | STRUCTURAL | 2.3        | current  |
+docs\PROGRESS.md:197:### ENTRY-0049 — 2026-10-16 — Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3
+```
+
+8. Typecheck:
+
+```bash
+pnpm exec tsc --noEmit
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+9. Unit suite:
+
+```bash
+pnpm test:unit
+```
+
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 17ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 18ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  19:06:56
+   Duration  354ms (tests 39%, import 28%, transform 20%, worker 12%)
+```
+
+10. Integration suite:
+
+```bash
+pnpm test:integration
+```
+
+```text
+$ vitest run --config vitest.integration.config.ts
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.repo.test.ts (13 tests) 12127ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2536ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2348ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1968ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2383ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 1720ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2351ms
+ ✓ tests/integration/repositories/venue.test.ts (3 tests) 2206ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2268ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 1709ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2053ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2055ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2119ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1568ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 1741ms
+
+ Test Files  15 passed (15)
+      Tests  76 passed (76)
+   Start at  19:07:03
+   Duration  43.68s (tests 97%, setup 2%)
+```
+
+11. Working tree check:
+
+```bash
+git status --short
+```
+
+```text
+ M docs/DECISIONS.md
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | ROADMAP.md has rows for 2.3.6.A, 2.3.6.B, and 2.3.7, with 2.3.6.A depending on 2.3.5 and 2.3.7 depending on 2.3.6.B | PASS | Command 1 shows rows for 2.3.6.A, 2.3.6.B, and 2.3.7; old 2.3.6 row removed |
+| 2 | ROADMAP.md no longer contains the string "pickup-labelled orders" in any task title | PASS | Command 2 returns empty |
+| 3 | DECISIONS.md contains the heading ### D-17.3 — | PASS | Command 3 returns one match for `### D-17.3 —` |
+| 4 | D-17.3 uses the six-part format | PASS | Command 4 shows Decision, Context, Alternatives considered, Consequences, What would make us revisit, Traces to |
+| 5 | DECISIONS.md's appendix reads 93 | PASS | Command 5 shows `**Total decisions:** 93` |
+| 6 | DECISIONS.md's Table of Contents names D-17.3 in Category 17 | PASS | Command 6 shows `17. Development Process — D-17.1 to D-17.3` |
+| 7 | PROGRESS.md contains ENTRY-0049 with status STRUCTURAL | PASS | Command 7 returns heading and §5.2 ledger row |
+| 8 | PROGRESS.md §7 names Task 2.3.6.A as the current task | PASS | Verified in §7: `Current task: Task 2.3.6.A — Extend CreateVenueInput and the venue adapter to support an optional counter.` |
+| 9 | The typecheck still passes | PASS | Command 8 exits 0 with no errors |
+| 10 | The unit suite still passes | PASS | Command 9 confirms 43 passing across 3 files |
+| 11 | The integration suite still passes | PASS | Command 10 confirms 76 passing across 15 files |
+| 12 | No code, test, or seed file was touched | PASS | Command 11 shows only `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/ROADMAP.md` |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- In `src/domain/organization/venue.repository.ts`, `VenueWithModules` currently extends `Venue` with `modules: VenueModule[]` and `services: HotelService[]`. Task 2.3.6.A will need to decide whether `counter?: { id: string; name: string } | null` belongs on `VenueWithModules` or if reads continue to surface `VenueWithModules` with counter retrieved when queried.
+- No other out-of-scope issues observed.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| `PRODUCT.md` | No | Requirements unchanged | No change |
+| `DECISIONS.md` | Yes | Added decision D-17.3, updated TOC and Appendix count | Updated |
+| `SYSTEM.md` | No | Architecture and counter entity definition preserved | No change |
+| `BUILD.md` | No | Conventions upheld | No change |
+| `ROADMAP.md` | Yes | Task 2.3.6 split into 2.3.6.A and 2.3.6.B, 2.3.7 dependency updated | Updated |
+| `PROGRESS.md` | Yes (this entry) | Appended ENTRY-0049, updated ledger, advanced §7 snapshot | Updated |
+| `PHASE_TESTS.md` | No | Phase 2 acceptance test preserved | No change |
+| `README.md` | No | No change needed | No change |
+
+**Contradiction Check:**
+1. Does this entry contradict any decision in DECISIONS.md? No — compliant with D-17.1, D-17.2, and records D-17.3.
+2. Does this entry contradict any rule in SYSTEM.md? No — aligns with §4, §11.1, §11.3, and §17.1.
+3. Does this entry introduce an untracked dependency? No — cleanly separates structural port/adapter work from behavioural seed work.
+4. Does this entry bypass the domain repository pattern? No — enforces that counter writing is integrated into `VenueRepository.create`.
+5. Does this entry alter past entries without justification? No — append-only modification to documentation.
+
+**Next:**
+Task 2.3.6.A — Extend CreateVenueInput and the venue adapter to support an optional counter. The first action: read src/domain/organization/venue.repository.ts and src/infrastructure/db/repositories/organization.repo.ts to confirm the current shape of CreateVenueInput, VenueWithModules, and the venue adapter's create method.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0048 — 2026-10-16 — Task 2.3.5 — Seed the enabled hotel services
 
@@ -3016,9 +3258,9 @@ Current phase: Phase 2 — The Data Model.
 
 Current milestone: Milestone 2.3 — The seed.
 
-Current task: Task 2.3.6 — Seed the counter, its QR token, and its own pickup-labelled orders.
+Current task: Task 2.3.6.A — Extend CreateVenueInput and the venue adapter to support an optional counter.
 
-Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), and 2.3.5 (Seed the enabled hotel services) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (76/76) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.6.
+Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), and 2.3.5 (Seed the enabled hotel services) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). Task 2.3.6 has been structurally split into Task 2.3.6.A (port and adapter extension) and Task 2.3.6.B (counter and QR token seed) per D-17.3; the premise of seeded orders was removed. All unit tests (43/43) and integration tests (76/76) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.6.A.
 
 ## 8. How the File Evolves
 

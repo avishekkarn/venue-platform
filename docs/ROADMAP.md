@@ -202,8 +202,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 2.3.3 | Seed the QR tokens, one per table, one per room, and one for the counter                           | ✅ Complete | 2.3.2      |
 | 2.3.4 | Seed the menu categories and menu items with modifiers                                             | ✅ Complete | 2.3.3      |
 | 2.3.5 | Seed the enabled hotel services                                                                    | ✅ Complete | 2.3.4      |
-| 2.3.6 | Seed the counter, its QR token, and its own pickup-labelled orders                                 | ⬜          | 2.3.5      |
-| 2.3.7 | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜          | 2.3.6      |
+| 2.3.6.A | Extend CreateVenueInput and the venue adapter to support an optional counter                       | ⬜          | 2.3.5      |
+| 2.3.6.B | Seed the counter and its QR token in prisma/seed.ts                                                | ⬜          | 2.3.6.A    |
+| 2.3.7   | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜          | 2.3.6.B    |
 
 **Acceptance for Phase 2:** The database schema matches SYSTEM.md §11 exactly. The migrations apply cleanly. The seed creates a fully populated venue (tables, rooms, counter, QR codes, menu, and hotel services; staff seed moved to Task 3.1.2 per honest hashing dependency). Every repository has at least one integration test that passes.
 
