@@ -26,7 +26,7 @@ type DbClient = PrismaClient | Prisma.TransactionClient;
 
 function mapVenue(
   raw: Prisma.VenueGetPayload<{
-    include: { modules: true; services: true };
+    include: { modules: true; services: true; counter: true };
   }>
 ): VenueWithModules {
   return {
@@ -49,6 +49,9 @@ function mapVenue(
     services: raw.services
       .filter((s) => s.isEnabled)
       .map((s) => s.service as HotelService),
+    counter: raw.counter
+      ? { id: raw.counter.id, name: raw.counter.name }
+      : null,
   };
 }
 
@@ -63,6 +66,7 @@ export function createPrismaVenueRepository(
           include: {
             modules: true,
             services: true,
+            counter: true,
           },
         });
 
@@ -89,6 +93,7 @@ export function createPrismaVenueRepository(
           include: {
             modules: true,
             services: true,
+            counter: true,
           },
         });
 
@@ -138,10 +143,14 @@ export function createPrismaVenueRepository(
                   })),
                 }
               : undefined,
+            counter: input.counter
+              ? { create: { name: input.counter.name } }
+              : undefined,
           },
           include: {
             modules: true,
             services: true,
+            counter: true,
           },
         });
 

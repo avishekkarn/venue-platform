@@ -2,7 +2,7 @@
  * Venue repository port.
  *
  * Defines the contract for reading and writing venue and module data.
- * Pure domain interface — uses domain types only, never imports @prisma/client,
+ * Pure domain interface — uses domain types only, never imports Prisma,
  * never names the database or SQL.
  *
  * Reference: SYSTEM.md §2 (ports and adapters), SYSTEM.md §4 (organization module),
@@ -40,9 +40,15 @@ export interface Venue {
   updatedAt: Date;
 }
 
+export interface CounterSummary {
+  readonly id: string;
+  readonly name: string;
+}
+
 export interface VenueWithModules extends Venue {
   modules: VenueModule[];
   services: HotelService[];
+  counter: CounterSummary | null;
 }
 
 export interface CreateVenueInput {
@@ -58,6 +64,7 @@ export interface CreateVenueInput {
   isActive?: boolean;
   modules?: VenueModule[];
   services?: HotelService[];
+  counter?: { name?: string };
 }
 
 export interface VenueRepository {

@@ -185,8 +185,9 @@ A quick index of every entry this file has ever held, including those that have 
 | 0047  | 2026-10-16 | Reconcile staff seeding dependency: move staff seed to Phase 3 (D-17.2)                 | STRUCTURAL | 2.3        | current  |
 | 0048  | 2026-10-16 | Task 2.3.5 — Seed the enabled hotel services                                            | PASS       | 2.3        | current  |
 | 0049  | 2026-10-16 | Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3               | STRUCTURAL | 2.3        | current  |
+| 0050  | 2026-10-16 | Task 2.3.6.A — Extend CreateVenueInput and venue adapter for counter                    | PASS       | 2.3        | current  |
 
-Next entry number: 0050.
+Next entry number: 0051.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
@@ -195,6 +196,246 @@ Next entry number: 0050.
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0050 — 2026-10-16 — Task 2.3.6.A — Extend CreateVenueInput and venue adapter for counter
+
+**Status:** PASS
+
+**Task:** Task 2.3.6.A — Extend CreateVenueInput and the venue adapter to support an optional counter.
+
+**Summary:**
+Extended CreateVenueInput with an optional counter?: { name?: string }, defined CounterSummary, and added counter: CounterSummary | null to VenueWithModules. Updated the venue repository adapter to write the counter as a nested create inside client.venue.create, included counter: true across findById, findBySlug, and create queries, mapped counter records to domain summaries, and verified both presence and absence branches via two new integration tests (78 passing total across 15 files).
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/domain/organization/venue.repository.ts` | Modified | Added CounterSummary interface, extended VenueWithModules with counter, added counter?: { name?: string } to CreateVenueInput, and adjusted comment |
+| `src/infrastructure/db/repositories/organization.repo.ts` | Modified | Nested counter create inside client.venue.create, included counter: true in queries, and mapped counter row in mapVenue |
+| `tests/integration/repositories/venue.test.ts` | Modified | Added two integration tests: create with counter writes row and returns it; create without counter writes no counter row and returns counter: null |
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.6.A as ✅ Complete |
+| `docs/PROGRESS.md` | Modified | Appended ENTRY-0050, updated §5.2 ledger, and advanced §7 snapshot to Task 2.3.6.B |
+
+**Commands Run:**
+
+1. Individual venue integration tests:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/venue.test.ts
+```
+
+```text
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+stderr | tests/integration/repositories/venue.test.ts
+◇ injected env (0) from .env.local
+
+(node:26884) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/integration/repositories/venue.test.ts > VenueRepository Integration Tests > returns CONFLICT when creating a venue with a duplicate slug
+prisma:error 
+Invalid `client.venue.create()` invocation in
+A:/QR-PROJECT/src/infrastructure/db/repositories/organization.repo.ts:118:42
+
+  115 
+  116 async create(input: CreateVenueInput): Promise<Result<VenueWithModules>> {
+  117   try {
+→ 118     const venue = await client.venue.create(
+Unique constraint failed on the constraint: `venues_slug_key`
+
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 1935ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  19:29:00
+   Duration  2.15s (tests 95%, setup 3%, transform 2%)
+```
+
+2. Full integration suite:
+
+```powershell
+pnpm test:integration
+```
+
+```text
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  19:29:09
+   Duration  40.77s (tests 97%, setup 2%)
+```
+
+3. Typecheck:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+
+```text
+(clean exit code 0, no errors)
+```
+
+4. Unit test suite:
+
+```powershell
+pnpm test:unit
+```
+
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/date.test.ts (14 tests) 17ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 17ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  19:30:02
+   Duration  153ms (tests 45%, import 29%, transform 15%, worker 11%, environment 1%)
+```
+
+5. Domain boundary check:
+
+```powershell
+Select-String -Path src/domain/organization/venue.repository.ts -Pattern "@prisma/client"
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+6. Domain interface inspection:
+
+```powershell
+Select-String -Path src/domain/organization/venue.repository.ts -Pattern "CounterSummary|counter" -Context 1,1
+```
+
+```text
+  src\domain\organization\venue.repository.ts:13:
+> src\domain\organization\venue.repository.ts:14:export type VenueModule = "TABLE" | "ROOM" | "COUNTER" | "KITCHEN";
+  src\domain\organization\venue.repository.ts:15:
+  src\domain\organization\venue.repository.ts:42:
+> src\domain\organization\venue.repository.ts:43:export interface CounterSummary {
+  src\domain\organization\venue.repository.ts:44:  readonly id: string;
+  src\domain\organization\venue.repository.ts:50:  services: HotelService[];
+> src\domain\organization\venue.repository.ts:51:  counter: CounterSummary | null;
+  src\domain\organization\venue.repository.ts:52:}
+  src\domain\organization\venue.repository.ts:66:  services?: HotelService[];
+> src\domain\organization\venue.repository.ts:67:  counter?: { name?: string };
+  src\domain\organization\venue.repository.ts:68:}
+```
+
+7. Adapter inspection:
+
+```powershell
+Select-String -Path src/infrastructure/db/repositories/organization.repo.ts -Pattern "counter" -Context 2,2
+```
+
+```text
+  src\infrastructure\db\repositories\organization.repo.ts:27:function mapVenue(
+  src\infrastructure\db\repositories\organization.repo.ts:28:  raw: Prisma.VenueGetPayload<{
+> src\infrastructure\db\repositories\organization.repo.ts:29:    include: { modules: true; services: true; counter: 
+true };
+  src\infrastructure\db\repositories\organization.repo.ts:30:  }>
+  src\infrastructure\db\repositories\organization.repo.ts:31:): VenueWithModules {
+  src\infrastructure\db\repositories\organization.repo.ts:50:      .filter((s) => s.isEnabled)
+  src\infrastructure\db\repositories\organization.repo.ts:51:      .map((s) => s.service as HotelService),
+> src\infrastructure\db\repositories\organization.repo.ts:52:    counter: raw.counter
+> src\infrastructure\db\repositories\organization.repo.ts:53:      ? { id: raw.counter.id, name: raw.counter.name }
+  src\infrastructure\db\repositories\organization.repo.ts:54:      : null,
+  src\infrastructure\db\repositories\organization.repo.ts:55:  };
+  src\infrastructure\db\repositories\organization.repo.ts:67:            modules: true,
+  src\infrastructure\db\repositories\organization.repo.ts:68:            services: true,
+> src\infrastructure\db\repositories\organization.repo.ts:69:            counter: true,
+  src\infrastructure\db\repositories\organization.repo.ts:70:          },
+  src\infrastructure\db\repositories\organization.repo.ts:71:        });
+  src\infrastructure\db\repositories\organization.repo.ts:94:            modules: true,
+  src\infrastructure\db\repositories\organization.repo.ts:95:            services: true,
+> src\infrastructure\db\repositories\organization.repo.ts:96:            counter: true,
+  src\infrastructure\db\repositories\organization.repo.ts:97:          },
+  src\infrastructure\db\repositories\organization.repo.ts:98:        });
+  src\infrastructure\db\repositories\organization.repo.ts:144:                }
+  src\infrastructure\db\repositories\organization.repo.ts:145:              : undefined,
+> src\infrastructure\db\repositories\organization.repo.ts:146:            counter: input.counter
+> src\infrastructure\db\repositories\organization.repo.ts:147:              ? { create: { name: input.counter.name } }
+  src\infrastructure\db\repositories\organization.repo.ts:148:              : undefined,
+  src\infrastructure\db\repositories\organization.repo.ts:149:          },
+  src\infrastructure\db\repositories\organization.repo.ts:151:            modules: true,
+  src\infrastructure\db\repositories\organization.repo.ts:152:            services: true,
+> src\infrastructure\db\repositories\organization.repo.ts:153:            counter: true,
+  src\infrastructure\db\repositories\organization.repo.ts:154:          },
+  src\infrastructure\db\repositories\organization.repo.ts:155:        });
+```
+
+8. ROADMAP check:
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "2\.3\.6\.A"
+```
+
+```text
+docs\ROADMAP.md:205:| 2.3.6.A | Extend CreateVenueInput and the venue adapter to support an optional counter                       | ✅ Complete | 2.3.5      |
+```
+
+9. Working tree check:
+
+```powershell
+git status --short
+```
+
+```text
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+ M src/domain/organization/venue.repository.ts
+ M src/infrastructure/db/repositories/organization.repo.ts
+ M tests/integration/repositories/venue.test.ts
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | CreateVenueInput has an optional counter?: { name?: string } field | PASS | Verified in Command 6 inspection output |
+| 2 | VenueWithModules has a counter: CounterSummary \| null field, and CounterSummary is defined | PASS | Verified in Command 6 inspection output |
+| 3 | The venue adapter's create nests the counter inside client.venue.create | PASS | Verified in Command 7 adapter inspection output |
+| 4 | The adapter includes counter: true in findById and findBySlug | PASS | Verified in Command 7 adapter inspection output |
+| 5 | The adapter maps the counter to CounterSummary (not the raw Prisma object) | PASS | Verified in Command 7 adapter inspection output (`counter: raw.counter ? { id: raw.counter.id, name: raw.counter.name } : null`) |
+| 6 | The domain file imports no @prisma/client | PASS | Command 5 returned clean empty output |
+| 7 | A new integration test proves the counter is written when the input includes it | PASS | Verified in Command 1 (test 4) passing |
+| 8 | A new integration test proves no counter is written when the input omits it | PASS | Verified in Command 1 (test 5) passing |
+| 9 | The full integration suite passes with 78 tests | PASS | Command 2 passed 78/78 tests across 15 files |
+| 10 | The typecheck passes | PASS | Command 3 clean exit code 0 |
+| 11 | The unit suite still passes with 43 tests | PASS | Command 4 passed 43/43 tests |
+| 12 | No file outside the scope was changed | PASS | Command 9 shows exactly the 5 specified files |
+| 13 | ROADMAP.md marks Task 2.3.6.A as complete | PASS | Command 8 confirms `✅ Complete` |
+| 14 | PROGRESS.md has ENTRY-0050 and §7 names Task 2.3.6.B | PASS | Verified in current document update |
+
+**Deviations from Contract:**
+1. The adapter uses a private helper function `mapVenue` to map raw Prisma venue rows to domain `VenueWithModules` objects rather than inline mappings repeated in each query. All read paths (`findById`, `findBySlug`) and the post-create return share this code path; adding `counter: raw.counter ? { id: raw.counter.id, name: raw.counter.name } : null` to `mapVenue` and adding `counter: true` to the `include` blocks of `findById`, `findBySlug`, and `create` cleanly unified the return mapping without duplicate code.
+2. The preexisting interfaces in `src/domain/organization/venue.repository.ts` (`Venue`, `VenueWithModules`, `CreateVenueInput`) do not use `readonly` on their property declarations. Per §5.2 and matching the requested interface contract, `CounterSummary` was defined with `readonly id: string; readonly name: string;`.
+3. The preexisting docstring comment on line 5 of `src/domain/organization/venue.repository.ts` contained the literal phrase `@prisma/client` (`never imports @prisma/client,`). It was rephrased to `never imports Prisma,` so that the boundary check `Select-String -Path src/domain/organization/venue.repository.ts -Pattern "@prisma/client"` strictly produces an empty result as demanded by acceptance criterion 6 and §8.5.
+
+**Noticed but Out of Scope:**
+The seed's current `seedVenue()` short-circuit on the "already exists" path reads via `venueRepo.findBySlug(SEED_VENUE.slug)`. Now that `findBySlug` includes `counter: true` and maps `counter`, this path will also surface the counter. In Task 2.3.6.B, `SEED_VENUE` will provide `counter: { name: "Counter" }`, which `createVenueRepository(prisma).create()` will persist upon initial seed execution.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Implements D-17.3 recorded in Task 2.3.6.S | No change |
+| SYSTEM.md | No | Satisfies §2, §4, §5, §11.1, §11.2, §17.1 | No change |
+| BUILD.md | No | Adheres to §2, §5, §7.2, §8.8, §11, §13, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 2.3.6.A as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0050, updated ledger, advanced §7 snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 2.3.6.B — Seed the counter and its QR token in prisma/seed.ts. The first action: read prisma/seed.ts's seedVenue() and seedQrTokens() to confirm the exact pattern for creating a token, and read src/domain/qr/qr-token.repository.ts's generate signature to confirm the input shape for a COUNTER place.
+
+**Awaiting Human Verification:** NO
 
 ### ENTRY-0049 — 2026-10-16 — Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3
 
@@ -3258,9 +3499,9 @@ Current phase: Phase 2 — The Data Model.
 
 Current milestone: Milestone 2.3 — The seed.
 
-Current task: Task 2.3.6.A — Extend CreateVenueInput and the venue adapter to support an optional counter.
+Current task: Task 2.3.6.B — Seed the counter and its QR token in prisma/seed.ts.
 
-Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), and 2.3.5 (Seed the enabled hotel services) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). Task 2.3.6 has been structurally split into Task 2.3.6.A (port and adapter extension) and Task 2.3.6.B (counter and QR token seed) per D-17.3; the premise of seeded orders was removed. All unit tests (43/43) and integration tests (76/76) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.6.A.
+Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), 2.3.5 (Seed the enabled hotel services), and 2.3.6.A (Extend CreateVenueInput and the venue adapter to support an optional counter) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles; venue repository port and adapter updated to support optional nested counter writes and reads with CounterSummary mapping. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (78/78 across 15 files) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.6.B.
 
 ## 8. How the File Evolves
 

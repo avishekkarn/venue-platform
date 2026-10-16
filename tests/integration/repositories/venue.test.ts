@@ -92,4 +92,88 @@ describe("VenueRepository Integration Tests", () => {
       }
     });
   });
+
+  it("creates a venue with a counter and reads it", async () => {
+    await withTransaction(async (tx) => {
+      const repo = createPrismaVenueRepository(tx);
+      const slug = `venue-counter-${Date.now()}`;
+
+      const createResult = await repo.create({
+        name: "Venue with Counter",
+        slug,
+        taxRate: "0.0500",
+        counter: { name: "Test Counter" },
+      });
+
+      expect(createResult.ok).toBe(true);
+      if (!createResult.ok) return;
+
+      const created = createResult.value;
+      expect(created.counter).not.toBeNull();
+      expect(created.counter?.id).toBeDefined();
+      expect(created.counter?.name).toBe("Test Counter");
+
+      // Verify direct query confirms counter row exists
+      const counterRow = await tx.counter.findUnique({
+        where: { venueId: created.id },
+      });
+      expect(counterRow).not.toBeNull();
+      expect(counterRow?.name).toBe("Test Counter");
+
+      // Verify findById includes counter
+      const byIdResult = await repo.findById(created.id);
+      expect(byIdResult.ok).toBe(true);
+      if (byIdResult.ok) {
+        expect(byIdResult.value.counter?.id).toBe(created.counter?.id);
+        expect(byIdResult.value.counter?.name).toBe("Test Counter");
+      }
+
+      // Verify findBySlug includes counter
+      const bySlugResult = await repo.findBySlug(slug);
+      expect(bySlugResult.ok).toBe(true);
+      if (bySlugResult.ok) {
+        expect(bySlugResult.value.counter?.id).toBe(created.counter?.id);
+        expect(bySlugResult.value.counter?.name).toBe("Test Counter");
+      }
+    });
+  });
+
+  it("creates a venue without a counter and returns counter null", async () => {
+    await withTransaction(async (tx) => {
+      const repo = createPrismaVenueRepository(tx);
+      const slug = `venue-no-counter-${Date.now()}`;
+
+      const createResult = await repo.create({
+        name: "Venue without Counter",
+        slug,
+        taxRate: "0.0500",
+      });
+
+      expect(createResult.ok).toBe(true);
+      if (!createResult.ok) return;
+
+      const created = createResult.value;
+      expect(created.counter).toBeNull();
+
+      // Verify direct query confirms no counter row exists
+      const counterRow = await tx.counter.findUnique({
+        where: { venueId: created.id },
+      });
+      expect(counterRow).toBeNull();
+
+      // Verify findById returns counter null
+      const byIdResult = await repo.findById(created.id);
+      expect(byIdResult.ok).toBe(true);
+      if (byIdResult.ok) {
+        expect(byIdResult.value.counter).toBeNull();
+      }
+
+      // Verify findBySlug returns counter null
+      const bySlugResult = await repo.findBySlug(slug);
+      expect(bySlugResult.ok).toBe(true);
+      if (bySlugResult.ok) {
+        expect(bySlugResult.value.counter).toBeNull();
+      }
+    });
+  });
 });
