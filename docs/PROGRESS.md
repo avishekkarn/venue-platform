@@ -183,8 +183,9 @@ A quick index of every entry this file has ever held, including those that have 
 | 0045  | 2026-10-16 | Task 2.3.3 — Seed the QR tokens (revised)                                               | PASS       | 2.3        | current  |
 | 0046  | 2026-10-16 | Task 2.3.4 — Seed the menu categories and menu items with modifiers                     | PASS       | 2.3        | current  |
 | 0047  | 2026-10-16 | Reconcile staff seeding dependency: move staff seed to Phase 3 (D-17.2)                 | STRUCTURAL | 2.3        | current  |
+| 0048  | 2026-10-16 | Task 2.3.5 — Seed the enabled hotel services                                            | PASS       | 2.3        | current  |
 
-Next entry number: 0048.
+Next entry number: 0049.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
@@ -193,6 +194,450 @@ Next entry number: 0048.
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0048 — 2026-10-16 — Task 2.3.5 — Seed the enabled hotel services
+
+**Status:** PASS
+
+**Task:** Task 2.3.5 — Seed the enabled hotel services.
+
+**Summary:**
+Added the `services` array to `SEED_VENUE` in `prisma/seed.ts` containing all nine `HotelService` domain literals in their declared union order, enabling atomic persistence of the venue and its service toggles via `createPrismaVenueRepository(prisma).create(...)`. Rebuilt the development database from a clean slate via migrations, seeded the venue with exactly 9 active hotel service toggles, confirmed idempotency on a subsequent seed run (preventing duplicate rows), and verified that zero `@prisma/client` imports exist in `prisma/seed.ts` while all 43 unit tests and 76 integration tests continue to pass.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `prisma/seed.ts` | Modified | Added `services` array with all 9 `HotelService` literals to `SEED_VENUE` |
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.5 as ✅ Complete |
+| `docs/PROGRESS.md` | Modified | Added ENTRY-0048, updated ledger table, and advanced §7 snapshot to Task 2.3.6 |
+
+**Commands Run:**
+
+1. Terminate qrproject backends:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'qrproject' AND pid <> pg_backend_pid();"
+```
+
+```text
+ pg_terminate_backend 
+----------------------
+(0 rows)
+```
+
+2. Drop database:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "DROP DATABASE IF EXISTS qrproject;"
+```
+
+```text
+DROP DATABASE
+```
+
+3. Create database:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE qrproject;"
+```
+
+```text
+CREATE DATABASE
+```
+
+4. Deploy migrations:
+
+```bash
+pnpm prisma migrate deploy
+```
+
+```text
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "qrproject", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20261015183749_phase2_initial_schema`
+Applying migration `20261015204426_add_note_to_order_state_change`
+Applying migration `20261015211847_add_failure_reason_to_payment_tickets`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261015183749_phase2_initial_schema/
+    └─ migration.sql
+  └─ 20261015204426_add_note_to_order_state_change/
+    └─ migration.sql
+  └─ 20261015211847_add_failure_reason_to_payment_tickets/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+```
+
+5. First seed run:
+
+```bash
+pnpm db:seed
+```
+
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Created venue: juniper-house (id: 4bfbceb3-bf58-4055-843b-46c42bec2495)
+Seeding tables and rooms...
+Created table 1 (id: c867b6dd-9370-4dc9-a2b4-ce6a468616e7).
+Created table 2 (id: c7c7ce05-fba1-4a33-858f-337c6c60ad87).
+Created table 3 (id: 50bf8614-8e1d-4249-8f89-cdcfa7f688f2).
+Created table 4 (id: b4932e8c-7081-47fe-baf5-c22ddc4fd64c).
+Created table 5 (id: 7d12f841-775f-4caa-bd14-b2d332c9e24d).
+Created table 6 (id: 9ff9279e-b5bf-4289-be29-d9802876f3b8).
+Created table 7 (id: bfeb3594-04c6-40ee-8352-491901df248b).
+Created table 8 (id: f588278f-8018-4a40-9d8c-b0caee78ead5).
+Created table 9 (id: a2eda607-7fd6-4283-9e24-9e9a764bd0da).
+Created table 10 (id: 10041c8e-1530-46aa-b058-45882f2c9798).
+Created table 11 (id: 8e6e14ac-403a-447b-aa04-0211ee0dba86).
+Created table 12 (id: 7dc3af9e-9b8a-422d-b545-d0964e0b9ed0).
+Created room 401 (id: eccbf3ac-80a5-4ea3-a50a-56501eaf23fb).
+Created room 402 (id: beeed208-1302-4ebf-9a02-1de5875be907).
+Created room 403 (id: 424edec6-70eb-4cd0-bad4-6615c0d7b5ef).
+Created room 404 (id: a6cf2cd0-5dcf-45e7-a929-ebfeae6ef8dd).
+Created room 411 (id: 21279626-5781-485e-a461-eb24c3878aa7).
+Created room 412 (id: 7649dc1f-0d9c-41ae-ad6d-6ac9c4bda130).
+Created room 413 (id: 40ef2f62-04c3-42ba-aae3-ff0984c19c69).
+Created room 414 (id: bebb965d-4838-4cfc-97d6-9dab0b7d00e4).
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Created token for table 1: de5f9437-15f4-4ec4-af3b-3a53200e30b2.
+Created token for table 2: dd29bd47-b356-4cb3-99c9-248208e64ddb.
+Created token for table 3: 06ed8701-161e-44df-9c51-f713755a3cf4.
+Created token for table 4: 18a60b8d-36af-449f-ae5f-eade864e00f5.
+Created token for table 5: b494f8ee-a2b3-427b-8478-89959d4eaff5.
+Created token for table 6: 4cd0b7fe-28ea-4a40-b017-73f003958dbf.
+Created token for table 7: 543e5b0c-fb59-40a0-82ea-7edb67c260b2.
+Created token for table 8: 6ea23f11-4498-4625-ac51-7743cf224a95.
+Created token for table 9: 70fd02a0-a7f8-4468-981f-9d1bd7815bdd.
+Created token for table 10: 3809a38c-d15f-400a-8f01-dfdbb4fe85d3.
+Created token for table 11: 9692b772-d7ed-4e27-a6eb-228609e2f895.
+Created token for table 12: 80b029c3-53d7-4acc-abc2-46477377828b.
+Created token for room 401: b64bb725-9c68-4aee-b3ee-1a612490de6c.
+Created token for room 402: 2d36505f-3735-42ed-865c-54f3176dbf01.
+Created token for room 403: 2f5e3e2a-8839-4ccb-9272-eac3a91a08d2.
+Created token for room 404: e72b116d-9b6f-40b5-b4b1-4026226817c5.
+Created token for room 411: fc12f723-eef6-41f1-bc2f-4f9d6c92055b.
+Created token for room 412: 160c20aa-db33-4a51-8f93-d758e131055a.
+Created token for room 413: 71926a21-641e-46ef-a452-18f3910fce09.
+Created token for room 414: 13b4bf50-ce45-491d-8eac-7ebeae50ee73.
+Seeded 12 table tokens and 8 room tokens.
+Seeding menu...
+Created category Starters (id: 7764dc00-cbcc-4499-880c-b5d5368e676d).
+Created category Mains (id: 6bb9f624-b531-47fc-9ac4-ad82a76a21c5).
+Created category Desserts (id: 37d2ac0c-5e79-4b5d-8564-c35d3ccc9d44).
+Created item Soup of the Day (id: e65731b3-2909-4c95-8354-2ee0875581c8).
+Created item Garden Salad (id: 2988da54-0c32-4931-b751-0ac3176ca0a9).
+Created item Bruschetta (id: 12d05386-438d-4360-bd80-bf09f987d75a).
+Created item Grilled Salmon (id: b84ca11b-5770-4d01-96bc-69d76b23c3ff).
+Created item Ribeye Steak (id: 96ba474e-cc0f-47e8-848c-9fe8602c0730).
+Created item Mushroom Risotto (id: 32979d28-2cb1-4631-8805-5884dda3b68d).
+Created item Roast Chicken (id: cc7b8abe-cd93-4c90-b3e0-97a6f42311f0).
+Created item Chocolate Cake (id: fedc0fc1-404a-4418-8603-824b503a63e7).
+Created item Crème Brûlée (id: 9513adb1-6dd4-4078-a32a-3755d84d7e7b).
+Created item Seasonal Fruit Plate (id: 3b1311e1-9250-42a6-abbd-5f656b783dc8).
+Created modifier group Doneness (id: f4e21a1d-0abd-417f-bc87-bce9430fdeac).
+Created modifier option Doneness/Rare.
+Created modifier option Doneness/Medium.
+Created modifier option Doneness/Well.
+Created modifier group Extras (id: 3111b58e-85d7-40be-975a-01663917adb5).
+Created modifier option Extras/Extra cheese.
+Created modifier option Extras/Bacon.
+Created modifier option Extras/Avocado.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+
+The seed command has been executed.
+```
+
+6. Query service toggle count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venue_service_toggles;"
+```
+
+```text
+ count 
+-------
+     9
+(1 row)
+```
+
+7. Query service toggle list:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT service FROM venue_service_toggles ORDER BY service;"
+```
+
+```text
+      service      
+-------------------
+ ROOM_SERVICE_FOOD
+ HOUSEKEEPING
+ MAINTENANCE
+ CONCIERGE
+ LAUNDRY
+ SPA
+ LATE_CHECKOUT
+ WAKE_UP_CALL
+ DO_NOT_DISTURB
+(9 rows)
+```
+
+8. Second seed run (idempotency check):
+
+```bash
+pnpm db:seed
+```
+
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Venue already exists: juniper-house (id: 4bfbceb3-bf58-4055-843b-46c42bec2495)
+Seeding tables and rooms...
+Table 1 already exists.
+Table 2 already exists.
+Table 3 already exists.
+Table 4 already exists.
+Table 5 already exists.
+Table 6 already exists.
+Table 7 already exists.
+Table 8 already exists.
+Table 9 already exists.
+Table 10 already exists.
+Table 11 already exists.
+Table 12 already exists.
+Room 401 already exists.
+Room 402 already exists.
+Room 403 already exists.
+Room 404 already exists.
+Room 411 already exists.
+Room 412 already exists.
+Room 413 already exists.
+Room 414 already exists.
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Table 1 already has an active token.
+Table 2 already has an active token.
+Table 3 already has an active token.
+Table 4 already has an active token.
+Table 5 already has an active token.
+Table 6 already has an active token.
+Table 7 already has an active token.
+Table 8 already has an active token.
+Table 9 already has an active token.
+Table 10 already has an active token.
+Table 11 already has an active token.
+Table 12 already has an active token.
+Room 401 already has an active token.
+Room 402 already has an active token.
+Room 403 already has an active token.
+Room 404 already has an active token.
+Room 411 already has an active token.
+Room 412 already has an active token.
+Room 413 already has an active token.
+Room 414 already has an active token.
+Seeded 0 table tokens and 0 room tokens; all places already have active tokens.
+Seeding menu...
+Category Starters already exists.
+Category Mains already exists.
+Category Desserts already exists.
+Item Soup of the Day already exists.
+Item Garden Salad already exists.
+Item Bruschetta already exists.
+Item Grilled Salmon already exists.
+Item Ribeye Steak already exists.
+Item Mushroom Risotto already exists.
+Item Roast Chicken already exists.
+Item Chocolate Cake already exists.
+Item Crème Brûlée already exists.
+Item Seasonal Fruit Plate already exists.
+Modifier group Doneness already exists.
+Modifier option Doneness/Rare already exists.
+Modifier option Doneness/Medium already exists.
+Modifier option Doneness/Well already exists.
+Modifier group Extras already exists.
+Modifier option Extras/Extra cheese already exists.
+Modifier option Extras/Bacon already exists.
+Modifier option Extras/Avocado already exists.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+
+The seed command has been executed.
+```
+
+9. Re-query service toggle count:
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venue_service_toggles;"
+```
+
+```text
+ count 
+-------
+     9
+(1 row)
+```
+
+10. Typecheck:
+
+```bash
+pnpm exec tsc --noEmit
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+11. Unit test suite:
+
+```bash
+pnpm test:unit
+```
+
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 17ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 18ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  19:06:56
+   Duration  354ms (tests 39%, import 28%, transform 20%, worker 12%)
+```
+
+12. Integration test suite:
+
+```bash
+pnpm test:integration
+```
+
+```text
+$ vitest run --config vitest.integration.config.ts
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.repo.test.ts (13 tests) 12127ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2536ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2348ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1968ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2383ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 1720ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2351ms
+ ✓ tests/integration/repositories/venue.test.ts (3 tests) 2206ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2268ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 1709ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2053ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2055ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2119ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1568ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 1741ms
+
+ Test Files  15 passed (15)
+      Tests  76 passed (76)
+   Start at  19:07:03
+   Duration  43.68s (tests 97%, setup 2%)
+```
+
+13. Boundary check:
+
+```powershell
+Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+14. Working tree check:
+
+```bash
+git status --short
+```
+
+```text
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+ M prisma/seed.ts
+```
+
+15. ROADMAP check:
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "2\.3\.5"
+```
+
+```text
+docs\ROADMAP.md:204:| 2.3.5 | Seed the enabled hotel services                                                                    | ✅ Complete | 2.3.4      |
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The seed persists exactly nine service toggles for the venue | PASS | Command 6 output `9` (1 row) |
+| 2 | The nine toggles are exactly the nine HotelService literals | PASS | Command 7 raw rows show all 9 literals (`ROOM_SERVICE_FOOD`, `HOUSEKEEPING`, `MAINTENANCE`, `CONCIERGE`, `LAUNDRY`, `SPA`, `LATE_CHECKOUT`, `WAKE_UP_CALL`, `DO_NOT_DISTURB`) |
+| 3 | The seed is idempotent with respect to services | PASS | Command 8 logs `Venue already exists: juniper-house`; Command 9 confirms toggle count remains exactly `9` |
+| 4 | The seed does not import @prisma/client | PASS | Command 13 output clean (exit code 0, empty) |
+| 5 | The typecheck passes | PASS | Command 10 clean exit code 0, no errors |
+| 6 | The unit suite still passes | PASS | Command 11 reports 43 passed across 3 files |
+| 7 | The integration suite still passes | PASS | Command 12 reports 76 passed across 15 files |
+| 8 | No file outside the scope was changed | PASS | Command 14 shows only `prisma/seed.ts`, `docs/ROADMAP.md`, `docs/PROGRESS.md` |
+| 9 | ROADMAP.md marks Task 2.3.5 complete | PASS | Command 15 confirms `| 2.3.5 | Seed the enabled hotel services | ✅ Complete | 2.3.4 |` |
+| 10 | PROGRESS.md has ENTRY-0048 and §7 names Task 2.3.6 | PASS | Recorded in ENTRY-0048 and verified in §7 |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| `PRODUCT.md` | No | Requirements unchanged | No change |
+| `DECISIONS.md` | No | D-9.6 satisfied without modification | No change |
+| `SYSTEM.md` | No | Schema and entities match | No change |
+| `BUILD.md` | No | Conventions upheld | No change |
+| `ROADMAP.md` | Yes | Task 2.3.5 marked complete | Updated |
+| `PROGRESS.md` | Yes (this entry) | ENTRY-0048 added, ledger updated, snapshot advanced | Updated |
+| `PHASE_TESTS.md` | No | Phase 2 test unchanged | No change |
+| `README.md` | No | No change needed | No change |
+
+**Contradiction Check:**
+1. Does this entry contradict any decision in DECISIONS.md? No — satisfies D-9.6.
+2. Does this entry contradict any rule in SYSTEM.md? No — satisfies §4, §11.1, §17.1, and §17.3.
+3. Does this entry introduce an untracked dependency? No — pure TypeScript array in seed configuration.
+4. Does this entry bypass the domain repository pattern? No — written through `VenueRepository.create` via `createPrismaVenueRepository(prisma)` with zero `@prisma/client` imports in seed.
+5. Does this entry alter past entries without justification? No — append-only modification to documentation.
+
+**Next:**
+Task 2.3.6 — Seed the counter, its QR token, and its own pickup-labelled orders. The first action: Read the Counter model in `prisma/schema.prisma` and the `QrTokenRepository` port to determine whether the counter is a distinct entity or a placeType on the QR token table, then add `seedCounter()` to `prisma/seed.ts`.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0047 — 2026-10-16 — Reconcile staff seeding dependency: move staff seed to Phase 3 (D-17.2)
 
@@ -2571,9 +3016,9 @@ Current phase: Phase 2 — The Data Model.
 
 Current milestone: Milestone 2.3 — The seed.
 
-Current task: Task 2.3.5 — Seed the enabled hotel services.
+Current task: Task 2.3.6 — Seed the counter, its QR token, and its own pickup-labelled orders.
 
-Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), and 2.3.4 (Seed the menu categories and items with modifiers) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, and 6 modifier options. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (76/76) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.5.
+Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), and 2.3.5 (Seed the enabled hotel services) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (76/76) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.6.
 
 ## 8. How the File Evolves
 

@@ -42,6 +42,17 @@ export const SEED_VENUE: CreateVenueInput = {
   taxRate: "0.1300",
   isActive: true,
   modules: ["TABLE", "ROOM", "COUNTER"],
+  services: [
+    "ROOM_SERVICE_FOOD",
+    "HOUSEKEEPING",
+    "MAINTENANCE",
+    "CONCIERGE",
+    "LAUNDRY",
+    "SPA",
+    "LATE_CHECKOUT",
+    "WAKE_UP_CALL",
+    "DO_NOT_DISTURB",
+  ],
 };
 
 export const TABLE_NUMBERS = [
