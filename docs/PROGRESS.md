@@ -60,13 +60,14 @@ Summary:
 
 Files Changed:
 
-Path	Action	Purpose
+Path Action Purpose
 Commands Run:
 <Every command, with raw output in a fenced block. If a command was not run, say so.>
 
 Acceptance Criteria Results:
 
-#	Criterion	Result	Evidence
+# Criterion Result Evidence
+
 Deviations from Contract:
 <Anything outside the task's scope, or anything the task asked for that was not done. If none, "None".>
 
@@ -75,13 +76,13 @@ Noticed but Out of Scope:
 
 Document Impact:
 
-Document	Affected?	Reason	Action
-PRODUCT.md	Yes / No		Updated / Needs update / No change
-DECISIONS.md	Yes / No		Updated / Needs update / No change
-SYSTEM.md	Yes / No		Updated / Needs update / No change
-BUILD.md	Yes / No		Updated / Needs update / No change
-ROADMAP.md	Yes / No		Updated / Needs update / No change
-PROGRESS.md	Yes (this entry)		Updated
+Document Affected? Reason Action
+PRODUCT.md Yes / No Updated / Needs update / No change
+DECISIONS.md Yes / No Updated / Needs update / No change
+SYSTEM.md Yes / No Updated / Needs update / No change
+BUILD.md Yes / No Updated / Needs update / No change
+ROADMAP.md Yes / No Updated / Needs update / No change
+PROGRESS.md Yes (this entry) Updated
 Contradiction Check:
 <One line. Does anything in this session contradict any decision, system description, or build rule? If yes, name it and how it was resolved. If no, "None found".>
 
@@ -132,11 +133,11 @@ If any answer is yes, the session stops. The developer resolves it. A FAIL entry
 
 Phase 0 — The Documents (closed 2026-10-11). The seven canonical documents were authored: PRODUCT.md, DECISIONS.md, SYSTEM.md, BUILD.md, ROADMAP.md, PROGRESS.md, DESIGN.md. Full entry in PROGRESS_ARCHIVE_PHASE_1.md under "Phase 0".
 
-Milestone 1.1 — Repository and tooling (closed 2026-10-13). Delivered the folder structure from SYSTEM.md §3, pnpm 12 with the allowBuilds setting in pnpm-workspace.yaml, TypeScript 7 in strict mode with the @/* path alias, Next.js 16 with the App Router, Tailwind 4 via @tailwindcss/postcss, the environment files, and .gitignore. Full entries in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.1". Notable: 198 empty placeholder files under app/ were deleted because Next.js validates every file; middleware.ts was deleted and is recreated in Task 3.5.1; React 19 + TypeScript 7 require the explicit JSX import from react.
+Milestone 1.1 — Repository and tooling (closed 2026-10-13). Delivered the folder structure from SYSTEM.md §3, pnpm 12 with the allowBuilds setting in pnpm-workspace.yaml, TypeScript 7 in strict mode with the @/\* path alias, Next.js 16 with the App Router, Tailwind 4 via @tailwindcss/postcss, the environment files, and .gitignore. Full entries in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.1". Notable: 198 empty placeholder files under app/ were deleted because Next.js validates every file; middleware.ts was deleted and is recreated in Task 3.5.1; React 19 + TypeScript 7 require the explicit JSX import from react.
 
 Milestone 1.2 — Design tokens (closed 2026-10-13). Delivered the complete token foundation in app/globals.css: five anchor color scales, the neutral grayscale, four status colors, the guest and staff semantic tokens, the staff dark-mode override, the three font families through src/lib/fonts.ts, the guest and staff type scales, spacing, radius, elevation, motion durations and easings, and the prefers-reduced-motion fallback. Full entry in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.2". Notable: the four status colors are literal hex values (a documented exception to DESIGN.md §4.2.1); the fractional spacing steps from DESIGN.md §4.4.1 are included; the type tokens use the CSS font shorthand; !important is used inside the reduced-motion safety net (a documented exception).
 
-Milestone 1.3 — Base components (closed 2026-10-14). Delivered the complete base component kit: Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast. Nine reserved placeholders (alert, avatar, checkbox, dropdown-menu, progress, radio, skeleton, tabs, tooltip) are still empty and wait for their future tasks. Full entries in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.3". Notable: Tailwind 4 parent-variant syntax corrected to [data-world=staff]_&:; the shadcn CLI's CSS was reconciled so our tokens remain the source of truth; @types/react-dom was missing and was added in Task 1.3.7.
+Milestone 1.3 — Base components (closed 2026-10-14). Delivered the complete base component kit: Button, Input, Textarea, Select, Label, Dialog, Sheet, Drawer, Badge, Card, Separator, Table, Toast. Nine reserved placeholders (alert, avatar, checkbox, dropdown-menu, progress, radio, skeleton, tabs, tooltip) are still empty and wait for their future tasks. Full entries in PROGRESS*ARCHIVE_PHASE_1.md under "Milestone 1.3". Notable: Tailwind 4 parent-variant syntax corrected to [data-world=staff]*&:; the shadcn CLI's CSS was reconciled so our tokens remain the source of truth; @types/react-dom was missing and was added in Task 1.3.7.
 
 Milestone 1.4 — Shared utilities (closed 2026-10-15). Delivered the project's first unit-test harness (vitest.config.ts) and the four shared utilities: tests for the cn helper; the formatMoney utility in src/lib/money.ts; the formatTime / formatDateTime / formatElapsed helpers in src/lib/date.ts; and the record of the motion implementation strategy as D-16.1 in DECISIONS.md. 43 unit tests passing, all green. Full entries ENTRY-0024 through ENTRY-0028 in PROGRESS_ARCHIVE_PHASE_1.md under "Milestone 1.4".
 
@@ -146,47 +147,1058 @@ Milestone 1.5 — The development server (closed 2026-10-15). Confirmed the root
 
 A quick index of every entry this file has ever held, including those that have moved to the archive. Format: ENTRY-XXXX — YYYY-MM-DD — title — status — milestone — location. Location is either `current` (in §5.3) or `archived` (in PROGRESS_ARCHIVE_PHASE_1.md).
 
-| Entry | Date | Title | Status | Milestone | Location |
-|-------|------|-------|--------|-----------|----------|
-| 0000 | 2026-10-11 | Project Foundation | STRUCTURAL | Phase 0 | archived |
-| 0013 | 2026-10-13 | Task 1.1.2b — Package manager configuration | PASS | 1.1 | archived |
-| 0014 | 2026-10-13 | Milestone 1.1 — Repository and tooling | PASS | 1.1 | archived |
-| 0016 | 2026-10-13 | Milestone 1.2 — Design tokens | PASS | 1.2 | archived |
-| 0018 | 2026-10-14 | Git initialised and public repository created | STRUCTURAL | pre-1.3 | archived |
-| 0019 | 2026-10-14 | Task 1.3.1 — shadcn/ui installed and configured | PASS | 1.3 | archived |
-| 0020 | 2026-10-14 | Task 1.3.2 — Button reconciled | PASS | 1.3 | archived |
-| 0021 | 2026-10-14 | Task 1.3.3 — Input, Textarea, Select, Label | PASS | 1.3 | archived |
-| 0022 | 2026-10-14 | Task 1.3.8 — Base component kit verified | PASS | 1.3 | archived |
-| 0023 | 2026-10-14 | Milestone 1.3 closed | STRUCTURAL | 1.3 | archived |
-| 0024 | 2026-10-14 | Task 1.4.1 — Unit tests for the cn helper | PASS | 1.4 | archived |
-| 0025 | 2026-10-14 | Task 1.4.2 — Money formatting utility | PASS | 1.4 | archived |
-| 0026 | 2026-10-14 | Task 1.4.3 — Date and time formatting utility | PASS | 1.4 | archived |
-| 0027 | 2026-10-15 | Task 1.4.4 — Record D-16.1 (motion implementation strategy) | STRUCTURAL | 1.4 | current |
-| 0028 | 2026-10-15 | Task 1.4.5 + 1.5.1 — Verify utilities and root layout | STRUCTURAL | 1.4 / 1.5 | archived |
-| 0029 | 2026-10-15 | Task 1.5.2 — Guest and staff atmosphere wrappers | PASS | 1.5 | current |
-| 0030 | 2026-10-15 | Task 1.5.3 — The 404 and error screens | PASS | 1.5 | current |
-| 0031 | 2026-10-15 | Task 1.5.4 — Verify the dev server, root page, and 404; close Milestone 1.5 and Phase 1 | STRUCTURAL | 1.5 | current |
-| 0032 | 2026-10-15 | C-01 — Start the documentation correction milestone; rewrite PROGRESS.md to v2.0 | STRUCTURAL | correction | current |
-| 0033 | 2026-10-16 | Milestone 2.1 — The schema, database migration, and verification | PASS | 2.1 | current |
-| 0034 | 2026-10-16 | Task 2.2.1 — The venue repository and integration harness | PASS | 2.2 | current |
-| 0035 | 2026-10-16 | Task 2.2.2 — The table and room repositories | PASS | 2.2 | current |
-| 0036 | 2026-10-16 | Task 2.2.3 — The QR token repository | PASS | 2.2 | current |
-| 0037 | 2026-10-16 | Task 2.2.4 — The staff and staff session repositories | PASS | 2.2 | current |
-| 0038 | 2026-10-16 | Task 2.2.5 — The menu repository | PASS | 2.2 | current |
-| 0039 | 2026-10-16 | Task 2.2.6 — The order repository | PASS | 2.2 | current |
-| 0040 | 2026-10-16 | Task 2.2.7 — The service request repository | PASS | 2.2 | current |
-| 0041 | 2026-10-16 | Task 2.2.8 — The payment ticket and receipt repositories | PASS | 2.2 | current |
-| 0042 | 2026-10-16 | Task 2.2.9 — Milestone 2.2 Verification and Close | STRUCTURAL | 2.2 | current |
+| Entry | Date       | Title                                                                                   | Status     | Milestone  | Location |
+| ----- | ---------- | --------------------------------------------------------------------------------------- | ---------- | ---------- | -------- |
+| 0000  | 2026-10-11 | Project Foundation                                                                      | STRUCTURAL | Phase 0    | archived |
+| 0013  | 2026-10-13 | Task 1.1.2b — Package manager configuration                                             | PASS       | 1.1        | archived |
+| 0014  | 2026-10-13 | Milestone 1.1 — Repository and tooling                                                  | PASS       | 1.1        | archived |
+| 0016  | 2026-10-13 | Milestone 1.2 — Design tokens                                                           | PASS       | 1.2        | archived |
+| 0018  | 2026-10-14 | Git initialised and public repository created                                           | STRUCTURAL | pre-1.3    | archived |
+| 0019  | 2026-10-14 | Task 1.3.1 — shadcn/ui installed and configured                                         | PASS       | 1.3        | archived |
+| 0020  | 2026-10-14 | Task 1.3.2 — Button reconciled                                                          | PASS       | 1.3        | archived |
+| 0021  | 2026-10-14 | Task 1.3.3 — Input, Textarea, Select, Label                                             | PASS       | 1.3        | archived |
+| 0022  | 2026-10-14 | Task 1.3.8 — Base component kit verified                                                | PASS       | 1.3        | archived |
+| 0023  | 2026-10-14 | Milestone 1.3 closed                                                                    | STRUCTURAL | 1.3        | archived |
+| 0024  | 2026-10-14 | Task 1.4.1 — Unit tests for the cn helper                                               | PASS       | 1.4        | archived |
+| 0025  | 2026-10-14 | Task 1.4.2 — Money formatting utility                                                   | PASS       | 1.4        | archived |
+| 0026  | 2026-10-14 | Task 1.4.3 — Date and time formatting utility                                           | PASS       | 1.4        | archived |
+| 0027  | 2026-10-15 | Task 1.4.4 — Record D-16.1 (motion implementation strategy)                             | STRUCTURAL | 1.4        | current  |
+| 0028  | 2026-10-15 | Task 1.4.5 + 1.5.1 — Verify utilities and root layout                                   | STRUCTURAL | 1.4 / 1.5  | archived |
+| 0029  | 2026-10-15 | Task 1.5.2 — Guest and staff atmosphere wrappers                                        | PASS       | 1.5        | current  |
+| 0030  | 2026-10-15 | Task 1.5.3 — The 404 and error screens                                                  | PASS       | 1.5        | current  |
+| 0031  | 2026-10-15 | Task 1.5.4 — Verify the dev server, root page, and 404; close Milestone 1.5 and Phase 1 | STRUCTURAL | 1.5        | current  |
+| 0032  | 2026-10-15 | C-01 — Start the documentation correction milestone; rewrite PROGRESS.md to v2.0        | STRUCTURAL | correction | current  |
+| 0033  | 2026-10-16 | Milestone 2.1 — The schema, database migration, and verification                        | PASS       | 2.1        | current  |
+| 0034  | 2026-10-16 | Task 2.2.1 — The venue repository and integration harness                               | PASS       | 2.2        | current  |
+| 0035  | 2026-10-16 | Task 2.2.2 — The table and room repositories                                            | PASS       | 2.2        | current  |
+| 0036  | 2026-10-16 | Task 2.2.3 — The QR token repository                                                    | PASS       | 2.2        | current  |
+| 0037  | 2026-10-16 | Task 2.2.4 — The staff and staff session repositories                                   | PASS       | 2.2        | current  |
+| 0038  | 2026-10-16 | Task 2.2.5 — The menu repository                                                        | PASS       | 2.2        | current  |
+| 0039  | 2026-10-16 | Task 2.2.6 — The order repository                                                       | PASS       | 2.2        | current  |
+| 0040  | 2026-10-16 | Task 2.2.7 — The service request repository                                             | PASS       | 2.2        | current  |
+| 0041  | 2026-10-16 | Task 2.2.8 — The payment ticket and receipt repositories                                | PASS       | 2.2        | current  |
+| 0042  | 2026-10-16 | Task 2.2.9 — Milestone 2.2 Verification and Close                                       | STRUCTURAL | 2.2        | current  |
+| 0043  | 2026-10-16 | Task 2.3.1 — Seed the venue with table, room, and counter modules                       | PASS       | 2.3        | current  |
+| 0044  | 2026-10-16 | Task 2.3.2 — Seed the tables and rooms                                                  | PASS       | 2.3        | current  |
+| 0045  | 2026-10-16 | Task 2.3.3 — Seed the QR tokens (revised)                                               | PASS       | 2.3        | current  |
+| 0046  | 2026-10-16 | Task 2.3.4 — Seed the menu categories and menu items with modifiers                     | PASS       | 2.3        | current  |
+| 0047  | 2026-10-16 | Reconcile staff seeding dependency: move staff seed to Phase 3 (D-17.2)                 | STRUCTURAL | 2.3        | current  |
 
-Next entry number: 0043.
+Next entry number: 0048.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
-### 5.3 Current Milestone — Phase 2 Milestone 2.1 (Closed) & Milestone 2.2 (Repositories)
+### 5.3 Current Milestone — Phase 2 Milestone 2.3 (The seed)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0047 — 2026-10-16 — Reconcile staff seeding dependency: move staff seed to Phase 3 (D-17.2)
+
+**Status:** STRUCTURAL
+
+**Task:** Task 2.3.5 — Reschedule staff member seed to Phase 3 after password hashing infrastructure.
+
+**Summary:**
+Reconciled the architectural dependency gap on `StaffMember` credentials: since `passwordHash` requires a verified hashing service that is built in Phase 3 Task 3.1.1, staff seeding is moved to Task 3.1.2 in Phase 3 rather than populating dishonest static hashes in Milestone 2.3. Updated `docs/ROADMAP.md` (renumbering Milestone 2.3 seed tasks and inserting Task 3.1.2), updated `docs/PHASE_TESTS.md` (§4 Step 5 allows empty `StaffMember` table at Phase 2 close), and locked decision `D-17.2` in `docs/DECISIONS.md`.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Modified | Moved staff seeding to Task 3.1.2; renumbered 2.3.6–2.3.8 to 2.3.5–2.3.7; updated dependency chain and §14 critical path |
+| `docs/PHASE_TESTS.md` | Modified | Updated §4 Step 5 expected observation to permit empty `StaffMember` table at Phase 2 close |
+| `docs/DECISIONS.md` | Modified | Added locked decision `D-17.2` documenting the rationale and updated appendix decision count to 92 |
+| `docs/PROGRESS.md` | Modified | Added ENTRY-0047, updated ledger table, and advanced §7 snapshot to Task 2.3.5 (Seed hotel services) |
+
+**Commands Run:**
+
+1. Typecheck:
+
+```bash
+pnpm exec tsc --noEmit
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+2. Unit test suite:
+
+```bash
+pnpm test:unit
+```
+
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 19ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 19ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  05:37:00
+   Duration  160ms (tests 43%, import 27%, transform 20%, worker 10%)
+```
+
+3. Integration test suite:
+
+```bash
+pnpm test:integration
+```
+
+```text
+$ vitest run --config vitest.integration.config.ts
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ Test Files  15 passed (15)
+      Tests  76 passed (76)
+   Start at  05:37:05
+   Duration  45.50s (tests 97%, setup 2%)
+```
+
+4. Working tree check:
+
+```bash
+git status --short
+```
+
+```text
+ M docs/DECISIONS.md
+ M docs/PHASE_TESTS.md
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Roadmap updated without bypassing dependency rules | PASS | `ROADMAP.md` Milestone 2.3 updated to resequence remaining seed tasks; Task 3.1.2 added after 3.1.1 |
+| 2 | Phase acceptance test updated | PASS | `PHASE_TESTS.md` §4 Step 5 updated to document empty `StaffMember` table at Phase 2 close |
+| 3 | Architectural decision recorded | PASS | `DECISIONS.md` locked record `D-17.2` authored |
+| 4 | Typecheck and tests clean | PASS | `tsc --noEmit` exits 0; 43 unit tests and 76 integration tests pass |
+| 5 | Working tree scope restricted to documentation | PASS | Only `docs/DECISIONS.md`, `docs/PHASE_TESTS.md`, `docs/PROGRESS.md`, `docs/ROADMAP.md` modified |
+
+**Deviations from Contract:**
+None. Rescheduling performed in strict alignment with orchestrator directive.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+| Document | Status | Reason |
+|----------|--------|--------|
+| `PRODUCT.md` | Unchanged | No product requirements altered |
+| `DECISIONS.md` | Updated | Added locked decision D-17.2; updated count to 92 |
+| `SYSTEM.md` | Unchanged | Staff entity and role model untouched |
+| `BUILD.md` | Unchanged | Conventions and honesty rules upheld |
+| `ROADMAP.md` | Updated | Resequenced Milestone 2.3 tasks and added Task 3.1.2 in Milestone 3.1 |
+| `PHASE_TESTS.md` | Updated | Revised §4 Step 5 for Phase 2 acceptance test |
+| `PROGRESS.md` | Updated | Recorded ENTRY-0047, updated ledger, updated §7 snapshot |
+| `README.md` | Unchanged | No change needed |
+
+**Contradiction Check:**
+
+1. Does this entry contradict any decision in DECISIONS.md? No — complies with D-3.1, D-3.6, D-3.7, D-3.8, and adds D-17.2.
+2. Does this entry contradict any rule in SYSTEM.md? No — preserves staff entities, roles, and schema exactly.
+3. Does this entry introduce an untracked dependency? No — honors dependency order without synthetic stubs.
+4. Does this entry bypass the domain repository pattern? No — all repository contracts preserved.
+5. Does this entry alter past entries without justification? No — append-only modification to documentation.
+
+**Next:**
+Task 2.3.5 — Seed the enabled hotel services. The first action: read the venue port and the schema to determine where the services are stored (on the venue row or in a separate service toggles table), and read the corresponding port if it exists.
+
+**Awaiting Human Verification:**
+YES.
+
+### ENTRY-0046 — 2026-10-16 — Task 2.3.4 — Seed the menu categories and menu items with modifiers
+
+**Status:** PASS
+
+**Task:** Task 2.3.4 — Seed the menu categories and menu items with modifiers.
+
+**Summary:**
+Appended `seedMenu(venueId: string): Promise<void>` to `prisma/seed.ts` to seed 3 categories (Starters, Mains, Desserts), 10 menu items all in `AVAILABLE` state with decimal string prices, and 2 modifier groups with 6 modifier options across Ribeye Steak (Doneness: Rare, Medium, Well; SINGLE, isRequired: true) and Grilled Salmon (Extras: Extra cheese, Bacon, Avocado; MULTIPLE, isRequired: false) via the pure domain `MenuRepository` port. Implemented memory-filtered idempotency using existing port methods `listCategories`, `listItemsForCategory`, and `getItemWithModifiers` without adding new port methods or altering adapters. Verified idempotency over two successive seed runs, confirmed counts and decimal formatting via direct SQL queries, confirmed zero `@prisma/client` imports in `prisma/seed.ts`, and verified all 43 unit tests and 76 integration tests pass.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `prisma/seed.ts` | Modified | Added menu port/adapter imports, `seedMenu` function, and called `await seedMenu(venueId)` in `main()` |
+| `docs/ROADMAP.md` | Modified | Updated Task 2.3.4 status from ⬜ to ✅ Complete |
+| `docs/PROGRESS.md` | Modified | Added ENTRY-0046, updated ledger table, and advanced §7 snapshot to Task 2.3.5 |
+
+**Commands Run:**
+
+1. First seed run
+
+```bash
+pnpm db:seed
+```
+
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+Seeding tables and rooms...
+Table 1 already exists.
+Table 2 already exists.
+Table 3 already exists.
+Table 4 already exists.
+Table 5 already exists.
+Table 6 already exists.
+Table 7 already exists.
+Table 8 already exists.
+Table 9 already exists.
+Table 10 already exists.
+Table 11 already exists.
+Table 12 already exists.
+Room 401 already exists.
+Room 402 already exists.
+Room 403 already exists.
+Room 404 already exists.
+Room 411 already exists.
+Room 412 already exists.
+Room 413 already exists.
+Room 414 already exists.
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Table 1 already has an active token.
+Table 2 already has an active token.
+Table 3 already has an active token.
+Table 4 already has an active token.
+Table 5 already has an active token.
+Table 6 already has an active token.
+Table 7 already has an active token.
+Table 8 already has an active token.
+Table 9 already has an active token.
+Table 10 already has an active token.
+Table 11 already has an active token.
+Table 12 already has an active token.
+Room 401 already has an active token.
+Room 402 already has an active token.
+Room 403 already has an active token.
+Room 404 already has an active token.
+Room 411 already has an active token.
+Room 412 already has an active token.
+Room 413 already has an active token.
+Room 414 already has an active token.
+Seeded 0 table tokens and 0 room tokens; all places already have active tokens.
+Seeding menu...
+Created category Starters (id: 1d5242aa-e110-43dc-8b70-b0c3218ef04a).
+Created category Mains (id: 4f22be4d-2c4c-4308-92c5-f8030626d00c).
+Created category Desserts (id: 7485e10b-d466-4b46-9d6a-816c167a3ade).
+Created item Soup of the Day (id: 0f147591-ef8c-477e-92e5-13501c32ced3).
+Created item Garden Salad (id: ff0095b0-ec0f-407e-9f4f-ece7d266abea).
+Created item Bruschetta (id: 4fa8c077-9fe2-4911-8184-d89dba77a273).
+Created item Grilled Salmon (id: 154f99e3-20f5-4f52-ab13-2730d571480c).
+Created item Ribeye Steak (id: 5a8c84d6-4c6f-4edd-8416-5cbb10d5470d).
+Created item Mushroom Risotto (id: ceb490a4-3b64-426f-8a5b-2c7a5c1c03d8).
+Created item Roast Chicken (id: fe9f07e3-d227-4753-86da-109630bf736b).
+Created item Chocolate Cake (id: dc03d168-b57e-46c2-8f91-5103b704d220).
+Created item Crème Brûlée (id: a92ae240-8040-43f2-a475-667d6e8787b7).
+Created item Seasonal Fruit Plate (id: b6c625db-d112-4abe-aac9-bf2d02af7696).
+Created modifier group Doneness (id: 717793fd-2a7e-407d-bbfa-cc4af3a2e365).
+Created modifier option Doneness/Rare.
+Created modifier option Doneness/Medium.
+Created modifier option Doneness/Well.
+Created modifier group Extras (id: d9862703-742a-480c-9386-2653547667e8).
+Created modifier option Extras/Extra cheese.
+Created modifier option Extras/Bacon.
+Created modifier option Extras/Avocado.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+
+The seed command has been executed.
+```
+
+2. Second seed run (idempotency check)
+
+```bash
+pnpm db:seed
+```
+
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+Seeding tables and rooms...
+Table 1 already exists.
+Table 2 already exists.
+Table 3 already exists.
+Table 4 already exists.
+Table 5 already exists.
+Table 6 already exists.
+Table 7 already exists.
+Table 8 already exists.
+Table 9 already exists.
+Table 10 already exists.
+Table 11 already exists.
+Table 12 already exists.
+Room 401 already exists.
+Room 402 already exists.
+Room 403 already exists.
+Room 404 already exists.
+Room 411 already exists.
+Room 412 already exists.
+Room 413 already exists.
+Room 414 already exists.
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Table 1 already has an active token.
+Table 2 already has an active token.
+Table 3 already has an active token.
+Table 4 already has an active token.
+Table 5 already has an active token.
+Table 6 already has an active token.
+Table 7 already has an active token.
+Table 8 already has an active token.
+Table 9 already has an active token.
+Table 10 already has an active token.
+Table 11 already has an active token.
+Table 12 already has an active token.
+Room 401 already has an active token.
+Room 402 already has an active token.
+Room 403 already has an active token.
+Room 404 already has an active token.
+Room 411 already has an active token.
+Room 412 already has an active token.
+Room 413 already has an active token.
+Room 414 already has an active token.
+Seeded 0 table tokens and 0 room tokens; all places already have active tokens.
+Seeding menu...
+Category Starters already exists.
+Category Mains already exists.
+Category Desserts already exists.
+Item Soup of the Day already exists.
+Item Garden Salad already exists.
+Item Bruschetta already exists.
+Item Grilled Salmon already exists.
+Item Ribeye Steak already exists.
+Item Mushroom Risotto already exists.
+Item Roast Chicken already exists.
+Item Chocolate Cake already exists.
+Item Crème Brûlée already exists.
+Item Seasonal Fruit Plate already exists.
+Modifier group Doneness already exists.
+Modifier option Doneness/Rare already exists.
+Modifier option Doneness/Medium already exists.
+Modifier option Doneness/Well already exists.
+Modifier group Extras already exists.
+Modifier option Extras/Extra cheese already exists.
+Modifier option Extras/Bacon already exists.
+Modifier option Extras/Avocado already exists.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+
+The seed command has been executed.
+```
+
+3. Category count
+
+```powershell
+$env:PGPASSWORD='avishek'; $q = 'SELECT count(*) FROM menu_categories WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'';'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+```
+
+```text
+ count
+-------
+     3
+(1 row)
+```
+
+4. Item count
+
+```powershell
+$env:PGPASSWORD='avishek'; $q = 'SELECT count(*) FROM menu_items WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'';'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+```
+
+```text
+ count
+-------
+    10
+(1 row)
+```
+
+5. Modifier group count
+
+```powershell
+$env:PGPASSWORD='avishek'; $q = 'SELECT count(*) FROM modifier_groups WHERE """menuItemId""" IN (SELECT id FROM menu_items WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'');'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+```
+
+```text
+ count
+-------
+     2
+(1 row)
+```
+
+6. Modifier option count
+
+```powershell
+$env:PGPASSWORD='avishek'; $q = 'SELECT count(*) FROM modifier_options WHERE """modifierGroupId""" IN (SELECT id FROM modifier_groups WHERE """menuItemId""" IN (SELECT id FROM menu_items WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d''));'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+```
+
+```text
+ count
+-------
+     6
+(1 row)
+```
+
+7. Item prices and states
+
+```powershell
+$env:PGPASSWORD='avishek'; $q = 'SELECT name, price, state FROM menu_items WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'' ORDER BY name;'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+```
+
+```text
+         name         | price |   state
+----------------------+-------+-----------
+ Bruschetta           |  8.00 | AVAILABLE
+ Chocolate Cake       |  9.00 | AVAILABLE
+ Crème Brûlée         |  8.50 | AVAILABLE
+ Garden Salad         |  7.00 | AVAILABLE
+ Grilled Salmon       | 24.00 | AVAILABLE
+ Mushroom Risotto     | 19.00 | AVAILABLE
+ Ribeye Steak         | 32.00 | AVAILABLE
+ Roast Chicken        | 22.00 | AVAILABLE
+ Seasonal Fruit Plate |  7.50 | AVAILABLE
+ Soup of the Day      |  6.50 | AVAILABLE
+(10 rows)
+```
+
+8. Option additional prices
+
+```powershell
+$env:PGPASSWORD='avishek'; $q = 'SELECT name, """additionalPrice""" FROM modifier_options WHERE """modifierGroupId""" IN (SELECT id FROM modifier_groups WHERE """menuItemId""" IN (SELECT id FROM menu_items WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'')) ORDER BY name;'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+```
+
+```text
+     name     | additionalPrice
+--------------+-----------------
+ Avocado      |            1.75
+ Bacon        |            2.00
+ Extra cheese |            1.50
+ Medium       |            0.00
+ Rare         |            0.00
+ Well         |            0.00
+(6 rows)
+```
+
+9. Typecheck
+
+```bash
+pnpm exec tsc --noEmit
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+10. Unit suite
+
+```bash
+pnpm test:unit
+```
+
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 19ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 19ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  05:13:30
+   Duration  161ms (tests 43%, import 27%, transform 20%, worker 10%)
+```
+
+11. Integration suite
+
+```bash
+pnpm test:integration
+```
+
+```text
+$ vitest run --config vitest.integration.config.ts
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.repo.test.ts (13 tests) 12533ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2390ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2382ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2380ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 3375ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1995ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 1770ms
+ ✓ tests/integration/repositories/venue.test.ts (3 tests) 2349ms
+ ✓ tests/integration/harness.test.ts (2 tests) 1937ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2150ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2102ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2127ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 1863ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2022ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 1676ms
+
+ Test Files  15 passed (15)
+      Tests  76 passed (76)
+   Start at  05:13:35
+   Duration  45.71s (tests 97%, setup 2%)
+```
+
+12. Boundary check
+
+```powershell
+Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"
+```
+
+```text
+(clean exit code 0, no output)
+```
+
+13. Working tree
+
+```bash
+git status --short
+```
+
+```text
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+ M prisma/seed.ts
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Three categories exist | PASS | Command 3: output `3` (1 row) |
+| 2 | Ten items exist | PASS | Command 4: output `10` (1 row) |
+| 3 | Two modifier groups exist | PASS | Command 5: output `2` (1 row) |
+| 4 | Six modifier options exist | PASS | Command 6: output `6` (1 row) |
+| 5 | Every item's price is a two-decimal string | PASS | Command 7: raw rows show `8.00`, `9.00`, `8.50`, `7.00`, `24.00`, `19.00`, `32.00`, `22.00`, `7.50`, `6.50` |
+| 6 | Every item's state is AVAILABLE | PASS | Command 7: all 10 rows show state `AVAILABLE` |
+| 7 | Every option's additional price is a two-decimal string | PASS | Command 8: raw rows show `1.75`, `2.00`, `1.50`, `0.00`, `0.00`, `0.00` |
+| 8 | The seed is idempotent | PASS | Command 2 logs `already exists` for every category, item, modifier group, and option; Commands 3–6 confirm counts remain 3, 10, 2, 6 |
+| 9 | The seed does not import @prisma/client | PASS | Command 12: empty output |
+| 10 | The typecheck passes | PASS | Command 9: exit 0, no output |
+| 11 | The unit suite still passes | PASS | Command 10: 43 tests pass across 3 files |
+| 12 | The integration suite still passes | PASS | Command 11: 76 tests pass across 15 files |
+| 13 | No file outside the scope was changed | PASS | Command 13: only `prisma/seed.ts`, `docs/ROADMAP.md`, and `docs/PROGRESS.md` modified |
+
+**Deviations from Contract:**
+No substitutions; the port's method names (`listCategories`, `listItemsForCategory`, `getItemWithModifiers`, `createCategory`, `createItem`, `createModifierGroup`, `createModifierOption`) and input shapes matched the template exactly. Entry number 0046 used as assigned.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+| Document | Status | Reason |
+|----------|--------|--------|
+| `PRODUCT.md` | Unchanged | No product requirements altered |
+| `DECISIONS.md` | Unchanged | No architectural decisions added or altered |
+| `SYSTEM.md` | Unchanged | Architecture, port contracts, and data models unchanged |
+| `BUILD.md` | Unchanged | Tooling and conventions unchanged |
+| `ROADMAP.md` | Updated | Marked Task 2.3.4 as Complete |
+| `PROGRESS.md` | Updated | Added ENTRY-0046, updated ledger, updated §7 snapshot |
+| `PROGRESS_ARCHIVE_PHASE_1.md` | Unchanged | Phase 1 archive untouched |
+| `README.md` | Unchanged | Repository documentation unchanged |
+
+**Contradiction Check:**
+
+1. Does this entry contradict any decision in DECISIONS.md? No — complies with D-4.1, D-4.2, D-10.1, D-10.2.
+2. Does this entry contradict any rule in SYSTEM.md? No — complies with menu entities and money representation rules.
+3. Does this entry introduce an untracked dependency? No — pure TypeScript/repository methods used.
+4. Does this entry bypass the domain repository pattern? No — all database writes and reads go through `MenuRepository` via `createPrismaMenuRepository(prisma)`. Zero `@prisma/client` imports in `prisma/seed.ts`.
+5. Does this entry alter past entries without justification? No — append-only modification to documentation.
+
+**Next:**
+Task 2.3.5 — Seed the staff members. The first action: read the staff port and adapter, and check whether the password-hashing service exists in `src/infrastructure/auth/` or `src/domain/auth/`. If it does not, the next session reports BLOCKED with the dependency gap and does not proceed.
+
+**Awaiting Human Verification:**
+YES.
+
+### ENTRY-0045 — 2026-10-16 — Task 2.3.3 — Seed the QR tokens (revised)
+
+**Status:** PASS
+
+**Task:** Task 2.3.3 — Seed the QR tokens.
+
+**Summary:**
+Appended `seedQrTokens(venueId: string)` to `prisma/seed.ts` to generate one active QR token per table and one per room via the pure domain `QrTokenRepository` port (`generate`), using `listForVenue(venueId, { state: QrTokenState.ACTIVE })` for strict idempotency without modifying the port or adapter. Verified that running the seed a second time detects all active tokens and generates zero additional tokens, creating exactly 12 table tokens, 8 room tokens, and 0 counter tokens (all valid UUIDs referencing their correct respective places), with zero `@prisma/client` imports in `prisma/seed.ts` and all 76 integration tests and 43 unit tests passing; this entry supersedes the previous evaluated blocked assessment.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `prisma/seed.ts` | Modified | Added `seedQrTokens(venueId)` helper and called it in `main()` |
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.3 as Complete |
+| `docs/PROGRESS.md` | Modified | Added ENTRY-0045, updated ledger, advanced §7 to Task 2.3.4 |
+
+**Commands Run:**
+
+```bash
+# First seed execution (creates 12 table tokens and 8 room tokens)
+pnpm db:seed
+# Output:
+# Running seed command `tsx prisma/seed.ts` ...
+# Seed starting.
+# Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+# Seeding tables and rooms...
+# Table 1 already exists.
+# ...
+# Room 414 already exists.
+# Seeded 12 tables and 8 rooms.
+# Seeding QR tokens...
+# Created token for table 1: a35f0f60-b79f-439c-93f8-37690ef19909.
+# Created token for table 2: 3114a579-2c1e-4e59-9b70-1b4c85612cb5.
+# Created token for table 3: 99ad0461-9143-4dc4-b9f0-cea6d451c5a4.
+# Created token for table 4: c68990d2-6699-41c8-99e0-aa6783b5fc8c.
+# Created token for table 5: 0902bc1d-a69f-4897-aa33-126808e77bad.
+# Created token for table 6: 5ce7f97f-2a82-4697-a4ae-243b8cf8010f.
+# Created token for table 7: 141f4f89-69d8-4546-ae3f-2ad564e6fad4.
+# Created token for table 8: 5a181e1e-4e09-4006-8db3-582364b43b1e.
+# Created token for table 9: c6f22cba-40f1-4638-a968-ff6e4b90c68f.
+# Created token for table 10: e6995a9f-8223-44d7-8263-7a4fa5b134fc.
+# Created token for table 11: 870b07f7-14bd-441b-9c55-3ec977d2815e.
+# Created token for table 12: 5386d291-f530-46e6-a9d0-25ec016cd5df.
+# Created token for room 401: 9bc4bf52-ae5e-4d4f-afcd-022cb6260b61.
+# Created token for room 402: e02d39b3-0cca-46f8-9ceb-1a4f03c02945.
+# Created token for room 403: 1708d812-3f10-429e-b0ea-6777d2c4c534.
+# Created token for room 404: 9c4f7e03-b45c-44dd-afa0-01a05948efaf.
+# Created token for room 411: 0f598612-c70c-447f-a8ba-6a9541534601.
+# Created room 412: 9711a53e-a353-4fe1-bcb1-f1b6ff1f4ac4.
+# Created token for room 413: 5fa4a7fe-5268-40c6-ad1a-72f5bb5cfae7.
+# Created token for room 414: ee37741f-9335-4c94-96b7-55d40334d12d.
+# Seeded 12 table tokens and 8 room tokens.
+# Seed complete.
+
+# Second seed execution (idempotency check)
+pnpm db:seed
+# Output:
+# Running seed command `tsx prisma/seed.ts` ...
+# Seed starting.
+# Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+# Seeding tables and rooms...
+# Seeded 12 tables and 8 rooms.
+# Seeding QR tokens...
+# Table 1 already has an active token.
+# ...
+# Room 414 already has an active token.
+# Seeded 0 table tokens and 0 room tokens; all places already have active tokens.
+# Seed complete.
+
+# Query table, room, and counter active token counts
+$env:PGPASSWORD='avishek'; $q1 = 'SELECT count(*) FROM qr_tokens WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'' AND """placeType""" = ''TABLE'' AND state = ''ACTIVE'';'; $q2 = 'SELECT count(*) FROM qr_tokens WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'' AND """placeType""" = ''ROOM'' AND state = ''ACTIVE'';'; $q3 = 'SELECT count(*) FROM qr_tokens WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'' AND """placeType""" = ''COUNTER'';'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q1 -c $q2 -c $q3
+# Output:
+#  count
+# -------
+#     12
+# (1 row)
+#  count
+# -------
+#      8
+# (1 row)
+#  count
+# -------
+#      0
+# (1 row)
+
+# Query tokens for UUID validation
+$env:PGPASSWORD='avishek'; $q = 'SELECT token FROM qr_tokens WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'';'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+# Output: 20 rows, all valid UUIDs
+
+# Query place references for tokens
+$env:PGPASSWORD='avishek'; $q = 'SELECT """placeType""", """tableId""", """roomId""" FROM qr_tokens WHERE """venueId""" = ''ca25276e-569d-4fb9-884f-8ece0dfac27d'' ORDER BY """placeType""", """tableId""", """roomId""";'; psql -h localhost -p 5432 -U postgres -d qrproject -c $q
+# Output: 12 TABLE tokens with tableId and null roomId; 8 ROOM tokens with roomId and null tableId
+
+# Verify port and adapter are unchanged
+git diff --stat src/domain/qr/qr-token.repository.ts src/infrastructure/db/repositories/qr-token.repo.ts
+# Output: empty (no changes)
+
+# Typecheck
+pnpm exec tsc --noEmit
+# Output: clean exit (code 0)
+
+# Unit test suite
+pnpm test:unit
+# Output: 43 passed (43) across 3 test files
+
+# Integration test suite
+pnpm test:integration
+# Output: 76 passed (76) across 15 test files
+
+# Verify zero @prisma/client imports in prisma/seed.ts
+Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"
+# Output: Clean. 0 matches (empty output).
+
+# Working tree check
+git status --short
+# Output:
+#  M docs/PROGRESS.md
+#  M docs/ROADMAP.md
+#  M prisma/seed.ts
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | One active token per table | PASS | Query returns 12 for TABLE with state 'ACTIVE' |
+| 2 | One active token per room | PASS | Query returns 8 for ROOM with state 'ACTIVE' |
+| 3 | No counter token | PASS | Query returns 0 for COUNTER |
+| 4 | Every token is a UUID | PASS | All 20 returned token values match the UUID format |
+| 5 | Every token references the right place | PASS | TABLE tokens have tableId and null roomId; ROOM tokens have roomId and null tableId |
+| 6 | The seed is idempotent | PASS | Second run logs "already has an active token" for all places and seeds 0 tokens; counts unchanged |
+| 7 | The seed does not import Prisma | PASS | `Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"` returns empty |
+| 8 | The typecheck passes | PASS | `pnpm exec tsc --noEmit` exits with 0 errors |
+| 9 | The unit suite still passes | PASS | 43/43 unit tests pass across 3 files |
+| 10 | The integration suite still passes | PASS | 76/76 integration tests pass across 15 files |
+| 11 | No file outside scope changed | PASS | Only `prisma/seed.ts`, `docs/ROADMAP.md`, and `docs/PROGRESS.md` touched |
+| 12 | The port and adapter are unchanged | PASS | `git diff --stat` on port and adapter outputs empty |
+
+**Deviations from Contract:**
+None. The idempotency check was implemented cleanly via the existing `listForVenue(venueId, { state: QrTokenState.ACTIVE })` method without modifying domain ports or infrastructure adapters.
+
+**Noticed but Out of Scope:**
+Cosmetic `prisma:error` blocks during expected negative-path integration tests remain deferred to Phase 3 harness hardening via D-16.4.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-16.2 | No change |
+| SYSTEM.md | No | Respects §8 and §11 | No change |
+| BUILD.md | No | Complies with build rules | No change |
+| ROADMAP.md | Yes | Marked Task 2.3.3 Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Added ENTRY-0045, updated ledger, advanced §7 | Updated |
+| DESIGN.md | No | No design changes | No change |
+| PHASE_TESTS.md | No | Acceptance test unchanged | No change |
+
+**Contradiction Check:**
+
+1. Does the session contradict a decision in DECISIONS.md? No; adheres to D-1.1, D-1.2, D-1.3, D-16.2.
+2. Does it contradict the system's shape in SYSTEM.md? No; adheres to §8, §11.1, §11.2.
+3. Does it contradict a build rule in BUILD.md? No; ports, adapters, and seed hygiene observed.
+4. Does it contradict a fact in PRODUCT.md? No; QR tokens created for tables and rooms.
+5. Does it contradict a task or status in ROADMAP.md? No; completes Task 2.3.3.
+
+**Next:**
+Task 2.3.4 — Seed the menu. The first action: read the menu port and adapter, and confirm the create methods for categories, items, groups, and options.
+
+**Awaiting Human Verification:** YES
+
+### ENTRY-0044 — 2026-10-16 — Task 2.3.2 — Seed the tables and rooms
+
+**Status:** PASS
+
+**Task:** Task 2.3.2 — Seed the tables and rooms.
+
+**Summary:**
+Appended `seedTablesAndRooms(venueId: string)` to `prisma/seed.ts` to create 12 tables (`1` through `12`) in initial state `FREE` and 8 rooms (`401`-`404`, `411`-`414`) in initial state `VACANT` using the pure domain ports `TableRepository` and `RoomRepository` and their Prisma adapter factories. Verified that the seed operation is completely idempotent (creates 12 tables and 8 rooms on the first run, and skips all 20 records on the second run without modifying existing state), with all rows strictly scoped to the Juniper House venue (`ca25276e-569d-4fb9-884f-8ece0dfac27d`). Zero `@prisma/client` imports exist in `prisma/seed.ts`, typecheck exits with 0 errors, and all 43 unit tests and 76 integration tests continue to pass.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `prisma/seed.ts` | Modified | Added `TABLE_NUMBERS`, `ROOM_NUMBERS`, `seedTablesAndRooms(venueId)` helper, and updated `main()` |
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.2 as Complete |
+| `docs/PROGRESS.md` | Modified | Added ENTRY-0044, updated ledger, advanced §7 to Task 2.3.3 |
+
+**Commands Run:**
+
+```bash
+# First seed execution (creates 12 tables and 8 rooms)
+pnpm db:seed
+# Output:
+# Running seed command `tsx prisma/seed.ts` ...
+# Seed starting.
+# Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+# Seeding tables and rooms...
+# Created table 1 (id: 8062c2c0-b2ed-4a31-924a-98dbcbcc2b20).
+# Created table 2 (id: 989c5daa-a02e-4fdc-b2a4-40d25efecab5).
+# Created table 3 (id: 20ed4574-4e2c-4f16-9338-ceb1c5aa6564).
+# Created table 4 (id: c58424e3-1352-4de5-a7ef-c8ff429b3e78).
+# Created table 5 (id: e0fb6cf2-1a3e-494d-8a32-ea9d41a8e896).
+# Created table 6 (id: 1c38616b-91b1-4749-8e3e-abdac88f1e06).
+# Created table 7 (id: 3b7f0616-b7e5-4489-9b2c-eadcaf8d2113).
+# Created table 8 (id: 411afe0d-8b24-4e0b-8704-74c6424a0738).
+# Created table 9 (id: f9eb0524-3d7f-4f10-81e3-35027464b500).
+# Created table 10 (id: 424b5137-0200-499f-84cd-b90bdd0bade4).
+# Created table 11 (id: 13036027-6cff-4064-aad0-058931689ede).
+# Created table 12 (id: 272e3514-be9f-4582-bb1f-fe5d54531e8a).
+# Created room 401 (id: 21656df5-dcd6-41ab-b96e-3a3c571bcc55).
+# Created room 402 (id: 89afedd8-79c7-44e2-9822-5c990db843d8).
+# Created room 403 (id: dce86a01-adbf-4fdc-ad13-f986a1be1ac5).
+# Created room 404 (id: 0966ae33-34ee-46ec-bcb9-47b194ed5b47).
+# Created room 411 (id: 14701fe5-45f6-44d2-b45a-4787a1232f8b).
+# Created room 412 (id: bacc78b7-c263-4926-85b6-b33e73f7a86e).
+# Created room 413 (id: 45dc4d91-fca3-4bab-8d78-058967c23598).
+# Created room 414 (id: 49100443-07ba-4772-8f05-b2b03fd65945).
+# Seeded 12 tables and 8 rooms.
+# Seed complete.
+
+# Second seed execution (idempotency check)
+pnpm db:seed
+# Output:
+# Running seed command `tsx prisma/seed.ts` ...
+# Seed starting.
+# Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+# Seeding tables and rooms...
+# Table 1 already exists.
+# Table 2 already exists.
+# Table 3 already exists.
+# Table 4 already exists.
+# Table 5 already exists.
+# Table 6 already exists.
+# Table 7 already exists.
+# Table 8 already exists.
+# Table 9 already exists.
+# Table 10 already exists.
+# Table 11 already exists.
+# Table 12 already exists.
+# Room 401 already exists.
+# Room 402 already exists.
+# Room 403 already exists.
+# Room 404 already exists.
+# Room 411 already exists.
+# Room 412 already exists.
+# Room 413 already exists.
+# Room 414 already exists.
+# Seeded 12 tables and 8 rooms.
+# Seed complete.
+
+# Verify table count in database
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM tables WHERE \""venueId\"" = 'ca25276e-569d-4fb9-884f-8ece0dfac27d';"
+# Output:
+#  count
+# -------
+#     12
+# (1 row)
+
+# Verify room count in database
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM rooms WHERE \""venueId\"" = 'ca25276e-569d-4fb9-884f-8ece0dfac27d';"
+# Output:
+#  count
+# -------
+#      8
+# (1 row)
+
+# Verify table states
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT number, state FROM tables WHERE \""venueId\"" = 'ca25276e-569d-4fb9-884f-8ece0dfac27d' ORDER BY number;"
+# Output:
+#  number | state
+# --------+-------
+#  1      | FREE
+#  10     | FREE
+#  11     | FREE
+#  12     | FREE
+#  2      | FREE
+#  3      | FREE
+#  4      | FREE
+#  5      | FREE
+#  6      | FREE
+#  7      | FREE
+#  8      | FREE
+#  9      | FREE
+# (12 rows)
+
+# Verify room states
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT number, state FROM rooms WHERE \""venueId\"" = 'ca25276e-569d-4fb9-884f-8ece0dfac27d' ORDER BY number;"
+# Output:
+#  number | state
+# --------+--------
+#  401    | VACANT
+#  402    | VACANT
+#  403    | VACANT
+#  404    | VACANT
+#  411    | VACANT
+#  412    | VACANT
+#  413    | VACANT
+#  414    | VACANT
+# (8 rows)
+
+# Typecheck
+pnpm exec tsc --noEmit
+# Output: clean exit (code 0)
+
+# Unit test suite
+pnpm test:unit
+# Output:
+# Test Files  3 passed (3)
+# Tests       43 passed (43)
+
+# Integration test suite
+pnpm test:integration
+# Output:
+# Test Files  15 passed (15)
+# Tests       76 passed (76)
+
+# Verify zero @prisma/client imports in prisma/seed.ts
+Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"
+# Output: Clean. 0 matches (empty output).
+
+# Working tree check
+git status --short
+# Output:
+#  M docs/PROGRESS.md
+#  M docs/ROADMAP.md
+#  M prisma/seed.ts
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The seed creates 12 tables and 8 rooms | PASS | Counts in `tables` and `rooms` are 12 and 8 respectively |
+| 2 | The tables and rooms belong to the seed venue | PASS | Query filtered by `venueId = 'ca25276e-569d-4fb9-884f-8ece0dfac27d'` returns all 12 tables and 8 rooms |
+| 3 | The initial states are correct | PASS | All 12 tables have state `FREE`; all 8 rooms have state `VACANT` |
+| 4 | The seed is idempotent | PASS | Second `pnpm db:seed` logs "already exists" for each table and room; row counts remain unchanged |
+| 5 | The seed does not import Prisma | PASS | `Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"` returns empty |
+| 6 | The typecheck passes | PASS | `pnpm exec tsc --noEmit` exits with 0 errors |
+| 7 | The unit suite still passes | PASS | 43/43 unit tests pass across 3 test files |
+| 8 | The integration suite still passes | PASS | 76/76 integration tests pass across 15 test files |
+| 9 | No file outside scope changed | PASS | Only `prisma/seed.ts`, `docs/ROADMAP.md`, and `docs/PROGRESS.md` touched |
+
+**Deviations from Contract:**
+
+1. In `prisma/schema.prisma` and the domain ports, `Table.number` and `Room.number` are typed as `String`, not integer. Accordingly, `TABLE_NUMBERS` and `ROOM_NUMBERS` are declared as string arrays (`["1", "2", ...]` and `["401", "402", ...]`).
+2. `TABLE_NUMBERS` and `ROOM_NUMBERS` are exported constants from `prisma/seed.ts` so Task 2.3.3 can consume the lists directly when generating QR tokens.
+3. For PowerShell execution of `psql`, PostgreSQL camelCase column identifiers (`"venueId"`) require escaping as `\""` when invoked inside double-quoted PowerShell command strings.
+
+**Noticed but Out of Scope:**
+Cosmetic `prisma:error` blocks continue to appear during negative-path integration tests in `order.repo.test.ts`, `payment.test.ts`, `staff.test.ts`, `table.test.ts`, `venue.test.ts`, and `room.test.ts`. This is expected and documented under D-16.4 for Phase 3 test harness hardening.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product requirements | No change |
+| DECISIONS.md | No | No new decisions required | No change |
+| SYSTEM.md | No | No change to system architecture | No change |
+| BUILD.md | No | No change to build rules | No change |
+| ROADMAP.md | Yes | Marked Task 2.3.2 Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0044, updated ledger, advanced §7 | Updated |
+| DESIGN.md | No | No design changes | No change |
+| PHASE_TESTS.md | No | Acceptance test unchanged | No change |
+
+**Contradiction Check:**
+
+1. Does any change contradict D-10.1 (one venue per installation)? No, tables and rooms are attached to the single installation venue.
+2. Does any change contradict D-10.2 (venue isolation)? No, every table and room operation is strictly scoped by `venueId`.
+3. Does any change contradict D-15.2 (one venue with tables and rooms)? No, both tables and rooms are actively seeded for the same venue.
+4. Does any change contradict SYSTEM.md §11.1 or §11.2? No, Table and Room entities and their initial states match the specification.
+5. Does any change violate the zero `@prisma/client` rule in pure callers? No, `prisma/seed.ts` interacts exclusively through domain ports and infrastructure repository adapters.
+
+**Next:**
+Task 2.3.3 — Seed the QR tokens. The first action: read the QR token port (`src/domain/qr/qr-token.repository.ts`) and adapter (`src/infrastructure/db/repositories/qr-token.repo.ts`), and confirm whether the port has a find-by-place method.
+
+**Awaiting Human Verification:** YES
+
+### ENTRY-0043 — 2026-10-16 — Task 2.3.1 — Seed the venue
+
+**Status:** PASS
+
+**Task:** Task 2.3.1 — Seed the venue with the table, room, and counter modules enabled.
+
+**Summary:**
+Created `prisma/seed.ts` as an idempotent script that creates the initial development venue (`juniper-house`) using the production database client and the `createPrismaVenueRepository` adapter. Verified that running the seed multiple times is completely idempotent (creates the venue on the first run, detects existing venue and skips writes on subsequent runs), resulting in exactly one row in `venues` with Table, Room, and Counter modules enabled, and Kitchen disabled. Zero `@prisma/client` imports exist in `prisma/seed.ts`. All 76 integration tests and 43 unit tests continue to pass.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `prisma/seed.ts` | Created | Idempotent seed script creating Juniper House venue via venue repository adapter |
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.1 as Complete |
+| `docs/PROGRESS.md` | Modified | Added ENTRY-0043, updated ledger, advanced §7 to Task 2.3.2 |
+
+**Commands Run:**
+
+```bash
+# First seed execution (creates venue)
+pnpm db:seed
+# Output:
+# Running seed command `tsx prisma/seed.ts` ...
+# Seed starting.
+# Created venue: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+# Seed complete.
+
+# Second seed execution (idempotency check)
+pnpm db:seed
+# Output:
+# Running seed command `tsx prisma/seed.ts` ...
+# Seed starting.
+# Venue already exists: juniper-house (id: ca25276e-569d-4fb9-884f-8ece0dfac27d)
+# Seed complete.
+
+# Verify exactly one venue row in database
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c 'SELECT count(*) FROM venues;'
+# Output:
+#  count
+# -------
+#      1
+
+# Verify venue fields and module toggles
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c 'SELECT * FROM venue_module_toggles;'
+# Output:
+#                   id                  |               venueId                | module  | isEnabled
+# --------------------------------------+--------------------------------------+---------+-----------
+#  c3ca157e-4844-4098-a559-6e95411997db | ca25276e-569d-4fb9-884f-8ece0dfac27d | TABLE   | t
+#  41abae95-3b1c-4284-bf5a-a98d336804ce | ca25276e-569d-4fb9-884f-8ece0dfac27d | ROOM    | t
+#  a966d76f-aebc-41a1-b7cc-1097d9d087ae | ca25276e-569d-4fb9-884f-8ece0dfac27d | COUNTER | t
+
+# Verify zero @prisma/client imports in prisma/seed.ts
+Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"
+# Output: Clean. 0 matches (empty output).
+
+# Typecheck
+pnpm exec tsc --noEmit
+# Output: clean exit (code 0)
+
+# Unit test suite
+pnpm test:unit
+# Output:
+# Test Files  3 passed (3)
+# Tests       43 passed (43)
+
+# Integration test suite
+pnpm test:integration
+# Output:
+# Test Files  15 passed (15)
+# Tests       76 passed (76)
+
+# Working tree check
+git status --short
+# Output:
+#  M docs/PROGRESS.md
+#  M docs/ROADMAP.md
+# ?? prisma/seed.ts
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The seed is declared and runnable | PASS | `pnpm db:seed` executes `tsx prisma/seed.ts` via `prisma.config.ts` and exits 0 |
+| 2 | The seed writes exactly one venue | PASS | `SELECT count(*) FROM venues;` returns 1 |
+| 3 | The venue's modules are correct | PASS | Table, Room, and Counter are enabled; Kitchen is disabled |
+| 4 | The seed is idempotent | PASS | Second `pnpm db:seed` exits 0, logs "Venue already exists", count remains 1 |
+| 5 | The seed does not import Prisma | PASS | `Select-String -Path "prisma/seed.ts" -Pattern "@prisma/client"` returns empty |
+| 6 | The typecheck passes | PASS | `pnpm exec tsc --noEmit` exits with 0 errors |
+| 7 | The unit suite still passes | PASS | 43/43 tests pass across 3 files |
+| 8 | The integration suite still passes | PASS | 76/76 tests pass across 15 files |
+| 9 | No file outside scope changed | PASS | Only `prisma/seed.ts`, `docs/ROADMAP.md`, and `docs/PROGRESS.md` touched |
 
 ### ENTRY-0042 — 2026-10-16 — Task 2.2.9 — Milestone 2.2 Verification and Close
 
@@ -206,6 +1218,7 @@ Closed Milestone 2.2 ("The repositories") with full verification across all laye
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0042, updated ledger, advanced §7 to Milestone 2.3 |
 
 **Commands Run:**
+
 ```bash
 # Integration test suite (all 76 tests pass across 15 files)
 pnpm test:integration
@@ -263,6 +1276,7 @@ Get-ChildItem -Recurse -Path "src/domain" -Filter "*.ts" | Select-String -Patter
 | 12 | PROGRESS.md has ENTRY-0042 (STRUCTURAL) and §7 advanced | PASS | Verified in file |
 
 **Limits of the Milestone (What Was Not Proven / Limits Named):**
+
 1. **Production atomicity of multi-row writes:** Not exercised by integration tests. The test harness wraps each test in an outer transaction; the nested `$transaction` wrapper in `createOrder`, `createServiceRequest`, and other multi-row methods is skipped in tests. True production atomicity is deferred to a dedicated real-PrismaClient test.
 2. **DbClient factory signature reconciliation:** Reconciled via Path (a). `createPrismaQrTokenRepository` now requires `client: DbClient` explicitly with no default, unifying all 11 repository adapters across the platform.
 3. **Prisma error logging in negative-path tests:** Reconciled via Path (b). Six test files emit cosmetic `prisma:error` blocks during expected constraint violation tests. Suppression was deferred to Phase 3 harness hardening via D-16.4 to preserve unmasked database diagnostic visibility during active development.
@@ -291,6 +1305,7 @@ Delivered the single `PaymentRepository` port in `src/domain/payments/payment.re
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0041, updated ledger, advanced §7 to Task 2.2.9 |
 
 **Commands Run:**
+
 ```bash
 # Forward migration generation and deployment
 pnpm prisma migrate dev --name add_failure_reason_to_payment_tickets
@@ -365,6 +1380,7 @@ pnpm build
 | 16 | The whole integration suite passes (76 tests across 15 files) | PASS | 76/76 tests pass across 15 test files |
 
 **Deviations:**
+
 1. **The one-port-two-adapters decision:** SYSTEM.md §4 names `payments` as a single domain module. `PaymentTicket` and `Receipt` form a single aggregate tree (a ticket has zero or one receipt). The domain declares a unified `PaymentRepository` port (which extends both `PaymentTicketRepository` and `ReceiptRepository`). The infrastructure implements two factory functions (`createPrismaPaymentTicketRepository` and `createPrismaReceiptRepository`) because the two database entities have distinct row shapes, distinct Prisma models, and can be composed independently or unified into a single `PaymentRepository`.
 2. **The $transaction branch:** Neither `createPrismaPaymentTicketRepository` nor `createPrismaReceiptRepository` requires multi-row transactional updates for their methods: each method operates on a single table row (`PaymentTicket` or `Receipt`), so Prisma's single-statement operations (`create`, `findFirst`, `update`) are atomic at the database engine level. No manual `$transaction` wrapper is needed.
 3. **The PaymentState enum lookup table:** Domain enum `PaymentState` (`PENDING`, `SUCCEEDED`, `FAILED`) exactly mirrors the Prisma `PaymentState` enum, with bidirectional lookup maps `TO_PRISMA_STATE` and `TO_DOMAIN_STATE` guaranteeing compile-time exhaustiveness and decoupling the domain from Prisma.
@@ -373,6 +1389,7 @@ pnpm build
 6. **Forward migration for failureReason (D-7.1 and BUILD.md §10.7):** To prevent silent loss of the reason passed to `failTicket(venueId, id, reason?: string)`, forward migration `20261015211847_add_failure_reason_to_payment_tickets` added `failureReason String?` to `payment_tickets`. Traced to D-7.1 (the bridge records every attempt) and BUILD.md §10.7. The adapter writes `failureReason`, maps it back to the domain `PaymentTicket`, and the integration test asserts that the reason round-trips.
 
 **Noticed:**
+
 1. `tests/integration/repositories/payment.test.ts` emits a `prisma:error` line during execution of Case 7 (`second createReceipt for the same paymentTicketId returns CONFLICT`). This is expected behavior when Vitest catches the Prisma P2002 unique constraint violation on `receipts_paymentTicketId_key`. `payment.test.ts` now joins the 6 files (`venue.test.ts`, `table.test.ts`, `room.test.ts`, `staff.test.ts`, `order.repo.test.ts`, and `payment.test.ts`) that produce expected `prisma:error` output during conflict/unique constraint tests, scheduled for log suppression in Task 2.2.9.
 
 ### ENTRY-0040 — 2026-10-16 — Task 2.2.7 — The service request repository
@@ -395,6 +1412,7 @@ Delivered the `ServiceRequestRepository` port in `src/domain/requests/request.re
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0040, updated ledger, advanced §7 to Task 2.2.8 |
 
 **Commands Run:**
+
 ```bash
 # Specific repository integration tests (13 cases)
 pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/request.test.ts
@@ -455,6 +1473,7 @@ pnpm build
 | 17 | Unit tests, typecheck, and build pass | PASS | 43 unit tests pass; `tsc` exit 0; `next build` exit 0 |
 
 **Deviations from Contract:**
+
 - **The $transaction Branch:** The adapter checks whether the client supports `$transaction` before wrapping writes in `create`, `advanceState`, `cancel`, and `decline`. In production with PrismaClient, the write is atomic; in test transactions with TransactionClient, it executes directly within the outer test transaction. As in Task 2.2.6, the tests run inside the harness's outer transaction, so the inner $transaction is not exercised. The production atomicity of create, advanceState, cancel, and decline is provided by the $transaction wrapper on the production path. Proving it requires a test that calls the adapter with the real PrismaClient; this is deferred to Task 2.2.9's verification pass or a follow-up.
 - **Details Domain Shape:** `ServiceRequestDetails` is typed as `Record<string, string | number | boolean | null | string[]>` to ensure strong compile-time typing and avoid `any`.
 - **Enum Lookup Tables:** Mappings between Prisma and domain enums for `RequestState` and `HotelService` use explicit bidirectional lookup dictionaries (`PRISMA_TO_DOMAIN_*` and `DOMAIN_TO_PRISMA_*`) rather than type casts, ensuring compile-time type exhaustiveness.
@@ -462,17 +1481,18 @@ pnpm build
 - **Integration Test Parallelism:** Added `fileParallelism: false` to `vitest.integration.config.ts` to execute database integration test files sequentially, preventing PostgreSQL transaction deadlocks (40P01) caused by table-level exclusive locks during database cleanup. The deadlocks first appeared at Task 2.2.7, when this repository's tests added a third file opening transactions against rooms and service_requests in parallel with the existing repository tests. The fix is suite-wide; it applies to every integration test file.
 
 **Noticed but Out of Scope:**
+
 - `tests/integration/repositories/request.test.ts` produced zero `prisma:error` lines because negative tests are cross-venue reads and lookups returning `null` rather than triggering unique-constraint violations.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | No | Conforms to D-5.1 to D-5.7, D-10.2 | No change |
-| SYSTEM.md     | No | Conforms to §2, §4, §10, §11.1, §15.4 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.7 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0040 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Conforms to D-5.1 to D-5.7, D-10.2 | No change |
+| SYSTEM.md | No | Conforms to §2, §4, §10, §11.1, §15.4 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.7 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0040 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; zero Prisma imports in domain; details shape is typed without `any`; enums mapped via lookup tables; cross-venue queries return NOT_FOUND; module path is `src/domain/requests/`.
@@ -505,6 +1525,7 @@ Delivered the `OrderRepository` port in `src/domain/orders/order.repository.ts`,
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0039, updated ledger, advanced §7 to Task 2.2.7 |
 
 **Commands Run:**
+
 ```bash
 # Forward migration generation and deployment
 pnpm prisma migrate dev --name add_note_to_order_state_change
@@ -571,6 +1592,7 @@ pnpm build
 | 16 | Unit tests, typecheck, and build pass | PASS | 43 unit tests pass; `tsc` exit 0; `next build` exit 0 |
 
 **Deviations from Contract:**
+
 - **The $transaction Branch:** The adapter checks whether the client supports $transaction before wrapping the write. In production, the client is the PrismaClient, which supports $transaction, and the write is atomic. In the integration test, the client is the test's Prisma.TransactionClient (the inner client inside the harness's outer transaction), which does not support nested $transaction; the write runs inside the test's outer transaction and rolls back with it. The production atomicity is therefore not exercised by the test — it is the correct path, but the test does not prove it. Proving it requires a test that calls the adapter with the real PrismaClient and asserts the three rows exist in the database, then cleans up. This is deferred to Task 2.2.9's verification pass or a follow-up.
 - **Forward Migration for Cancellation Reason:** Added forward migration `20261015204426_add_note_to_order_state_change` (`ALTER TABLE "order_state_changes" ADD COLUMN "note" TEXT;`) traced to D-4.7 (cancellation reasons must be recorded with the transition) and BUILD.md §10.7 (never edit applied migrations; add forward migrations).
 - **The Two Halves of Money-as-String:** On the read path, `Decimal(10, 2)` columns are converted via `.toFixed(2)` (and `Decimal(5, 4)` via `.toFixed(4)`) on Prisma's Decimal object, which returns a string without coercing to a JavaScript number. On the write path, the adapter accepts strings in `CreateOrderInput` and `CreateOrderItemInput` and passes them to Prisma without conversion, strictly avoiding `Number(...)`, `.toNumber()`, or floating-point arithmetic.
@@ -578,17 +1600,18 @@ pnpm build
 - **Factory Signature:** The adapter factory signature uses `client: DbClient` with no default, matching Tasks 2.2.1, 2.2.2, 2.2.4, and 2.2.5.
 
 **Noticed but Out of Scope:**
+
 - `tests/integration/repositories/order.repo.test.ts` emits a `prisma:error` log to stdout/stderr when Case 2 triggers a unique constraint violation on `orders_idempotencyKey_key`. This is expected and caught by the adapter, joining `venue.test.ts`, `table.test.ts`, `room.test.ts`, and `staff.test.ts` on the list of test files producing `prisma:error` logs scheduled for suppression in Task 2.2.9.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | No | Conforms to D-4.1, D-4.7, D-4.12, D-10.2 | No change |
-| SYSTEM.md     | No | Conforms to §2, §5, §9.7, §11.1, §15.4 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.6 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0039 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Conforms to D-4.1, D-4.7, D-4.12, D-10.2 | No change |
+| SYSTEM.md | No | Conforms to §2, §5, §9.7, §11.1, §15.4 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.6 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0039 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; zero Prisma imports in domain; idempotency contract fully implemented; money fields are strings; enums mapped via lookup tables; cross-venue queries return NOT_FOUND; forward migration cleanly applied.
@@ -619,6 +1642,7 @@ Delivered the `MenuRepository` port in `src/domain/menu/menu.repository.ts`, the
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0038, updated ledger, advanced §7 to Task 2.2.6 |
 
 **Commands Run:**
+
 ```bash
 # Specific repository integration tests (13 cases)
 pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/menu.test.ts
@@ -672,23 +1696,25 @@ pnpm build
 | 10 | Unit tests, typecheck, and build pass | PASS | 43 unit tests pass; `tsc` exit 0; `next build` exit 0 |
 
 **Deviations from Contract:**
+
 - On the read path, the adapter maps each Decimal column by calling .toFixed(2) on Prisma's Decimal object, which returns a string. It does not call Number(...) or .toNumber(), and it does not perform floating-point arithmetic. On the write path, the adapter accepts a string in the input and passes it to Prisma as-is, without conversion.
 - **Enum Lookup Tables:** Mappings between Prisma and domain enums for `MenuItemState` and `ModifierChoiceType` use explicit bidirectional lookup dictionaries (`PRISMA_TO_DOMAIN_*` and `DOMAIN_TO_PRISMA_*`) rather than type casts, ensuring compile-time type exhaustiveness.
 - **Modifier Writes Context:** `createModifierGroup` and `createModifierOption` accept `menuItemId` and `modifierGroupId` directly without requiring `venueId` in their input, because modifier entities are scoped to their parent menu item / group. The domain layer confirms venue ownership of the parent menu item prior to invoking these methods.
 - **Factory Signature:** The adapter factory signature uses `client: DbClient` with no default, matching Tasks 2.2.1, 2.2.2, and 2.2.4.
 
 **Noticed but Out of Scope:**
+
 - Cosmetic `prisma:error` logged to stderr during negative-path conflict tests in `venue.test.ts`, `table.test.ts`, `room.test.ts`, and `staff.test.ts` remains scheduled for suppression in Task 2.2.9. The menu integration test (`menu.test.ts`) produced zero `prisma:error` lines because cross-venue lookups query `where: { id, venueId }` and return `null` rather than throwing unique constraint violations. The list of test files producing `prisma:error` will be addressed collectively during Task 2.2.9.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | No | Conforms to D-4.1, D-4.2, D-4.3, D-10.1, D-10.2 | No change |
-| SYSTEM.md     | No | Conforms to §2, §3, §4, §5, §11.1, §11.3, §15.4 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.5 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0038 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Conforms to D-4.1, D-4.2, D-4.3, D-10.1, D-10.2 | No change |
+| SYSTEM.md | No | Conforms to §2, §3, §4, §5, §11.1, §11.3, §15.4 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.5 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0038 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; zero Prisma imports in domain; money fields are strings; enums mapped via lookup tables; cross-venue queries return NOT_FOUND; item states updated without deleting rows.
@@ -720,6 +1746,7 @@ Delivered the `StaffRepository` port in `src/domain/auth/staff.repository.ts`, t
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0037, updated ledger, advanced §7 to Task 2.2.5 |
 
 **Commands Run:**
+
 ```bash
 # Specific repository integration tests
 pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/staff.test.ts tests/integration/repositories/staff-session.test.ts
@@ -774,18 +1801,19 @@ The adapter factory signature uses client: DbClient with no default. This matche
 endAllForStaff returns Result<number> (the count of ended sessions), not a Result<StaffSession[]>. This is the first repository method in the milestone to return a count rather than a row. Task 3.2.5 (password-change invalidation) and Task 3.2.6 (single-session enforcement) consume the count.
 
 **Noticed but Out of Scope:**
+
 - Cosmetic `prisma:error` logged to stderr during negative-path conflict tests in `venue.test.ts`, `table.test.ts`, `room.test.ts`, and `staff.test.ts` remains scheduled for suppression in Task 2.2.9, when the milestone close runs the full integration suite and cleans its output.
-The list of test files producing cosmetic prisma:error output will grow as more negative-path tests are added in Tasks 2.2.5 through 2.2.8. Task 2.2.9's suppression will cover the full set.
+  The list of test files producing cosmetic prisma:error output will grow as more negative-path tests are added in Tasks 2.2.5 through 2.2.8. Task 2.2.9's suppression will cover the full set.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | No | Conforms to D-3.1 through D-3.8, D-10.1, D-10.2 | No change |
-| SYSTEM.md     | No | Conforms to §4, §5, §6.3, §7, §11.1, §15.3 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.4 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0037 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Conforms to D-3.1 through D-3.8, D-10.1, D-10.2 | No change |
+| SYSTEM.md | No | Conforms to §4, §5, §6.3, §7, §11.1, §15.3 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.4 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0037 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; zero Prisma imports in domain; roles mapped via lookup table; passwordHash strictly isolated to findByUsername; sessions ended without deletions; DB-level filtering on endedAt.
@@ -814,6 +1842,7 @@ Delivered the `QrTokenRepository` port in `src/domain/qr/qr-token.repository.ts`
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0036 and updated ledger & snapshot |
 
 **Commands Run:**
+
 ```bash
 # Specific repository integration test
 pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/qr-token.test.ts
@@ -857,6 +1886,7 @@ pnpm build
 | 9 | Unit tests, typecheck, and build pass | PASS | 43 unit tests pass; `tsc` exit 0; `next build` exit 0 |
 
 **Deviations from Contract:**
+
 - The port models place references as a discriminated union on `placeType` (`PlaceType.TABLE` with `tableId`, `PlaceType.ROOM` with `roomId`, `PlaceType.COUNTER` with `counterId`) rather than three loose nullable fields. This enforces the domain invariant at compile time that exactly one place foreign key is populated per token, as required by SYSTEM.md §8.6 and §11.1.
 - Token string generation is delegated to Prisma's `@default(uuid())` in the database rather than generated manually via `crypto.randomUUID()` in the adapter, ensuring clean consistency with the schema definition.
 - Because the token is generated by the database, the adapter reads the token back from the returned row. Callers (including the QR image generator in Task 4.1.4) receive the token from the domain object returned by generate. No caller needs to generate a token itself.
@@ -864,17 +1894,18 @@ pnpm build
 - createPrismaQrTokenRepository takes client: DbClient = defaultPrisma (the default is new; Tasks 2.2.1 and 2.2.2 take a required client). The default is for convenience at production call sites; the integration test still passes the transaction client explicitly. The default will be reconciled across all adapters — either every adapter takes a required client, or every adapter takes a default — in Task 2.2.9.
 
 **Noticed but Out of Scope:**
+
 - Cosmetic `prisma:error` logged to stderr during negative-path conflict tests in `venue.test.ts`, `table.test.ts`, and `room.test.ts` remains scheduled for suppression in Task 2.2.9, when the milestone close runs the full integration suite and cleans its output.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | No | Conforms to D-1.2, D-16.2 | No change |
-| SYSTEM.md     | No | Conforms to §4, §5, §8.6, §11.1 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.3 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0036 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Conforms to D-1.2, D-16.2 | No change |
+| SYSTEM.md | No | Conforms to §4, §5, §8.6, §11.1 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.3 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0036 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; domain does not import database; discriminated union enforces place integrity; tokens are permanent UUIDs; revocation updates state and never deletes rows.
@@ -906,6 +1937,7 @@ Delivered the `TableRepository` port interface in `src/domain/organization/table
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0035 and updated ledger & snapshot |
 
 **Commands Run:**
+
 ```bash
 # Specific repository integration tests
 pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/table.test.ts tests/integration/repositories/room.test.ts
@@ -954,18 +1986,19 @@ pnpm build
 The table and room adapters accept client: DbClient (PrismaClient | Prisma.TransactionClient) as their first argument. Task 2.2.1's createPrismaVenueRepository takes only PrismaClient; the newer adapters take the union, so the integration tests can pass the rollback-transaction client from tests/integration/setup.ts. Traces to BUILD.md §8.8 (integration tests open a transaction and roll it back). The venue adapter will be reconciled to the same DbClient alias in Task 2.2.9, not now.
 
 **Noticed but Out of Scope:**
+
 - Integration test output displays cosmetic `prisma:error` logged to stdout/stderr during negative-path conflict tests when testing unique constraint violations (`tables_venueId_number_key` and `rooms_venueId_number_key`). This is expected and caught/wrapped into `CONFLICT`, but visible due to `client.ts` logging configuration.
-Scheduled for suppression in Task 2.2.9, when the milestone close runs the full integration suite and cleans its output.
+  Scheduled for suppression in Task 2.2.9, when the milestone close runs the full integration suite and cleans its output.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | No | Follows existing decisions D-10.1, D-10.2 | No change |
-| SYSTEM.md     | No | Strictly conforms to §4, §5, §11.1 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.2 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0035 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Follows existing decisions D-10.1, D-10.2 | No change |
+| SYSTEM.md | No | Strictly conforms to §4, §5, §11.1 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.2 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0035 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; domain does not import database; tenancy isolation respected (`venueId` first); Result type used for all outcomes; domain enums match Prisma values without coupling.
@@ -1001,6 +2034,7 @@ Configured the integration test harness (`vitest.integration.config.ts`, `tests/
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0034 and updated snapshot |
 
 **Commands Run:**
+
 ```bash
 # Specific repository integration test
 pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/venue.test.ts
@@ -1047,23 +2081,25 @@ pnpm build
 | 10 | Production build passes | PASS | `next build` exit 0 |
 
 **Deviations from Contract:**
+
 - `src/infrastructure/db/client.ts`: Added `@prisma/adapter-pg` driver adapter with `pg.Pool` because Prisma 7 requires a driver adapter for direct PostgreSQL connections. Traces to D-16.3.
 - `package.json` & `pnpm-lock.yaml`: Added `@prisma/adapter-pg`, `pg`, and `@types/pg` dependencies to supply the PostgreSQL driver adapter. Traces to D-16.3.
 - `.env.local`: Added `TEST_DATABASE_URL` pointing to dedicated `qrproject_test` database; it is a test-only variable scoped to `vitest.integration.config.ts` and never read by production code.
 
 **Noticed but Out of Scope:**
+
 - The integration test output displays a cosmetic `prisma:error` logged to stderr/stdout during the negative-path test for duplicate slug in `venue.test.ts`. The error is expected and caught/wrapped into `CONFLICT` as designed, but is printed because `log: ["query", "warn", "error"]` is enabled in `client.ts` for non-production environments. Suppressing or re-routing Prisma logs in the test environment can be addressed in a future refinement task.
 - Five integration test files currently show 0 tests; in particular, `tests/integration/repositories/order.repo.test.ts` is the file that will satisfy PHASE_TESTS.md §4 Step 6 when Task 2.2.6 lands, while `tests/integration/api/guest-orders.test.ts`, `tests/integration/api/kitchen-orders.test.ts`, `tests/integration/api/admin-menu.test.ts`, and `tests/integration/api/staff-orders.test.ts` are reserved placeholders for future roadmap tasks (Tasks 5.6.4, 6.2.4, 8.3.7, and 7.4.4).
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change | No change |
-| DECISIONS.md  | Yes | Recorded D-16.3 (driver adapter requirement) | Updated |
-| SYSTEM.md     | No | Exactly follows §2, §4, §5 | No change |
-| BUILD.md      | No | Follows testing and coding standards | No change |
-| ROADMAP.md    | Yes | Task 2.2.1 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0034 added | Updated |
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | Yes | Recorded D-16.3 (driver adapter requirement) | Updated |
+| SYSTEM.md | No | Exactly follows §2, §4, §5 | No change |
+| BUILD.md | No | Follows testing and coding standards | No change |
+| ROADMAP.md | Yes | Task 2.2.1 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0034 added | Updated |
 
 **Contradiction Check:**
 None found. Architecture strictly respects ports-and-adapters; domain does not import database; Decimal mapped to string; Result type used for all outcomes; D-16.3 documents the Prisma 7 driver adapter choice.
@@ -1098,6 +2134,7 @@ Configured Prisma 7 client and CLI tooling with dedicated `prisma.config.ts`, au
 | `docs/PROGRESS.md` | Modified | Added ENTRY-0033 and updated snapshot |
 
 **Commands Run:**
+
 ```bash
 # Validated schema
 pnpm prisma validate
@@ -1142,17 +2179,18 @@ pnpm test -- --run
 None.
 
 **Noticed but Out of Scope:**
+
 - In-memory repository doubles and integration test harness (`vitest.integration.config.ts`) will be set up as part of Milestone 2.2.
 
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No change to product definition | No change |
-| DECISIONS.md  | No | Conforms to all decisions | No change |
-| SYSTEM.md     | No | Exactly mirrors §11 and §12 | No change |
-| BUILD.md      | No | Complies with database and verification rules | No change |
-| ROADMAP.md    | Yes | Tasks 2.1.1 to 2.1.12 marked Complete | Updated |
-| PROGRESS.md   | Yes (this entry) | ENTRY-0033 added | Updated |
+| PRODUCT.md | No | No change to product definition | No change |
+| DECISIONS.md | No | Conforms to all decisions | No change |
+| SYSTEM.md | No | Exactly mirrors §11 and §12 | No change |
+| BUILD.md | No | Complies with database and verification rules | No change |
+| ROADMAP.md | Yes | Tasks 2.1.1 to 2.1.12 marked Complete | Updated |
+| PROGRESS.md | Yes (this entry) | ENTRY-0033 added | Updated |
 
 **Contradiction Check:**
 None found. Schema and data types match SYSTEM.md §11-12, Money uses Decimal per BUILD.md §7.1, ports and adapters architecture followed per SYSTEM.md §2.
@@ -1210,13 +2248,13 @@ None. This is the first task of a milestone that changes documentation, not code
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No (this task) | Corrected in C-03 | Needs update |
-| DECISIONS.md  | No (this task) | Corrected in C-02 | Needs update |
-| SYSTEM.md     | No (this task) | Corrected in C-04 | Needs update |
-| BUILD.md      | No (this task) | Corrected in C-05 | Needs update |
-| ROADMAP.md    | No (this task) | Corrected in C-07 and C-08 | Needs update |
-| DESIGN.md     | No (this task) | Corrected in C-06 | Needs update |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
+| PRODUCT.md | No (this task) | Corrected in C-03 | Needs update |
+| DECISIONS.md | No (this task) | Corrected in C-02 | Needs update |
+| SYSTEM.md | No (this task) | Corrected in C-04 | Needs update |
+| BUILD.md | No (this task) | Corrected in C-05 | Needs update |
+| ROADMAP.md | No (this task) | Corrected in C-07 and C-08 | Needs update |
+| DESIGN.md | No (this task) | Corrected in C-06 | Needs update |
+| PROGRESS.md | Yes (this entry) | — | Updated |
 
 **Contradiction Check:**
 None found. The rewrite removes noise and records the start of the correction; it does not change a decision. The contradictions that exist in other documents are named in "Noticed but Out of Scope" and are each assigned to a correction task.
@@ -1235,7 +2273,7 @@ C-02 — Rewrite DECISIONS.md to v2.0. Fix the appendix count from 54 to the act
 **Task:** 1.5.4 (Verify: the dev server starts, the scratch page renders, the 404 screen renders). Closes Milestone 1.5 and Phase 1.
 
 **Summary:**
-Verified with raw evidence that the dev server starts (Ready in 364ms), the root placeholder page renders (GET / 200), the custom 404 renders (GET /this-does-not-exist 404 in 197ms, with the warm guest surface), the type check passes (exit 0), the build passes (Compiled successfully, 3 static routes including _not-found), and the unit tests pass (43/43). Milestone 1.5 is closed. Phase 1 — The Foundation is complete.
+Verified with raw evidence that the dev server starts (Ready in 364ms), the root placeholder page renders (GET / 200), the custom 404 renders (GET /this-does-not-exist 404 in 197ms, with the warm guest surface), the type check passes (exit 0), the build passes (Compiled successfully, 3 static routes including \_not-found), and the unit tests pass (43/43). Milestone 1.5 is closed. Phase 1 — The Foundation is complete.
 
 **Files Changed:**
 None. This is a verification session.
@@ -1244,7 +2282,7 @@ None. This is a verification session.
 
 `pnpm exec tsc --noEmit` — exit 0, no output.
 
-`pnpm build` — Compiled successfully in 720ms. Routes: /, /_not-found.
+`pnpm build` — Compiled successfully in 720ms. Routes: /, /\_not-found.
 
 `pnpm test:unit` — 3 files, 43 tests, all passed.
 
@@ -1281,13 +2319,13 @@ None. The verification confirmed what the previous four tasks promised. No new c
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No product change | No change |
-| DECISIONS.md  | No | No decision change | No change |
-| SYSTEM.md     | No | No system shape change | No change |
-| BUILD.md      | No | No build rule change | No change |
-| ROADMAP.md    | Yes | Milestone 1.5 and Phase 1 closed | Updated |
-| DESIGN.md     | No | No design change | No change |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change | No change |
+| SYSTEM.md | No | No system shape change | No change |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | Milestone 1.5 and Phase 1 closed | Updated |
+| DESIGN.md | No | No design change | No change |
+| PROGRESS.md | Yes (this entry) | — | Updated |
 
 **Contradiction Check:**
 None found. Phase 1 is complete and consistent with the documents. Phase 2 can begin.
@@ -1318,7 +2356,7 @@ Created app/not-found.tsx (the guest-world 404) and app/error.tsx (the root erro
 
 `pnpm exec tsc --noEmit` — exit 0.
 
-`pnpm build` — Compiled successfully, routes / and /_not-found.
+`pnpm build` — Compiled successfully, routes / and /\_not-found.
 
 `pnpm test:unit` — 43/43.
 
@@ -1328,7 +2366,7 @@ Created app/not-found.tsx (the guest-world 404) and app/error.tsx (the root erro
 | # | Criterion | Result | Evidence |
 |---|-----------|--------|----------|
 | 1 | Type check passes | PASS | exit 0 |
-| 2 | Build passes; /not-found registered | PASS | _not-found in route list |
+| 2 | Build passes; /not-found registered | PASS | \_not-found in route list |
 | 3 | The test suite passes | PASS | 43/43 |
 | 4 | Non-existent URL renders the custom 404 | PASS | 404 response + screenshot |
 | 5 | The 404 is guest-voiced | PASS | no 404, no error code, guest vocabulary |
@@ -1347,8 +2385,8 @@ Created app/not-found.tsx (the guest-world 404) and app/error.tsx (the root erro
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| ROADMAP.md    | Yes | Task 1.5.3 complete | Updated |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
+| ROADMAP.md | Yes | Task 1.5.3 complete | Updated |
+| PROGRESS.md | Yes (this entry) | — | Updated |
 
 **Contradiction Check:**
 None found.
@@ -1381,7 +2419,7 @@ Created four route-group layouts that set the data-world attribute so that every
 
 `pnpm exec tsc --noEmit` — exit 0.
 
-`pnpm build` — Compiled successfully, routes / and /_not-found.
+`pnpm build` — Compiled successfully, routes / and /\_not-found.
 
 `pnpm test:unit` — 43/43.
 
@@ -1403,7 +2441,7 @@ Built CSS check — .bg-guest-surface and .bg-staff-surface present, resolving t
 
 **Deviations from Contract:**
 
-1. The CSS verification command needed correction during the session: the original .next/static/css path was the Next.js 13/14 webpack convention; Turbopack places output elsewhere. Also, single quotes are required around paths containing (guest), and PowerShell's **/*.css glob does not recurse. The corrected recursive command found the CSS and confirmed both utilities.
+1. The CSS verification command needed correction during the session: the original .next/static/css path was the Next.js 13/14 webpack convention; Turbopack places output elsewhere. Also, single quotes are required around paths containing (guest), and PowerShell's \*_/_.css glob does not recurse. The corrected recursive command found the CSS and confirmed both utilities.
 2. app/page.tsx was not moved into app/(guest)/. The move is deferred to Phase 4 or Phase 5 per BUILD.md §12.3 (structural change separated from behavioural change).
 
 **Noticed but Out of Scope:**
@@ -1416,8 +2454,8 @@ Built CSS check — .bg-guest-surface and .bg-staff-surface present, resolving t
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| ROADMAP.md    | Yes | Task 1.5.2 complete | Updated |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
+| ROADMAP.md | Yes | Task 1.5.2 complete | Updated |
+| PROGRESS.md | Yes (this entry) | — | Updated |
 
 **Contradiction Check:**
 None found.
@@ -1491,13 +2529,13 @@ No code files changed. No test files changed.
 **Document Impact:**
 | Document | Affected? | Reason | Action |
 |----------|-----------|--------|--------|
-| PRODUCT.md    | No | No product change | No change |
-| DECISIONS.md  | Yes | D-16.1 added | Updated |
-| SYSTEM.md     | No | No system shape change | No change |
-| BUILD.md      | No | No build rule change | No change |
-| ROADMAP.md    | Yes | Task 1.4.4 repurposed and complete | Updated |
-| DESIGN.md     | No | No design change | No change |
-| PROGRESS.md   | Yes (this entry) | — | Updated |
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | Yes | D-16.1 added | Updated |
+| SYSTEM.md | No | No system shape change | No change |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | Task 1.4.4 repurposed and complete | Updated |
+| DESIGN.md | No | No design change | No change |
+| PROGRESS.md | Yes (this entry) | — | Updated |
 
 **Contradiction Check:**
 None found. D-16.1 records a strategy that the existing documents left undefined and names the trigger for revisiting it.
@@ -1533,9 +2571,9 @@ Current phase: Phase 2 — The Data Model.
 
 Current milestone: Milestone 2.3 — The seed.
 
-Current task: Task 2.3.1 — Seed the venue with the table, room, and counter modules enabled.
+Current task: Task 2.3.5 — Seed the enabled hotel services.
 
-Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete and verified. All ten domain ports and eleven infrastructure adapters are in place with 100% consistent `createPrisma*Repository(client: DbClient)` factory signatures and zero `@prisma/client` leakage into `src/domain/`. Integration test suite has 76 passed tests across 15 files, unit test suite has 43 passed tests across 3 files, typecheck passes with 0 errors, and production build succeeds. Two forward migrations are applied. Next milestone is Milestone 2.3 (The seed), beginning with Task 2.3.1.
+Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), and 2.3.4 (Seed the menu categories and items with modifiers) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 20 active QR tokens, 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, and 6 modifier options. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (76/76) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.5.
 
 ## 8. How the File Evolves
 

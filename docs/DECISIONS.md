@@ -40,11 +40,13 @@
 **Context:** Venues need their own branded experience, but managing separate installations per venue is operationally heavy. A single hosted platform with QR-based routing gives each venue its own experience without duplicating infrastructure. It also keeps the venue's name out of any public URL, which the venue prefers.
 
 **Alternatives considered:**
+
 - A subdomain per venue (`venue.platform.com`) — rejected because it requires DNS and certificate management per venue, slowing onboarding and adding operational cost.
 - A public path-based URL that a guest can type (`platform.com/venue-name`) — rejected because it invites guessing, exposes venue names publicly, and creates an entry point that bypasses the QR.
 - A directory or marketplace of venues — rejected because it is a different product and the venue did not ask for it.
 
 **Consequences:**
+
 - The guest URL is opaque to the guest. The QR carries the venue and the context; the server resolves them.
 - A guest can only reach the venue's experience by scanning a valid QR. There is no public discovery.
 - The venue's display name appears on screen after resolution, never in the URL.
@@ -61,10 +63,12 @@
 **Context:** In a previous design, the URL contained a human-readable name that could be changed, which would have invalidated every printed QR and forced a reprint of every table and room. Tying the QR to an internal identifier removes that risk entirely.
 
 **Alternatives considered:**
+
 - A human-readable URL segment that the owner can change — rejected because changing it would invalidate every printed QR.
 - A human-readable URL segment that the owner cannot change — rejected because it still exposes the venue's name in the URL, which D-1.1 already decided against.
 
 **Consequences:**
+
 - The QR encodes an internal identifier for the venue and the place.
 - The venue's display name is a separate field, shown on screen after resolution.
 - Renaming a venue is a text change with no effect on any QR.
@@ -81,10 +85,12 @@
 **Context:** The product promise is "scan and order". Any other entry point dilutes that promise and introduces a discovery surface the venue did not ask for.
 
 **Alternatives considered:**
+
 - A public directory of venues — rejected because it is a different product (a marketplace), and it is not what the venue asked for.
 - A typed URL with a venue name — rejected for the same reason as D-1.2.
 
 **Consequences:**
+
 - Every guest screen assumes a valid QR context has been resolved.
 - A guest who lands on the platform root without a QR context sees a small screen that says "Scan the QR code at your table or in your room."
 - There is no SEO, no indexing, and no public page for any venue.
@@ -102,10 +108,12 @@
 **Context:** The product promise is zero friction. Any account-creation step loses guests before they see the menu.
 
 **Alternatives considered:**
+
 - Optional accounts for repeat guests — deferred. Revisit only if a venue asks for a loyalty feature.
 - Mandatory accounts — rejected outright, because it would lose most guests.
 
 **Consequences:**
+
 - The guest session is anonymous and tied to the QR context.
 - No guest data is ever collected beyond what the guest voluntarily types (notes, request details).
 - The venue cannot contact a guest after they leave unless the guest chooses to share contact information inside a request.
@@ -121,10 +129,12 @@
 **Context:** Storing the cart on the server adds a guest-session concept and a database write for every cart change, which is expensive and unnecessary for a flow that typically lasts a few minutes.
 
 **Alternatives considered:**
+
 - A server-side cart tied to a guest session — rejected because it adds load and complexity for a flow that is usually short.
 - A server-side cart with a short timeout — rejected for the same reason, plus it still needs the guest-session concept.
 
 **Consequences:**
+
 - A guest who refreshes the page keeps their cart, as long as the browser retains local state.
 - A guest who closes the browser loses their cart.
 - No server resources are consumed by guests who browse but never order.
@@ -140,10 +150,12 @@
 **Context:** For a restaurant, a table is reused across many guests in a day. For a hotel, a room is reused across many stays. The product must not leak one guest's data to the next.
 
 **Alternatives considered:**
+
 - A fixed timeout (for example, four hours) — rejected because a table might be reused in less time, and the timeout would then leak data.
 - End on browser close — rejected because the guest might close and reopen, and an order in progress would be orphaned.
 
 **Consequences:**
+
 - The venue's staff have an explicit "close table" or "check out room" action.
 - Closing the table ends every session tied to it, and the table becomes available for the next guest.
 - A guest who has not ordered yet is not affected by a table close.
@@ -160,10 +172,12 @@
 **Context:** Guests sometimes move — a larger group arrives, a table is too hot or too cold, a reservation takes priority. The product should not force the guest to re-enter their cart.
 
 **Alternatives considered:**
+
 - The cart is tied to the table and does not follow the guest — rejected because it forces the guest to re-enter everything if they move.
 - Automatic detection of the move — rejected because the product cannot know when the guest has moved unless the guest scans the new table's QR.
 
 **Consequences:**
+
 - The cart lives on the guest's phone and is unaffected by a table change.
 - If the guest scans the new table's QR while they have an active order, the product shows them their existing order and asks if they want to move it to the new table.
 - The staff can also manually move an order from one table to another.
@@ -179,10 +193,12 @@
 **Context:** A hotel room is a private space. Leaking one guest's requests, orders, or notes to another is unacceptable.
 
 **Alternatives considered:**
+
 - Remember the last session for a short time — rejected. Even a short memory is a privacy risk.
 - Always ask "is this a new guest?" — rejected because it introduces friction the guest should not have to answer.
 
 **Consequences:**
+
 - The room's QR is tied to the room, not to the guest. The guest's session is created fresh on every scan.
 - When a guest checks out, the room's session is invalidated.
 - Any requests still open at checkout are archived and not shown to the next guest.
@@ -200,10 +216,12 @@
 **Context:** Staff accounts are created by the manager, who knows the staff member's name, not necessarily their email. Username login is simpler for venues where staff do not have work emails.
 
 **Alternatives considered:**
+
 - Email and password — rejected because many venue staff do not have work emails and would have to use personal emails the venue does not want on file.
 - Either username or email — deferred for the first version because it introduces ambiguity and duplicate identities.
 
 **Consequences:**
+
 - Each staff account has a unique username per venue.
 - The manager can record the staff member's email for contact, but it is not used for login.
 - Password reset is done by the manager, per D-3.8.
@@ -219,10 +237,12 @@
 **Context:** Staff work long shifts and use shared devices. An automatic timeout would force them to log in repeatedly, which is a friction point during a busy service.
 
 **Alternatives considered:**
+
 - A fixed timeout (for example, twelve hours) — rejected because a double shift would trigger a mid-service logout.
 - A short idle timeout (for example, thirty minutes) — rejected for the same reason.
 
 **Consequences:**
+
 - Staff must remember to log out at the end of their shift, especially on shared devices.
 - The manager can force-log-out a staff member from the admin panel if needed.
 - A session left open on a shared device is a mild risk. The manager can mitigate it by reminding staff to log out.
@@ -238,9 +258,11 @@
 **Context:** If a staff member suspects their password is compromised, the change needs to take effect immediately. Leaving old sessions alive would defeat the purpose.
 
 **Alternatives considered:**
+
 - Existing sessions continue until they expire — rejected because it leaves a security hole.
 
 **Consequences:**
+
 - The staff member is logged out of every device after a password change.
 - The manager should tell the staff member before resetting the password, so the staff member is not surprised mid-shift.
 
@@ -255,10 +277,12 @@
 **Context:** This prevents a staff member's credentials from being silently shared across multiple devices without the manager's knowledge. It also keeps the queue views honest — a staff member cannot be in two queues at once.
 
 **Alternatives considered:**
+
 - Multiple devices allowed — rejected because it makes the "who is on duty" picture unclear.
 - A limited number of devices — rejected because the limit is arbitrary.
 
 **Consequences:**
+
 - If a staff member logs in on a second device, the first device is signed out and shows the login screen on the next action.
 - If a shared tablet is used by multiple staff across a shift, each staff member logs in and out in turn.
 - If a staff member forgets to log out of a device and logs in elsewhere, the forgotten device is signed out automatically.
@@ -274,10 +298,12 @@
 **Context:** A full password is the simplest thing to implement, and it is sufficient for the first version. PINs and badges are convenient but add complexity that is not needed now.
 
 **Alternatives considered:**
+
 - A short PIN for quick re-login on shared tablets — deferred. Revisit if the manager asks for it, since typing a full password every time on a shared tablet is slow.
 - A physical badge — deferred. It requires hardware the venue may not have.
 
 **Consequences:**
+
 - Staff typing on shared tablets need to enter a full password at the start of each shift.
 - The manager must not use weak passwords.
 
@@ -292,10 +318,12 @@
 **Context:** Small venues often have staff wearing multiple hats. A housekeeping attendant might also take laundry requests. A manager might also serve tables on a busy night.
 
 **Alternatives considered:**
+
 - One role per staff member — rejected because it forces the manager to create duplicate accounts or to make everyone a manager.
 - A role plus a list of specific permissions — deferred, because it is more complex than needed for the first version.
 
 **Consequences:**
+
 - The admin panel shows all of a staff member's queues in one place.
 - The staff member can switch between their queues, or see them side by side.
 - The manager assigns roles when creating or editing a staff member.
@@ -311,10 +339,12 @@
 **Context:** The venue needs to know who did what. If a manager needs to review why an order was cancelled three weeks ago, they need the name of the staff member who cancelled it, even if that person no longer works there.
 
 **Alternatives considered:**
+
 - Anonymise the actions — rejected because it removes the ability to investigate.
 - Delete the account entirely — rejected because it would orphan the actions.
 
 **Consequences:**
+
 - Every order and request shows the name of the staff member who handled it, forever.
 - The admin panel has a "former staff" filter so the manager can see only current staff when managing accounts, or all accounts when reviewing history.
 
@@ -329,10 +359,12 @@
 **Context:** Staff accounts are created by the manager and do not have personal emails on file. A self-service reset would require email or SMS, which the venue does not want to set up.
 
 **Alternatives considered:**
+
 - Email-based self-service reset — rejected because most staff do not have work emails.
 - SMS-based reset — rejected because it requires phone number collection and an SMS provider.
 
 **Consequences:**
+
 - If a staff member forgets their password, they ask the manager, who resets it.
 - The manager must be available during shifts in case a password reset is needed.
 - The admin panel has a prominent "Reset password" action on each staff account.
@@ -350,9 +382,11 @@
 **Context:** If a price changes tomorrow, yesterday's revenue must not change. This is a fundamental accounting requirement.
 
 **Alternatives considered:**
+
 - Live prices that follow the current menu — rejected because it makes reporting impossible and would surprise the guest.
 
 **Consequences:**
+
 - The order stores a copy of each item's name, price, and modifiers as they were at the moment of ordering.
 - A menu item can be removed and the historical orders still show it correctly.
 - Reports reflect the actual amount charged, which is what the venue needs.
@@ -376,11 +410,13 @@ Historical orders keep the item's name and price as they were when the order was
 **Context:** The manager must be able to take an item off the menu quickly — for example, when a dish sells out — and put it back later. The guest must see what is not currently available so they are not surprised. The manager must never lose the item's history.
 
 **Alternatives considered:**
+
 - Automatic unavailability based on stock — deferred. The product does not track stock in the first version.
 - A push notification to the guest when an item changes — rejected because the guest should not be interrupted. An on-screen update with a ping is enough.
 - Hard deletion of the item — rejected because it would break historical orders.
 
 **Consequences:**
+
 - A guest looking at the menu when the manager marks an item unavailable sees it grey out within the polling interval, with a ping on their device.
 - A guest not looking at the menu sees the item already greyed out when they return.
 - Historical orders are unaffected by any state change.
@@ -397,10 +433,12 @@ Historical orders keep the item's name and price as they were when the order was
 **Context:** Most venues have one tax rate. Handling multiple rates adds complexity to the menu, the order, and the reports without benefit for the first version.
 
 **Alternatives considered:**
+
 - Per-section tax (for example, dine-in versus takeaway) — deferred. Revisit if a venue needs it.
 - Per-item tax — deferred. Revisit if a venue needs it.
 
 **Consequences:**
+
 - The tax rate is a single setting in the venue's configuration.
 - Every order uses the same rate.
 - A venue with multiple rates cannot use the product yet.
@@ -416,9 +454,11 @@ Historical orders keep the item's name and price as they were when the order was
 **Context:** Reports must reflect what was actually charged. Recalculating historical orders would corrupt the record.
 
 **Alternatives considered:**
+
 - Recalculate all historical orders — rejected because it corrupts the record.
 
 **Consequences:**
+
 - The order stores the tax rate it used.
 - A tax-rate change does not affect any order placed before the change.
 - Reports always show the correct tax collected.
@@ -434,10 +474,12 @@ Historical orders keep the item's name and price as they were when the order was
 **Context:** Splitting the bill is a common request in restaurants, but it introduces significant complexity in the payment flow and the reporting. For the first version, one bill per table or room keeps the flow simple.
 
 **Alternatives considered:**
+
 - Split by item — deferred. Revisit if guests ask for it.
 - Split equally by number of people — deferred for the same reason.
 
 **Consequences:**
+
 - The guest sees one running total for their table or room.
 - If a group wants to split, they handle it among themselves after seeing the total.
 - The manager's reports show the total revenue, not the split.
@@ -453,10 +495,12 @@ Historical orders keep the item's name and price as they were when the order was
 **Context:** Allowing the guest to modify an order after the kitchen has started it creates chaos in the kitchen queue and makes pricing fragile.
 
 **Alternatives considered:**
+
 - A short window (two minutes) for the guest to modify — rejected because it introduces a race condition with the kitchen and complicates the queue.
 - The guest can add items to an order at any time — rejected because it makes one order span multiple kitchen tickets, which is confusing.
 
 **Consequences:**
+
 - Guests who want to add items place a new order. The product makes this easy with an "add more items" button on the tracking screen.
 - The venue's staff handle cancellations, not the guest.
 - A guest's bill may include several orders if they order in waves, but the total is correct.
@@ -472,10 +516,12 @@ Historical orders keep the item's name and price as they were when the order was
 **Context:** Allowing guests to cancel freely would let them cancel after the kitchen has started, wasting food. The staff are the ones who should decide.
 
 **Alternatives considered:**
+
 - The guest can cancel within a short window — rejected because it creates a race condition with the kitchen.
 - The guest can cancel at any time — rejected as operationally unreasonable.
 
 **Consequences:**
+
 - The guest sees an "ask the staff to cancel" link instead of a cancel button.
 - The staff panel has a "cancel" action on every active order, with a reason.
 - Every cancellation is recorded with the reason and the staff member's name.
@@ -501,10 +547,12 @@ No additional states are introduced in the first version.
 **Context:** These seven states cover every real order. More states add no value; fewer states lose information.
 
 **Alternatives considered:**
+
 - Fewer states (for example, just Placed, Preparing, Done) — rejected because the venue cannot see whether an order is ready but not yet delivered.
 - More states (for example, separate "in the pass" and "in the expo") — deferred. Revisit if a venue wants finer granularity.
 
 **Consequences:**
+
 - Every order moves through a known set of states.
 - The guest's tracking screen shows the states that are relevant to them, hiding the ones they do not need.
 - The kitchen screen shows only the states it acts on.
@@ -520,10 +568,12 @@ No additional states are introduced in the first version.
 **Context:** In small venues, the manager, the kitchen, and the service staff all move orders. Restricting transitions by role creates friction without a real security benefit.
 
 **Alternatives considered:**
+
 - Only the kitchen can move Placed → Approved → Preparing → Ready; only service can move Ready → Delivered → Completed — rejected because it slows down a busy kitchen and forces staff to switch devices.
 - Only managers can move orders — rejected as too restrictive.
 
 **Consequences:**
+
 - Every staff member can act on any order.
 - The action is recorded with the staff member's name, so the venue can review if needed.
 - The manager can see who moved each order in the order's history.
@@ -539,10 +589,12 @@ No additional states are introduced in the first version.
 **Context:** The venue's staff are the best judges of urgency. An automatic timer would be noisy and often wrong.
 
 **Alternatives considered:**
+
 - An alert if the order is in one state for more than a fixed number of minutes — deferred. Revisit if a venue asks for it.
 - A visible countdown — rejected for the same reason.
 
 **Consequences:**
+
 - Staff look at the elapsed time to judge urgency and act accordingly.
 - No automated alerts, no false alarms.
 - The manager can see the elapsed time in reports to spot problems.
@@ -558,11 +610,13 @@ No additional states are introduced in the first version.
 **Context:** D-4.10 and D-5.5 already establish that no automatic timers or alerts fire on orders or requests. PRODUCT.md §8.12 nonetheless lists "the default SLA targets per service" as a manager setting. That is a contradiction: a setting the manager can configure implies a feature the product does not have. This decision closes the contradiction by removing the setting.
 
 **Alternatives considered:**
+
 - Add SLA targets and alerts now — rejected because it contradicts D-4.10, D-5.5, and the first-version scope. The venue has not asked for it.
 - Keep the setting but hide the alerts — rejected because a setting that does nothing is worse than no setting at all.
 - Defer SLA to a per-venue configuration in the admin panel — deferred. If a venue asks for SLA-based alerts, we add them as an optional per-venue setting, per D-4.10 and D-5.5.
 
 **Consequences:**
+
 - The admin panel has no SLA configuration section.
 - The service catalog has no SLA field per service.
 - The staff rely on the elapsed time and their own judgement.
@@ -579,11 +633,13 @@ No additional states are introduced in the first version.
 **Context:** D-8.2 says the guest's order is queued locally when the connection drops and resent when it returns. Without an idempotency key, a retry whose first attempt actually reached the server would create a duplicate order — the guest would see two orders, the kitchen would cook twice, and the guest would be charged twice if online payment is enabled. This is the specific failure mode the key prevents.
 
 **Alternatives considered:**
+
 - A server-side dedupe window (reject a repeat submission from the same guest session within N seconds) — rejected because the guest session is anonymous and the timing window is arbitrary. It also fails if the retry is delayed past the window.
 - Do nothing; accept that a lost response may produce a duplicate — rejected because the duplicate is expensive: real food cooked twice, real money charged twice. The cost of the key is one UUID column and one uniqueness check.
 - Ask the guest to confirm before retrying — rejected because the guest cannot know whether the first attempt reached the server, and a confirm dialog adds friction the product promise forbids.
 
 **Consequences:**
+
 - The order table has a unique `idempotency_key` column.
 - Every create-order API request includes the key.
 - The domain's `createOrder` function enforces the constraint.
@@ -604,10 +660,12 @@ No additional states are introduced in the first version.
 **Context:** Building a completely different flow for each service would multiply the work and the maintenance. A shared structure with service-specific details is simpler and behaves consistently across the staff panel.
 
 **Alternatives considered:**
+
 - A dedicated flow for each service — rejected because it forces the codebase to grow with every service.
 - A single form for all services — rejected because it would lose the specific fields each service needs (for example, a photo for maintenance).
 
 **Consequences:**
+
 - The staff panel shows all requests in a unified queue, filterable by service type.
 - Adding a new service is a matter of defining its fields and its queue, not building a new flow.
 - The guest sees a tailored form for each service, but the underlying request is the same shape.
@@ -630,10 +688,12 @@ No additional states are introduced in the first version.
 **Context:** These six states cover every real request.
 
 **Alternatives considered:**
+
 - Fewer states — rejected because it loses information (for example, Acknowledged versus In Progress).
 - More states — deferred.
 
 **Consequences:**
+
 - The guest sees the states that are relevant to them.
 - The staff see all states and act on the transitions.
 - Every state change is recorded with the time and the staff member's name.
@@ -649,10 +709,12 @@ No additional states are introduced in the first version.
 **Context:** If the staff have already started on the request, cancelling from the guest side would waste their work. Before they start, the guest's change of mind is fine.
 
 **Alternatives considered:**
+
 - The guest can cancel at any time — rejected because it disrupts staff mid-task.
 - The guest can never cancel — rejected because it forces the guest to ask the staff, which is friction.
 
 **Consequences:**
+
 - The guest sees a "Cancel" button while the request is in Submitted.
 - The "Cancel" button disappears once the request is Acknowledged.
 - Staff can cancel any request at any time, with a reason.
@@ -668,10 +730,12 @@ No additional states are introduced in the first version.
 **Context:** Same reasoning as D-5.3. Before staff start, the guest can revise. After, it is in motion.
 
 **Alternatives considered:**
+
 - The guest can never edit — rejected because it forces a cancel and resubmit for a trivial change.
 - The guest can always edit — rejected because it disrupts the staff mid-task.
 
 **Consequences:**
+
 - The request screen has an "Edit" action while the state is Submitted.
 - After Acknowledged, the action is hidden.
 - Staff always work from the latest version the guest submitted.
@@ -687,9 +751,11 @@ No additional states are introduced in the first version.
 **Context:** Same reasoning as D-4.10. The venue's staff judge urgency.
 
 **Alternatives considered:**
+
 - SLA alerts — deferred. Revisit if a venue asks for them.
 
 **Consequences:**
+
 - The staff queue shows the elapsed time so staff can prioritise.
 - The manager can see request times in reports.
 
@@ -704,10 +770,12 @@ No additional states are introduced in the first version.
 **Context:** A chat thread adds significant complexity — real-time messaging, notifications, moderation. For the first version, the request is one-way.
 
 **Alternatives considered:**
+
 - A chat thread per request — deferred. Revisit if a service (for example, concierge) needs back-and-forth.
 - A chat thread only for concierge — deferred for the same reason.
 
 **Consequences:**
+
 - The request form is a one-time submission.
 - The guest sees the request status, not a conversation.
 - If the venue needs to ask the guest a question, they call the room phone or visit the room.
@@ -723,9 +791,11 @@ No additional states are introduced in the first version.
 **Context:** Same privacy reasoning as D-2.5.
 
 **Alternatives considered:**
+
 - The guest sees their own past stays — rejected because there are no guest accounts, so there is no way to know it is the same guest.
 
 **Consequences:**
+
 - The Requests tab shows only the current stay.
 - On checkout, the requests are archived and not shown again.
 - The venue's staff and manager can still see the historical requests.
@@ -743,9 +813,11 @@ No additional states are introduced in the first version.
 **Context:** Approval gives the venue a chance to catch mistakes before the kitchen invests time. It also lets the venue handle cases where a table has left, or where the guest ordered something that is no longer available.
 
 **Alternatives considered:**
+
 - The kitchen sees orders immediately — rejected because it removes the venue's chance to catch mistakes.
 
 **Consequences:**
+
 - Every order passes through a staff approval step.
 - In a venue where the manager wants orders to go straight to the kitchen, the approval can be configured to be automatic (a "trusted mode"), but this is a per-venue setting.
 - The guest's tracking screen shows Placed until the staff approve, then Approved.
@@ -761,10 +833,12 @@ No additional states are introduced in the first version.
 **Context:** A pause button seems useful but introduces edge cases — paused guests see no progress, staff must remember to unpause, a pause left on overnight is a disaster. The staff approving slowly achieves the same result.
 
 **Alternatives considered:**
+
 - A pause button for the whole kitchen — deferred. Revisit if a venue asks for it.
 - A pause per station — deferred for the same reason.
 
 **Consequences:**
+
 - The kitchen queue fills up during a rush, and the staff pace themselves.
 - The venue can communicate a delay to guests through the tracking screen if needed.
 
@@ -779,9 +853,11 @@ No additional states are introduced in the first version.
 **Context:** Station-based routing requires the venue to define stations and the product to route items to stations. For the first version, the venue's own coordination is simpler.
 
 **Alternatives considered:**
+
 - Station-based routing — deferred. Revisit if a venue has a large kitchen with distinct stations.
 
 **Consequences:**
+
 - The kitchen screen shows one queue.
 - The kitchen staff coordinate verbally, as they do today.
 
@@ -796,9 +872,11 @@ No additional states are introduced in the first version.
 **Context:** Marking items separately creates a more complex kitchen screen and more clicks for the staff. For most venues, the whole ticket is done together.
 
 **Alternatives considered:**
+
 - Individual item marking — deferred. Revisit if a venue has very large tickets (for example, a banquet) where items finish at different times.
 
 **Consequences:**
+
 - The kitchen's actions are simple: Start and Ready.
 - The service staff see the whole order as Ready at once.
 - The guest sees the whole order as Ready at once.
@@ -816,12 +894,14 @@ The guest's menu also plays a small ping when an item's availability changes whi
 **Context:** The kitchen staff are often not looking at the screen. An audible ping is the fastest way to bring their attention to a new ticket. The staff and manager areas stay quiet so the venue is not full of sounds.
 
 **Alternatives considered:**
+
 - Ping on staff queues as well — rejected because a room full of pings is chaotic.
 - Ping on the manager dashboard — rejected for the same reason.
 - No ping anywhere — rejected because the kitchen must not miss a ticket.
 - A mute option for the kitchen — rejected per the venue's preference that the kitchen never miss a ticket.
 
 **Consequences:**
+
 - The kitchen screen always pings on a new ticket.
 - The service staff queues, the housekeeping queue, the maintenance queue, the concierge queue, the laundry queue, the spa queue, and the front desk view are silent.
 - The manager dashboard is silent.
@@ -838,10 +918,12 @@ The guest's menu also plays a small ping when an item's availability changes whi
 **Context:** Polling every 5 seconds is simple, works everywhere, and gives the kitchen and staff a reasonable freshness without hammering the server. A faster refresh increases server load; a slower refresh risks a ticket being seen late.
 
 **Alternatives considered:**
+
 - Every 2 seconds — deferred. Revisit if the venue needs faster freshness.
 - Live push (Server-Sent Events) — deferred to a later version. Revisit if the venue grows large enough.
 
 **Consequences:**
+
 - A new ticket appears on the kitchen screen within 5 seconds.
 - A staff queue updates within 5 seconds.
 - A guest's tracking screen updates within 5 seconds when it is open.
@@ -868,12 +950,14 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The venue asked for the payment infrastructure to be ready without integrating a provider. The intended first providers are eSewa (Nepal) and UPI (India). Building the bridge first, without locking to a provider, keeps the option open and matches the plan of aligning per organisation later.
 
 **Alternatives considered:**
+
 - Integrate eSewa now — deferred. Revisit when a Nepal-based venue is onboarded.
 - Integrate UPI now — deferred. Same reason.
 - Integrate Stripe now — deferred. Not the target region.
 - Skip payments entirely for the first version — rejected because the venue asked for the infrastructure.
 
 **Consequences:**
+
 - The product can record and verify payments without being tied to any provider.
 - Adding a provider later is one adapter, not a rewrite.
 - The first version ships with the cash-at-counter path fully working.
@@ -890,9 +974,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The venue's branding and configuration are developer-controlled per D-9.1. The payment provider follows the same model — it is set up per venue, in code, by the developer.
 
 **Alternatives considered:**
+
 - A self-service payment configuration in the admin panel — deferred until the product is offered as a general SaaS.
 
 **Consequences:**
+
 - Adding a provider for a venue is a developer task.
 - Each venue's payment credentials are held in the venue's own configuration.
 - If the venue has no provider configured, the product shows the cash-at-counter path to the guest.
@@ -908,10 +994,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Not every guest wants to pay online, and not every venue has a card terminal. Cash at the counter is a real option.
 
 **Alternatives considered:**
+
 - Online only — rejected because it forces every guest to use a card.
 - Cash only — rejected because it loses the convenience of online payment.
 
 **Consequences:**
+
 - The tracking screen has a "Pay now" button when the venue has a provider configured, and a "Pay at the counter" option always.
 - If the guest pays at the counter, the staff mark the order as paid.
 - Both types of payment are recorded in the order's history.
@@ -927,10 +1015,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Some venues expect tips, others do not. A custom amount lets the guest decide, and a blank default keeps it unobtrusive.
 
 **Alternatives considered:**
+
 - No tipping — rejected because venues in some regions expect it.
 - Preset percentages — rejected because the guest might feel pressured.
 
 **Consequences:**
+
 - The payment screen has an optional tip field.
 - The tip is added to the bill.
 - The tip is recorded separately in the reports so the venue can distribute it.
@@ -946,9 +1036,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Building refund logic into the product adds complexity (full versus partial, reason codes, provider-specific rules) for a rare event.
 
 **Alternatives considered:**
+
 - Refunds from the manager panel — deferred. Revisit if a venue asks for it.
 
 **Consequences:**
+
 - The manager cannot issue refunds from the product.
 - The product shows the original payment record and a note that the guest requested a refund.
 - The venue handles the refund outside the product.
@@ -964,10 +1056,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Guests need a record of their payment. A digital receipt is the standard.
 
 **Alternatives considered:**
+
 - No receipt — rejected because guests expect one.
 - Print-only receipt — rejected because the venue may not have a printer.
 
 **Consequences:**
+
 - The payment success screen shows the receipt.
 - The receipt has a download button and an optional email field.
 - The receipt is also stored in the venue's records.
@@ -983,11 +1077,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** D-7.1 says the payment bridge is built but no live provider is connected in the first version. D-7.3 says the guest can pay online through the bridge or in cash at the counter. These two together imply that the "Pay now" path exists in the first version — but a bridge with no provider cannot deliver a payment. PRODUCT.md §5.11 and §16.1 describe the "Pay now" flow as if it works on day one. That is a contradiction: the product spec promises a flow the decisions forbid. This decision closes the contradiction by stating plainly which path is live in the first version.
 
 **Alternatives considered:**
+
 - Keep the "Pay now" button visible but non-functional — rejected because a button that does nothing is worse than no button. The guest would tap it and hit a dead end.
 - Show the "Pay now" button only when a placeholder provider is connected — rejected because the placeholder adapter is not a real payment path. It records an attempt; it does not take money. Showing a pay button that records an attempt and takes no money would be worse than showing cash-only.
 - Enable the bridge with the placeholder in the first version — rejected. The bridge is testable; it is not a payment method. A venue cannot accept money through the placeholder.
 
 **Consequences:**
+
 - The guest's tracking screen shows "Ask your waiter for the bill" or "Pay at the counter".
 - The staff panel has a "Mark as paid" action. The staff take the cash and mark the order paid.
 - The payment bridge, the ticket, and the receipt flow exist and are tested, but they are only exercised by the test suite in the first version, not by a live guest.
@@ -1005,10 +1101,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** SYSTEM.md §11.1 lists the Receipt entity but does not give it a venueId. SYSTEM.md §15.4 requires every venue-scoped entity to be scoped by venue. The receipt is venue-scoped by association.
 
 **Alternatives considered:**
+
 - Add a venueId column to Receipt (rejected — duplicate data, risk of drift).
 - Trust the caller to verify the ticket's venue (rejected — the repository is the boundary).
 
 **Consequences:**
+
 - The receipt adapter joins to payment_tickets on every read and write.
 - A cross-venue receipt read returns NOT_FOUND, never FORBIDDEN.
 
@@ -1025,10 +1123,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Same as D-6.6. Polling is simple and works everywhere.
 
 **Alternatives considered:**
+
 - Live push (Server-Sent Events) — deferred to a later version.
 - Polling every 2 seconds — deferred. Revisit if the venue needs faster freshness.
 
 **Consequences:**
+
 - Screens update within 5 seconds.
 - Server load is reasonable.
 
@@ -1043,10 +1143,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Guests on flaky wifi, especially in hotels, should not lose their cart just because the connection hiccupped.
 
 **Alternatives considered:**
+
 - Show an error and let the guest retry — rejected because it is a bad experience on a flaky network.
 - Make the product work fully offline — rejected because it is a much larger effort and not needed for the first version.
 
 **Consequences:**
+
 - The guest's order is not lost if the connection drops briefly.
 - The guest sees a clear "Sending…" state while the order is queued.
 - If the connection is down for a long time, the guest sees an error and can retry.
@@ -1063,10 +1165,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** A kitchen screen must never silently show stale data without the staff knowing.
 
 **Alternatives considered:**
+
 - Show the last known state, marked as "stale" — rejected because the staff might act on stale data.
 - Show an error and stop — rejected because it would require a manual refresh.
 
 **Consequences:**
+
 - The kitchen screen has a clear connection-state indicator.
 - The screen retries automatically.
 - The staff know immediately if the connection is down.
@@ -1082,10 +1186,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The guest should not have to refresh to see that their order is ready.
 
 **Alternatives considered:**
+
 - Manual refresh only — rejected because it is a poor experience.
 - Live push — same as D-8.1, deferred to a later version.
 
 **Consequences:**
+
 - The tracking screen updates within 5 seconds of a status change.
 - The guest sees a smooth transition when the state advances.
 - The guest can leave the screen and come back to find the latest state.
@@ -1101,10 +1207,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** A daily backup is sufficient for the first version. Thirty days of retention gives the venue a month of recovery options.
 
 **Alternatives considered:**
+
 - Continuous backup with point-in-time recovery — deferred to a later version.
 - Weekly backup — rejected because a week of lost data is too much.
 
 **Consequences:**
+
 - The venue can recover from most data-loss scenarios.
 - A failure within the last 24 hours may lose up to 24 hours of data.
 - Backup storage stays within reasonable bounds.
@@ -1122,10 +1230,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The venue's branding is a deliberate design choice, not a self-service toggle. The product is designed specifically for each organisation, and each venue's branding is aligned per organisation by the developer.
 
 **Alternatives considered:**
+
 - Self-service branding in the admin panel — deferred until the product is offered as a general SaaS.
 - Partial self-service (color only) — deferred for the same reason.
 
 **Consequences:**
+
 - Onboarding a new venue is a developer task, not a manager task.
 - Each venue's branding is deliberate and consistent.
 - The admin panel is simpler — it has no branding tab.
@@ -1144,9 +1254,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Staff tools should feel consistent across venues for training, support, and shared screenshots. A distinct palette for staff keeps that consistency.
 
 **Alternatives considered:**
+
 - Brand color used everywhere — rejected because it would make every venue's staff tools look different.
 
 **Consequences:**
+
 - The guest experience reflects the venue's brand color.
 - The staff experience is identical across all venues.
 - The staff learn the tool once and can use it anywhere.
@@ -1162,10 +1274,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** An unreadable guest screen is worse than a slightly less brand-accurate one. The product must always be usable.
 
 **Alternatives considered:**
+
 - Automatically adjust the colour to a readable shade — deferred. Revisit if the developer wants a "make it readable" tool.
 - Accept the colour anyway — rejected because it produces an unusable guest experience.
 
 **Consequences:**
+
 - The developer chooses a readable brand colour.
 - The guest screen is always legible.
 - There is no automatic colour adjustment in the product.
@@ -1181,10 +1295,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The guest experience is designed for a warm, appetite-driven look. A dark mode would undermine that, and most guests prefer light menus on their phones.
 
 **Alternatives considered:**
+
 - Automatic dark mode based on device settings — rejected because it changes the guest's perception of the venue's brand.
 - A guest toggle — rejected for the same reason.
 
 **Consequences:**
+
 - The guest screens are always light.
 - The guest's device dark mode does not affect the guest experience.
 
@@ -1199,10 +1315,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Kitchens are often low-light environments. A dark screen is easier on the eyes and produces less glare.
 
 **Alternatives considered:**
+
 - Light mode by default — rejected because most kitchens are dark.
 - No dark mode — rejected because it would be uncomfortable in a low-light kitchen.
 
 **Consequences:**
+
 - The kitchen screen starts dark.
 - A toggle is available on the kitchen screen.
 - The preference is remembered per device.
@@ -1216,6 +1334,7 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Decision:** The boundary between what the developer sets and what the operator (manager) manages is fixed:
 
 **The developer sets, per venue, in code, at onboarding:**
+
 - The venue's display name.
 - The venue's logo, brand color, hero image, and welcome message.
 - The venue's font choices and language.
@@ -1226,6 +1345,7 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 - The venue's deployment.
 
 **The operator manages, from the admin panel:**
+
 - The menu — categories, items, modifiers, prices.
 - The tables and rooms — adding, editing, and status.
 - The QR codes — generating, printing, revoking.
@@ -1240,11 +1360,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** D-9.1 says the branding is developer-controlled and the admin panel has no branding tab. PRODUCT.md §8.1 describes the owner performing a setup flow that sets the branding, and §8.10 describes a Branding tab that lets the manager change the logo, the color, the welcome message, and the hero image. PRODUCT.md §8.12 lists the language, the currency, and the tax rate as manager-adjustable settings. Those descriptions contradict D-9.1. They also describe a self-service flow that D-10.3 forbids. This decision resolves the contradiction by stating the boundary plainly and by naming which side of the boundary each item falls on.
 
 **Alternatives considered:**
+
 - Give the operator full control of branding — rejected. It contradicts D-9.1 and D-9.3, and it means the developer cannot guarantee a readable brand color or a consistent look across an organisation's venues.
 - Give the developer nothing and the operator everything — rejected. It would require a self-service onboarding flow (D-10.3 defers this), and it would remove the developer's role in aligning per organisation.
 - Split branding between developer and operator (developer picks the color family, operator picks the exact shade) — rejected. It introduces a third configuration surface without a benefit. Simpler is better: the developer owns branding, the operator owns operations.
 
 **Consequences:**
+
 - Onboarding a venue remains a developer task (per D-9.1 and D-10.3).
 - The admin panel has no Branding tab.
 - The admin panel's Settings tab shows the venue's address, contact, tax rate, and currency as **read-only**, and it shows the module toggles and service toggles as **editable within the limits the developer has enabled**.
@@ -1266,10 +1388,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The first version targets one venue, with both rooms and tables possible in the same venue. Multi-venue and multi-franchise support come later.
 
 **Alternatives considered:**
+
 - Multi-venue per installation — deferred. Revisit when a franchise asks for it.
 - A true multi-tenant SaaS — deferred. This would be a large shift.
 
 **Consequences:**
+
 - One installation serves one venue.
 - The venue's staff, menu, tables, and rooms are all in one place.
 - A franchise runs more than one installation.
@@ -1286,9 +1410,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Even if two venues are owned by the same person, they are separate businesses. Sharing data between them would be surprising and potentially harmful.
 
 **Alternatives considered:**
+
 - Share some data (for example, menu templates) between venues — deferred. Revisit if a franchise asks for shared menus.
 
 **Consequences:**
+
 - No menu, order, staff, or guest data is ever shared between venues.
 - Each venue has its own everything.
 - Any shared feature would be an explicit, per-venue opt-in.
@@ -1304,9 +1430,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The product is designed specifically for each organisation, and onboarding includes a developer. Self-service onboarding would require a lot of additional work.
 
 **Alternatives considered:**
+
 - Self-service onboarding — deferred. Revisit when the product is offered to other organisations.
 
 **Consequences:**
+
 - Onboarding a new venue is a developer task, not a manager task.
 - Each venue's initial setup is deliberate and correct.
 - Self-service onboarding is not part of the first version.
@@ -1322,10 +1450,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Deleting a venue would destroy its orders, requests, and history. Even a venue that closes might reopen, or might need its data for accounting. Deactivation preserves everything.
 
 **Alternatives considered:**
+
 - Hard delete with data destruction — rejected because it destroys history.
 - Soft delete with archival to cold storage — deferred. Revisit if storage becomes an issue.
 
 **Consequences:**
+
 - The developer can deactivate a venue.
 - The venue's data is preserved.
 - The venue can be reactivated at any time.
@@ -1341,11 +1471,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** D-10.1 says one venue per installation in the first version. PRODUCT.md §3.7 describes the owner as someone who "may manage more than one venue under the same ownership", and §8.13 describes a venue switcher at the top of the admin panel. Those descriptions contradict D-10.1 and D-10.3. This decision closes the contradiction by naming the boundary.
 
 **Alternatives considered:**
+
 - Build a multi-venue switcher now — rejected. It contradicts D-10.1, and it implies a shared identity across venues that D-10.2 forbids. Building it now would require a cross-venue account system the product does not have.
 - Hide the switcher but keep the owner role as a multi-venue role — rejected because the role would have nothing to switch to. The role and the switcher are the same decision.
 - Defer the whole multi-venue question to a later version — this is what we are doing. The deferral is recorded here so that no product description implies a capability that does not exist.
 
 **Consequences:**
+
 - The admin panel has no venue switcher.
 - Every operator is scoped to one venue.
 - The "Owner" role exists per venue, not across venues (see D-3.6 and SYSTEM.md §7). A venue's owner is the venue's operator with the highest permission level; they are not a cross-venue identity.
@@ -1365,11 +1497,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The venue confirmed the product is English-only. English is the default and only language in the first version.
 
 **Alternatives considered:**
+
 - Multi-language with a guest picker — deferred for the first version.
 - Auto-detect from the browser — deferred for the same reason.
 - A per-venue language setting — rejected because the venue asked for English only.
 
 **Consequences:**
+
 - Every text string in the product is English.
 - A non-English venue is onboarded by editing the code if they want a different language, at the developer's discretion.
 - No language infrastructure is built into the product.
@@ -1385,9 +1519,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** One currency per venue is the natural model for a single physical venue.
 
 **Alternatives considered:**
+
 - Multiple currencies per venue — deferred. Revisit if a venue has international pricing.
 
 **Consequences:**
+
 - All prices use the venue's currency.
 - The currency is set at onboarding.
 - Reports use the venue's currency.
@@ -1403,9 +1539,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Same as D-4.3.
 
 **Alternatives considered:**
+
 - Multiple tax rules — deferred. See D-4.3.
 
 **Consequences:**
+
 - The tax rate is a single setting per venue.
 - All orders use the same rate.
 
@@ -1420,11 +1558,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** PRODUCT.md §8.12 lists "the default language (if multi-language is enabled)" as a manager-adjustable setting. D-11.1 says the product is English only and there is no per-venue language setting. The two contradict. This decision closes the contradiction by stating plainly that the language is a developer setting, not an operator setting, and that D-9.6's boundary applies to it.
 
 **Alternatives considered:**
+
 - Let the operator change the language — rejected. It contradicts D-11.1, and it would require a language setting the product does not build.
 - Remove the language line from PRODUCT.md without a decision — rejected because the removal must trace to a decision. This is that decision.
 - Add a multi-language picker now — rejected. It is out of scope for the first version (per D-11.1's alternatives).
 
 **Consequences:**
+
 - The admin panel's Settings tab does not list a language field.
 - Every guest and staff screen shows strings in the language the developer set at onboarding.
 - A venue that needs a different language is onboarded by editing the code, per D-11.1's consequence.
@@ -1443,11 +1583,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** 6 months covers the venue's useful reporting window. Older data is still stored and can be extended to older ranges in a later version.
 
 **Alternatives considered:**
+
 - 30 days — rejected because a venue needs a seasonal view.
 - 12 months — deferred. Revisit if a venue asks for it.
 - All time — deferred. Revisit if a venue asks for it.
 
 **Consequences:**
+
 - Reports can cover any two dates within the last 6 months.
 - Older data is available on request from the developer.
 - The venue can see seasonal trends within a 6-month window.
@@ -1463,10 +1605,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** CSV opens in every spreadsheet, and is the format the venue's accountant will need.
 
 **Alternatives considered:**
+
 - PDF — deferred. Revisit if a venue asks for a formatted report.
 - Excel — deferred for the same reason.
 
 **Consequences:**
+
 - The venue can download any report as a CSV.
 - The CSV opens in Excel, Google Sheets, or any spreadsheet.
 - No formatted reports in the first version.
@@ -1482,10 +1626,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Scheduled reports require an email infrastructure and a preference system. For the first version, manual download is sufficient.
 
 **Alternatives considered:**
+
 - Daily email — deferred. Revisit if a venue asks for it.
 - Weekly email — deferred for the same reason.
 
 **Consequences:**
+
 - The manager opens the reports tab and downloads the CSV when they need it.
 - No emails are sent by the product for reports.
 
@@ -1500,9 +1646,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Staff activity reporting is useful but can be misused for surveillance. For the first version, the manager can see the history of each order and request, which shows the staff member's name, but there is no aggregated "staff performance" view.
 
 **Alternatives considered:**
+
 - A staff activity report — deferred. Revisit if a venue asks for it.
 
 **Consequences:**
+
 - The manager sees staff names in order and request histories.
 - There is no aggregate staff report.
 - The staff do not feel surveilled by an aggregate view.
@@ -1520,11 +1668,13 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The guest is anonymous and the product does not collect contact details. Notifications would require collecting contact information, which conflicts with the no-friction promise.
 
 **Alternatives considered:**
+
 - SMS — rejected because it requires collecting a phone number.
 - Email — rejected for the same reason.
 - Browser push — deferred. Revisit if the guest experience needs it.
 
 **Consequences:**
+
 - The guest must check the tracking screen to see the status.
 - The tracking screen updates live when it is open.
 - No notifications are sent by the product to the guest.
@@ -1540,10 +1690,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Staff are at their station and can see the queue. Other notifications would be noise.
 
 **Alternatives considered:**
+
 - Browser notifications — deferred. Revisit if a staff member is often away from their screen.
 - SMS — deferred for the same reason.
 
 **Consequences:**
+
 - Staff rely on the queue and the kitchen ping.
 - No notifications are sent by the product to staff.
 
@@ -1558,9 +1710,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Same as D-13.2. The manager can check the dashboard when they want.
 
 **Alternatives considered:**
+
 - Email — deferred. Revisit if a venue asks for it.
 
 **Consequences:**
+
 - The manager relies on the dashboard.
 - No notifications are sent by the product to the manager.
 
@@ -1577,10 +1731,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The product should be portable, so the venue or the developer can choose the hosting that suits them.
 
 **Alternatives considered:**
+
 - Locking to a specific host — rejected because it limits the venue's choice.
 - Locking to a specific database — rejected for the same reason.
 
 **Consequences:**
+
 - The product's deployment is documented as a portable setup.
 - The first version uses a specific host and database, chosen for convenience, not by design.
 - The product can be moved to another host or database with effort but without a rewrite.
@@ -1596,9 +1752,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The first version is tested locally, with real data and full flows. A staging environment is deferred until the product is offered to other organisations.
 
 **Alternatives considered:**
+
 - Always-on staging — deferred. Revisit when the product is offered as a SaaS.
 
 **Consequences:**
+
 - Testing happens locally.
 - The developer must be careful when deploying to production.
 - The venue can be used for testing before it goes live with real guests.
@@ -1614,9 +1772,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Automatic deployments are convenient but risky for the first version, when the product is still being shaped.
 
 **Alternatives considered:**
+
 - Automatic deployment on every commit — deferred. Revisit when the product stabilises.
 
 **Consequences:**
+
 - The developer decides when to deploy.
 - A bad commit cannot go live on its own.
 - Deployments are deliberate.
@@ -1634,9 +1794,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** A partial product is not acceptable. The first version must be a working, complete loop.
 
 **Alternatives considered:**
+
 - A partial product with some flows mocked — rejected because the venue asked for the complete loop.
 
 **Consequences:**
+
 - Every flow is implemented, not stubbed.
 - The database is real and populated.
 - The product can be demonstrated end-to-end on the developer's machine.
@@ -1652,10 +1814,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** This ensures the product handles both facilities in the same installation, which is the more complex case.
 
 **Alternatives considered:**
+
 - One venue with only tables — rejected because the venue asked for both.
 - One venue with only rooms — rejected for the same reason.
 
 **Consequences:**
+
 - The first venue has tables and rooms.
 - All modules are enabled and tested.
 - The product is verified for the more complex case first.
@@ -1671,10 +1835,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Fifty concurrent orders is a reasonable target for a busy venue.
 
 **Alternatives considered:**
+
 - Ten concurrent orders — rejected because it is too low for a busy venue.
 - Hundreds — deferred. Revisit if a larger venue is onboarded.
 
 **Consequences:**
+
 - The product is tested against 50 concurrent orders.
 - Performance work is scoped to that target.
 - Beyond 50, the product may slow down.
@@ -1690,10 +1856,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** Twenty staff is more than most venues have.
 
 **Alternatives considered:**
+
 - Ten staff — rejected because it is too low for a large venue.
 - Fifty staff — deferred.
 
 **Consequences:**
+
 - The product is tested against 20 concurrent staff sessions.
 - The staff panel is designed for that load.
 
@@ -1708,10 +1876,12 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** A fast landing is the most important factor in guest conversion.
 
 **Alternatives considered:**
+
 - 2 seconds — rejected because it is too slow.
 - 3 seconds — rejected for the same reason.
 
 **Consequences:**
+
 - The guest's landing page is aggressively optimised for first paint.
 - Images are compressed and served efficiently.
 - The product's performance budget is set at 1 second.
@@ -1727,9 +1897,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The kitchen must see new tickets as soon as possible.
 
 **Alternatives considered:**
+
 - A short delay (for example, 10 seconds) to batch tickets — rejected because the venue does not want batching.
 
 **Consequences:**
+
 - The kitchen screen polls frequently per D-6.6.
 - A new ticket appears within the polling interval.
 - No batching, no delay.
@@ -1745,9 +1917,11 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 **Context:** The structure must be right from the beginning so that the product can grow without a rewrite.
 
 **Alternatives considered:**
+
 - Build something quick and refactor later — rejected because a rewrite would waste far more time than getting the structure right upfront.
 
 **Consequences:**
+
 - Every commit adds code to the correct place.
 - No shortcuts, no temporary hacks, no "we'll fix it later".
 - The product is testable end-to-end from the first milestone.
@@ -1807,12 +1981,14 @@ Building the motion abstraction before its first consumer would mean inventing i
 **Context:** D-1.2 says the QR is permanent and tied to the venue's internal identity. SYSTEM.md §8 describes the resolution flow, the revocation, and the generation. Together they imply a contract, but they do not spell it out in one place. This decision spells it out so that the Phase 4 implementation has a single authoritative reference.
 
 **Alternatives considered:**
+
 - Sequential database IDs — rejected. A sequential ID is guessable. If the QR encoded `table/42`, a guest could change the URL to `table/43` and reach a different table's context. The whole promise of the QR as the sole entry point (D-1.1, D-1.3) depends on the token being unguessable.
 - A signed payload (for example, a JWT) — rejected. A signed payload would let the server avoid a database lookup, but it would also make revocation impossible: a signed token stays valid until it expires. Revocation is a real requirement (D-1.2, D-2.5, SYSTEM.md §8.4), and it needs a server-side state change. The database lookup is cheap and correct.
 - A human-readable slug (`table-12-juniper`) — rejected. It exposes the venue's name (contradicting D-1.1) and it invites guessing.
 - Reuse a revoked token when reissuing for the same place — rejected. Reuse would break the revocation history. A new UUID is created every time.
 
 **Consequences:**
+
 - The QR token table has a `token` column, unique, indexed, of the UUID type.
 - The token's `state` is an enum: `active`, `revoked`.
 - The token's `revoked_at` is nullable. It is set when the state becomes `revoked`.
@@ -1832,10 +2008,12 @@ Building the motion abstraction before its first consumer would mean inventing i
 **Context:** Prisma ORM v7 enforces the driver adapter architecture for all direct database connections outside Prisma Accelerate. Without a driver adapter, PrismaClient throws `PrismaClientConstructorValidationError`. While Prisma 7 CLI tools (such as `prisma migrate`) communicate directly via the connection URL defined in `prisma.config.ts`, runtime database queries from PrismaClient require `@prisma/adapter-pg`.
 
 **Alternatives considered:**
+
 - Prisma Accelerate — rejected because the application is designed to run self-hosted and locally against standard PostgreSQL (per D-10.1 and D-14.1) without an external cloud proxy.
 - Dropping Prisma in favor of raw SQL (`pg` alone) — rejected because the data model, types, and migrations are governed by Prisma schema (SYSTEM.md §11).
 
 **Consequences:**
+
 - `@prisma/adapter-pg` and `pg` (with `@types/pg`) are declared dependencies in `package.json`.
 - `src/infrastructure/db/client.ts` manages a singleton `Pool` alongside `PrismaClient` in development to prevent connection exhaustion during Next.js reloads.
 - Runtime database performance benefits from `pg` connection pooling.
@@ -1853,10 +2031,12 @@ Building the motion abstraction before its first consumer would mean inventing i
 **Context:** Six repository integration test files (`venue.test.ts`, `table.test.ts`, `room.test.ts`, `staff.test.ts`, `order.repo.test.ts`, and `payment.test.ts`) deliberately test unique constraint violations, which causes Prisma's query engine to emit diagnostic error blocks before the repository catches `PrismaClientKnownRequestError` and converts it into domain `CONFLICT` results. Suppressing error logging globally at the test harness level in Milestone 2.2 risks masking unexpected runtime database failures and schema mismatches during active development.
 
 **Alternatives considered:**
+
 - Globally silence error logs in `src/infrastructure/db/client.ts` during tests — rejected because it would hide genuine database configuration errors and query faults throughout the test run.
 - Monkey-patch `process.stdout.write` in `tests/integration/setup.ts` — rejected as a brittle global interceptor that could swallow unintended diagnostic output.
 
 **Consequences:**
+
 - Integration test runs print expected `prisma:error` blocks during negative constraint tests; tests still pass with clean exit codes.
 - Phase 3 will introduce granular, per-assertion logger suppression or test log interceptors when service and route error boundaries are tested.
 
@@ -1875,11 +2055,13 @@ Building the motion abstraction before its first consumer would mean inventing i
 **Context:** The documents were marked "Draft for approval" through Phase 0 and Phase 1, while the developer built against them and they held up. The documentation correction milestone (C-01 through C-08j) resolved every contradiction the audit found and every gap that was identified. The milestone closes on the same date the version 2.0 approval is recorded. The approval is a real change in the standing of the documents: before, a statement in the documents was a proposal; after, it is a requirement.
 
 **Alternatives considered:**
+
 - Leave the documents as "Draft" and continue — rejected. A working repository governed by drafts has no contract. Every session would have to decide for itself whether a statement was binding.
 - Approve without correcting — rejected. Approving a document with a known contradiction would make the contradiction part of the contract. The correction milestone exists to remove every contradiction before approval.
 - Approve incrementally, one document at a time — rejected. The documents reference each other. A document is not approved until every document it references is approved. Approving one at a time would leave a window in which approved documents cite unapproved ones.
 
 **Consequences:**
+
 - Every document's header reads `**Version:** 2.0`, `**Status:** Approved`, `**Approved:** 2026-10-15`.
 - A later change to a document requires a new version number and a new decision record (for a decision change) or a STRUCTURAL entry in PROGRESS.md (for a non-decision correction).
 - The documentation correction milestone is closed by this decision, and Phase 2 begins.
@@ -1889,9 +2071,34 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ---
 
+### D-17.2 — Rescheduling the staff member seed to Phase 3 after password hashing infrastructure
+
+**Decision:** The staff member seeding task is moved out of Phase 2 Milestone 2.3 and scheduled in Phase 3 Milestone 3.1 (as Task 3.1.2), immediately following the creation of the password hashing service (Task 3.1.1). At the close of Phase 2, the `StaffMember` table remains empty, and the Phase 2 acceptance test (§4 Step 5 in `PHASE_TESTS.md`) is adjusted accordingly.
+
+**Context:** Task 2.3.5 originally proposed seeding staff accounts during Milestone 2.3. However, `StaffMember` requires a secure `passwordHash` column, and no password hashing service exists in `src/infrastructure/auth/` (password hashing is explicitly scheduled for Phase 3 Task 3.1.1). Using fixed, pre-computed static hashes or plaintext placeholders in the database seed would violate the project's honesty standard (BUILD.md §11.2) and the dependency rule (ROADMAP.md §1: "a task never starts before the tasks it depends on are complete").
+
+**Alternatives considered:**
+
+- Seed staff with static Argon2id hash strings without the runtime hashing service — rejected because it produces synthetic credentials unverified by the application's own hashing implementation, violating BUILD.md §11.2 honesty rules.
+- Implement the password hashing service early in Milestone 2.3 — rejected because it prematurely pulls Phase 3 authentication infrastructure into Phase 2 data model milestones, expanding scope unconstrained.
+- Omit password hashes or store plaintext — rejected as an unacceptable security failure violating SYSTEM.md §15.3 and DECISIONS.md D-3.1.
+
+**Consequences:**
+
+- Milestone 2.3 focuses on domain entities independent of authentication services: venue, tables, rooms, counter, QR tokens, menu aggregate, and hotel service toggles.
+- The staff seed in Task 3.1.2 will use the real, verified `hashPassword` function delivered in Task 3.1.1.
+- PHASE_TESTS.md §4 Step 5 permits the `StaffMember` table to be empty at the Phase 2 boundary.
+- No schema changes or migration changes are made.
+
+**What would make us revisit:** Never. When Task 3.1.1 completes, Task 3.1.2 executes with the verified hashing implementation.
+
+**Traces to:** BUILD.md §11.2 (honesty standard), ROADMAP.md §1 (dependency rule), DECISIONS.md D-3.1, PHASE_TESTS.md §4 Step 5.
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 91
+**Total decisions:** 92
 **Categories:** 17
 **Status:** All locked.
 
@@ -1899,54 +2106,54 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 **Decisions deferred to a later version, with the trigger that would reopen them:**
 
-| Deferred decision | Reopen trigger |
-|-------------------|----------------|
-| Optional guest accounts (D-2.1) | A venue asks for loyalty or return-guest features |
-| Server-side cart with timeout (D-2.2) | Guests complain about losing carts, or longer browsing patterns emerge |
-| Email-based login (D-3.1) | A venue asks for it, or for SSO |
-| Optional idle timeout for staff (D-3.2) | A venue complains about shared-device sessions |
-| PIN login for shared tablets (D-3.5) | A venue complains about full-password friction |
-| Per-section or per-item tax (D-4.3) | A venue operates with differentiated tax |
-| Bill splitting (D-4.5) | A venue asks for it |
-| Guest-initiated cancel window (D-4.7) | A venue asks for it |
-| Additional order states (D-4.8) | A venue asks for finer granularity |
-| SLA alerts on orders (D-4.10) | A venue asks for them |
-| SLA targets and SLA alerts (D-4.11) | A venue asks for SLA-based alerts as an optional per-venue setting |
-| Dedicated flow per hotel service (D-5.1) | A service needs a fundamentally different flow |
-| SLA alerts on requests (D-5.5) | A venue asks for them |
-| Guest-staff messaging inside a request (D-5.6) | A venue (concierge) asks for it |
-| Auto-approval of orders (D-6.1) | A venue asks for it |
-| Kitchen pause button (D-6.2) | A venue asks for it |
-| Station-based kitchen routing (D-6.3) | A large venue asks for it |
-| Item-level ticket marking (D-6.4) | A venue has very large tickets |
-| Pings on staff queues (D-6.5) | A venue asks for them |
-| Live push (SSE) for screens (D-6.6, D-8.1, D-8.4) | A venue needs faster freshness |
-| eSewa and UPI adapters (D-7.1) | A venue in Nepal or India is onboarded |
-| Self-service payment configuration (D-7.2) | The product is offered as a general SaaS |
-| In-product refunds (D-7.5) | A venue asks for them |
-| Guest online payment — the "Pay now" path (D-7.7) | A venue's real payment provider is connected |
-| Stronger offline queue (D-8.2) | A venue's network is unreliable in a way that breaks this |
-| Continuous backup (D-8.5) | A venue's data volume grows, or a catastrophic loss occurs |
-| Self-service branding (D-9.1, D-9.6) | The product is offered as a general SaaS |
-| Automatic brand-colour adjustment (D-9.3) | The developer wants a "make it readable" tool |
-| Multi-venue per installation (D-10.1) | A franchise asks for it |
-| Shared menus between venues (D-10.2) | A franchise asks for shared menus |
-| Self-service venue onboarding (D-10.3) | The product is offered as a general SaaS |
-| Multi-venue switcher (D-10.5) | A franchise asks for multi-venue support, or the product is offered as a general SaaS |
-| Multi-language (D-11.1) | A venue asks for a second language as a first-class feature |
-| Per-venue language setting (D-11.4) | A venue asks for a second language as a first-class feature |
-| Multiple currencies (D-11.2) | A venue has international pricing |
-| Multiple tax rules (D-11.3) | See D-4.3 |
-| Reports beyond 6 months (D-12.1) | A venue asks for a longer range |
-| PDF and Excel exports (D-12.2) | A venue asks for them |
-| Scheduled reports (D-12.3) | A venue asks for them |
-| Aggregate staff activity reporting (D-12.4) | A venue asks for it |
-| Guest notifications (D-13.1) | A venue asks for them |
-| Staff browser notifications (D-13.2) | A venue asks for them |
-| Manager notifications (D-13.3) | A venue asks for them |
-| Staging environment (D-14.2) | The product is offered as a SaaS, or more than one developer joins |
-| Automatic deployments (D-14.3) | The product stabilises, or more than one developer joins |
-| Motion implementation strategy for complex motion (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented |
-| Test engine error log suppression (D-16.4) | Phase 3 test harness hardening or clean-stdout requirement |
+| Deferred decision                                          | Reopen trigger                                                                        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Optional guest accounts (D-2.1)                            | A venue asks for loyalty or return-guest features                                     |
+| Server-side cart with timeout (D-2.2)                      | Guests complain about losing carts, or longer browsing patterns emerge                |
+| Email-based login (D-3.1)                                  | A venue asks for it, or for SSO                                                       |
+| Optional idle timeout for staff (D-3.2)                    | A venue complains about shared-device sessions                                        |
+| PIN login for shared tablets (D-3.5)                       | A venue complains about full-password friction                                        |
+| Per-section or per-item tax (D-4.3)                        | A venue operates with differentiated tax                                              |
+| Bill splitting (D-4.5)                                     | A venue asks for it                                                                   |
+| Guest-initiated cancel window (D-4.7)                      | A venue asks for it                                                                   |
+| Additional order states (D-4.8)                            | A venue asks for finer granularity                                                    |
+| SLA alerts on orders (D-4.10)                              | A venue asks for them                                                                 |
+| SLA targets and SLA alerts (D-4.11)                        | A venue asks for SLA-based alerts as an optional per-venue setting                    |
+| Dedicated flow per hotel service (D-5.1)                   | A service needs a fundamentally different flow                                        |
+| SLA alerts on requests (D-5.5)                             | A venue asks for them                                                                 |
+| Guest-staff messaging inside a request (D-5.6)             | A venue (concierge) asks for it                                                       |
+| Auto-approval of orders (D-6.1)                            | A venue asks for it                                                                   |
+| Kitchen pause button (D-6.2)                               | A venue asks for it                                                                   |
+| Station-based kitchen routing (D-6.3)                      | A large venue asks for it                                                             |
+| Item-level ticket marking (D-6.4)                          | A venue has very large tickets                                                        |
+| Pings on staff queues (D-6.5)                              | A venue asks for them                                                                 |
+| Live push (SSE) for screens (D-6.6, D-8.1, D-8.4)          | A venue needs faster freshness                                                        |
+| eSewa and UPI adapters (D-7.1)                             | A venue in Nepal or India is onboarded                                                |
+| Self-service payment configuration (D-7.2)                 | The product is offered as a general SaaS                                              |
+| In-product refunds (D-7.5)                                 | A venue asks for them                                                                 |
+| Guest online payment — the "Pay now" path (D-7.7)          | A venue's real payment provider is connected                                          |
+| Stronger offline queue (D-8.2)                             | A venue's network is unreliable in a way that breaks this                             |
+| Continuous backup (D-8.5)                                  | A venue's data volume grows, or a catastrophic loss occurs                            |
+| Self-service branding (D-9.1, D-9.6)                       | The product is offered as a general SaaS                                              |
+| Automatic brand-colour adjustment (D-9.3)                  | The developer wants a "make it readable" tool                                         |
+| Multi-venue per installation (D-10.1)                      | A franchise asks for it                                                               |
+| Shared menus between venues (D-10.2)                       | A franchise asks for shared menus                                                     |
+| Self-service venue onboarding (D-10.3)                     | The product is offered as a general SaaS                                              |
+| Multi-venue switcher (D-10.5)                              | A franchise asks for multi-venue support, or the product is offered as a general SaaS |
+| Multi-language (D-11.1)                                    | A venue asks for a second language as a first-class feature                           |
+| Per-venue language setting (D-11.4)                        | A venue asks for a second language as a first-class feature                           |
+| Multiple currencies (D-11.2)                               | A venue has international pricing                                                     |
+| Multiple tax rules (D-11.3)                                | See D-4.3                                                                             |
+| Reports beyond 6 months (D-12.1)                           | A venue asks for a longer range                                                       |
+| PDF and Excel exports (D-12.2)                             | A venue asks for them                                                                 |
+| Scheduled reports (D-12.3)                                 | A venue asks for them                                                                 |
+| Aggregate staff activity reporting (D-12.4)                | A venue asks for it                                                                   |
+| Guest notifications (D-13.1)                               | A venue asks for them                                                                 |
+| Staff browser notifications (D-13.2)                       | A venue asks for them                                                                 |
+| Manager notifications (D-13.3)                             | A venue asks for them                                                                 |
+| Staging environment (D-14.2)                               | The product is offered as a SaaS, or more than one developer joins                    |
+| Automatic deployments (D-14.3)                             | The product stabilises, or more than one developer joins                              |
+| Motion implementation strategy for complex motion (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented         |
+| Test engine error log suppression (D-16.4)                 | Phase 3 test harness hardening or clean-stdout requirement                            |
 
 ---

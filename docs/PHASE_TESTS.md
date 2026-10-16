@@ -234,7 +234,7 @@ Paste the seven pieces of evidence into a new `PROGRESS.md` entry, mark every Ph
 #### Step 5 — The populated venue is inspectable
 
 - **Action:** Open `prisma studio` (or an equivalent SQL client) and connect to the local database.
-- **Expected:** Exactly one `Venue` row. It has the table, room, and counter modules enabled. It has many `Table`, `Room`, `QrToken`, `MenuCategory`, `MenuItem`, `ModifierGroup`, `ModifierOption`, `StaffMember`, and `ServiceConfig` rows. At least one `QrToken` is bound to the counter.
+- **Expected:** Exactly one `Venue` row. It has the table, room, and counter modules enabled. It has many `Table`, `Room`, `QrToken`, `MenuCategory`, `MenuItem`, `ModifierGroup`, `ModifierOption`, and `ServiceConfig` rows. At least one `QrToken` is bound to the counter. The `StaffMember` table may be empty at Phase 2's close; staff members are seeded with honest password hashes in Phase 3 (Task 3.1.2) once the password hashing service exists (Task 3.1.1), and their presence is verified in Phase 3.
 - **If it fails:** Task 2.3.1.
 - **Evidence:** A screenshot of `prisma studio` showing the `Venue` row and a summary of its related rows.
 

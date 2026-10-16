@@ -121,36 +121,36 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 1.3 — Base components
 
-| ID    | Task                                                                       | Status | Depends on |
-| ----- | -------------------------------------------------------------------------- | ------ | ---------- |
-| 1.3.0 | Author the Tailwind 4 `@theme` token mapping in `app/globals.css` | ✅     | 1.2.7      |
-| 1.3.1 | Install and configure the base component library (shadcn/ui or equivalent) | ✅ Complete     | 1.3.0      |
-| 1.3.2 | Add the Button component, themed by tokens                                 | ✅ Complete     | 1.3.1      |
-| 1.3.3 | Add the Input, Textarea, and Select components, themed by tokens           | ✅ Complete     | 1.3.2      |
-| 1.3.4 | Add the Dialog, Sheet, and Drawer components                               | ✅ Complete     | 1.3.2      |
-| 1.3.5 | Add the Badge, Card, and Separator components                              | ✅ Complete     | 1.3.2      |
-| 1.3.6 | Add the Table component (for staff and manager views)                      | ✅ Complete     | 1.3.2      |
-| 1.3.7 | Add the Toast or notification component                                    | ✅ Complete     | 1.3.2      |
-| 1.3.8 | Verify: every base component renders on a scratch page; the build passes   | ✅ Complete     | 1.3.7      |
+| ID    | Task                                                                       | Status      | Depends on |
+| ----- | -------------------------------------------------------------------------- | ----------- | ---------- |
+| 1.3.0 | Author the Tailwind 4 `@theme` token mapping in `app/globals.css`          | ✅          | 1.2.7      |
+| 1.3.1 | Install and configure the base component library (shadcn/ui or equivalent) | ✅ Complete | 1.3.0      |
+| 1.3.2 | Add the Button component, themed by tokens                                 | ✅ Complete | 1.3.1      |
+| 1.3.3 | Add the Input, Textarea, and Select components, themed by tokens           | ✅ Complete | 1.3.2      |
+| 1.3.4 | Add the Dialog, Sheet, and Drawer components                               | ✅ Complete | 1.3.2      |
+| 1.3.5 | Add the Badge, Card, and Separator components                              | ✅ Complete | 1.3.2      |
+| 1.3.6 | Add the Table component (for staff and manager views)                      | ✅ Complete | 1.3.2      |
+| 1.3.7 | Add the Toast or notification component                                    | ✅ Complete | 1.3.2      |
+| 1.3.8 | Verify: every base component renders on a scratch page; the build passes   | ✅ Complete | 1.3.7      |
 
 ### Milestone 1.4 — Shared utilities
 
-| ID    | Task                                                       | Status | Depends on |
-| ----- | ---------------------------------------------------------- | ------ | ---------- |
-| 1.4.1 | Add the `cn` helper for class name composition             | ✅ Complete     | 1.3.8      |
-| 1.4.2 | Add the money formatting utility                           | ✅ Complete     | 1.4.1      |
-| 1.4.3 | Add the date and time formatting utility                   | ✅ Complete     | 1.4.1      |
-| 1.4.4 | Add the motion utilities, one per atmosphere               | ✅ Complete     | 1.4.1      |
-| 1.4.5 | Verify: each utility has a small unit test; the tests pass | ✅ Complete     | 1.4.4      |
+| ID    | Task                                                       | Status      | Depends on |
+| ----- | ---------------------------------------------------------- | ----------- | ---------- |
+| 1.4.1 | Add the `cn` helper for class name composition             | ✅ Complete | 1.3.8      |
+| 1.4.2 | Add the money formatting utility                           | ✅ Complete | 1.4.1      |
+| 1.4.3 | Add the date and time formatting utility                   | ✅ Complete | 1.4.1      |
+| 1.4.4 | Add the motion utilities, one per atmosphere               | ✅ Complete | 1.4.1      |
+| 1.4.5 | Verify: each utility has a small unit test; the tests pass | ✅ Complete | 1.4.4      |
 
 ### Milestone 1.5 — The development server
 
-| ID    | Task                                                                            | Status | Depends on |
-| ----- | ------------------------------------------------------------------------------- | ------ | ---------- |
-| 1.5.1 | Configure the root layout with the design tokens applied                        | ✅ Complete     | 1.4.5      |
-| 1.5.2 | Configure the guest and staff atmosphere wrappers                               | ✅ Complete     | 1.5.1      |
-| 1.5.3 | Add the 404 and error screens                                                   | ✅ Complete     | 1.5.2      |
-| 1.5.4 | Verify: the dev server starts, the scratch page renders, the 404 screen renders | ✅ Complete     | 1.5.3      |
+| ID    | Task                                                                            | Status      | Depends on |
+| ----- | ------------------------------------------------------------------------------- | ----------- | ---------- |
+| 1.5.1 | Configure the root layout with the design tokens applied                        | ✅ Complete | 1.4.5      |
+| 1.5.2 | Configure the guest and staff atmosphere wrappers                               | ✅ Complete | 1.5.1      |
+| 1.5.3 | Add the 404 and error screens                                                   | ✅ Complete | 1.5.2      |
+| 1.5.4 | Verify: the dev server starts, the scratch page renders, the 404 screen renders | ✅ Complete | 1.5.3      |
 
 **Acceptance for Phase 1:** The dev server starts. The type checker passes. The build passes. The base components render. The design tokens are visible on a scratch page. No product feature works yet, and that is the point.
 
@@ -181,8 +181,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 2.2 — The repositories
 
-| ID    | Task                                                                                | Status | Depends on |
-| ----- | ----------------------------------------------------------------------------------- | ------ | ---------- |
+| ID    | Task                                                                                | Status      | Depends on |
+| ----- | ----------------------------------------------------------------------------------- | ----------- | ---------- |
 | 2.2.1 | Add the venue repository (read the venue and its modules)                           | ✅ Complete | 2.1.12     |
 | 2.2.2 | Add the table and room repositories                                                 | ✅ Complete | 2.2.1      |
 | 2.2.3 | Add the QR token repository                                                         | ✅ Complete | 2.2.2      |
@@ -195,20 +195,19 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 2.3 — The seed
 
-| ID    | Task                                                                                               | Status | Depends on |
-| ----- | -------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 2.3.1 | Seed the venue with the table, room, and counter modules enabled                                   | ⬜     | 2.2.9      |
-| 2.3.2 | Seed the tables and rooms                                                                          | ⬜     | 2.3.1      |
-| 2.3.3 | Seed the QR tokens, one per table, one per room, and one for the counter                           | ⬜     | 2.3.2      |
-| 2.3.4 | Seed the menu categories and menu items with modifiers                                             | ⬜     | 2.3.3      |
-| 2.3.5 | Seed the staff members with different roles                                                        | ⬜     | 2.3.4      |
-| 2.3.6 | Seed the enabled hotel services                                                                    | ⬜     | 2.3.5      |
-| 2.3.7 | Seed the counter, its QR token, and its own pickup-labelled orders                                 | ⬜     | 2.3.6      |
-| 2.3.8 | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜     | 2.3.7      |
+| ID    | Task                                                                                               | Status      | Depends on |
+| ----- | -------------------------------------------------------------------------------------------------- | ----------- | ---------- |
+| 2.3.1 | Seed the venue with the table, room, and counter modules enabled                                   | ✅ Complete | 2.2.9      |
+| 2.3.2 | Seed the tables and rooms                                                                          | ✅ Complete | 2.3.1      |
+| 2.3.3 | Seed the QR tokens, one per table, one per room, and one for the counter                           | ✅ Complete | 2.3.2      |
+| 2.3.4 | Seed the menu categories and menu items with modifiers                                             | ✅ Complete | 2.3.3      |
+| 2.3.5 | Seed the enabled hotel services                                                                    | ⬜          | 2.3.4      |
+| 2.3.6 | Seed the counter, its QR token, and its own pickup-labelled orders                                 | ⬜          | 2.3.5      |
+| 2.3.7 | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ⬜          | 2.3.6      |
 
-**Acceptance for Phase 2:** The database schema matches SYSTEM.md §11 exactly. The migrations apply cleanly. The seed creates a fully populated venue. Every repository has at least one integration test that passes.
+**Acceptance for Phase 2:** The database schema matches SYSTEM.md §11 exactly. The migrations apply cleanly. The seed creates a fully populated venue (tables, rooms, counter, QR codes, menu, and hotel services; staff seed moved to Task 3.1.2 per honest hashing dependency). Every repository has at least one integration test that passes.
 
-**Visible progress at the end of Phase 2:** The developer can query the database and see a fully populated venue with tables, rooms, QR codes, a menu, and staff.
+**Visible progress at the end of Phase 2:** The developer can query the database and see a populated venue with tables, rooms, QR codes, menu, and enabled services.
 
 ---
 
@@ -220,16 +219,17 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                            | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 3.1.1 | Add the password hashing service (hash and verify)                                              | ⬜     | 2.3.8      |
-| 3.1.2 | Add the session service (create, validate, delete, invalidate-all)                              | ⬜     | 3.1.1      |
-| 3.1.3 | Add the session cookie helpers (set, read, clear)                                               | ⬜     | 3.1.2      |
-| 3.1.4 | Verify: a session can be created, validated, and deleted; a password can be hashed and verified | ⬜     | 3.1.3      |
+| 3.1.1 | Add the password hashing service (hash and verify)                                              | ⬜     | 2.3.7      |
+| 3.1.2 | Seed the staff members with different roles                                                     | ⬜     | 3.1.1      |
+| 3.1.3 | Add the session service (create, validate, delete, invalidate-all)                              | ⬜     | 3.1.2      |
+| 3.1.4 | Add the session cookie helpers (set, read, clear)                                               | ⬜     | 3.1.3      |
+| 3.1.5 | Verify: a session can be created, validated, and deleted; a password can be hashed and verified | ⬜     | 3.1.4      |
 
 ### Milestone 3.2 — The auth domain
 
 | ID    | Task                                                   | Status | Depends on |
 | ----- | ------------------------------------------------------ | ------ | ---------- |
-| 3.2.1 | Add the `login` domain function                        | ⬜     | 3.1.4      |
+| 3.2.1 | Add the `login` domain function                        | ⬜     | 3.1.5      |
 | 3.2.2 | Add the `logout` domain function                       | ⬜     | 3.2.1      |
 | 3.2.3 | Add the `getSession` domain function                   | ⬜     | 3.2.1      |
 | 3.2.4 | Add the `canAccess` domain function (roles and areas)  | ⬜     | 3.2.3      |
@@ -378,15 +378,15 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 5.4 — The cart
 
-| ID    | Task                                                                                                            | Status | Depends on |
-| ----- | --------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 5.4.1 | Add the cart screen                                                                                             | ⬜     | 5.3.8      |
-| 5.4.2 | Add item-level adjustment (quantity, remove)                                                                    | ⬜     | 5.4.1      |
-| 5.4.3 | Add the order-level notes field                                                                                 | ⬜     | 5.4.1      |
-| 5.4.4 | Add the summary (subtotal, tax, total)                                                                          | ⬜     | 5.4.2      |
-| 5.4.5 | Add the "Place order" action                                                                                    | ⬜     | 5.4.4      |
-| 5.4.6 | Add the empty cart state                                                                                        | ⬜     | 5.4.1      |
-| 5.4.7 | Add the pickup-name field for the counter flow                                                                  | ⬜     | 5.4.5      |
+| ID    | Task                                                                                                           | Status | Depends on |
+| ----- | -------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
+| 5.4.1 | Add the cart screen                                                                                            | ⬜     | 5.3.8      |
+| 5.4.2 | Add item-level adjustment (quantity, remove)                                                                   | ⬜     | 5.4.1      |
+| 5.4.3 | Add the order-level notes field                                                                                | ⬜     | 5.4.1      |
+| 5.4.4 | Add the summary (subtotal, tax, total)                                                                         | ⬜     | 5.4.2      |
+| 5.4.5 | Add the "Place order" action                                                                                   | ⬜     | 5.4.4      |
+| 5.4.6 | Add the empty cart state                                                                                       | ⬜     | 5.4.1      |
+| 5.4.7 | Add the pickup-name field for the counter flow                                                                 | ⬜     | 5.4.5      |
 | 5.4.8 | Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | ⬜     | 5.4.7      |
 
 ### Milestone 5.5 — The order domain
@@ -774,8 +774,8 @@ The critical path — the sequence that cannot be shortened — is:
  → 1.5.4 (dev server)
  → 2.1.12 (schema)
  → 2.2.9 (repositories)
- → 2.3.8 (seed)
- → 3.1.4 (session)
+ → 2.3.7 (seed)
+ → 3.1.5 (session)
  → 3.6.4 (placeholder dashboards)
  → 4.1.5 (QR domain)
  → 4.4.7 (guest landing)
