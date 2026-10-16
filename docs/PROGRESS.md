@@ -187,8 +187,9 @@ A quick index of every entry this file has ever held, including those that have 
 | 0049  | 2026-10-16 | Task 2.3.6.S — Structural: split Task 2.3.6, correct title, record D-17.3               | STRUCTURAL | 2.3        | current  |
 | 0050  | 2026-10-16 | Task 2.3.6.A — Extend CreateVenueInput and venue adapter for counter                    | PASS       | 2.3        | current  |
 | 0051  | 2026-10-16 | Task 2.3.6.B — Seed the counter and its QR token                                        | PASS       | 2.3        | current  |
+| 0052  | 2026-10-16 | Task 2.3.7 — Seed idempotency verification; close Milestone 2.3 & Phase 2               | STRUCTURAL | 2.3        | current  |
 
-Next entry number: 0052.
+Next entry number: 0053.
 
 (The table is updated whenever an entry is added or moved. Every session that writes a new entry appends its row at the bottom of this table. Every session that archives an entry changes its Location cell from current to archived. Nothing else in the table changes.)
 
@@ -197,6 +198,913 @@ Next entry number: 0052.
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0052 — 2026-10-16 — Task 2.3.7 — Seed idempotency verification; close Milestone 2.3 & Phase 2
+
+**Status:** STRUCTURAL
+
+**Task:** Task 2.3.7 (Re-issued) — Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data. Closes Milestone 2.3 and Phase 2.
+
+**Summary:**
+Closed Milestone 2.3 ("The seed") and Phase 2 ("The Data Model") following complete raw verification of seed idempotency and satisfaction of all seven acceptance steps in PHASE_TESTS.md §4. Pre-flight git state confirmed commit 23bf672 with exactly 3 migrations. Fresh database reset and migration application ran cleanly. First seed run created the venue (`juniper-house`), 12 tables (1–12), 8 rooms (401–404, 411–414), 21 QR tokens (12 table, 8 room, 1 counter), 3 categories (Starters, Mains, Desserts), 10 items, 2 modifier groups (Doneness, Extras), and 6 options. Second seed run reported existence across every entity and created 0 new rows. Row counts across all 21 tables in the schema were queried with full psql commands visible after both runs and matched identically (11 seed-populated tables non-zero, 10 runtime-only tables zero). All 43 unit and 78 integration tests passed, strict typecheck passed with exit code 0, and the Next.js dev server booted cleanly.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Modified | Marked Task 2.3.7 as ✅ Complete; closed Milestone 2.3 and Phase 2 |
+| `docs/PROGRESS.md` | Modified | Appended ENTRY-0052, updated §5.2 ledger, and advanced §7 snapshot to Phase 2 closed / Phase 3 pending |
+
+**Commands Run:**
+
+#### Pre-Flight Checks (Requirement A)
+
+```powershell
+git log --oneline -1
+```
+```text
+23bf672 Task 2.3.6.B — Seed the counter and its QR token
+```
+
+```powershell
+git ls-files prisma/migrations
+```
+```text
+prisma/migrations/20261015183749_phase2_initial_schema/migration.sql
+prisma/migrations/20261015204426_add_note_to_order_state_change/migration.sql
+prisma/migrations/20261015211847_add_failure_reason_to_payment_tickets/migration.sql
+```
+
+```powershell
+git status --short
+```
+```text
+```
+*(Empty)*
+
+#### Reset the Database (Step A1 / 8.1)
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'qrproject' AND pid <> pg_backend_pid();"
+```
+```text
+ pg_terminate_backend 
+----------------------
+(0 rows)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "DROP DATABASE IF EXISTS qrproject;"
+```
+```text
+DROP DATABASE
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d postgres -c "CREATE DATABASE qrproject;"
+```
+```text
+CREATE DATABASE
+```
+
+```powershell
+pnpm prisma migrate deploy
+```
+```text
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "qrproject", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20261015183749_phase2_initial_schema`
+Applying migration `20261015204426_add_note_to_order_state_change`
+Applying migration `20261015211847_add_failure_reason_to_payment_tickets`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261015183749_phase2_initial_schema/
+    └─ migration.sql
+  └─ 20261015204426_add_note_to_order_state_change/
+    └─ migration.sql
+  └─ 20261015211847_add_failure_reason_to_payment_tickets/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+```
+
+#### First Seed Run (Step A2 / 8.2)
+
+```powershell
+pnpm db:seed
+```
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+(node:29136) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Created venue: juniper-house (id: 2225c9cd-097b-4bf8-8451-3aa470a7132b)
+Seeding tables and rooms...
+Created table 1 (id: 362650e8-7d1c-4551-aed6-292f88ccd8e7).
+Created table 2 (id: a99cb582-50a6-469a-9969-e8f78f1bead9).
+Created table 3 (id: ac8da2f8-d395-4e41-ab05-a1f526c61389).
+Created table 4 (id: c345064a-e3c1-4abb-8661-610eca00848a).
+Created table 5 (id: f7bbcbdd-a3e5-4b4f-9a91-ac905b8cbf47).
+Created table 6 (id: 0ce3420a-4749-433e-9f95-1d9a793dd47c).
+Created table 7 (id: c7885eca-42bd-455a-83d7-603e0dc749f9).
+Created table 8 (id: fedfbeb5-5429-4882-96d2-2a129684e6a5).
+Created table 9 (id: 8c26af46-ce85-452d-9e60-5d64db663f43).
+Created table 10 (id: 16db4878-b057-4418-869e-29694ebcc3bc).
+Created table 11 (id: 0e0f9c5e-e613-4ca3-92be-95ebd73a4e8f).
+Created table 12 (id: 197b14d2-ed35-4f10-a114-0c5b0ecca301).
+Created room 401 (id: 2cff37d0-1fe6-4909-a551-4218a61ee89e).
+Created room 402 (id: b44b2f28-418d-490d-905e-ced564d881b8).
+Created room 403 (id: 5689bcaf-29a5-4348-8cb2-222a29d759be).
+Created room 404 (id: ebb50e28-bc04-418f-a5ff-9d8d0120b700).
+Created room 411 (id: 78ffb57e-3278-4547-aaaf-81e1d2b55c33).
+Created room 412 (id: 88297fd8-053c-48da-b9fd-a0e3de82a97d).
+Created room 413 (id: 417812e5-2331-4a61-a13b-f259ba8426f7).
+Created room 414 (id: 5a59e019-63c7-4bde-b354-5761057de833).
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Created token for table 1: 9f583526-3491-449c-99be-abaa074a2219.
+Created token for table 2: 8b047578-d2a9-4de8-9337-466ef560ccd5.
+Created token for table 3: b794a818-e1c9-4955-b826-47be68f609f4.
+Created token for table 4: e4f4cadf-a6f1-40e0-8c7a-80366989083c.
+Created token for table 5: 3c35ec43-0802-4b8b-9256-33101b04912b.
+Created token for table 6: 517fe8e6-894d-4dee-9911-6784cf1a3980.
+Created token for table 7: ca2e05df-9eb8-48d2-9150-0a4e172041d0.
+Created token for table 8: c872310c-104e-4a05-951c-d800e3da7731.
+Created token for table 9: 3f5f0ba5-e921-4788-95a2-0ce3d578d612.
+Created token for table 10: 1fdf2dc1-4879-44ca-ab3e-cbc217dda59b.
+Created token for table 11: a7875889-7ae5-4c71-ab2d-f31d2532696c.
+Created token for table 12: f5112b85-1dcf-40e6-9a63-24b0191278db.
+Created token for room 401: a353529d-9666-427c-a487-e6b0d73acaf3.
+Created token for room 402: 07d51eac-f363-4a0d-ba31-332de3c644dc.
+Created token for room 403: c29e6f72-377f-4e61-9185-d22225f84fc2.
+Created token for room 404: 0417144d-bd20-4b69-bb9b-5ec5f5d6e244.
+Created token for room 411: c02927e5-c8dd-424f-ae66-a229796b8ade.
+Created token for room 412: f70d6215-c4cb-4ca9-8e6e-33fdbb51c65c.
+Created token for room 413: ed17f714-c173-4164-9617-88c874b0ad9f.
+Created token for room 414: 16ce208a-eed1-48dc-95e6-b8814b8ee7e1.
+Seeded 12 table tokens and 8 room tokens.
+Created token for counter: 3956d2f6-6381-4143-b1dd-49c25cb961e4.
+Seeding menu...
+Created category Starters (id: 7d42da22-e918-464c-8e8a-3a53cb32a715).
+Created category Mains (id: b7027065-f715-40ea-9bb6-f9a014b4758b).
+Created category Desserts (id: 91c00d0c-c1a2-4c7c-801f-b452d08f5505).
+Created item Soup of the Day (id: 51a10ed8-7806-48fc-b8d4-7c8f974e4fb8).
+Created item Garden Salad (id: 23511052-db05-45c7-85ea-9113384c3ae2).
+Created item Bruschetta (id: 8eed2ebd-ae2d-411c-a462-6fdbe7a588fb).
+Created item Grilled Salmon (id: c8b9166c-e9fe-4adf-b5fc-7618f659ba0c).
+Created item Ribeye Steak (id: c3951ab5-edfb-4f97-8cc9-79f5351d988a).
+Created item Mushroom Risotto (id: 3945a09a-57d0-4a90-829f-9d73b9d53032).
+Created item Roast Chicken (id: 0062286d-ffeb-40ca-9968-6a49fbf4350f).
+Created item Chocolate Cake (id: fe6e53a2-2037-402b-81c5-e173c2c51f42).
+Created item Crème Brûlée (id: 826f96ac-689e-47f9-8dff-35e64ffca15d).
+Created item Seasonal Fruit Plate (id: 39cd7be4-6719-4563-800c-060fb9a9866d).
+Created modifier group Doneness (id: 178e8a20-b162-4410-ba20-b25832b189fa).
+Created modifier option Doneness/Rare.
+Created modifier option Doneness/Medium.
+Created modifier option Doneness/Well.
+Created modifier group Extras (id: 02f9824f-d0b6-4a81-aaeb-b3f85bd4de47).
+Created modifier option Extras/Extra cheese.
+Created modifier option Extras/Bacon.
+Created modifier option Extras/Avocado.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+
+The seed command has been executed.
+```
+
+#### Row Counts After Run 1 (Step A3 / 8.3)
+
+*Seed-Populated Tables:*
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venues;"
+```
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venue_module_toggles;"
+```
+```text
+ count 
+-------
+     3
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venue_service_toggles;"
+```
+```text
+ count 
+-------
+     9
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM tables;"
+```
+```text
+ count 
+-------
+    12
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM rooms;"
+```
+```text
+ count 
+-------
+     8
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM counters;"
+```
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM qr_tokens;"
+```
+```text
+ count 
+-------
+    21
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM menu_categories;"
+```
+```text
+ count 
+-------
+     3
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM menu_items;"
+```
+```text
+ count 
+-------
+    10
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM modifier_groups;"
+```
+```text
+ count 
+-------
+     2
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM modifier_options;"
+```
+```text
+ count 
+-------
+     6
+(1 row)
+```
+
+*Runtime-Only Tables:*
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM orders;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM order_items;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM order_state_changes;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM staff_members;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM staff_sessions;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM guest_sessions;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM service_requests;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM request_state_changes;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM payment_tickets;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM receipts;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+#### Second Seed Run (Step A4 / 8.4)
+
+```powershell
+pnpm db:seed
+```
+```text
+$ prisma db seed
+◇ injected env (3) from .env.local
+Loaded Prisma config from prisma.config.ts.
+
+Running seed command `tsx prisma/seed.ts` ...
+◇ injected env (0) from .env.local
+Seed starting.
+Venue already exists: juniper-house (id: 2225c9cd-097b-4bf8-8451-3aa470a7132b)
+Seeding tables and rooms...
+Table 1 already exists.
+Table 2 already exists.
+Table 3 already exists.
+Table 4 already exists.
+Table 5 already exists.
+Table 6 already exists.
+Table 7 already exists.
+Table 8 already exists.
+Table 9 already exists.
+Table 10 already exists.
+Table 11 already exists.
+Table 12 already exists.
+Room 401 already exists.
+Room 402 already exists.
+Room 403 already exists.
+Room 404 already exists.
+Room 411 already exists.
+Room 412 already exists.
+Room 413 already exists.
+Room 414 already exists.
+Seeded 12 tables and 8 rooms.
+Seeding QR tokens...
+Table 1 already has an active token.
+Table 2 already has an active token.
+Table 3 already has an active token.
+Table 4 already has an active token.
+Table 5 already has an active token.
+Table 6 already has an active token.
+Table 7 already has an active token.
+Table 8 already has an active token.
+Table 9 already has an active token.
+Table 10 already has an active token.
+Table 11 already has an active token.
+Table 12 already has an active token.
+Room 401 already has an active token.
+Room 402 already has an active token.
+Room 403 already has an active token.
+Room 404 already has an active token.
+Room 411 already has an active token.
+Room 412 already has an active token.
+Room 413 already has an active token.
+Room 414 already has an active token.
+Seeded 0 table tokens and 0 room tokens; all places already have active tokens.
+Counter already has an active token.
+Seeding menu...
+Category Starters already exists.
+Category Mains already exists.
+Category Desserts already exists.
+Item Soup of the Day already exists.
+Item Garden Salad already exists.
+Item Bruschetta already exists.
+Item Grilled Salmon already exists.
+Item Ribeye Steak already exists.
+Item Mushroom Risotto already exists.
+Item Roast Chicken already exists.
+Item Chocolate Cake already exists.
+Item Crème Brûlée already exists.
+Item Seasonal Fruit Plate already exists.
+Modifier group Doneness already exists.
+Modifier option Doneness/Rare already exists.
+Modifier option Doneness/Medium already exists.
+Modifier option Doneness/Well already exists.
+Modifier group Extras already exists.
+Modifier option Extras/Extra cheese already exists.
+Modifier option Extras/Bacon already exists.
+Modifier option Extras/Avocado already exists.
+Seeded 3 categories, 10 items, 2 modifier groups.
+Seed complete.
+
+The seed command has been executed.
+```
+
+#### Row Counts After Run 2 (Step A5 / 8.5)
+
+*Seed-Populated Tables:*
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venues;"
+```
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venue_module_toggles;"
+```
+```text
+ count 
+-------
+     3
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM venue_service_toggles;"
+```
+```text
+ count 
+-------
+     9
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM tables;"
+```
+```text
+ count 
+-------
+    12
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM rooms;"
+```
+```text
+ count 
+-------
+     8
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM counters;"
+```
+```text
+ count 
+-------
+     1
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM qr_tokens;"
+```
+```text
+ count 
+-------
+    21
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM menu_categories;"
+```
+```text
+ count 
+-------
+     3
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM menu_items;"
+```
+```text
+ count 
+-------
+    10
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM modifier_groups;"
+```
+```text
+ count 
+-------
+     2
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM modifier_options;"
+```
+```text
+ count 
+-------
+     6
+(1 row)
+```
+
+*Runtime-Only Tables:*
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM orders;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM order_items;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM order_state_changes;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM staff_members;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM staff_sessions;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM guest_sessions;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM service_requests;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM request_state_changes;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM payment_tickets;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT count(*) FROM receipts;"
+```
+```text
+ count 
+-------
+     0
+(1 row)
+```
+
+#### Schema Inspection (Step B2.1 / 8.6)
+
+```powershell
+Select-String -Path prisma/schema.prisma -Pattern "^model "
+```
+```text
+prisma\schema.prisma:132:model Venue {
+prisma\schema.prisma:163:model VenueModuleToggle {
+prisma\schema.prisma:176:model VenueServiceToggle {
+prisma\schema.prisma:192:model Table {
+prisma\schema.prisma:210:model Room {
+prisma\schema.prisma:229:model Counter {
+prisma\schema.prisma:248:model QrToken {
+prisma\schema.prisma:278:model StaffMember {
+prisma\schema.prisma:300:model StaffSession {
+prisma\schema.prisma:316:model GuestSession {
+prisma\schema.prisma:341:model MenuCategory {
+prisma\schema.prisma:356:model MenuItem {
+prisma\schema.prisma:379:model ModifierGroup {
+prisma\schema.prisma:395:model ModifierOption {
+prisma\schema.prisma:415:model Order {
+prisma\schema.prisma:451:model OrderItem {
+prisma\schema.prisma:470:model OrderStateChange {
+prisma\schema.prisma:489:model ServiceRequest {
+prisma\schema.prisma:509:model RequestStateChange {
+prisma\schema.prisma:530:model PaymentTicket {
+prisma\schema.prisma:551:model Receipt {
+```
+
+```powershell
+Select-String -Path prisma/schema.prisma -Pattern "idempotencyKey" -Context 1,1
+```
+```text
+  prisma\schema.prisma:429:  notes          String?
+> prisma\schema.prisma:430:  idempotencyKey String     @unique
+  prisma\schema.prisma:431:  placedAt       DateTime   @default(now())
+```
+
+#### Seeded Venue Inspection (Step B2.5 / 8.7)
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT id, name, slug FROM venues;"
+```
+```text
+                  id                  |     name      |     slug      
+--------------------------------------+---------------+---------------
+ 2225c9cd-097b-4bf8-8451-3aa470a7132b | Juniper House | juniper-house
+(1 row)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT service FROM venue_service_toggles ORDER BY service;"
+```
+```text
+      service      
+-------------------
+ ROOM_SERVICE_FOOD
+ HOUSEKEEPING
+ MAINTENANCE
+ CONCIERGE
+ LAUNDRY
+ SPA
+ LATE_CHECKOUT
+ WAKE_UP_CALL
+ DO_NOT_DISTURB
+(9 rows)
+```
+
+```powershell
+$env:PGPASSWORD='avishek'; psql -h localhost -p 5432 -U postgres -d qrproject -c "SELECT id, name FROM counters;"
+```
+```text
+                  id                  |  name   
+--------------------------------------+---------
+ a33a97f6-f707-4d49-916a-5d76ef53d423 | Counter
+(1 row)
+```
+
+#### TypeScript Strict Check (8.8)
+
+```powershell
+pnpm exec tsc --noEmit
+```
+*(Clean exit code 0; zero output)*
+
+#### Unit Suite (8.9)
+
+```powershell
+pnpm test:unit
+```
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 9ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 18ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 18ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  20:18:49
+   Duration  361ms (tests 41%, import 30%, transform 17%, worker 11%)
+```
+
+#### Integration Suite (Step B2.6 / 8.10)
+
+```powershell
+pnpm test:integration
+```
+```text
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  20:18:54
+   Duration  41.94s (tests 97%, setup 2%)
+```
+
+#### Dev Server (Step B2.7 / 8.11)
+
+```powershell
+pnpm dev
+```
+```text
+$ next dev
+▲ Next.js 16.4.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.108:3000
+- Environments: .env.local
+✓ Ready in 433ms
+✓ Running next.config.mjs took 17ms
+
+✓ Generated AGENTS.md for AI agents. Set `agentRules: false` in next.config to disable.
+```
+*(Process terminated after verifying readiness; transient root `AGENTS.md` removed)*
+
+#### ROADMAP Check (8.12)
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "2\.3\.7"
+```
+```text
+docs\ROADMAP.md:207:| 2.3.7   | Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data | ✅ Complete | 2.3.6.B    |
+```
+
+#### Working Tree Check (8.13)
+
+```powershell
+git status --short
+```
+```text
+ M docs/PROGRESS.md
+ M docs/ROADMAP.md
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The database was reset and migrated cleanly | PASS | 3 migrations applied cleanly to empty database |
+| 2 | The first seed run created the venue and every seeded entity | PASS | `pnpm db:seed` log shows Created venue, 12 tables, 8 rooms, 21 QR tokens, 3 categories, 10 items |
+| 3 | Every seed-populated table has data after run 1 | PASS | venues=1, toggles=3, services=9, tables=12, rooms=8, counters=1, qr_tokens=21, categories=3, items=10, groups=2, options=6 |
+| 4 | Every runtime-only table is empty after run 1 | PASS | orders, order_items, order_state_changes, staff_members, staff_sessions, guest_sessions, service_requests, request_state_changes, payment_tickets, receipts all count 0 |
+| 5 | The second seed run created nothing new | PASS | `pnpm db:seed` log shows "already exists" and "already has an active token" across all entities with 0 creations |
+| 6 | Every table's count after run 2 equals its count after run 1 | PASS | All 21 table counts match cell-for-cell between run 1 and run 2 |
+| 7 | The schema file matches SYSTEM.md §11.1 | PASS | Select-String confirms all 21 models present |
+| 8 | The Order model has a unique constraint on idempotencyKey | PASS | `@unique` on `idempotencyKey` verified |
+| 9 | The StaffMember table is empty at Phase 2's close | PASS | Count returned 0 (per D-17.2; staff seed deferred to Task 3.1.2) |
+| 10 | The Counter table has exactly one row | PASS | Count returned 1 (per D-17.3) |
+| 11 | The integration suite passes with 78 tests | PASS | `pnpm test:integration` reports 78 passed across 15 files |
+| 12 | The unit suite passes with 43 tests | PASS | `pnpm test:unit` reports 43 passed across 3 files |
+| 13 | The typecheck passes | PASS | `pnpm exec tsc --noEmit` exits with 0 |
+| 14 | The dev server starts | PASS | `pnpm dev` prints "✓ Ready in 433ms" |
+| 15 | ROADMAP.md marks Task 2.3.7 as complete and Milestone 2.3 closed | PASS | Line 207 shows `✅ Complete` |
+| 16 | PROGRESS.md has ENTRY-0052 and §7 names Task 3.1.1 | PASS | ENTRY-0052 appended at line 202; §7 shows Current task: Task 3.1.1 |
+| 17 | No file outside the scope was changed | PASS | `git status --short` shows strictly `docs/PROGRESS.md` and `docs/ROADMAP.md` |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Staff seeding deferred to Task 3.1.2 per D-17.2.
+- Integration tests generate expected error logs to stderr when testing negative paths (e.g. unique constraint violations).
+- Dev server with Turbopack generated transient `AGENTS.md` which was removed.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | No change | No change |
+| SYSTEM.md | No | No change | No change |
+| BUILD.md | No | No change | No change |
+| ROADMAP.md | Yes | Marked Task 2.3.7 complete | Updated |
+| PROGRESS.md | Yes | Appended ENTRY-0052, updated ledger and §7 | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 3 — Authentication and Sessions. Milestone 3.1. Task 3.1.1 — Add the password hashing service (hash and verify). The first action: read SYSTEM.md §15.3, D-3.1, D-3.3, D-3.5, D-3.8, and the current `src/infrastructure/auth/` directory to see what (if anything) exists.
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0051 — 2026-10-16 — Task 2.3.6.B — Seed the counter and its QR token
 
@@ -3957,13 +4865,13 @@ Milestone 1.5 — The development server — see "Milestone 1.5" in the archive 
 
 Updated at the end of every session.
 
-Current phase: Phase 2 — The Data Model.
+Current phase: Phase 2 — closed. Phase 3 is next.
 
-Current milestone: Milestone 2.3 — The seed.
+Current milestone: Milestone 2.3 — closed.
 
-Current task: Task 2.3.7 — Verify: the seed is idempotent; running it twice does not duplicate anything; every table has data.
+Current task: Task 3.1.1 — Add the password hashing service (hash and verify).
 
-Current status: Milestone 2.1 (The schema) and Milestone 2.2 (The repositories) are complete. Tasks 2.3.1 (Seed the venue), 2.3.2 (Seed the tables and rooms), 2.3.3 (Seed the QR tokens), 2.3.4 (Seed the menu categories and items with modifiers), 2.3.5 (Seed the enabled hotel services), 2.3.6.A (Extend CreateVenueInput and the venue adapter to support an optional counter), and 2.3.6.B (Seed the counter and its QR token) are complete: Juniper House (`juniper-house`) seeded with 12 tables, 8 rooms, 1 counter, 21 active QR tokens (12 table, 8 room, 1 counter), 3 menu categories, 10 menu items (all AVAILABLE with 2-decimal string prices), 2 modifier groups, 6 modifier options, and 9 active hotel service toggles; 0 seeded orders. Staff seeding is rescheduled to Phase 3 Task 3.1.2 per D-17.2 following verified password hashing (Task 3.1.1). All unit tests (43/43) and integration tests (78/78 across 15 files) pass. TypeScript check clean with 0 errors. Next task is Task 2.3.7.
+Current status: Milestone 2.1, 2.2, and 2.3 are complete; Phase 2 is closed. The seed is idempotent; every seed-populated table has data; every runtime-only table is empty; 43 unit tests pass; 78 integration tests pass; typecheck clean. Next task: Task 3.1.1.
 
 ## 8. How the File Evolves
 
