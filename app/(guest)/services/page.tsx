@@ -1,14 +1,28 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
 import { redirect } from "next/navigation";
+import {
+  UtensilsCrossed,
+  BedDouble,
+  Wrench,
+  Bell,
+  Shirt,
+  Flower,
+  Clock,
+  Phone,
+  DoorClosed,
+  type LucideIcon,
+} from "lucide-react";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
+import { type HotelService } from "@/domain/organization/venue.repository";
 import { GuestHero } from "@/components/guest/hero";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -16,6 +30,59 @@ export const metadata: Metadata = {
     index: false,
   },
 };
+
+interface ServiceDescriptor {
+  label: string;
+  icon: LucideIcon;
+}
+
+const SERVICE_DESCRIPTORS: Record<HotelService, ServiceDescriptor> = {
+  ROOM_SERVICE_FOOD: {
+    label: "Room Service",
+    icon: UtensilsCrossed,
+  },
+  HOUSEKEEPING: {
+    label: "Housekeeping",
+    icon: BedDouble,
+  },
+  MAINTENANCE: {
+    label: "Maintenance",
+    icon: Wrench,
+  },
+  CONCIERGE: {
+    label: "Concierge",
+    icon: Bell,
+  },
+  LAUNDRY: {
+    label: "Laundry",
+    icon: Shirt,
+  },
+  SPA: {
+    label: "Spa",
+    icon: Flower,
+  },
+  LATE_CHECKOUT: {
+    label: "Late Checkout",
+    icon: Clock,
+  },
+  WAKE_UP_CALL: {
+    label: "Wake-up Call",
+    icon: Phone,
+  },
+  DO_NOT_DISTURB: {
+    label: "Do Not Disturb",
+    icon: DoorClosed,
+  },
+};
+
+function getServiceDescriptor(service: HotelService): ServiceDescriptor {
+  return (
+    SERVICE_DESCRIPTORS[service] ?? {
+      label: service,
+      icon: Bell,
+    }
+  );
+}
 
 export default async function ServicesPage(): Promise<JSX.Element> {
   const cookie = await getGuestCookie();
@@ -76,6 +143,32 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           View requests
         </Button>
       </div>
+
+      {venue.value.services && venue.value.services.length > 0 && (
+        <div className="mt-6 w-full max-w-4xl mx-auto px-4 animate-in fade-in duration-700 delay-500 ease-guest-entrance">
+          <h2 className="font-display text-xl text-guest-text-primary mb-3 text-center">
+            Our Services
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {venue.value.services.map((service) => {
+              const { label, icon: Icon } = getServiceDescriptor(service);
+              return (
+                <Card
+                  key={service}
+                  interactive={true}
+                  className="p-3 flex flex-col items-center text-center"
+                >
+                  <Icon className="w-6 h-6 text-guest-brand mb-2" />
+                  <span className="text-sm font-semibold text-guest-text-primary">
+                    {label}
+                  </span>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="mt-8 max-w-2xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
         <div className="flex flex-row items-start justify-center gap-4 md:gap-8 text-center">
           <div>
