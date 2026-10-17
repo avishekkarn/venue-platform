@@ -220,7 +220,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                            | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 3.1.1 | Add the password hashing service (hash and verify)                                              | ⬜     | 2.3.7      |
+| 3.1.1 | Add the password hashing service (hash and verify)                                              | ✅ Complete | 2.3.7      |
 | 3.1.2 | Seed the staff members with different roles                                                     | ⬜     | 3.1.1      |
 | 3.1.3 | Add the session service (create, validate, delete, invalidate-all)                              | ⬜     | 3.1.2      |
 | 3.1.4 | Add the session cookie helpers (set, read, clear)                                               | ⬜     | 3.1.3      |
