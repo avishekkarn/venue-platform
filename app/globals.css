@@ -57,18 +57,18 @@ body {
   --color-guest-accent:           var(--color-peach-500);
 
   /* Colors — staff world */
-  --color-staff-surface:          var(--color-neutral-50);
-  --color-staff-surface-raised:   var(--color-neutral-0);
-  --color-staff-surface-sunken:   var(--color-neutral-100);
-  --color-staff-text-primary:     var(--color-neutral-900);
-  --color-staff-text-secondary:   var(--color-neutral-600);
-  --color-staff-text-muted:       var(--color-neutral-400);
-  --color-staff-text-inverse:     var(--color-neutral-0);
-  --color-staff-border-subtle:    var(--color-neutral-200);
-  --color-staff-border-strong:    var(--color-neutral-300);
-  --color-staff-brand:            var(--color-forest-700);
-  --color-staff-brand-contrast:   var(--color-neutral-0);
-  --color-staff-accent:           var(--color-sage-500);
+  --color-staff-surface:          var(--staff-surface);
+  --color-staff-surface-raised:   var(--staff-surface-raised);
+  --color-staff-surface-sunken:   var(--staff-surface-sunken);
+  --color-staff-text-primary:     var(--staff-text-primary);
+  --color-staff-text-secondary:   var(--staff-text-secondary);
+  --color-staff-text-muted:       var(--staff-text-muted);
+  --color-staff-text-inverse:     var(--staff-text-inverse);
+  --color-staff-border-subtle:    var(--staff-border-subtle);
+  --color-staff-border-strong:    var(--staff-border-strong);
+  --color-staff-brand:            var(--staff-brand);
+  --color-staff-brand-contrast:   var(--staff-brand-contrast);
+  --color-staff-accent:           var(--staff-accent);
 
   /* Colors — status */
   --color-status-waiting:         var(--color-neutral-500);
@@ -461,7 +461,10 @@ body {
  * STAFF DARK MODE — kitchen default. DESIGN.md §4.15.4.
  * ============================================================ */
 
-[data-world="staff"][data-theme="dark"] {
+[data-theme="dark"],
+[data-world="staff"][data-theme="dark"],
+[data-theme="dark"] [data-world="staff"],
+[data-world="staff"] [data-theme="dark"] {
   --staff-surface:         var(--color-neutral-900);
   --staff-surface-raised:  var(--color-neutral-800);
   --staff-surface-sunken:  var(--color-neutral-950);

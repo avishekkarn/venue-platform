@@ -271,8 +271,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ----- | --------------------------------------------------------------------------------------- | ------ | ---------- |
 | 3.6.1 | Add a placeholder staff dashboard                                                       | ✅ Complete | 3.5.4      |
 | 3.6.2 | Add a placeholder kitchen screen                                                        | ✅ Complete | 3.6.1      |
-| 3.6.3 | Add a placeholder admin dashboard                                                       | ⬜     | 3.6.2      |
-| 3.6.4 | Verify: each placeholder renders after login and shows the staff member's name and role | ⬜     | 3.6.3      |
+| 3.6.3 | Add a placeholder admin dashboard                                                       | ✅ Complete | 3.6.2      |
+| 3.6.4 | Verify: each placeholder renders after login and shows the staff member's name and role | ✅ Complete | 3.6.3      |
 
 **Acceptance for Phase 3:** A staff member can log in, see a placeholder for their area, log out, and be rejected on the next request. A staff member of one role cannot access another role's area. Changing a staff member's password invalidates their sessions. A second login ends the first.
 

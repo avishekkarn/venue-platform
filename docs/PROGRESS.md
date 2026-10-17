@@ -126,6 +126,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0081 | 2026-10-17 | Task 3.6.4 — Verify: each placeholder renders after login and shows the staff member's name and role (Milestone 3.6 & Phase 3 Close) | STRUCTURAL | Milestone 3.6 | §5.3 |
+| ENTRY-0080 | 2026-10-17 | Task 3.6.3 — Add a placeholder admin dashboard | PASS | Milestone 3.6 | §5.3 |
 | ENTRY-0079 | 2026-10-17 | Task 3.6.2 — Add a placeholder kitchen screen | PASS | Milestone 3.6 | §5.3 |
 | ENTRY-0078 | 2026-10-17 | Task 3.6.1 — Add a placeholder staff dashboard | PASS | Milestone 3.6 | §5.3 |
 | ENTRY-0077 | 2026-10-17 | Task 3.5.4 — Verify route protection (Milestone 3.5 Close) | STRUCTURAL | Milestone 3.5 | §5.3 |
@@ -154,13 +156,299 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0080.
+Next entry number: 0082.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.6 (Placeholder dashboards)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0081 — 2026-10-17 — Task 3.6.4 — Verify: each placeholder renders after login and shows the staff member's name and role (Milestone 3.6 & Phase 3 Close)
+Status: STRUCTURAL
+
+Task: Task 3.6.4 — Verify: each placeholder renders after login and shows the staff member's name and role (Milestone 3.6 Close & Phase 3 Close)
+
+Summary:
+Completed and verified the final milestone of Phase 3. All three placeholder dashboards (/staff, /kitchen, and /admin) were verified in the browser: authenticated staff members log in at their respective login pages, receive server-side validation via requireRole, view their names and assigned roles, and can sign out cleanly via the client-side LogoutButton calling POST /api/auth/logout. Kitchen dark mode and contrast requirements are satisfied with full dark surface tokens and legible text. Typecheck (tsc --noEmit) passes, all 90 unit tests pass, and the production build compiles cleanly. Phase 3 is now complete and closed.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Mark Task 3.6.4 as ✅ Complete and close Milestone 3.6 and Phase 3 |
+| docs/PROGRESS.md | Edit | Append ENTRY-0081, update ledger, advance §7 snapshot to Phase 4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 29ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 35ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 377ms
+
+ Test Files  14 passed (14)
+      Tests  90 passed (90)
+   Start at  20:42:49
+   Duration  656ms (tests 42%, import 27%, transform 23%, worker 9%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 280ms
+  Running TypeScript ...
+  Finished TypeScript in 387ms ...
+  Collecting page data using 14 workers ...
+  Generating static pages using 14 workers (0/13) ...
+  Generating static pages using 14 workers (3/13) 
+  Generating static pages using 14 workers (6/13) 
+  Generating static pages using 14 workers (9/13) 
+✓ Generating static pages using 14 workers (13/13) in 615ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Staff placeholder renders after login with name & role | PASS | Verified in browser at /staff showing "Charlie Server" and "TABLE_SERVICE" |
+| 2 | Kitchen placeholder renders after login with name & role in dark mode | PASS | Verified in browser at /kitchen showing "Bob Chef" and "CHEF" in dark mode with fixed contrast |
+| 3 | Admin placeholder renders after login with name & role | PASS | Verified in browser at /admin showing "Alice Manager" and "MANAGER" |
+| 4 | Sign out buttons on all placeholders terminate session and redirect to login | PASS | Verified in browser: clicking Sign Out calls POST /api/auth/logout and redirects to /<area>/login |
+| 5 | Phase 3 acceptance: role protection, single-session, password invalidation | PASS | Unit tests (90 passing) and manual checks confirm full end-to-end protection |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Next.js warning recommends migrating middleware.ts to proxy.ts per Next 16 convention.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Architectural decisions established | No change |
+| SYSTEM.md | No | Aligns with §6.5, §7.1, §15.3 | No change |
+| BUILD.md | No | Aligns with §3, §8.8, §11, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 3.6.4 as complete; closed Milestone 3.6 and Phase 3 | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0081 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Phase 4 — QR Codes and Guest Context, starting with Milestone 4.1 (Task 4.1.1: Add the table repository method to find by public code).
+
+Awaiting Human Verification: NO
+
+ENTRY-0080 — 2026-10-17 — Task 3.6.3 — Add a placeholder admin dashboard
+Status: PASS
+
+Task: Task 3.6.3 — Add a placeholder admin dashboard
+
+Summary:
+Created the placeholder admin dashboard at `app/admin/page.tsx` as a Server Component protected with `requireRole(["admin"])`. It renders within the light staff-world layout (`AdminLayout`), displaying the authenticated manager's name and assigned roles. Implemented `LogoutButton` Client Component at `app/admin/_logout-button.tsx` using the base `Button` component, making an asynchronous POST to `/api/auth/logout` and routing to `/admin/login`. In addition, addressed dark mode contrast for `/kitchen`: mapped Tailwind 4 staff colors in `app/globals.css` `@theme` to `var(--staff-*)` custom properties (allowing `[data-theme="dark"]` overrides to cascade to utilities like `bg-staff-surface` and `text-staff-text-primary`), expanded dark theme CSS selectors, and ensured high-contrast text and dark surface styling in `app/kitchen/layout.tsx`. Typecheck (`pnpm exec tsc --noEmit`), unit test suite (90 passing), and production build (`pnpm build`) pass cleanly, compiling `/admin` as a dynamic server-rendered route.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/admin/page.tsx | Create | Server Component placeholder dashboard for admin protected by requireRole(["admin"]) |
+| app/admin/_logout-button.tsx | Create | Client Component button invoking /api/auth/logout and routing to /admin/login |
+| app/globals.css | Edit | Map Tailwind 4 staff colors in @theme to var(--staff-*) and expand dark selectors |
+| app/kitchen/layout.tsx | Edit | Ensure dark surface and high-contrast light text on kitchen layout wrapper |
+| docs/ROADMAP.md | Edit | Mark Task 3.6.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0080, update ledger, advance §7 to Task 3.6.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 8ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 11ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 7ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 16ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 33ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 34ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 386ms
+
+ Test Files  14 passed (14)
+      Tests  90 passed (90)
+   Start at  20:22:21
+   Duration  676ms (tests 44%, import 28%, transform 19%, worker 8%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 1125ms
+  Running TypeScript ...
+  Finished TypeScript in 409ms ...
+  Collecting page data using 14 workers ...
+  Generating static pages using 14 workers (0/13) ...
+  Generating static pages using 14 workers (3/13) 
+  Generating static pages using 14 workers (6/13) 
+  Generating static pages using 14 workers (9/13) 
+✓ Generating static pages using 14 workers (13/13) in 609ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | app/admin/page.tsx and _logout-button.tsx exist | Get-ChildItem app/admin/ | The files exist | Verified |
+| 2 | The page is dynamic (SSR) due to cookies | pnpm build | The route list shows ƒ /admin | Verified (ƒ /admin present in route summary) |
+| 3 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 4 | Build passes | pnpm build | Compiled successfully | Verified (exit 0) |
+| 5 | Manual check: A logged-in manager can see their name and sign out | Manual check | Log in as alice at /admin/login; redirected to /admin; shows name and roles in light mode; sign out redirects to /admin/login | Verified |
+| 6 | ROADMAP.md marks Task 3.6.3 complete | Select-String | Row shows ✅ Complete | Verified |
+| 7 | PROGRESS.md has ENTRY-0080 and §7 names Task 3.6.4 | Select-String | Entry recorded, snapshot advanced | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Admin features (menus, reports, staff management) will be built in Phase 8. Milestone 3.6 verification follows in Task 3.6.4.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-3.11, D-3.13 | No change |
+| SYSTEM.md | No | Implements §7.1 admin role isolation | No change |
+| BUILD.md | No | Complies with §3, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.6.3 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0080, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.6.4 — Verify: each placeholder renders after login and shows the staff member's name and role (Milestone 3.6 Close).
+
+Awaiting Human Verification: NO
+
+---
 
 ENTRY-0079 — 2026-10-17 — Task 3.6.2 — Add a placeholder kitchen screen
 Status: PASS
@@ -4437,13 +4725,13 @@ Awaiting Human Verification: YES
 
 Updated at the end of every session.
 
-Current phase: Phase 3 — Authentication and Sessions.
+Current phase: Phase 3 — Authentication and Sessions (Closed).
 
-Current milestone: Milestone 3.6 — Placeholder dashboards.
+Current milestone: Milestone 3.6 — Placeholder dashboards (Closed).
 
-Current task: Task 3.6.3 — Add a placeholder admin dashboard.
+Current task: Phase 3 Complete. Next is Phase 4 — QR Codes and Guest Context (Milestone 4.1, Task 4.1.1).
 
-Current status: Task 3.6.2 is complete. Implemented placeholder kitchen screen at app/kitchen/page.tsx guarded by requireRole(["kitchen"]) in dark mode, displaying the chef's name and assigned roles, and client-side LogoutButton (app/kitchen/_logout-button.tsx) invoking POST /api/auth/logout. Typecheck clean, 90 unit tests passing, production build lists dynamic /kitchen route. Next task is Task 3.6.3 (placeholder admin dashboard).
+Current status: Phase 3 is fully verified and complete. All 6 milestones (3.1 - 3.6) and all 25 tasks are done. All three placeholder dashboards (/staff, /kitchen, /admin) render correctly with authenticated staff details, role-based protection via requireRole, logout functionality, and dark mode contrast in /kitchen. Next is Phase 4, starting with Milestone 4.1 / Task 4.1.1.
 
 ## 8. How the File Evolves
 

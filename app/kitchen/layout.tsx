@@ -47,7 +47,11 @@ export default function KitchenLayout({
     <div
       data-world="staff"
       data-theme="dark"
-      className="min-h-dvh bg-staff-surface"
+      className="min-h-dvh bg-staff-surface text-staff-text-primary"
+      style={{
+        backgroundColor: "var(--staff-surface)",
+        color: "var(--staff-text-primary)",
+      }}
     >
       {children}
     </div>
