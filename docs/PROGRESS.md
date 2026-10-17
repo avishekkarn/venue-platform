@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0060 | 2026-10-17 | Task 3.2.3 — Add the getSession domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0059 | 2026-10-17 | Task 3.2.2 — Add the logout domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0058 | 2026-10-17 | Task 3.2.1 — Add the login domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0057 | 2026-10-17 | Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified | STRUCTURAL | Milestone 3.1 | §5.3 |
@@ -134,13 +135,163 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0060.
+Next entry number: 0061.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.2 (The auth domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0060 — 2026-10-17 — Task 3.2.3 — Add the getSession domain function
+Status: PASS
+
+Task: Task 3.2.3 — Add the getSession domain function
+
+Summary:
+Implemented the `getSession` domain function in `src/domain/auth/get-session.ts` and exported it from `src/domain/auth/index.ts`. The function accepts a raw token and injected `GetSessionDependencies` (`validateSession`), returning `ok(StaffSession)` if valid, or `fail(DomainErrorCode.UNAUTHORIZED, "Invalid or expired session")` if expired or missing (SYSTEM.md §6.3). Verified with 3 unit tests in `tests/unit/auth/get-session.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/auth/get-session.ts | Edit | Implemented getSession domain function with GetSessionDependencies |
+| src/domain/auth/index.ts | Edit | Exported getSession domain function and types |
+| tests/unit/auth/get-session.test.ts | Create | Added 3 unit tests covering valid session, invalid session, and token forwarding |
+| docs/ROADMAP.md | Edit | Marked Task 3.2.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0060, updated ledger, advanced §7 to Task 3.2.4 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/auth/get-session.test.ts
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  15:37:45
+   Duration  156ms (transform 65%, import 19%, worker 8%, tests 8%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/can-access.test.ts (0 test) 1ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 4ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 5ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 5ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 12ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 25ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 26ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 347ms
+
+ Test Files  10 passed (10)
+      Tests  66 passed (66)
+   Start at  15:38:02
+   Duration  558ms (tests 59%, import 21%, transform 12%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2121ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2360ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2427ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 1736ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2277ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2193ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 1990ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1850ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2080ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2277ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 1713ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 1520ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 1591ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2067ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  15:38:11
+   Duration  42.54s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path src/domain/auth/get-session.ts -Pattern "from ['`"]@prisma/client|from ['`"]react|from ['`"]next"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `getSession` domain function accepts GetSessionDependencies and token | PASS | Pure function taking injected `validateSession` dependency |
+| 2 | `getSession` exported from `src/domain/auth/index.ts` | PASS | Exported via `export * from "./get-session"` |
+| 3 | Returns `ok(session)` on valid session | PASS | Verified in unit test with resolved StaffSession |
+| 4 | Returns `fail(DomainErrorCode.UNAUTHORIZED)` on null session | PASS | Verified in unit test with generic error message |
+| 5 | Forwards exact token to validateSession | PASS | Verified in unit test tracking argument forwarding |
+| 6 | 3 unit tests pass in `tests/unit/auth/get-session.test.ts` | PASS | All 3 test cases passed cleanly |
+| 7 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 8 | Full unit suite passes with 66 tests | PASS | 10 files passed, 66 tests passed |
+| 9 | Full integration suite remains green with 78 tests | PASS | 15 files passed, 78 tests passed (42.54s duration) |
+| 10 | Domain boundary respected (no framework/infrastructure imports) | PASS | Boundary check regex produced empty output |
+| 11 | ROADMAP.md updated | PASS | Task 3.2.3 marked `✅ Complete` |
+| 12 | PROGRESS.md updated | PASS | ENTRY-0060 appended, ledger updated, snapshot advanced to Task 3.2.4 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+The `getSession` function validates the token and yields `StaffSession`. Permission checks are handled by `canAccess` (Task 3.2.4), and resolving full staff profiles will be handled in route handlers and middleware (Milestone 3.3/3.5).
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.2 | No change |
+| SYSTEM.md | No | Conforms with §6.3, §15.3 | No change |
+| BUILD.md | No | Conforms with §5, §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.2.3 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0060 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.2.4 — Add the `canAccess` domain function (roles and areas). The first action: read SYSTEM.md §7 (role and permission matrix), then implement src/domain/auth/can-access.ts to evaluate staff roles against protected area requirements with unit tests.
+
+Awaiting Human Verification: YES
 
 ENTRY-0059 — 2026-10-17 — Task 3.2.2 — Add the logout domain function
 Status: PASS
@@ -1399,9 +1550,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.2 — The auth domain.
 
-Current task: Task 3.2.3 — Add the `getSession` domain function.
+Current task: Task 3.2.4 — Add the `canAccess` domain function (roles and areas).
 
-Current status: Task 3.2.2 is complete. The `logout` domain function is implemented in `src/domain/auth/logout.ts` and exported from `src/domain/auth/index.ts`. Ends sessions via injected `deleteSession` dependency and wraps exceptions into INTERNAL errors. 63 unit tests and 78 integration tests passing. Next task is Task 3.2.3.
+Current status: Task 3.2.3 is complete. The `getSession` domain function is implemented in `src/domain/auth/get-session.ts` and exported from `src/domain/auth/index.ts`. Forwards raw token to injected `validateSession` dependency, returning `ok(session)` on valid session or generic UNAUTHORIZED on expired/null session. 66 unit tests and 78 integration tests passing. Next task is Task 3.2.4.
 
 ## 8. How the File Evolves
 
