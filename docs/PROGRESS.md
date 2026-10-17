@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0100 | 2026-10-18 | Task 4.4.4 — Add the menu preview (Real Seed Data + Photos) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0099 | 2026-10-18 | Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0098 | 2026-10-18 | Task 4.4.2 — Add the primary action (View Menu or Explore Services) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0097 | 2026-10-18 | Task 4.4.1 — Add the venue hero (The First 1.5 Seconds) | PASS | Milestone 4.4 | §5.3 |
@@ -150,13 +151,143 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0100.
+Next entry number: 0101.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0100 — 2026-10-18 — Task 4.4.4 — Add the menu preview (Real Seed Data + Photos)
+Status: PASS
+
+Task: Task 4.4.4 — Add the menu preview (Real Seed Data + Photos)
+
+Summary:
+Implemented the menu preview ("Chef's Picks") section on `app/(guest)/menu/page.tsx` beneath the secondary action buttons. Added `listItems(venueId: string)` to `MenuRepository` port in `src/domain/menu/menu.repository.ts` and `createPrismaMenuRepository` adapter in `src/infrastructure/db/repositories/menu.repo.ts` to query all menu items for the venue. Made `locale` optional with a default value of `"en-US"` in `formatMoney` (`src/lib/money.ts`). In `app/(guest)/menu/page.tsx`, fetched venue items, filtered for `MenuItemState.AVAILABLE`, and took the first 3 items as featured items. Rendered a section with a Fraunces `Chef's Picks` heading and horizontal scrolling row with snap alignment (`snap-x snap-mandatory [scrollbar-width:none] hide-scrollbar`). Each item renders inside an interactive `Card` with hover-lift animation, `CardMedia` for photo/image when available with `h-40 w-full object-cover`, `CardHeader` with `CardTitle` and `CardDescription`, and `CardBody` with localized price via `formatMoney(item.price, venue.value.currency)`. Added `.hide-scrollbar` utility to `app/globals.css`. If no available items exist, the section gracefully skips rendering. Typecheck clean, Next.js build clean with dynamic routes, 121 unit tests passing across 20 files, 103 integration tests passing across 22 files, and manual checks verified against the running development server.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/menu/menu.repository.ts | Edit | Add listItems(venueId: string) method to MenuRepository port interface |
+| src/infrastructure/db/repositories/menu.repo.ts | Edit | Implement listItems in createPrismaMenuRepository adapter |
+| src/lib/money.ts | Edit | Allow locale to default to "en-US" in formatMoney for two-argument calls |
+| app/globals.css | Edit | Add .hide-scrollbar utility class for horizontal snap containers |
+| app/(guest)/menu/page.tsx | Edit | Fetch featured items via MenuRepository and render Chef's Picks preview section |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.4 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0100, update ledger, advance Section 7 snapshot to Task 4.4.5 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Compiled successfully in 869ms
+  Running TypeScript ...
+  Finished TypeScript in 463ms ...
+  Generating static pages using 15 workers (16/16) in 313ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  02:58:51
+   Duration  733ms (tests 37%, transform 30%, import 25%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  02:58:58
+   Duration  60.22s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | Menu preview section renders below secondary actions | Inspect `menu/page.tsx` & HTML | Renders below secondary actions when items exist | Verified |
+| 2 | "Chef's Picks" heading in Fraunces display font | Inspect markup | `<h2 className="font-display text-2xl text-guest-text-primary mb-6 text-center">` | Verified |
+| 3 | Horizontal scrolling cards with snap alignment | Inspect container | `flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory` | Verified |
+| 4 | Cards use Card component with hover-lift | Inspect Card component | `interactive={true}` with hover-lift tokens | Verified |
+| 5 | CardMedia renders image with object-cover if present | Inspect CardMedia | Renders when photoUrl/imageUrl exists, omitted when absent | Verified |
+| 6 | Price formatted with venue currency | Inspect CardBody | Formatted via `formatMoney(item.price, venue.value.currency)` | Verified ("$6.50", "$7.00", "$8.00") |
+| 7 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 733ms) |
+| 8 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 60.22s) |
+| 9 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 10 | Build passes | `pnpm build` | Clean exit code 0; dynamic routes rendered | Verified (compiled in 869ms) |
+| 11 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 12 | ROADMAP.md marks Task 4.4.4 as Complete | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete | Verified |
+| 13 | PROGRESS.md has ENTRY-0100 and §7 snapshot names Task 4.4.5 | Inspect `docs/PROGRESS.md` | Entry recorded, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Task 4.4.5 will add the "how it works" strip below the menu preview.
+- Task 4.4.6 will add the footer.
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4, D-10.2 | No change |
+| SYSTEM.md | No | Adheres to §4, §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.6, §4.6.10, §4.12.2 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.4 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0100, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.5 — Add the "how it works" strip.
+
+Awaiting Human Verification: NO
 
 ENTRY-0099 — 2026-10-18 — Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill)
 Status: PASS
@@ -2605,9 +2736,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.4 — The guest landing screen.
 
-Current task: Task 4.4.4 — Add the menu preview (a few featured items).
+Current task: Task 4.4.5 — Add the "how it works" strip.
 
-Current status: Task 4.4.3 completed. Added quiet secondary action ghost buttons beneath primary CTA with entrance animation. /menu renders "Call a waiter" and "Request the bill"; /services renders "Call the front desk" and "View requests". Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.4.
+Current status: Task 4.4.4 completed. Added menu preview section on /menu with "Chef's Picks" heading and 3 horizontal scrolling cards using real seed data, Card with hover-lift, CardMedia for photos when present, CardHeader, CardTitle, CardDescription, and CardBody with formatMoney localized price. Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.5.
 
 ## 8. How the File Evolves
 

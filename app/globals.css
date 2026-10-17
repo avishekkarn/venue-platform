@@ -604,3 +604,12 @@ body {
 [data-world="staff"] [data-slot="button"]:active:not(:disabled) {
   filter: brightness(0.96);
 }
+
+/* Hide scrollbar utility for horizontal scroll carousels */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

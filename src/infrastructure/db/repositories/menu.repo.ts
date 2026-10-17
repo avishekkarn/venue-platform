@@ -187,6 +187,22 @@ export function createPrismaMenuRepository(
       }
     },
 
+    async listItems(venueId: string): Promise<Result<MenuItem[]>> {
+      try {
+        const items = await client.menuItem.findMany({
+          where: { venueId },
+          orderBy: { sortOrder: "asc" },
+        });
+
+        return ok(items.map(mapMenuItem));
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database read operation failed"
+        );
+      }
+    },
+
     async getItemWithModifiers(
       venueId: string,
       itemId: string

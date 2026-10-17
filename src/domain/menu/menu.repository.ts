@@ -119,6 +119,7 @@ export interface MenuRepository {
     venueId: string,
     categoryId: string
   ): Promise<Result<MenuItem[]>>;
+  listItems(venueId: string): Promise<Result<MenuItem[]>>;
   getItemWithModifiers(
     venueId: string,
     itemId: string

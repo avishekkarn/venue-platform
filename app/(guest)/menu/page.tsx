@@ -7,8 +7,19 @@ import { createPrismaGuestSessionRepository } from "@/infrastructure/db/reposito
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
+import { MenuItemState } from "@/domain/menu/menu.repository";
+import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
 import { GuestHero } from "@/components/guest/hero";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardMedia,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardBody,
+} from "@/components/ui/card";
+import { formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -60,6 +71,14 @@ export default async function MenuPage(): Promise<JSX.Element> {
     }
   }
 
+  const menuRepo = createPrismaMenuRepository(prisma);
+  const itemsResult = await menuRepo.listItems(venue.value.id);
+  const featuredItems = itemsResult.ok
+    ? itemsResult.value
+        .filter((item) => item.state === MenuItemState.AVAILABLE)
+        .slice(0, 3)
+    : [];
+
   return (
     <div className="min-h-dvh flex flex-col items-center">
       <GuestHero venue={venue.value} placeContext={placeContext} />
@@ -76,6 +95,49 @@ export default async function MenuPage(): Promise<JSX.Element> {
           Request the bill
         </Button>
       </div>
+      {featuredItems.length > 0 ? (
+        <div className="mt-16 w-full max-w-4xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
+          <h2 className="font-display text-2xl text-guest-text-primary mb-6 text-center">
+            Chef's Picks
+          </h2>
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [scrollbar-width:none] hide-scrollbar">
+            {featuredItems.map((item) => {
+              const imageUrl =
+                item.photoUrl ??
+                (item as unknown as { imageUrl?: string | null }).imageUrl;
+
+              return (
+                <Card
+                  key={item.id}
+                  interactive={true}
+                  className="min-w-[240px] max-w-[240px] snap-center overflow-hidden flex flex-col justify-between"
+                >
+                  {imageUrl ? (
+                    <CardMedia>
+                      <img
+                        src={imageUrl}
+                        alt={item.name}
+                        className="h-40 w-full object-cover"
+                      />
+                    </CardMedia>
+                  ) : null}
+                  <CardHeader>
+                    <CardTitle>{item.name}</CardTitle>
+                    {item.description ? (
+                      <CardDescription>{item.description}</CardDescription>
+                    ) : null}
+                  </CardHeader>
+                  <CardBody>
+                    <p className="text-guest-text-primary font-medium">
+                      {formatMoney(item.price, venue.value.currency)}
+                    </p>
+                  </CardBody>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

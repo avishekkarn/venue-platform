@@ -78,7 +78,7 @@ const DECIMAL_STRING = /^-?\d+(\.\d{1,2})?$/;
 export function formatMoney(
   value: string,
   currency: string,
-  locale: string
+  locale: string = "en-US"
 ): string {
   if (!DECIMAL_STRING.test(value)) {
     throw new TypeError(
