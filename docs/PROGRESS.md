@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0095 | 2026-10-18 | Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0094 | 2026-10-18 | Task 4.3.2 — Add the "QR no longer active" screen | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0093 | 2026-10-18 | Task 4.3.1 — Re-issue QR landing as Route Handler | STRUCTURAL | Milestone 4.3 | §5.3 |
 | ENTRY-0092 | 2026-10-18 | Task 4.3.1 — Add the QR landing page (resolves the token, creates the session, redirects) | PASS | Milestone 4.3 | §5.3 |
@@ -145,13 +146,193 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0095.
+Next entry number: 0096.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.3 (The QR Landing)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0095 — 2026-10-18 — Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token
+Status: PASS
+
+Task: Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token
+
+Summary:
+Replaced the default Next.js placeholder at `app/page.tsx` with a Server Component rendering the platform's front-door "Scan the QR code." screen. Wrapped with `data-world="guest"` and styled using guest design tokens (`bg-guest-surface`, `font-display`, `text-4xl`, `text-guest-text-primary`, `text-guest-text-muted`, and `min-h-dvh`), with zero inline styles and zero raw hex values, honoring D-1.1, D-1.3, and DESIGN.md §4.13.1. Renders "Scan the QR code." and "Please scan the QR code on your table or in your room to view the menu and order." Typecheck clean, build clean with route table showing `○ /`, 121 unit tests passing, and 100 integration tests passing.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/page.tsx | Edit | Replace default Next.js placeholder with the platform front-door scan screen using guest tokens |
+| docs/ROADMAP.md | Edit | Mark Task 4.3.3 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0095, update ledger, advance §7 to Task 4.3.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 792ms
+  Running TypeScript ...
+  Finished TypeScript in 407ms ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/16) ...
+  Generating static pages using 15 workers (4/16) 
+  Generating static pages using 15 workers (8/16) 
+  Generating static pages using 15 workers (12/16) 
+✓ Generating static pages using 15 workers (16/16) in 300ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ○ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ○ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 26ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 27ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 10ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 9ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 21ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 12ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 94ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 6ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 5ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 556ms
+
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  01:46:17
+   Duration  876ms (tests 42%, import 28%, transform 23%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  21 passed (21)
+      Tests  100 passed (100)
+   Start at  01:46:23
+   Duration  57.09s (tests 97%, setup 2%)
+```
+
+```powershell
+curl.exe -i "http://localhost:3000/"
+```
+Output:
+```
+HTTP/1.1 200 OK
+...
+div data-world="guest" class="min-h-dvh bg-guest-surface flex flex-col items-center justify-center px-4 text-center"
+h1 class="font-display text-4xl text-guest-text-primary mb-4": "Scan the QR code."
+p class="text-base leading-relaxed text-guest-text-muted": "Please scan the QR code on your table or in your room to view the menu and order."
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | app/page.tsx is a Server Component | Inspect `app/page.tsx` | No "use client" directive | Verified |
+| 2 | Renders inside guest world | Inspect `app/page.tsx` | Root element sets `data-world="guest"` | Verified |
+| 3 | Uses guest tokens without raw hex or inline styles | Inspect `app/page.tsx` | Uses `bg-guest-surface`, `font-display`, `text-guest-text-primary`, `text-guest-text-muted` | Verified |
+| 4 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 5 | Next.js build passes | `pnpm build` | Compiled successfully; `○ /` in route table | Verified (exit code 0) |
+| 6 | Unit test suite passes | `pnpm test:unit` | 121 tests passing across 20 files | Verified (121/121 passed) |
+| 7 | Integration test suite passes | `pnpm test:integration` | 100 tests passing across 21 files | Verified (100/100 passed) |
+| 8 | Developer manual check at http://localhost:3000/ | Fetch `http://localhost:3000/` | Renders "Scan the QR code." with warm sand background and Fraunces font | Verified |
+| 9 | ROADMAP 4.3.3 marked ✅ Complete on evidence | Inspect `docs/ROADMAP.md` | Task 4.3.3 is ✅ Complete | Verified |
+| 10 | PROGRESS has ENTRY-0095 and §7 names Task 4.3.4 | Inspect `docs/PROGRESS.md` | Entry appended, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Milestone 4.3 close verification is Task 4.3.4.
+- Barrels `src/domain/qr/index.ts` and `src/domain/organization/index.ts` remain empty as tracked previously.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Matches product behavior | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.3 | No change |
+| SYSTEM.md | No | Adheres to §8.3 | No change |
+| DESIGN.md | No | Adheres to §4.7.2, §4.13.1, §4.14 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.3.3 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0095, updated ledger, advanced snapshot to Task 4.3.4 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.3.4 — Verify: a valid token opens the guest landing; a revoked token shows the "no longer active" screen.
+
+Awaiting Human Verification: NO
 
 ENTRY-0094 — 2026-10-18 — Task 4.3.2 — Add the "QR no longer active" screen
 Status: PASS
@@ -1856,9 +2037,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.3 — The QR landing.
 
-Current task: Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token.
+Current task: Task 4.3.4 — Verify: a valid token opens the guest landing; a revoked token shows the "no longer active" screen.
 
-Current status: Task 4.3.2 is complete. Added the inactive QR screen at app/(guest)/qr/inactive/page.tsx as a Server Component adhering to guest design tokens (sand surface, forest text, Fraunces headline, Inter body, no inline styles or raw hex), and updated the Route Handler at app/(guest)/qr/[token]/route.ts to redirect to /qr/inactive on resolution or session failures. Typecheck, build, 121 unit tests, and 100 integration tests pass. Next task is Task 4.3.3.
+Current status: Task 4.3.3 is complete. Replaced default placeholder app/page.tsx with the platform front-door "Scan the QR code." screen wrapped in data-world="guest" and styled with guest tokens (sand background, Fraunces headline, Inter body, no inline styles or raw hex). Typecheck, build, 121 unit tests, and 100 integration tests pass. Next task is Task 4.3.4.
 
 ## 8. How the File Evolves
 
