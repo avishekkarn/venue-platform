@@ -301,9 +301,11 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ID    | Task                                                                                                | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 4.2.1 | Add the guest session service (create, read, invalidate)                                            | ✅ Complete | 4.1.5      |
-| 4.2.2 | Add the guest cookie helpers                                                                        | ⬜     | 4.2.1      |
+| 4.2.2 | Add the guest cookie helpers                                                                        | ✅ Complete | 4.2.1      |
 | 4.2.3 | Add the guest session invalidation on table close and room checkout                                 | ⬜     | 4.2.2      |
 | 4.2.4 | Verify: a guest session is created on scan, is invalidated on close, and the next scan starts fresh | ⬜     | 4.2.3      |
+
+*(Guest cookie helpers are in place; the guest session is now visible to the browser.)*
 
 ### Milestone 4.3 — The QR landing
 

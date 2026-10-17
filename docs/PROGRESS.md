@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0089 | 2026-10-17 | Task 4.2.2 — Add the guest cookie helpers | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0088 | 2026-10-17 | Task 4.2.1 — Add the guest session service (create, read, invalidate) | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0087 | 2026-10-17 | Task 4.1.5 — Verify: a token can be generated, resolved, and revoked (Milestone 4.1 Close) | STRUCTURAL | Milestone 4.1 | §5.3 |
 | ENTRY-0086 | 2026-10-17 | Task 4.1.4 — Add the QR image generator | PASS | Milestone 4.1 | §5.3 |
@@ -139,13 +140,99 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0089.
+Next entry number: 0090.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.2 (The Guest Session)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0089 — 2026-10-17 — Task 4.2.2 — Add the guest cookie helpers
+Status: PASS
+
+Task: Task 4.2.2 — Add the guest cookie helpers
+
+Summary:
+Created `src/infrastructure/guest/cookies.ts` with `setGuestCookie`, `getGuestCookie`, and `clearGuestCookie` helpers using Next.js `cookies()` from `next/headers` and the `venue_guest` cookie name (SYSTEM.md §6.4). The cookie is configured as HttpOnly, Secure in production, SameSite=Lax, path=/, and 30-day max age for consistency with the staff session cookie. Added unit tests in `tests/unit/infrastructure/guest/cookies.test.ts` verifying all 4 behaviors. All 118 unit tests pass, typecheck passes, and production build compiles cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/infrastructure/guest/cookies.ts | Create | Guest session cookie helpers (set, get, clear) |
+| tests/unit/infrastructure/guest/cookies.test.ts | Create | Unit tests for guest cookie helpers |
+| docs/ROADMAP.md | Edit | Mark Task 4.2.2 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0089, update ledger, advance §7 to Task 4.2.3 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 6ms
+ Test Files  20 passed (20)
+      Tests  118 passed (118)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+✓ Compiled successfully in 520ms
+Finished TypeScript in 428ms ...
+Generating static pages using 14 workers (13/13) in 615ms
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | src/infrastructure/guest/cookies.ts exists with three functions | PASS | setGuestCookie, getGuestCookie, clearGuestCookie present |
+| 2 | The cookie name is venue_guest | PASS | Fixed by SYSTEM.md §6.4 |
+| 3 | Unit tests pass | PASS | 118 tests passing |
+| 4 | Typecheck passes | PASS | pnpm exec tsc --noEmit exit code 0 |
+| 5 | Build passes | PASS | pnpm build compiled successfully |
+| 6 | ROADMAP.md marks Task 4.2.2 complete | PASS | Row shows ✅ Complete |
+| 7 | PROGRESS.md has ENTRY-0089 and §7 names Task 4.2.3 | PASS | Entry recorded and snapshot advanced |
+| 8 | vitest.config.ts is unchanged | PASS | Not modified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | None | No change |
+| DECISIONS.md | No | Adheres to D-2.1, D-2.3, D-2.5 | No change |
+| SYSTEM.md | No | Adheres to §6.2, §6.4 | No change |
+| BUILD.md | No | Adheres to §2, §7.4 | No change |
+| ROADMAP.md | Yes | Marked Task 4.2.2 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0089, advanced snapshot to Task 4.2.3 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.2.3 — Add the guest session invalidation on table close and room checkout.
+
+Awaiting Human Verification: NO
+
 
 ENTRY-0088 — 2026-10-17 — Task 4.2.1 — Add the guest session service (create, read, invalidate)
 Status: PASS
@@ -918,9 +1005,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.2 — The guest session.
 
-Current task: Task 4.2.2 — Add the guest cookie helpers.
+Current task: Task 4.2.3 — Add the guest session invalidation on table close and room checkout.
 
-Current status: Task 4.2.1 is complete. Implemented GuestSessionRepository port, Prisma adapter, and pure domain service (create, get, invalidate). 114 unit tests and 4 integration tests passing against live PostgreSQL. Next task is Task 4.2.2.
+Current status: Task 4.2.2 is complete. Implemented guest cookie helpers (setGuestCookie, getGuestCookie, clearGuestCookie) using venue_guest cookie name. 118 unit tests passing, typecheck and build pass. Next task is Task 4.2.3.
 
 ## 8. How the File Evolves
 
