@@ -28,6 +28,9 @@ import {
   ModifierChoiceType,
   MenuItemState,
 } from "@/domain/menu/menu.repository";
+import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
+import { hashPassword } from "@/infrastructure/auth/password";
+import { StaffRole } from "@/domain/auth/staff.repository";
 
 // Load environment variables from .env.local for standalone seed execution
 dotenv.config({ path: ".env.local" });
@@ -662,9 +665,61 @@ async function seedMenu(venueId: string): Promise<void> {
   );
 }
 
+export async function seedStaff(venueId: string): Promise<void> {
+  console.log("Seeding staff...");
+  const staffRepo = createPrismaStaffRepository(prisma);
+
+  const staffDefs = [
+    { name: "Alice Manager", username: "alice", role: StaffRole.MANAGER },
+    { name: "Bob Chef", username: "bob", role: StaffRole.CHEF },
+    { name: "Charlie Server", username: "charlie", role: StaffRole.TABLE_SERVICE },
+    { name: "Diana Housekeeper", username: "diana", role: StaffRole.HOUSEKEEPING },
+    { name: "Eve Front Desk", username: "eve", role: StaffRole.FRONT_DESK },
+  ];
+
+  for (const def of staffDefs) {
+    // Check if staff member already exists to ensure idempotency
+    const existingResult = await staffRepo.findByUsername(venueId, def.username);
+    if (existingResult.ok) {
+      console.log(`Staff ${def.username} already exists.`);
+      continue;
+    }
+
+    // Check if the failure was actually NOT_FOUND. If not, it's a real DB error.
+    if (existingResult.error.code !== DomainErrorCode.NOT_FOUND) {
+      console.error(
+        `Failed to check staff ${def.username}: [${existingResult.error.code}] ${existingResult.error.message}`
+      );
+      throw new Error(existingResult.error.message);
+    }
+
+    // Hash the default password
+    const defaultPassword = "password123";
+    const passwordHash = await hashPassword(defaultPassword);
+
+    // Create the staff member
+    const created = await staffRepo.create({
+      venueId,
+      name: def.name,
+      username: def.username,
+      passwordHash,
+      roles: [def.role],
+    });
+
+    if (!created.ok) {
+      console.error(
+        `Failed to create staff ${def.username}: [${created.error.code}] ${created.error.message}`
+      );
+      throw new Error(created.error.message);
+    }
+    console.log(`Created staff ${def.username} (role: ${def.role}).`);
+  }
+}
+
 async function main(): Promise<void> {
   console.log("Seed starting.");
   const { venueId, counterId } = await seedVenue();
+  await seedStaff(venueId);
   await seedTablesAndRooms(venueId);
   await seedQrTokens(venueId);
   await seedCounter(venueId, counterId);
