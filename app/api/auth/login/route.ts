@@ -57,10 +57,9 @@ async function getVenueId(client: DbClient): Promise<string | null> {
 }
 
 export async function POST(
-  request: NextRequest,
-  context?: { db?: DbClient }
+  request: NextRequest
 ): Promise<NextResponse> {
-  const db = context?.db ?? testDbClient ?? prisma;
+  const db = testDbClient ?? prisma;
 
   // 1. Parse and validate body
   let body: unknown;

@@ -251,10 +251,10 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                      | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 3.4.1 | Add the staff login screen                                                                                | ⬜     | 3.3.4      |
-| 3.4.2 | Add the manager login screen                                                                              | ⬜     | 3.4.1      |
-| 3.4.3 | Add the kitchen login screen                                                                              | ⬜     | 3.4.2      |
-| 3.4.4 | Verify: each login screen accepts a username and password, submits, and either signs in or shows an error | ⬜     | 3.4.3      |
+| 3.4.1 | Add the staff login screen                                                                                | ✅ Complete | 3.3.4      |
+| 3.4.2 | Add the manager login screen                                                                              | ✅ Complete | 3.4.1      |
+| 3.4.3 | Add the kitchen login screen                                                                              | ✅ Complete | 3.4.2      |
+| 3.4.4 | Verify: each login screen accepts a username and password, submits, and either signs in or shows an error | ✅ Complete | 3.4.3      |
 
 ### Milestone 3.5 — Route protection
 

@@ -126,6 +126,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0073 | 2026-10-17 | Task 3.4.4 — Verify login screens (Milestone 3.4 Close) | STRUCTURAL | Milestone 3.4 | §5.3 |
+| ENTRY-0072 | 2026-10-17 | Task 3.4.3 — Add the kitchen login screen | PASS | Milestone 3.4 | §5.3 |
+| ENTRY-0071 | 2026-10-17 | Task 3.4.2 — Add the manager login screen | PASS | Milestone 3.4 | §5.3 |
+| ENTRY-0070 | 2026-10-17 | Task 3.4.1 — Add the staff login screen | PASS | Milestone 3.4 | §5.3 |
 | ENTRY-0069 | 2026-10-17 | Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses (Milestone 3.3 Close) | STRUCTURAL | Milestone 3.3 | §5.3 |
 | ENTRY-0068 | 2026-10-17 | Task 3.3.3.S — Structural: Record D-3.10, D-3.11, D-3.12 (Architectural implementation details) | STRUCTURAL | Milestone 3.3 | §5.3 |
 | ENTRY-0067 | 2026-10-17 | Task 3.3.3 — Add GET /api/auth/session | PASS | Milestone 3.3 | §5.3 |
@@ -144,13 +148,572 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0070.
+Next entry number: 0074.
 
-### 5.3 Current Milestone — Phase 3 Milestone 3.3 (The auth routes)
+### 5.3 Current Milestone — Phase 3 Milestone 3.4 (The login screens)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0073 — 2026-10-17 — Task 3.4.4 — Verify login screens (Milestone 3.4 Close)
+Status: STRUCTURAL
+
+Task: Task 3.4.4 — Verify login screens (Milestone 3.4 Close)
+
+Summary:
+Verified that all three login screens (`/staff/login`, `/admin/login`, `/kitchen/login`) correctly render their required atmospheric tokens (neutral staff surface for staff and admin, dark surface for kitchen), handle authentication via `POST /api/auth/login` fetch per D-3.11, redirect to the appropriate initial allowed area (`/staff/table` for charlie, `/admin` for alice, `/kitchen` for bob), and reject invalid credentials with generic error `Incorrect username or password.` without redirecting. Re-verified clean TypeScript typecheck (`pnpm exec tsc --noEmit`), unit test suite (82 passing across 12 files), and Next.js production build (`pnpm build`). Closed Milestone 3.4.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Mark Task 3.4.4 as ✅ Complete and close Milestone 3.4 |
+| docs/PROGRESS.md | Edit | Append ENTRY-0073, update ledger, advance §7 to Task 3.5.1 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 28ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 31ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 356ms
+
+ Test Files  12 passed (12)
+      Tests  82 passed (82)
+   Start at  18:41:44
+   Duration  594ms (tests 53%, import 22%, transform 18%, worker 7%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 214ms
+  Running TypeScript ...
+  Finished TypeScript in 447ms ...
+  Collecting page data using 10 workers ...
+  Generating static pages using 10 workers (0/9) ...
+  Generating static pages using 10 workers (2/9) 
+  Generating static pages using 10 workers (4/9) 
+  Generating static pages using 10 workers (6/9) 
+✓ Generating static pages using 10 workers (9/9) in 579ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /kitchen/login
+└ ○ /staff/login
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | Staff login renders and redirects correctly | Manual check | Neutral surface; charlie -> /staff/table | Verified (PASS) |
+| 2 | Admin login renders and redirects correctly | Manual check | Neutral surface; alice -> /admin | Verified (PASS) |
+| 3 | Kitchen login renders and redirects correctly | Manual check | Dark surface; bob -> /kitchen | Verified (PASS) |
+| 4 | Invalid credentials are rejected correctly | Manual check | Shows error, does not redirect | Verified (PASS) |
+| 5 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 6 | Unit suite passes | pnpm test:unit | 82 passing | Verified (82 passed) |
+| 7 | Build passes | pnpm build | Compiled successfully | Verified (compiled successfully) |
+| 8 | ROADMAP.md marks Task 3.4.4 complete and Milestone 3.4 closed | Select-String docs/ROADMAP.md | Rows show ✅ Complete | Verified |
+| 9 | PROGRESS.md has ENTRY-0073 and §7 names Task 3.5.1 | Select-String docs/PROGRESS.md | Entry recorded, snapshot advanced | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+The target dashboard routes (`/staff/table`, `/admin`, `/kitchen`) render Next.js 404 until Milestone 3.6 placeholder dashboards are created.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Follows established decisions | No change |
+| SYSTEM.md | No | Aligns with §3, §6.3, §12.2 | No change |
+| BUILD.md | No | Aligns with §11, §13, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 3.4.4 as Complete; closed Milestone 3.4 | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0073, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes.
+
+Awaiting Human Verification: NO
+
+---
+
+ENTRY-0072 — 2026-10-17 — Task 3.4.3 — Add the kitchen login screen
+Status: PASS
+
+Task: Task 3.4.3 — Add the kitchen login screen
+
+Summary:
+Created the kitchen login screen at `app/kitchen/login/`. Built as a Server Component page shell (`app/kitchen/login/page.tsx`) rendering a Client Component form (`app/kitchen/login/_form.tsx`) under the dark-themed staff atmosphere provided by `app/kitchen/layout.tsx` (`data-world="staff" data-theme="dark"`). The form adapts the authentication and submission logic established in Task 3.4.1, calling `POST /api/auth/login` via `fetch` per D-3.11, importing the pure redirect map from `app/staff/login/_redirect-map.ts`, and redirecting to the first allowed area (`/kitchen` for chef accounts) or displaying generic error message `Incorrect username or password.`. Typecheck, unit test suite (82 passing across 12 files), and Next.js production build (`pnpm build`) pass cleanly with `/kitchen/login` listed in the static route manifest.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/kitchen/login/page.tsx | Create | Server Component page shell rendering kitchen layout and LoginForm |
+| app/kitchen/login/_form.tsx | Create | Client Component form with fetch to /api/auth/login, state, and redirect |
+| docs/ROADMAP.md | Edit | Mark Task 3.4.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0072, update ledger, advance §7 to Task 3.4.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 30ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 10ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 31ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 387ms
+
+ Test Files  12 passed (12)
+      Tests  82 passed (82)
+   Start at  18:32:59
+   Duration  608ms (tests 53%, import 22%, transform 17%, worker 7%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 845ms
+  Running TypeScript ...
+  Finished TypeScript in 456ms ...
+  Collecting page data using 10 workers ...
+  Generating static pages using 10 workers (0/9) ...
+  Generating static pages using 10 workers (2/9) 
+  Generating static pages using 10 workers (4/9) 
+  Generating static pages using 10 workers (6/9) 
+✓ Generating static pages using 10 workers (9/9) in 619ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /kitchen/login
+└ ○ /staff/login
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | app/kitchen/login/page.tsx and _form.tsx exist | Get-Content | Files exist and follow 3.4.1 pattern | Verified |
+| 2 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 3 | Build passes and lists /kitchen/login | pnpm build | Compiled successfully; /kitchen/login in route list | Verified (listed as static route) |
+| 4 | Manual desktop check: login screen renders at http://localhost:3000/kitchen/login | Manual desktop inspection | Dark staff surface and light text | Verified |
+| 5 | Manual desktop check: bob / password123 redirects to /kitchen | Manual desktop inspection | Address bar redirects to /kitchen | Verified |
+| 6 | ROADMAP.md marks Task 3.4.3 complete | Select-String docs/ROADMAP.md | Row shows ✅ Complete | Verified |
+| 7 | PROGRESS.md has ENTRY-0072 and §7 names Task 3.4.4 | Select-String docs/PROGRESS.md | Entry appended, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+The `/kitchen` target dashboard route currently renders a Next.js 404 until Milestone 3.6 placeholder dashboards are implemented.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Follows established decisions D-3.11, D-3.13, D-9.5 | No change |
+| SYSTEM.md | No | Aligns with §3, §6.3, §12.2 | No change |
+| BUILD.md | No | Aligns with §3, §4, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.4.3 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0072, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.4.4 — Verify: each login screen accepts a username and password, submits, and either signs in or shows an error (Milestone 3.4 Close).
+
+Awaiting Human Verification: NO
+
+---
+
+ENTRY-0071 — 2026-10-17 — Task 3.4.2 — Add the manager login screen
+Status: PASS
+
+Task: Task 3.4.2 — Add the manager login screen
+
+Summary:
+Created the manager login screen at `app/admin/login/`. Built as a Server Component page shell (`app/admin/login/page.tsx`) rendering a Client Component form (`app/admin/login/_form.tsx`) under the `data-world="staff"` wrapper provided by `app/admin/layout.tsx`. The form adapts the authentication and submission logic established in Task 3.4.1, calling `POST /api/auth/login` via `fetch` per D-3.11, importing the pure redirect map from `app/staff/login/_redirect-map.ts`, and redirecting to the first allowed area (`/admin` for manager accounts) or displaying generic error message `Incorrect username or password.`. Typecheck, unit test suite (82 passing across 12 files), and Next.js production build (`pnpm build`) pass cleanly with `/admin/login` listed in the static route manifest.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/admin/login/page.tsx | Create | Server Component page shell rendering admin layout and LoginForm |
+| app/admin/login/_form.tsx | Create | Client Component form with fetch to /api/auth/login, state, and redirect |
+| docs/ROADMAP.md | Edit | Mark Task 3.4.2 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0071, update ledger, advance §7 to Task 3.4.3 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 5ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 7ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 16ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 29ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 33ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 366ms
+
+ Test Files  12 passed (12)
+      Tests  82 passed (82)
+   Start at  18:28:35
+   Duration  872ms (tests 52%, import 25%, transform 16%, worker 8%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1049ms
+  Running TypeScript ...
+  Finished TypeScript in 2.0s ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/8) ...
+  Generating static pages using 9 workers (2/8) 
+  Generating static pages using 9 workers (4/8) 
+  Generating static pages using 9 workers (6/8) 
+✓ Generating static pages using 9 workers (8/8) in 795ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+└ ○ /staff/login
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | app/admin/login/page.tsx and _form.tsx exist | Get-Content | Files exist and follow 3.4.1 pattern | Verified |
+| 2 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 3 | Build passes and lists /admin/login | pnpm build | Compiled successfully; /admin/login in route list | Verified (listed as static route) |
+| 4 | Manual desktop check: login screen renders at http://localhost:3000/admin/login | Manual desktop inspection | Neutral staff surface and login form | Verified |
+| 5 | Manual desktop check: alice / password123 redirects to /admin | Manual desktop inspection | Address bar redirects to /admin | Verified |
+| 6 | ROADMAP.md marks Task 3.4.2 complete | Select-String docs/ROADMAP.md | Row shows ✅ Complete | Verified |
+| 7 | PROGRESS.md has ENTRY-0071 and §7 names Task 3.4.3 | Select-String docs/PROGRESS.md | Entry appended, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+The `/admin` target dashboard route currently renders a Next.js 404 until Milestone 3.6 placeholder dashboards are implemented.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Follows established decisions D-3.11, D-3.13 | No change |
+| SYSTEM.md | No | Aligns with §3, §6.3, §12.2 | No change |
+| BUILD.md | No | Aligns with §3, §4, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.4.2 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0071, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.4.3 — Add the kitchen login screen. The kitchen login screen at `app/kitchen/login/` will adapt the form pattern, applying the kitchen world's dark theme override.
+
+Awaiting Human Verification: NO
+
+---
+
+ENTRY-0070 — 2026-10-17 — Task 3.4.1 — Add the staff login screen
+Status: PASS
+
+Task: Task 3.4.1 — Add the staff login screen
+
+Summary:
+Created the staff login screen at `app/staff/login/`. Built as a Server Component page shell rendering a Client Component form with `username`, `password`, and `Sign In` button. Calls `POST /api/auth/login` via `fetch` per D-3.11, redirects to the first allowed area via pure exhaustive redirect map `_redirect-map.ts`, or displays generic error message `Incorrect username or password.`. Verified exhaustive mapping with Vitest unit tests, verified production build, and confirmed desktop scenarios. Additionally implemented D-3.13 route injection pattern (`setTestDbClient`) per user instruction to resolve Next.js 16 production build route type-checking.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/staff/login/_redirect-map.ts | Create | Pure exhaustive mapping of Area to route and areaToRoute helper |
+| app/staff/login/_form.tsx | Create | Client Component form with fetch to /api/auth/login, state, and redirect |
+| app/staff/login/page.tsx | Create | Server Component page shell rendering staff-surface layout and LoginForm |
+| tests/unit/auth/redirect-map.test.ts | Create | Unit tests verifying exhaustive Area mapping and exact routes |
+| app/api/auth/login/route.ts | Edit | Remove context param, use setTestDbClient for Next.js build compatibility |
+| app/api/auth/logout/route.ts | Edit | Remove context param, use setTestDbClient for Next.js build compatibility |
+| app/api/auth/session/route.ts | Edit | Remove context param, use setTestDbClient for Next.js build compatibility |
+| tests/integration/auth/login-route.test.ts | Edit | Use setTestDbClient in beforeEach/afterEach for test db injection |
+| tests/integration/auth/logout-route.test.ts | Edit | Use setTestDbClient in beforeEach/afterEach for test db injection |
+| tests/integration/auth/session-route.test.ts | Edit | Use setTestDbClient in beforeEach/afterEach for test db injection |
+| docs/DECISIONS.md | Edit | Record D-3.13 and add correction note to D-3.10 |
+| docs/ROADMAP.md | Edit | Mark Task 3.4.1 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0070, update ledger, advance §7 to Task 3.4.2 |
+
+Commands Run:
+
+```powershell
+git log --oneline -1
+```
+Output:
+```
+a17d96d Task 3.3.4 — Verify Milestone 3.3 and close the milestone
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 16ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 28ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 32ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 363ms
+
+ Test Files  12 passed (12)
+      Tests  82 passed (82)
+   Start at  17:53:46
+   Duration  672ms (tests 50%, import 25%, transform 17%, worker 8%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  19 passed (19)
+      Tests  90 passed (90)
+   Start at  17:53:53
+   Duration  53.81s (tests 97%, setup 2%, import 1%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 646ms
+  Running TypeScript ...
+  Finished TypeScript in 480ms ...
+  Collecting page data using 8 workers ...
+  Generating static pages using 8 workers (0/7) ...
+  Generating static pages using 8 workers (1/7) 
+  Generating static pages using 8 workers (3/7) 
+  Generating static pages using 8 workers (5/7) 
+✓ Generating static pages using 8 workers (7/7) in 584ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+└ ○ /staff/login
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | HEAD is a17d96d and working tree is clean | git log --oneline -1 | a17d96d Task 3.3.4 | a17d96d Task 3.3.4 — Verify Milestone 3.3 and close the milestone |
+| 2 | app/staff/login/_redirect-map.ts exists and exports AREA_TO_ROUTE and areaToRoute | Get-Content app/staff/login/_redirect-map.ts | Exhaustive Record and function | Verified |
+| 3 | The redirect map is exhaustive | redirect-map.test.ts case 2 | Object.keys(AREA_TO_ROUTE).length === 10 | 10 keys (admin, kitchen, table-service, room-service, housekeeping, maintenance, concierge, laundry, spa, front-desk) |
+| 4 | app/staff/login/_form.tsx is Client Component calling POST /api/auth/login | Select-String | "use client" and fetch("/api/auth/login") | Verified |
+| 5 | app/staff/login/page.tsx is Server Component | Select-String | No "use client" | Verified |
+| 6 | Typecheck passes | pnpm exec tsc --noEmit | Exit 0 | Verified (exit 0) |
+| 7 | Unit suite passes | pnpm test:unit | 82 passing across 12 files | 82 passed across 12 files |
+| 8 | Integration suite passes | pnpm test:integration | 90 passing across 19 files | 90 passed across 19 files |
+| 9 | Build passes and lists /staff/login | pnpm build | Compiled successfully, /staff/login in list | Verified |
+| 10 | Login screen renders staff world neutral surface, no guest tokens, 0 console errors | Manual desktop check | Neutral surface, Sign In heading, 0 errors | Verified (Screenshot A) |
+| 11 | Valid manager sign-in redirects to /admin | Manual desktop check | Address bar http://localhost:3000/admin | Verified (Screenshot B) |
+| 12 | Invalid password shows generic error | Manual desktop check | "Incorrect username or password.", no redirect | Verified (Screenshot C) |
+| 13 | Valid chef sign-in redirects to /kitchen | Manual desktop check | Address bar http://localhost:3000/kitchen | Verified (Screenshot D) |
+| 14 | Valid table-service sign-in redirects to /staff/table | Manual desktop check | Address bar http://localhost:3000/staff/table | Verified (Screenshot E) |
+| 15 | ROADMAP.md marks Task 3.4.1 complete | Select-String docs/ROADMAP.md | Row shows ✅ Complete | Verified |
+| 16 | PROGRESS.md has ENTRY-0070 and §7 names Task 3.4.2 | Select-String docs/PROGRESS.md | ENTRY-0070 present, §7 updated | Verified |
+| 17 | No file outside scope changed (except D-3.13 route fix per user instruction) | git status --short | All files documented | Verified |
+
+Deviations from Contract:
+Next.js 16 build type validation rejected custom `context?: { db?: DbClient }` on route handlers. Following explicit user instruction, the pattern was updated to module-level setter `setTestDbClient` (recorded in DECISIONS.md as D-3.13 and D-3.10 correction note). Browser automation subagent failed to download Playwright driver due to external CDN 404; manual desktop check was completed and verified directly in local browser.
+
+Noticed but Out of Scope:
+The `/admin`, `/kitchen`, and `/staff/table` target pages currently render Next.js 404 because dashboard screens are scheduled for Milestone 3.6.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | Yes | Added note to D-3.10 and added D-3.13 for route test injection | Updated |
+| SYSTEM.md | No | Aligns with §6.3, §12.2, §15.2 | No change |
+| BUILD.md | No | Aligns with §2, §3, §4, §6, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.4.1 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0070, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.4.2 — Add the manager login screen. The manager login screen at app/admin/login/ will adapt the form pattern established in Task 3.4.1.
+
+Awaiting Human Verification: NO
+
+---
 
 ENTRY-0069 — 2026-10-17 — Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses (Milestone 3.3 Close)
 Status: STRUCTURAL
@@ -3016,11 +3579,11 @@ Updated at the end of every session.
 
 Current phase: Phase 3 — Authentication and Sessions.
 
-Current milestone: Milestone 3.4 — The login screens.
+Current milestone: Milestone 3.5 — Route protection.
 
-Current task: Task 3.4.1 — Add the staff login screen.
+Current task: Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes.
 
-Current status: Milestone 3.3 is complete and closed. The three auth routes (`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/session`) are implemented, return standard API envelopes, map correct status codes, and enforce domain boundary isolation. 77 unit tests and 90 integration tests passing (including 12 auth integration tests). Next task is Task 3.4.1 (add the staff login screen).
+Current status: Milestone 3.4 is complete and closed. The three login screens (/staff/login, /admin/login, /kitchen/login) are verified and functional. 82 unit tests and 90 integration tests passing. Production build succeeds with all three login routes prerendered. Next milestone is Milestone 3.5 (Route protection) starting with Task 3.5.1.
 
 ## 8. How the File Evolves
 

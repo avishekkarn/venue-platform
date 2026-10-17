@@ -53,10 +53,9 @@ async function getVenueId(client: DbClient): Promise<string | null> {
 }
 
 export async function GET(
-  _request?: NextRequest | Request,
-  context?: { db?: DbClient }
+  _request?: NextRequest
 ): Promise<NextResponse> {
-  const db = context?.db ?? testDbClient ?? prisma;
+  const db = testDbClient ?? prisma;
 
   // 1. Read cookie
   const token = await getSessionCookie();

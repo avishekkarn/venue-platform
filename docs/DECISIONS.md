@@ -405,6 +405,7 @@
 
 Decision: API route handlers that touch the database accept an optional second argument context?: { db?: DbClient }. In production, Next.js does not pass this argument, so the route falls back to the module-scoped prisma singleton. In integration tests, the test passes { db: tx } where tx is the withTransaction client.
 Context: The integration tests run inside a rollback transaction. If the route used the global prisma singleton, it would write to the dev DB. Next.js reserves the second argument for dynamic route params ({ params }). For routes without dynamic segments, this is safe.
+CORRECTED BY D-3.13: The second argument in Next.js route handlers is reserved by the framework for dynamic route parameters. Passing an arbitrary context object fails the production build (next build). The injection pattern is changed to a module-level setter (setTestDbClient), which is exported from the route file and called by the test suite before invoking the route handler.
 Alternatives considered: vi.mock for every test (repetitive); factory pattern (changes export shape); in-memory DB (diverges from prod).
 Consequences: Future routes with dynamic segments ([id]) cannot use the second argument for db injection and must use vi.mock. This decision documents the pattern.
 What would make us revisit: Next.js changes the handler signature, or we exceed 20 database-touching routes.
@@ -431,6 +432,14 @@ Alternatives considered: cleanTestDatabase() (destructive, leaves no trace on fa
 Consequences: The test suite takes ~60s. Future tests must use withTransaction.
 What would make us revisit: If Postgres isolation improves, or if we move to a dedicated CI database per test file.
 Traces to: BUILD.md §8.8, PHASE_TESTS.md §4.
+
+---
+
+### D-3.13 — Route test injection uses module-level setters, not the handler argument
+
+Decision: Route handlers export a setTestDbClient function. Integration tests use it to inject the transaction client.
+Context: Next.js strict build checking rejects custom arguments in the second parameter position.
+Consequences: Test isolation works exactly as before, but without breaking the production build.
 
 ---
 

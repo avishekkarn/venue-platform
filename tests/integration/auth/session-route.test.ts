@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GET } from "../../../app/api/auth/session/route";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { GET, setTestDbClient } from "../../../app/api/auth/session/route";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { StaffRole } from "@/domain/auth/staff.repository";
@@ -17,6 +17,10 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
 describe("GET /api/auth/session Route Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    setTestDbClient(null);
   });
 
   it("returns active session, staff info, and allowed areas for valid session (200)", async () => {
@@ -47,7 +51,8 @@ describe("GET /api/auth/session Route Integration Tests", () => {
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
 
-      const response = await GET(undefined, { db: tx });
+      setTestDbClient(tx);
+      const response = await GET();
       expect(response.status).toBe(200);
 
       const json = await response.json();
@@ -87,7 +92,8 @@ describe("GET /api/auth/session Route Integration Tests", () => {
 
       vi.mocked(getSessionCookie).mockResolvedValue("non-existent-token-12345");
 
-      const response = await GET(undefined, { db: tx });
+      setTestDbClient(tx);
+      const response = await GET();
       expect(response.status).toBe(401);
 
       const json = await response.json();
@@ -128,7 +134,8 @@ describe("GET /api/auth/session Route Integration Tests", () => {
 
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
 
-      const response = await GET(undefined, { db: tx });
+      setTestDbClient(tx);
+      const response = await GET();
       expect(response.status).toBe(401);
 
       const json = await response.json();

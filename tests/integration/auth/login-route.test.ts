@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
-import { POST } from "../../../app/api/auth/login/route";
+import { POST, setTestDbClient } from "../../../app/api/auth/login/route";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { StaffRole } from "@/domain/auth/staff.repository";
@@ -17,6 +17,10 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
 describe("POST /api/auth/login Route Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    setTestDbClient(null);
   });
 
   it("authenticates valid credentials, sets session cookie, and returns staff with allowed areas (200)", async () => {
@@ -53,7 +57,8 @@ describe("POST /api/auth/login Route Integration Tests", () => {
         }),
       });
 
-      const response = await POST(request, { db: tx });
+      setTestDbClient(tx);
+      const response = await POST(request);
       expect(response.status).toBe(200);
 
       const json = await response.json();
@@ -104,7 +109,8 @@ describe("POST /api/auth/login Route Integration Tests", () => {
         }),
       });
 
-      const response = await POST(request, { db: tx });
+      setTestDbClient(tx);
+      const response = await POST(request);
       expect(response.status).toBe(401);
 
       const json = await response.json();
