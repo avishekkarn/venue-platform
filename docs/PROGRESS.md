@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0067 | 2026-10-17 | Task 3.3.3 — Add GET /api/auth/session | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0066 | 2026-10-17 | Task 3.3.2 — Add POST /api/auth/logout | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0065 | 2026-10-17 | Task 3.3.1 — Add POST /api/auth/login | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0064 | 2026-10-17 | Task 3.2.7 — Verify: every domain function has unit tests; all pass (Milestone 3.2 Close) | STRUCTURAL | Milestone 3.2 | §5.3 |
@@ -141,13 +142,176 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0067.
+Next entry number: 0068.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.3 (The auth routes)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0067 — 2026-10-17 — Task 3.3.3 — Add GET /api/auth/session
+Status: PASS
+
+Task: Task 3.3.3 — Add GET /api/auth/session
+
+Summary:
+Implemented the `GET /api/auth/session` route handler in `app/api/auth/session/route.ts`. The route functions as an adapter conforming to BUILD.md §6: reads the `venue_staff` session cookie via `getSessionCookie()`, returning 401 with `{ error: { code: "UNAUTHORIZED", message: "No active session" } }` if absent; resolves the venue; delegates session validation to the `getSession` domain function, returning 401 if invalid or expired; retrieves the active `StaffMember` record via `StaffRepository.findById`; computes `allowedAreas` by filtering with `canAccess`; and returns the standard envelope `{ data: { session, staff, allowedAreas } }` with HTTP 200. Verified with 4 integration tests in `tests/integration/auth/session-route.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/auth/session/route.ts | Create | Implemented GET /api/auth/session route handler |
+| tests/integration/auth/session-route.test.ts | Create | Added 4 integration tests covering valid session (200), missing cookie (401), invalid token (401), and ended/expired session (401) |
+| docs/ROADMAP.md | Edit | Marked Task 3.3.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0067, updated ledger, advanced §7 to Task 3.3.4 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/auth/session-route.test.ts
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+stderr | tests/integration/auth/session-route.test.ts
+◇ injected env (0) from .env.local
+
+(node:19752) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/integration/auth/session-route.test.ts (4 tests) 2845ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  16:40:30
+   Duration  3.22s (tests 93%, setup 3%, transform 2%, import 2%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/login.test.ts (5 tests) 14ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 13ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 11ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 23ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 10ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 9ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 39ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 42ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 448ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  16:40:53
+   Duration  761ms (tests 56%, import 23%, transform 13%, worker 8%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2763ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 1937ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1997ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2761ms
+ ✓ tests/integration/auth/logout-route.test.ts (3 tests) 2588ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2320ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2508ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 1690ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2361ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 2481ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2566ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2528ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2165ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2541ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2412ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2167ms
+ ✓ tests/integration/auth/session-route.test.ts (4 tests) 2845ms
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 2694ms
+
+ Test Files  19 passed (19)
+      Tests  90 passed (90)
+   Start at  16:41:03
+   Duration  62.64s (tests 97%, setup 2%, import 1%)
+```
+
+```powershell
+Select-String -Path app/api/auth/session/route.ts -Pattern "from ['`"]@/domain/orders"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `GET /api/auth/session` route created | PASS | Implemented in `app/api/auth/session/route.ts` |
+| 2 | Reads `venue_staff` session cookie via `getSessionCookie()` | PASS | Token extracted via `getSessionCookie` helper |
+| 3 | Returns 401 with `UNAUTHORIZED` when no cookie present | PASS | Verified in integration test returning `No active session` |
+| 4 | Delegates validation to domain `getSession` | PASS | Validates session via `getSession` domain function |
+| 5 | Returns 401 when token is invalid or expired | PASS | Verified in integration tests |
+| 6 | Fetches staff member via `StaffRepository.findById` | PASS | Retrieves full profile with roles |
+| 7 | Computes `allowedAreas` via `canAccess` | PASS | Filters `ALL_AREAS` based on staff roles |
+| 8 | Returns 200 with `{ data: { session, staff, allowedAreas } }` | PASS | Verified in integration test |
+| 9 | 4 integration tests pass in `tests/integration/auth/session-route.test.ts` | PASS | All 4 tests passed cleanly |
+| 10 | TypeScript typecheck clean | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 11 | Unit test suite passes with 77 tests | PASS | 11 files passed, 77 tests passed |
+| 12 | Integration test suite passes with 90 tests | PASS | 19 files passed, 90 tests passed (62.64s duration) |
+| 13 | Route boundary pure (no cross-domain order imports) | PASS | Regex check produced empty output |
+| 14 | ROADMAP.md updated | PASS | Task 3.3.3 marked `✅ Complete` |
+| 15 | PROGRESS.md updated | PASS | ENTRY-0067 appended, ledger updated, snapshot advanced to Task 3.3.4 |
+
+Deviations from Contract:
+`@/infrastructure/auth/cookies` is mocked via `vi.mock` in `tests/integration/auth/session-route.test.ts` because Next.js `cookies()` requires an active HTTP server request context not present during direct route function calls in Vitest (consistent with Tasks 3.3.1 and 3.3.2).
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.2, D-3.6 | No change |
+| SYSTEM.md | No | Conforms with §5, §6.3, §12.1, §12.2 | No change |
+| BUILD.md | No | Conforms with §6, §7.4 | No change |
+| ROADMAP.md | Yes | Marked Task 3.3.3 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0067 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses. The first action: execute comprehensive verification across `POST /api/auth/login`, `POST /api/auth/logout`, and `GET /api/auth/session`, ensuring all envelopes, statuses, and boundaries match specifications, and close Milestone 3.3.
+
+Awaiting Human Verification: YES
 
 ENTRY-0066 — 2026-10-17 — Task 3.3.2 — Add POST /api/auth/logout
 Status: PASS
@@ -2477,9 +2641,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.3 — The auth routes.
 
-Current task: Task 3.3.3 — Add `GET /api/auth/session`.
+Current task: Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses.
 
-Current status: Task 3.3.2 is complete. `POST /api/auth/logout` is implemented in `app/api/auth/logout/route.ts` and covered by integration tests in `tests/integration/auth/logout-route.test.ts`. Reads cookie, deletes session in DB (idempotent), clears cookie via `clearSessionCookie`, and returns `{ data: { success: true } }` with 200. 77 unit tests and 86 integration tests passing. Next task is Task 3.3.3.
+Current status: Task 3.3.3 is complete. `GET /api/auth/session` is implemented in `app/api/auth/session/route.ts` and covered by integration tests in `tests/integration/auth/session-route.test.ts`. Validates session token, retrieves staff profile, computes `allowedAreas`, and returns `{ data: { session, staff, allowedAreas } }` with 200, or returns 401 if unauthenticated. 77 unit tests and 90 integration tests passing. Next task is Task 3.3.4 (Milestone 3.3 verification and close).
 
 ## 8. How the File Evolves
 
