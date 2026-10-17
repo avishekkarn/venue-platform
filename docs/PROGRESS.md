@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0098 | 2026-10-18 | Task 4.4.2 — Add the primary action (View Menu or Explore Services) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0097 | 2026-10-18 | Task 4.4.1 — Add the venue hero (The First 1.5 Seconds) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0096 | 2026-10-18 | Task 4.3.4 — Verify the QR landing (Milestone 4.3 Close) | STRUCTURAL | Milestone 4.3 | §5.3 |
 | ENTRY-0095 | 2026-10-18 | Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token | PASS | Milestone 4.3 | §5.3 |
@@ -148,13 +149,139 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0098.
+Next entry number: 0099.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0098 — 2026-10-18 — Task 4.4.2 — Add the primary action (View Menu or Explore Services)
+Status: PASS
+
+Task: Task 4.4.2 — Add the primary action (View Menu or Explore Services)
+
+Summary:
+Added the centered primary action CTA button beneath `<GuestHero />` on both the `/menu` and `/services` landing pages using the `Button` component from `@/components/ui/button`. On `app/(guest)/menu/page.tsx`, rendered a large tactile "View Menu" button configured with `size="xl"` (60px height) and `variant="primary"` (guest brand color), wrapped in `<div className="mt-8 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">`, completely replacing the previous "The menu is being prepared." text placeholder. On `app/(guest)/services/page.tsx`, rendered an identical action area with an "Explore Services" button using `size="xl"` and `variant="primary"`, completely replacing the previous "Services are being prepared." text placeholder. Typecheck clean, Next.js build clean with dynamically rendered pages, 121 unit tests passing across 20 files, 103 integration tests passing across 22 files, and manual checks verified on the running development server.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/page.tsx | Edit | Render primary action "View Menu" button (size="xl", variant="primary") below GuestHero |
+| app/(guest)/services/page.tsx | Edit | Render primary action "Explore Services" button (size="xl", variant="primary") below GuestHero |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.2 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0098, update ledger, advance Section 7 snapshot to Task 4.4.3 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Compiled successfully in 831ms
+  Running TypeScript ...
+  Finished TypeScript in 451ms ...
+  Generating static pages using 15 workers (16/16) in 271ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  02:34:15
+   Duration  859ms (tests 39%, import 28%, transform 28%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  02:34:21
+   Duration  64.98s (tests 97%, setup 2%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | `/menu` has "View Menu" button using `variant="primary"` and `size="xl"` | Inspect `menu/page.tsx` & HTML | Renders Button with `size="xl"`, `variant="primary"`, label "View Menu" | Verified |
+| 2 | `/services` has "Explore Services" button using `variant="primary"` and `size="xl"` | Inspect `services/page.tsx` & HTML | Renders Button with `size="xl"`, `variant="primary"`, label "Explore Services" | Verified |
+| 3 | Both buttons wrapped in entrance animated container | Inspect markup | `<div className="mt-8 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">` | Verified |
+| 4 | "The menu is being prepared." text removed | Inspect `menu/page.tsx` & HTML | Text completely absent | Verified |
+| 5 | "Services are being prepared." text removed | Inspect `services/page.tsx` & HTML | Text completely absent | Verified |
+| 6 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 859ms) |
+| 7 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 64.98s) |
+| 8 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 9 | Build passes | `pnpm build` | Clean exit code 0; `/menu` and `/services` dynamically rendered | Verified (compiled in 831ms) |
+| 10 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 11 | ROADMAP.md marks Task 4.4.2 as Complete | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete | Verified |
+| 12 | PROGRESS.md has ENTRY-0098 and §7 snapshot names Task 4.4.3 | Inspect `docs/PROGRESS.md` | Entry recorded, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Task 4.4.3 will add the quiet secondary actions ("Call a waiter", "Request the bill") beneath the primary action.
+- The button action routing to the menu view will be wired in Phase 5.
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.4, §4.6.1 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.2 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0098, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill).
+
+Awaiting Human Verification: NO
 
 ENTRY-0097 — 2026-10-18 — Task 4.4.1 — Add the venue hero (The First 1.5 Seconds)
 Status: PASS
@@ -2352,9 +2479,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.4 — The guest landing screen.
 
-Current task: Task 4.4.2 — Add the primary action (View Menu or Explore Services).
+Current task: Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill).
 
-Current status: Task 4.4.1 completed. Created GuestHero Server Component with ambient brand-color glow, Fraunces headline, place context, and welcome message. Wired /menu and /services to authenticate guest session, resolve venue and place context, and render GuestHero. Verified against Next.js build, unit tests (121/121), and full integration suite (103/103). Next task is Task 4.4.2.
+Current status: Task 4.4.2 completed. Added centered primary action CTA button using size="xl" (60px) and variant="primary" (venue brand color) with entrance animation. /menu renders "View Menu" and /services renders "Explore Services", replacing the preparation text placeholders. Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.3.
 
 ## 8. How the File Evolves
 

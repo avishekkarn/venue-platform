@@ -8,6 +8,7 @@ import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/or
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
 import { GuestHero } from "@/components/guest/hero";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -62,9 +63,11 @@ export default async function ServicesPage(): Promise<JSX.Element> {
   return (
     <div className="min-h-dvh flex flex-col items-center">
       <GuestHero venue={venue.value} placeContext={placeContext} />
-      <p className="text-center text-guest-text-muted mt-12">
-        Services are being prepared.
-      </p>
+      <div className="mt-8 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
+        <Button size="xl" variant="primary">
+          Explore Services
+        </Button>
+      </div>
     </div>
   );
 }
