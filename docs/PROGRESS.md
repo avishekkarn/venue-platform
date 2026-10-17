@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0061 | 2026-10-17 | Task 3.2.4 — Add the canAccess domain function (roles and areas) | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0060 | 2026-10-17 | Task 3.2.3 — Add the getSession domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0059 | 2026-10-17 | Task 3.2.2 — Add the logout domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0058 | 2026-10-17 | Task 3.2.1 — Add the login domain function | PASS | Milestone 3.2 | §5.3 |
@@ -135,13 +136,164 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0061.
+Next entry number: 0062.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.2 (The auth domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0061 — 2026-10-17 — Task 3.2.4 — Add the canAccess domain function (roles and areas)
+Status: PASS
+
+Task: Task 3.2.4 — Add the canAccess domain function (roles and areas)
+
+Summary:
+Implemented the `canAccess` domain function and `Area` union type in `src/domain/auth/can-access.ts` and exported them from `src/domain/auth/index.ts`. The function maps staff roles to protected areas according to SYSTEM.md §7.1 and DECISIONS.md D-3.6 (roles union), granting OWNER and MANAGER blanket access across all areas, and matching dedicated roles to their respective domains (CHEF -> kitchen, TABLE_SERVICE -> table-service, etc.). Verified with 6 unit tests in `tests/unit/auth/can-access.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/auth/can-access.ts | Edit | Implemented canAccess domain function and Area type |
+| src/domain/auth/index.ts | Edit | Exported canAccess and Area from auth module |
+| tests/unit/auth/can-access.test.ts | Edit | Implemented 6 unit tests covering role access matrix and union behavior |
+| docs/ROADMAP.md | Edit | Marked Task 3.2.4 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0061, updated ledger, advanced §7 to Task 3.2.5 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/auth/can-access.test.ts
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  15:44:32
+   Duration  147ms (transform 60%, import 23%, worker 9%, tests 7%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/date.test.ts (14 tests) 25ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 10ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 17ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 26ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 368ms
+
+ Test Files  10 passed (10)
+      Tests  72 passed (72)
+   Start at  15:44:52
+   Duration  605ms (tests 61%, import 21%, transform 11%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2408ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2141ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2505ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2151ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2034ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2277ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 1784ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2502ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2315ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2264ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2123ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2094ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2117ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1595ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  15:44:58
+   Duration  44.07s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path src/domain/auth/can-access.ts -Pattern "from ['`"]@prisma/client|from ['`"]react|from ['`"]next"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `Area` type defined covering all 10 areas | PASS | Defined in `src/domain/auth/can-access.ts` |
+| 2 | `canAccess` function exported from `src/domain/auth/index.ts` | PASS | Exported alongside `Area` |
+| 3 | Owner and Manager have access to all areas | PASS | Verified in unit tests for admin, kitchen, and table-service |
+| 4 | Specific roles grant access only to authorized areas | PASS | Verified for Chef, Table Service, and combinations |
+| 5 | Multiple roles allow union of privileges | PASS | [TABLE_SERVICE, HOUSEKEEPING] grants both table-service and housekeeping |
+| 6 | Empty roles array denies all access | PASS | Verified all 10 areas return false |
+| 7 | 6 unit tests pass in `tests/unit/auth/can-access.test.ts` | PASS | All 6 tests passing |
+| 8 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 9 | Full unit suite passes with 72 tests | PASS | 10 files passed, 72 tests passed |
+| 10 | Full integration suite remains green with 78 tests | PASS | 15 files passed, 78 tests passed (44.07s duration) |
+| 11 | Domain boundary respected (no framework/infrastructure imports) | PASS | Boundary check regex produced empty output |
+| 12 | ROADMAP.md updated | PASS | Task 3.2.4 marked `✅ Complete` |
+| 13 | PROGRESS.md updated | PASS | ENTRY-0061 appended, ledger updated, snapshot advanced to Task 3.2.5 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+`canAccess` operates directly on pure domain types (`readonly StaffRole[]`, `Area`). Role checking in route handlers and middleware will wrap this function against authenticated `StaffSession` / `StaffMember` state.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.6 | No change |
+| SYSTEM.md | No | Conforms with §7.1, §7.2 | No change |
+| BUILD.md | No | Conforms with §5, §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.2.4 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0061 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.2.5 — Add the password-change invalidation logic. The first action: read DECISIONS.md D-3.3 and SYSTEM.md §6.3, then implement the domain logic or coordinator that ensures changing a staff member's password invalidates all of their active sessions across the system.
+
+Awaiting Human Verification: YES
 
 ENTRY-0060 — 2026-10-17 — Task 3.2.3 — Add the getSession domain function
 Status: PASS
@@ -1550,9 +1702,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.2 — The auth domain.
 
-Current task: Task 3.2.4 — Add the `canAccess` domain function (roles and areas).
+Current task: Task 3.2.5 — Add the password-change invalidation logic.
 
-Current status: Task 3.2.3 is complete. The `getSession` domain function is implemented in `src/domain/auth/get-session.ts` and exported from `src/domain/auth/index.ts`. Forwards raw token to injected `validateSession` dependency, returning `ok(session)` on valid session or generic UNAUTHORIZED on expired/null session. 66 unit tests and 78 integration tests passing. Next task is Task 3.2.4.
+Current status: Task 3.2.4 is complete. The `canAccess` domain function and `Area` type are implemented in `src/domain/auth/can-access.ts` and exported from `src/domain/auth/index.ts`. Evaluates roles against area requirements with OWNER/MANAGER blanket permissions and union of multiple roles per SYSTEM.md §7.1 and DECISIONS.md D-3.6. 72 unit tests and 78 integration tests passing. Next task is Task 3.2.5.
 
 ## 8. How the File Evolves
 

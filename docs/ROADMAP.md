@@ -233,7 +233,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 3.2.1 | Add the `login` domain function                        | ✅ Complete | 3.1.5      |
 | 3.2.2 | Add the `logout` domain function                       | ✅ Complete | 3.2.1      |
 | 3.2.3 | Add the `getSession` domain function                   | ✅ Complete | 3.2.1      |
-| 3.2.4 | Add the `canAccess` domain function (roles and areas)  | ⬜     | 3.2.3      |
+| 3.2.4 | Add the `canAccess` domain function (roles and areas)  | ✅ Complete | 3.2.3      |
 | 3.2.5 | Add the password-change invalidation logic             | ⬜     | 3.2.4      |
 | 3.2.6 | Add the single-session-per-staff-member logic          | ⬜     | 3.2.5      |
 | 3.2.7 | Verify: every domain function has unit tests; all pass | ⬜     | 3.2.6      |
