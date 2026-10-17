@@ -29,6 +29,7 @@ export default defineConfig({
       "tests/unit/lib/**/*.test.ts",
       "tests/unit/infrastructure/**/*.test.ts",
       "tests/unit/auth/**/*.test.ts",
+      "tests/unit/qr/**/*.test.ts",
     ],
     passWithNoTests: true,
     environment: "node",
