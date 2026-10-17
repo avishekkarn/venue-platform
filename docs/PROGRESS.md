@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0066 | 2026-10-17 | Task 3.3.2 — Add POST /api/auth/logout | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0065 | 2026-10-17 | Task 3.3.1 — Add POST /api/auth/login | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0064 | 2026-10-17 | Task 3.2.7 — Verify: every domain function has unit tests; all pass (Milestone 3.2 Close) | STRUCTURAL | Milestone 3.2 | §5.3 |
 | ENTRY-0063 | 2026-10-17 | Task 3.2.6 — Add the single-session-per-staff-member logic | PASS | Milestone 3.2 | §5.3 |
@@ -140,13 +141,166 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0066.
+Next entry number: 0067.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.3 (The auth routes)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0066 — 2026-10-17 — Task 3.3.2 — Add POST /api/auth/logout
+Status: PASS
+
+Task: Task 3.3.2 — Add POST /api/auth/logout
+
+Summary:
+Implemented the `POST /api/auth/logout` route handler in `app/api/auth/logout/route.ts`. The route functions as an adapter conforming to BUILD.md §6: reads the `venue_staff` session cookie via `getSessionCookie()`, if present looks up and ends the session in the database via `validateSession` and the `logout` domain function (idempotent), always clears the session cookie via `clearSessionCookie()`, and always returns the standard envelope `{ data: { success: true } }` with HTTP 200. Verified with 3 integration tests in `tests/integration/auth/logout-route.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/auth/logout/route.ts | Create | Implemented POST /api/auth/logout route handler |
+| tests/integration/auth/logout-route.test.ts | Create | Added 3 integration tests covering valid session (200), no cookie (200), and invalid token (200) |
+| docs/ROADMAP.md | Edit | Marked Task 3.3.2 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0066, updated ledger, advanced §7 to Task 3.3.3 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/auth/logout-route.test.ts
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/auth/logout-route.test.ts (3 tests) 4405ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:34:10
+   Duration  4.99s (tests 94%, import 2%, setup 2%, transform 2%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 13ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 14ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 10ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 8ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 26ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 43ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 42ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 15ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 536ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  16:34:28
+   Duration  887ms (tests 55%, import 22%, transform 15%, worker 8%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2678ms
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 2694ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2053ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2172ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2445ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2037ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 1899ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2269ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 1834ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1635ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 2062ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2198ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2336ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2578ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2517ms
+ ✓ tests/integration/auth/logout-route.test.ts (3 tests) 2400ms
+
+ Test Files  18 passed (18)
+      Tests  86 passed (86)
+   Start at  16:34:40
+   Duration  56.98s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path app/api/auth/logout/route.ts -Pattern "from ['`"]@/domain/orders"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `POST /api/auth/logout` route created | PASS | Implemented in `app/api/auth/logout/route.ts` |
+| 2 | Reads `venue_staff` session cookie via `getSessionCookie()` | PASS | Token extracted via `getSessionCookie` helper |
+| 3 | Ends session in DB if cookie present (idempotent) | PASS | Looks up session and delegates to domain `logout` and `deleteSession` |
+| 4 | Clears cookie on every call | PASS | `clearSessionCookie()` invoked regardless of session state |
+| 5 | Returns `{ data: { success: true } }` with 200 | PASS | Standard envelope returned on all execution paths |
+| 6 | 3 integration tests pass in `tests/integration/auth/logout-route.test.ts` | PASS | All 3 tests passed cleanly |
+| 7 | TypeScript typecheck clean | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 8 | Unit test suite passes with 77 tests | PASS | 11 files passed, 77 tests passed |
+| 9 | Integration test suite passes with 86 tests | PASS | 18 files passed, 86 tests passed (56.98s duration) |
+| 10 | Route boundary pure (no cross-domain order imports) | PASS | Regex check produced empty output |
+| 11 | ROADMAP.md updated | PASS | Task 3.3.2 marked `✅ Complete` |
+| 12 | PROGRESS.md updated | PASS | ENTRY-0066 appended, ledger updated, snapshot advanced to Task 3.3.3 |
+
+Deviations from Contract:
+`@/infrastructure/auth/cookies` is mocked via `vi.mock` in `tests/integration/auth/logout-route.test.ts` because Next.js `cookies()` requires an active HTTP server request context not present during direct route function calls in Vitest (explicitly specified in Task 3.3.2 Step 3).
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.2 | No change |
+| SYSTEM.md | No | Conforms with §5, §6.3, §12.1 | No change |
+| BUILD.md | No | Conforms with §6, §7.4 | No change |
+| ROADMAP.md | Yes | Marked Task 3.3.2 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0066 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.3.3 — Add `GET /api/auth/session`. The first action: read `src/domain/auth/get-session.ts`, `src/domain/auth/can-access.ts`, and `src/infrastructure/auth/cookies.ts`, then implement `app/api/auth/session/route.ts` to return the current staff session and computed `allowedAreas`, or return 401 if unauthenticated.
+
+Awaiting Human Verification: YES
 
 ENTRY-0065 — 2026-10-17 — Task 3.3.1 — Add POST /api/auth/login
 Status: PASS
@@ -2323,9 +2477,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.3 — The auth routes.
 
-Current task: Task 3.3.2 — Add `POST /api/auth/logout`.
+Current task: Task 3.3.3 — Add `GET /api/auth/session`.
 
-Current status: Task 3.3.1 is complete. `POST /api/auth/login` is implemented in `app/api/auth/login/route.ts` and covered by integration tests in `tests/integration/auth/login-route.test.ts`. Authenticates credentials, sets `venue_staff` session cookie, and returns `{ data: { staff, allowedAreas } }` with 200, or maps domain failures. 77 unit tests and 83 integration tests passing. Next task is Task 3.3.2.
+Current status: Task 3.3.2 is complete. `POST /api/auth/logout` is implemented in `app/api/auth/logout/route.ts` and covered by integration tests in `tests/integration/auth/logout-route.test.ts`. Reads cookie, deletes session in DB (idempotent), clears cookie via `clearSessionCookie`, and returns `{ data: { success: true } }` with 200. 77 unit tests and 86 integration tests passing. Next task is Task 3.3.3.
 
 ## 8. How the File Evolves
 
