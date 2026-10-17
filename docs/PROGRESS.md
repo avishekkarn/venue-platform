@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0094 | 2026-10-18 | Task 4.3.2 — Add the "QR no longer active" screen | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0093 | 2026-10-18 | Task 4.3.1 — Re-issue QR landing as Route Handler | STRUCTURAL | Milestone 4.3 | §5.3 |
 | ENTRY-0092 | 2026-10-18 | Task 4.3.1 — Add the QR landing page (resolves the token, creates the session, redirects) | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0091 | 2026-10-18 | Task 4.2.4 — Verify the guest session lifecycle (Milestone 4.2 Close) | PASS | Milestone 4.2 | §5.3 |
@@ -144,13 +145,212 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0094.
+Next entry number: 0095.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.3 (The QR Landing)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0094 — 2026-10-18 — Task 4.3.2 — Add the "QR no longer active" screen
+Status: PASS
+
+Task: Task 4.3.2 — Add the "QR no longer active" screen
+
+Summary:
+Created the inactive QR screen at `app/(guest)/qr/inactive/page.tsx` as a Server Component inside the guest layout. The screen uses pure Tailwind utilities styled with guest design tokens (`font-display`, `text-3xl`, `text-guest-text-primary`, `text-guest-text-muted`), containing zero inline styles and zero raw hex colors, rendering "This QR is no longer active." and "Please ask a member of staff for help." Calm, centered, and fully aligned with the guest voice (D-1.2, D-9.4, DESIGN.md §4.13.1). Modified `app/(guest)/qr/[token]/route.ts` to redirect failure paths (`!resolved.ok`, `!venue.ok`, `!session.ok`) via `NextResponse.redirect(new URL("/qr/inactive", request.url))` while preserving server logging for diagnostics. Typecheck clean, build clean with route table showing `ƒ /qr/[token]` and `○ /qr/inactive`, 121 unit tests passing, and 100 integration tests passing.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/qr/inactive/page.tsx | Create | Server Component rendering the calm "This QR is no longer active" screen using guest tokens |
+| app/(guest)/qr/[token]/route.ts | Edit | Redirect failure branches to `/qr/inactive` instead of returning raw inline HTML |
+| docs/ROADMAP.md | Edit | Mark Task 4.3.2 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0094, update ledger, advance §7 to Task 4.3.3 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 1027ms
+  Running TypeScript ...
+  Finished TypeScript in 443ms ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/16) ...
+  Generating static pages using 15 workers (4/16) 
+  Generating static pages using 15 workers (8/16) 
+  Generating static pages using 15 workers (12/16) 
+✓ Generating static pages using 15 workers (16/16) in 322ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ○ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ○ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/money.test.ts (16 tests) 27ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 23ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 9ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 29ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 14ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 12ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 96ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 4ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 461ms
+
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  01:35:50
+   Duration  892ms (tests 38%, import 29%, transform 27%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  21 passed (21)
+      Tests  100 passed (100)
+   Start at  01:36:11
+   Duration  55.44s (tests 97%, setup 2%)
+```
+
+```powershell
+curl.exe -i "http://localhost:3000/qr/00000000-0000-0000-0000-000000000000"
+```
+Output:
+```
+HTTP/1.1 307 Temporary Redirect
+location: http://localhost:3000/qr/inactive
+```
+
+```powershell
+curl.exe -i "http://localhost:3000/qr/not-a-uuid"
+```
+Output:
+```
+HTTP/1.1 307 Temporary Redirect
+location: http://localhost:3000/qr/inactive
+```
+
+```powershell
+curl.exe -i "http://localhost:3000/qr/9f583526-3491-449c-99be-abaa074a2219"
+```
+Output:
+```
+HTTP/1.1 307 Temporary Redirect
+location: http://localhost:3000/menu
+set-cookie: venue_guest=44137d23-05d7-4a41-af49-7cdb37c60d09; Path=/; Expires=Mon, 16 Nov 2026 20:08:31 GMT; Max-Age=2592000; HttpOnly; SameSite=lax
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | Inactive QR page exists as a Server Component with guest tokens | Test-Path and inspect `app/(guest)/qr/inactive/page.tsx` | Pure Tailwind over guest tokens, no inline styles, no raw hex | Verified |
+| 2 | Route Handler redirects failure branches to `/qr/inactive` | Inspect `app/(guest)/qr/[token]/route.ts` | Redirects to `/qr/inactive` on failure via `NextResponse.redirect` | Verified |
+| 3 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 4 | Next.js build passes | `pnpm build` | Compiled successfully; `○ /qr/inactive` and `ƒ /qr/[token]` in route table | Verified (exit code 0) |
+| 5 | Unit test suite passes | `pnpm test:unit` | 121 tests passing across 20 files | Verified (121/121 passed) |
+| 6 | Integration test suite passes | `pnpm test:integration` | 100 tests passing across 21 files | Verified (100/100 passed) |
+| 7 | Unknown UUID token redirects to `/qr/inactive` | `curl.exe -i http://localhost:3000/qr/00000000-0000-0000-0000-000000000000` | HTTP 307 Redirect to `/qr/inactive` | Verified (`location: http://localhost:3000/qr/inactive`) |
+| 8 | Malformed token string redirects to `/qr/inactive` | `curl.exe -i http://localhost:3000/qr/not-a-uuid` | HTTP 307 Redirect to `/qr/inactive` | Verified (`location: http://localhost:3000/qr/inactive`) |
+| 9 | Inactive page renders calm copy inside guest layout | Fetch `/qr/inactive` | Renders "This QR is no longer active." and "Please ask a member of staff for help." | Verified |
+| 10 | Valid token resolution success path unaffected | `curl.exe -i http://localhost:3000/qr/<active-token>` | HTTP 307 Redirect to `/menu` with `venue_guest` cookie | Verified |
+| 11 | ROADMAP 4.3.2 marked ✅ Complete on evidence | Inspect `docs/ROADMAP.md` | Task 4.3.2 is ✅ Complete | Verified |
+| 12 | PROGRESS has ENTRY-0094 and §7 names Task 4.3.3 | Inspect `docs/PROGRESS.md` | Entry appended, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- The root "scan the QR" screen for guests landing at `/` without a token is Task 4.3.3.
+- The barrels `src/domain/qr/index.ts` and `src/domain/organization/index.ts` remain empty as tracked previously.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Matches product behavior | No change |
+| DECISIONS.md | No | Adheres to D-1.2, D-9.4 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.2, §4.13.1, §4.14, §4.15.2 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.3.2 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0094, updated ledger, advanced snapshot to Task 4.3.3 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token.
+
+Awaiting Human Verification: NO
 
 ENTRY-0093 — 2026-10-18 — Task 4.3.1 — Re-issue QR landing as Route Handler
 Status: STRUCTURAL
@@ -1656,9 +1856,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.3 — The QR landing.
 
-Current task: Task 4.3.2 — Add the "QR no longer active" screen.
+Current task: Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token.
 
-Current status: Task 4.3.1 is complete. Re-issued the QR landing route as a Route Handler at app/(guest)/qr/[token]/route.ts (fixing Next.js 16 Server Component cookie write restriction), executing full resolution chain, setting the venue_guest cookie on NextResponse.redirect, and returning token-styled HTML placeholders on error. Typecheck, build, 121 unit tests, and 100 integration tests pass. Next task is Task 4.3.2.
+Current status: Task 4.3.2 is complete. Added the inactive QR screen at app/(guest)/qr/inactive/page.tsx as a Server Component adhering to guest design tokens (sand surface, forest text, Fraunces headline, Inter body, no inline styles or raw hex), and updated the Route Handler at app/(guest)/qr/[token]/route.ts to redirect to /qr/inactive on resolution or session failures. Typecheck, build, 121 unit tests, and 100 integration tests pass. Next task is Task 4.3.3.
 
 ## 8. How the File Evolves
 

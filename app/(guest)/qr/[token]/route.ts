@@ -6,34 +6,6 @@ import { createPrismaQrTokenRepository } from "@/infrastructure/db/repositories/
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { prisma } from "@/infrastructure/db/client";
-import { DomainErrorCode } from "@/domain/shared/result";
-
-function renderPlaceholderHtml(): string {
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <title>QR</title>
-</head>
-<body style="margin: 0; min-height: 100dvh; display: flex; align-items: center; justify-content: center; background-color: #faf7f2; font-family: system-ui, -apple-system, sans-serif; padding: 1rem;">
-  <div style="max-width: 28rem; text-align: center;">
-    <h1 style="color: #344b3c; font-size: 1.875rem; line-height: 2.25rem; font-weight: 600; margin: 0 0 1rem 0;">This QR is not available.</h1>
-    <p style="color: #5c6f62; font-size: 1rem; line-height: 1.5rem; margin: 0;">Ask a member of staff for help.</p>
-  </div>
-</body>
-</html>`;
-}
-
-function placeholderResponse(status: number): NextResponse {
-  return new NextResponse(renderPlaceholderHtml(), {
-    status,
-    headers: {
-      "content-type": "text/html; charset=utf-8",
-    },
-  });
-}
 
 export async function GET(
   request: NextRequest,
@@ -50,9 +22,7 @@ export async function GET(
       code: resolved.error.code,
       token,
     });
-    const status =
-      resolved.error.code === DomainErrorCode.VALIDATION_FAILED ? 400 : 404;
-    return placeholderResponse(status);
+    return NextResponse.redirect(new URL("/qr/inactive", request.url));
   }
 
   // c. Fetch venue by slug
@@ -65,7 +35,7 @@ export async function GET(
       code: venue.error.code,
       slug: process.env["VENUE_SLUG"] ?? "juniper-house",
     });
-    return placeholderResponse(404);
+    return NextResponse.redirect(new URL("/qr/inactive", request.url));
   }
 
   // d. Derive placeId from discriminated union
@@ -99,7 +69,7 @@ export async function GET(
       placeId,
       venueId: venue.value.id,
     });
-    return placeholderResponse(404);
+    return NextResponse.redirect(new URL("/qr/inactive", request.url));
   }
 
   // f. Redirect by place type, and set the cookie on the redirect response
