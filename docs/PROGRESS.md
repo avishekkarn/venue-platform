@@ -132,17 +132,170 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0086 | 2026-10-17 | Task 4.1.4 — Add the QR image generator | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0084 | 2026-10-17 | Task 4.1.3 — Add the revokeToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0085.
+Next entry number: 0087.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.1 (The QR Code Domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0086 — 2026-10-17 — Task 4.1.4 — Add the QR image generator
+Status: PASS
+
+Task: Task 4.1.4 — Add the QR image generator
+
+Summary:
+Created the `QrImageGenerator` domain port in `src/domain/qr/qr-image-generator.ts` and its infrastructure adapter `QrImageAdapter` in `src/infrastructure/qr/qr-image.adapter.ts` using the `qrcode` library to render high-resolution 600px PNG buffers. Exported the adapter factory `createQrImageGenerator` from `src/infrastructure/qr/index.ts`. Added unit tests in `tests/unit/infrastructure/qr/qr-image.adapter.test.ts` verifying PNG magic bytes (0x89, 0x50, 0x4E, 0x47) on valid URLs and options forwarding. All 104 unit tests, typecheck, and production build pass cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| package.json | Edit | Add qrcode and @types/qrcode dependencies |
+| pnpm-lock.yaml | Edit | Update lockfile for qrcode dependencies |
+| src/domain/qr/qr-image-generator.ts | Create | Domain port interface for QR image generation |
+| src/infrastructure/qr/qr-image.adapter.ts | Create | Implementation adapter using qrcode library producing PNG buffers |
+| src/infrastructure/qr/index.ts | Create | Export createQrImageGenerator factory |
+| tests/unit/infrastructure/qr/qr-image.adapter.test.ts | Create | Unit tests verifying PNG magic bytes and option forwarding |
+| docs/ROADMAP.md | Edit | Mark Task 4.1.4 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0086, update ledger, advance §7 to Task 4.2.1 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 31ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 35ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 7ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 82ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 442ms
+
+ Test Files  18 passed (18)
+      Tests  104 passed (104)
+   Start at  22:39:03
+   Duration  729ms (tests 40%, transform 27%, import 27%, worker 6%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 571ms
+  Running TypeScript ...
+  Finished TypeScript in 414ms ...
+  Collecting page data using 14 workers ...
+  Generating static pages using 14 workers (0/13) ...
+  Generating static pages using 14 workers (3/13) 
+  Generating static pages using 14 workers (6/13) 
+  Generating static pages using 14 workers (9/13) 
+✓ Generating static pages using 14 workers (13/13) in 625ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | qrcode is installed | Select-String package.json | The dependency is present | Verified: qrcode ^1.5.4 in dependencies |
+| 2 | The port exists | Get-Content src/domain/qr/qr-image-generator.ts | The interface is defined | Verified |
+| 3 | The adapter exists | Get-Content src/infrastructure/qr/qr-image.adapter.ts | The implementation uses the qrcode library | Verified |
+| 4 | Unit tests pass | pnpm test:unit | 104 tests passing | Verified: 104 passed across 18 test files |
+| 5 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit code 0) |
+| 6 | Build passes | pnpm build | Compiled successfully | Verified (exit code 0) |
+| 7 | ROADMAP.md marks Task 4.1.4 complete | Select-String | Row shows ✅ Complete | Verified |
+| 8 | PROGRESS.md has ENTRY-0086 and §7 names Task 4.2.1 | Select-String | Entry recorded, snapshot updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Verification of end-to-end QR generation and scannability will be finalized in Milestone 4.1 close / Milestone 4.2.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-16.2 | No change |
+| SYSTEM.md | No | Adheres to §8.5 | No change |
+| BUILD.md | No | Adheres to ports/adapters isolation rules | No change |
+| ROADMAP.md | Yes | Marked Task 4.1.4 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0086, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.2.1 — Add the guest session service (create, read, invalidate).
+
+Awaiting Human Verification: NO
 
 ENTRY-0084 — 2026-10-17 — Task 4.1.3 — Add the revokeToken domain function
 Status: PASS
@@ -595,11 +748,11 @@ Updated at the end of every session.
 
 Current phase: Phase 4 — QR Codes and Guest Context.
 
-Current milestone: Milestone 4.1 — The QR code domain.
+Current milestone: Milestone 4.2 — The guest session.
 
-Current task: Task 4.1.4 — Add the QR image generator (the adapter that produces a scannable image).
+Current task: Task 4.2.1 — Add the guest session service (create, read, invalidate).
 
-Current status: Task 4.1.3 is complete. Implemented revokeToken pure domain function in src/domain/qr/revoke-token.ts with UUID format boundary validation and delegation to QrTokenRepository.revoke. 102 unit tests passing, clean typecheck and production build. Next task is Task 4.1.4.
+Current status: Task 4.1.4 is complete. Implemented QrImageGenerator port and QrImageAdapter using qrcode library to generate PNG buffers. 104 unit tests passing, clean typecheck and production build. Next task is Task 4.2.1.
 
 ## 8. How the File Evolves
 
