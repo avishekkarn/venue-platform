@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0062 | 2026-10-17 | Task 3.2.5 — Add the password-change invalidation logic | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0061 | 2026-10-17 | Task 3.2.4 — Add the canAccess domain function (roles and areas) | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0060 | 2026-10-17 | Task 3.2.3 — Add the getSession domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0059 | 2026-10-17 | Task 3.2.2 — Add the logout domain function | PASS | Milestone 3.2 | §5.3 |
@@ -136,13 +137,166 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0062.
+Next entry number: 0063.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.2 (The auth domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0062 — 2026-10-17 — Task 3.2.5 — Add the password-change invalidation logic
+Status: PASS
+
+Task: Task 3.2.5 — Add the password-change invalidation logic
+
+Summary:
+Implemented the `changePassword` domain function in `src/domain/auth/change-password.ts` and exported it from `src/domain/auth/index.ts`. Enforces DECISIONS.md D-3.3 and SYSTEM.md §6.3/§15.3: hashes the new plain password, updates the staff password hash via `StaffRepository.updatePasswordHash`, and immediately invalidates all active sessions for the staff member via injected `invalidateAllSessions`. Fails gracefully if the staff member is not found, or if hashing/invalidation encounters an unexpected internal error. Verified with 5 unit tests in `tests/unit/auth/change-password.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/auth/change-password.ts | Create | Implemented changePassword domain function and dependency types |
+| src/domain/auth/index.ts | Edit | Exported changePassword and its types from auth module |
+| tests/unit/auth/change-password.test.ts | Create | Added 5 unit tests covering success, not found, call ordering, invalidation errors, and hashing errors |
+| docs/ROADMAP.md | Edit | Marked Task 3.2.5 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0062, updated ledger, advanced §7 to Task 3.2.6 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/auth/change-password.test.ts
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 5ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  15:48:53
+   Duration  157ms (transform 65%, import 20%, tests 9%, worker 7%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 6ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 13ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 28ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 31ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 356ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  15:49:18
+   Duration  581ms (tests 54%, import 22%, transform 17%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2354ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2756ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2615ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2215ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2413ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2398ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2353ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2450ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2108ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2140ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2170ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2383ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2441ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2149ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  15:49:24
+   Duration  48.66s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path src/domain/auth/change-password.ts -Pattern "from ['`"]@prisma/client|from ['`"]react|from ['`"]next"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `changePassword` domain function accepts ChangePasswordDependencies and ChangePasswordInput | PASS | Implemented in `src/domain/auth/change-password.ts` with pure DI |
+| 2 | `changePassword` exported from `src/domain/auth/index.ts` | PASS | Exported alongside dependency types |
+| 3 | Hashes new password and persists new hash | PASS | Verified in unit test with mock `hashPassword` and `updatePasswordHash` |
+| 4 | Returns failure and skips invalidation if staff member not found | PASS | Verified in unit test returning `fail(NOT_FOUND)` |
+| 5 | Invalidates all existing sessions after password update succeeds | PASS | Verified call ordering via `invocationCallOrder` |
+| 6 | Returns `fail(INTERNAL)` when invalidation fails | PASS | Catches error and returns generic internal failure |
+| 7 | Returns `fail(INTERNAL)` when hashing fails | PASS | Catches error and returns generic internal failure |
+| 8 | 5 unit tests pass in `tests/unit/auth/change-password.test.ts` | PASS | All 5 test cases passing |
+| 9 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 10 | Full unit suite passes with 77 tests | PASS | 11 files passed, 77 tests passed |
+| 11 | Full integration suite remains green with 78 tests | PASS | 15 files passed, 78 tests passed (48.66s duration) |
+| 12 | Domain boundary respected (no framework/infrastructure imports) | PASS | Boundary check regex produced empty output |
+| 13 | ROADMAP.md updated | PASS | Task 3.2.5 marked `✅ Complete` |
+| 14 | PROGRESS.md updated | PASS | ENTRY-0062 appended, ledger updated, snapshot advanced to Task 3.2.6 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Authorization checks (e.g., verifying caller has MANAGER role per D-3.8) are performed at the API route layer (Milestone 3.3). The domain function focuses purely on the business transaction (hash, update, invalidate).
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.3, D-3.8 | No change |
+| SYSTEM.md | No | Conforms with §6.3, §15.3 | No change |
+| BUILD.md | No | Conforms with §5, §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.2.5 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0062 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.2.6 — Add the single-session-per-staff-member logic. The first action: read DECISIONS.md D-3.4 and SYSTEM.md §6.3, verify how login and session invalidation coordinate to guarantee only one session exists per staff member at a time, and add domain tests/guards where required.
+
+Awaiting Human Verification: YES
 
 ENTRY-0061 — 2026-10-17 — Task 3.2.4 — Add the canAccess domain function (roles and areas)
 Status: PASS
@@ -1702,9 +1856,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.2 — The auth domain.
 
-Current task: Task 3.2.5 — Add the password-change invalidation logic.
+Current task: Task 3.2.6 — Add the single-session-per-staff-member logic.
 
-Current status: Task 3.2.4 is complete. The `canAccess` domain function and `Area` type are implemented in `src/domain/auth/can-access.ts` and exported from `src/domain/auth/index.ts`. Evaluates roles against area requirements with OWNER/MANAGER blanket permissions and union of multiple roles per SYSTEM.md §7.1 and DECISIONS.md D-3.6. 72 unit tests and 78 integration tests passing. Next task is Task 3.2.5.
+Current status: Task 3.2.5 is complete. The `changePassword` domain function is implemented in `src/domain/auth/change-password.ts` and exported from `src/domain/auth/index.ts`. Hashes the new password, updates the staff password hash in the database, and immediately invalidates all active sessions for the staff member to enforce D-3.3 and SYSTEM.md §6.3/§15.3. 77 unit tests and 78 integration tests passing. Next task is Task 3.2.6.
 
 ## 8. How the File Evolves
 

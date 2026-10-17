@@ -10,3 +10,4 @@ export * from "./login";
 export * from "./logout";
 export * from "./get-session";
 export * from "./can-access";
+export * from "./change-password";
