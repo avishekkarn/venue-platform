@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0099 | 2026-10-18 | Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0098 | 2026-10-18 | Task 4.4.2 — Add the primary action (View Menu or Explore Services) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0097 | 2026-10-18 | Task 4.4.1 — Add the venue hero (The First 1.5 Seconds) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0096 | 2026-10-18 | Task 4.3.4 — Verify the QR landing (Milestone 4.3 Close) | STRUCTURAL | Milestone 4.3 | §5.3 |
@@ -149,13 +150,138 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0099.
+Next entry number: 0100.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0099 — 2026-10-18 — Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill)
+Status: PASS
+
+Task: Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill)
+
+Summary:
+Added the quiet secondary actions beneath the primary action CTA on both the `/menu` and `/services` landing pages using the `Button` component with `variant="ghost"` and `size="md"`. Wrapped in a centered flex container with `gap-4` and entrance animation timing (`animate-in fade-in duration-700 delay-700 ease-guest-entrance`). On `app/(guest)/menu/page.tsx`, rendered two quiet ghost buttons: "Call a waiter" and "Request the bill". On `app/(guest)/services/page.tsx`, rendered two quiet ghost buttons: "Call the front desk" and "View requests". The buttons sit quietly without borders or solid backgrounds on the sand surface, respecting the visual hierarchy established in DESIGN.md §4.7.5. Typecheck clean, Next.js build clean with dynamically rendered pages, 121 unit tests passing across 20 files, 103 integration tests passing across 22 files, and manual checks verified on the running development server.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/page.tsx | Edit | Render quiet secondary action buttons ("Call a waiter", "Request the bill") below primary CTA |
+| app/(guest)/services/page.tsx | Edit | Render quiet secondary action buttons ("Call the front desk", "View requests") below primary CTA |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.3 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0099, update ledger, advance Section 7 snapshot to Task 4.4.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Compiled successfully in 688ms
+  Running TypeScript ...
+  Finished TypeScript in 405ms ...
+  Generating static pages using 15 workers (16/16) in 307ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  02:45:16
+   Duration  760ms (tests 38%, transform 28%, import 28%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  02:45:22
+   Duration  57.96s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | `/menu` has two ghost buttons ("Call a waiter", "Request the bill") | Inspect `menu/page.tsx` & HTML | Buttons rendered with `variant="ghost"`, `size="md"` | Verified |
+| 2 | `/services` has two ghost buttons ("Call the front desk", "View requests") | Inspect `services/page.tsx` & HTML | Buttons rendered with `variant="ghost"`, `size="md"` | Verified |
+| 3 | Container has entrance animation with delay-700 | Inspect markup | `<div className="mt-8 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">` | Verified |
+| 4 | Buttons sit quietly without distracting from primary CTA | Inspect styling | Transparent background, no borders, text-guest-text-primary | Verified |
+| 5 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 760ms) |
+| 6 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 57.96s) |
+| 7 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 8 | Build passes | `pnpm build` | Clean exit code 0; dynamic routes rendered | Verified (compiled in 688ms) |
+| 9 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 10 | ROADMAP.md marks Task 4.4.3 as Complete | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete | Verified |
+| 11 | PROGRESS.md has ENTRY-0099 and §7 snapshot names Task 4.4.4 | Inspect `docs/PROGRESS.md` | Entry recorded, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Task 4.4.4 will add the menu preview section below the secondary actions.
+- Event handlers for calling a waiter or requesting the bill will be wired in Phase 7.
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.5, §4.6.1 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.3 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0099, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.4 — Add the menu preview (a few featured items).
+
+Awaiting Human Verification: NO
 
 ENTRY-0098 — 2026-10-18 — Task 4.4.2 — Add the primary action (View Menu or Explore Services)
 Status: PASS
@@ -2479,9 +2605,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.4 — The guest landing screen.
 
-Current task: Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill).
+Current task: Task 4.4.4 — Add the menu preview (a few featured items).
 
-Current status: Task 4.4.2 completed. Added centered primary action CTA button using size="xl" (60px) and variant="primary" (venue brand color) with entrance animation. /menu renders "View Menu" and /services renders "Explore Services", replacing the preparation text placeholders. Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.3.
+Current status: Task 4.4.3 completed. Added quiet secondary action ghost buttons beneath primary CTA with entrance animation. /menu renders "Call a waiter" and "Request the bill"; /services renders "Call the front desk" and "View requests". Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.4.
 
 ## 8. How the File Evolves
 

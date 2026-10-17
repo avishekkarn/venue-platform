@@ -68,6 +68,14 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           Explore Services
         </Button>
       </div>
+      <div className="mt-8 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
+        <Button variant="ghost" size="md">
+          Call the front desk
+        </Button>
+        <Button variant="ghost" size="md">
+          View requests
+        </Button>
+      </div>
     </div>
   );
 }

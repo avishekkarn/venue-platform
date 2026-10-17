@@ -68,6 +68,14 @@ export default async function MenuPage(): Promise<JSX.Element> {
           View Menu
         </Button>
       </div>
+      <div className="mt-8 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
+        <Button variant="ghost" size="md">
+          Call a waiter
+        </Button>
+        <Button variant="ghost" size="md">
+          Request the bill
+        </Button>
+      </div>
     </div>
   );
 }
