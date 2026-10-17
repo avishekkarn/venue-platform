@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0068 | 2026-10-17 | Task 3.3.3.S — Structural: Record D-3.10, D-3.11, D-3.12 (Architectural implementation details) | STRUCTURAL | Milestone 3.3 | §5.3 |
 | ENTRY-0067 | 2026-10-17 | Task 3.3.3 — Add GET /api/auth/session | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0066 | 2026-10-17 | Task 3.3.2 — Add POST /api/auth/logout | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0065 | 2026-10-17 | Task 3.3.1 — Add POST /api/auth/login | PASS | Milestone 3.3 | §5.3 |
@@ -142,13 +143,138 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0068.
+Next entry number: 0069.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.3 (The auth routes)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0068 — 2026-10-17 — Task 3.3.3.S — Structural: Record D-3.10, D-3.11, D-3.12 (Architectural implementation details)
+Status: STRUCTURAL
+
+Task: None (structural session)
+
+Summary:
+Recorded three architectural implementation decisions in `docs/DECISIONS.md`: D-3.10 (API route handlers accept an optional injected database client `context?: { db?: DbClient }` for testability in integration tests), D-3.11 (frontend authentication forms submit via fetch to API routes, not Server Actions), and D-3.12 (integration test suite uses sequential execution `fileParallelism: false` and rollback transactions via `withTransaction`). Updated Category 3 in Table of Contents to cover D-3.1 to D-3.12, and updated the Appendix total decisions count to 97.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/DECISIONS.md | Edit | Recorded D-3.10, D-3.11, D-3.12, updated TOC, and bumped total decisions count to 97 |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0068, updated ledger, advanced §7 to Task 3.3.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 7ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 6ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 9ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 9ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 11ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 23ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 11ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 37ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 35ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 449ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  17:01:52
+   Duration  991ms (tests 53%, import 23%, transform 16%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 2507ms
+ ✓ tests/integration/auth/logout-route.test.ts (3 tests) 2974ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2877ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2854ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2615ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2871ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 3022ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2103ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 3086ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2684ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1975ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2964ms
+ ✓ tests/integration/auth/session-route.test.ts (4 tests) 3030ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2707ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2965ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2348ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2445ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2763ms
+
+ Test Files  19 passed (19)
+      Tests  90 passed (90)
+   Start at  17:02:02
+   Duration  72.59s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | D-3.10 added to docs/DECISIONS.md | PASS | Added route handler db injection decision |
+| 2 | D-3.11 added to docs/DECISIONS.md | PASS | Added REST API submission decision for auth forms |
+| 3 | D-3.12 added to docs/DECISIONS.md | PASS | Added integration test sequential and transaction rollback decision |
+| 4 | TOC updated in docs/DECISIONS.md | PASS | Category 3 updated to D-3.1 to D-3.12 |
+| 5 | Appendix updated in docs/DECISIONS.md | PASS | Total decisions count updated to 97 |
+| 6 | TypeScript typecheck clean | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 7 | Full unit test suite passes with 77 tests | PASS | 11 files passed, 77 tests passed |
+| 8 | Full integration test suite passes with 90 tests | PASS | 19 files passed, 90 tests passed |
+| 9 | docs/PROGRESS.md updated | PASS | ENTRY-0068 appended, ledger updated, snapshot at Task 3.3.4 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | Yes | Added D-3.10, D-3.11, D-3.12; bumped count to 97 | Updated |
+| SYSTEM.md | No | Aligns with §12 | No change |
+| BUILD.md | No | Aligns with §6, §8.8 | No change |
+| ROADMAP.md | No | No change to roadmap tasks | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0068 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses. The first action: execute comprehensive verification across `POST /api/auth/login`, `POST /api/auth/logout`, and `GET /api/auth/session`, ensuring all envelopes, statuses, and boundaries match specifications, and close Milestone 3.3.
+
+Awaiting Human Verification: YES
 
 ENTRY-0067 — 2026-10-17 — Task 3.3.3 — Add GET /api/auth/session
 Status: PASS

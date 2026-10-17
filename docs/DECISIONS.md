@@ -13,7 +13,7 @@
 
 1. Venue Identity — D-1.1 to D-1.3
 2. Guest Identity — D-2.1 to D-2.5
-3. Staff Identity — D-3.1 to D-3.9
+3. Staff Identity — D-3.1 to D-3.12
 4. Order Identity — D-4.1 to D-4.12
 5. Service Request Identity — D-5.1 to D-5.7
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
@@ -398,6 +398,39 @@
 **What would make us revisit:** If argon2 becomes unmaintained, or if a native binding issue blocks deployment, we switch to bcrypt via a new decision record. The old hashes stay valid via a migration that re-hashes at next login.
 
 **Traces to:** SYSTEM.md §15.3 (passwords hashed with a strong function), BUILD.md §7.4 (the security rules), BUILD.md §10.6 (a dependency choice requires a decision), D-3.1 (staff log in with username and password), D-3.3 (password change invalidates sessions — which reads the hash service), D-3.8 (only the manager resets a password — the reset re-hashes).
+
+---
+
+### D-3.10 — Route handlers accept an optional injected database client for testability
+
+Decision: API route handlers that touch the database accept an optional second argument context?: { db?: DbClient }. In production, Next.js does not pass this argument, so the route falls back to the module-scoped prisma singleton. In integration tests, the test passes { db: tx } where tx is the withTransaction client.
+Context: The integration tests run inside a rollback transaction. If the route used the global prisma singleton, it would write to the dev DB. Next.js reserves the second argument for dynamic route params ({ params }). For routes without dynamic segments, this is safe.
+Alternatives considered: vi.mock for every test (repetitive); factory pattern (changes export shape); in-memory DB (diverges from prod).
+Consequences: Future routes with dynamic segments ([id]) cannot use the second argument for db injection and must use vi.mock. This decision documents the pattern.
+What would make us revisit: Next.js changes the handler signature, or we exceed 20 database-touching routes.
+Traces to: BUILD.md §6, SYSTEM.md §12.
+
+---
+
+### D-3.11 — Authentication forms submit to API routes, not Server Actions
+
+Decision: The login forms in Milestone 3.4 will use fetch to call POST /api/auth/login, not Next.js Server Actions.
+Context: The cookie helpers (setSessionCookie, clearSessionCookie) use cookies() from next/headers. Server Actions have different caching and mutation semantics than route handlers. Using API routes keeps the auth contract pure and testable with our existing integration tests.
+Alternatives considered: Server Actions (tighter coupling to Next.js runtime, harder to integration test).
+Consequences: The API routes are the single source of truth for auth actions. The frontend is a standard REST client.
+What would make us revisit: A full migration to Server Actions if the project moves to a Server-Action-first architecture.
+Traces to: SYSTEM.md §12, BUILD.md §6.
+
+---
+
+### D-3.12 — Integration tests use sequential execution and transaction rollbacks
+
+Decision: The integration test suite runs with fileParallelism: false to prevent Postgres deadlocks. Every database test must wrap its operations in withTransaction from tests/integration/setup.ts, which throws a ROLLBACK_SIGNAL to roll back after the test.
+Context: Parallel test files caused connection pool exhaustion and deadlocks on the shared Postgres instance. The withTransaction harness ensures absolute test isolation without deleting production data.
+Alternatives considered: cleanTestDatabase() (destructive, leaves no trace on failure); parallel execution (causes deadlocks).
+Consequences: The test suite takes ~60s. Future tests must use withTransaction.
+What would make us revisit: If Postgres isolation improves, or if we move to a dedicated CI database per test file.
+Traces to: BUILD.md §8.8, PHASE_TESTS.md §4.
 
 ---
 
@@ -2156,7 +2189,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 94
+**Total decisions:** 97
 **Categories:** 17
 **Status:** All locked.
 
