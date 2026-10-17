@@ -126,17 +126,161 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0056 | 2026-10-17 | Task 3.1.4 — Add the session cookie helpers (set, read, clear) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0055 | 2026-10-17 | Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0056.
+Next entry number: 0057.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.1 (Session infrastructure)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0056 — 2026-10-17 — Task 3.1.4 — Add the session cookie helpers (set, read, clear)
+Status: PASS
+
+Task: Task 3.1.4 — Add the session cookie helpers (set, read, clear)
+
+Summary:
+Implemented the staff session cookie helpers in `src/infrastructure/auth/cookies.ts` (`setSessionCookie`, `getSessionCookie`, `clearSessionCookie`) using Next.js `cookies()` from `next/headers`. Configured secure cookie attributes (`venue_staff`, `httpOnly: true`, `secure: production`, `sameSite: "lax"`, `path: "/"`, `maxAge: 30 days`). Added 3 unit tests with `next/headers` mocking in `tests/unit/infrastructure/auth/cookies.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/infrastructure/auth/cookies.ts | Edit | Implemented setSessionCookie, getSessionCookie, clearSessionCookie |
+| tests/unit/infrastructure/auth/cookies.test.ts | Create | Added 3 unit tests covering set, get, and clear cookie helpers |
+| docs/ROADMAP.md | Edit | Marked Task 3.1.4 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0056, updated ledger, advanced §7 to Task 3.1.5 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/infrastructure/auth/cookies.test.ts
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  15:03:30
+   Duration  217ms (transform 61%, import 25%, worker 7%, tests 7%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 23ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 23ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 371ms
+
+ Test Files  6 passed (6)
+      Tests  56 passed (56)
+   Start at  15:03:40
+   Duration  539ms (tests 73%, import 15%, transform 7%, worker 5%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2076ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2390ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2137ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2363ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2314ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2125ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2115ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 3090ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2312ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2139ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2315ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2154ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2268ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2194ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  15:03:55
+   Duration  45.83s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path src/infrastructure/auth/cookies.ts -Pattern "from ['`"]@/domain|from ['`"]react|from ['`"]@prisma/client"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `setSessionCookie` sets `venue_staff` cookie with security flags | PASS | Sets `httpOnly: true`, `secure: production`, `sameSite: "lax"`, `path: "/"`, `maxAge: 30 days` |
+| 2 | `getSessionCookie` returns token or null | PASS | Returns token string when present, `null` when missing |
+| 3 | `clearSessionCookie` deletes `venue_staff` cookie | PASS | Calls `cookieStore.delete("venue_staff")` |
+| 4 | 3 unit tests pass in `tests/unit/infrastructure/auth/cookies.test.ts` | PASS | All 3 test cases passed cleanly |
+| 5 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 6 | Full unit test suite passes with 56 tests | PASS | 6 files passed, 56 tests passed |
+| 7 | Full integration test suite remains green with 78 tests | PASS | 15 files passed, 78 tests passed (45.83s duration) |
+| 8 | Architectural boundary respected | PASS | Boundary check regex produced empty output |
+| 9 | ROADMAP.md updated | PASS | Task 3.1.4 marked `✅ Complete` |
+| 10 | PROGRESS.md updated | PASS | ENTRY-0056 appended, ledger updated, snapshot advanced to Task 3.1.5 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Next.js 16 requires `await cookies()` as an asynchronous Promise per Next 15+ specifications, which is correctly implemented.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.2, D-3.4 | No change |
+| SYSTEM.md | No | Conforms with §6.4, §6.5 | No change |
+| BUILD.md | No | Conforms with §5, §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.1.4 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0056 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified. The first action: write a verification test or script exercising the full session lifecycle and password hashing service end-to-end to close Milestone 3.1.
+
+Awaiting Human Verification: YES
 
 ENTRY-0055 — 2026-10-17 — Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all)
 Status: PASS
@@ -750,9 +894,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.1 — Session infrastructure.
 
-Current task: Task 3.1.4 — Add the session cookie helpers (set, read, clear).
+Current task: Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified.
 
-Current status: Task 3.1.3 is complete. The staff session service is implemented in `src/infrastructure/auth/session.ts` and verified with 5 unit tests. All unit tests (53/53) and integration tests (78/78) pass. TypeScript check clean. Next task is Task 3.1.4.
+Current status: Task 3.1.4 is complete. Implemented `setSessionCookie`, `getSessionCookie`, and `clearSessionCookie` in `src/infrastructure/auth/cookies.ts`. Verified with 3 unit tests (56/56 unit tests passing, 78/78 integration tests passing). Next task is Task 3.1.5.
 
 ## 8. How the File Evolves
 
