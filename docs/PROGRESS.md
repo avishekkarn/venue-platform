@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0097 | 2026-10-18 | Task 4.4.1 — Add the venue hero (The First 1.5 Seconds) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0096 | 2026-10-18 | Task 4.3.4 — Verify the QR landing (Milestone 4.3 Close) | STRUCTURAL | Milestone 4.3 | §5.3 |
 | ENTRY-0095 | 2026-10-18 | Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0094 | 2026-10-18 | Task 4.3.2 — Add the "QR no longer active" screen | PASS | Milestone 4.3 | §5.3 |
@@ -147,13 +148,140 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0097.
+Next entry number: 0098.
 
-### 5.3 Current Milestone — Phase 4 Milestone 4.3 (The QR Landing)
+### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0097 — 2026-10-18 — Task 4.4.1 — Add the venue hero (The First 1.5 Seconds)
+Status: PASS
+
+Task: Task 4.4.1 — Add the venue hero (The First 1.5 Seconds)
+
+Summary:
+Built the `GuestHero` component at `src/components/guest/hero.tsx` as a Server Component rendering the venue name in Fraunces display typography (`font-display text-[40px] leading-[44px] md:text-[56px] md:leading-[60px] text-guest-text-primary`), an ambient blurred brand-color glow centered behind the name using dynamic `venue.brandColor`, optional place context ("Table X", "Room Y", or null for counter), and a calm, exclamation-free welcome message ("Everything you need is on this page. Order when you are ready."). Motion adheres strictly to entrance-only timing (`animate-in fade-in slide-in-from-bottom-4 duration-700 ease-guest-entrance` with staggered 150ms and 300ms delays). Wired both `app/(guest)/menu/page.tsx` and `app/(guest)/services/page.tsx` to read the `venue_guest` cookie via `getGuestCookie()`, fetch the session via `getGuestSession(...)`, fetch the venue via `createPrismaVenueRepository(prisma).findBySlug(...)`, derive `placeContext` from `table` or `room` records, and render `<GuestHero venue={venue.value} placeContext={placeContext} />` above their preparation placeholders. Unauthenticated requests are redirected with HTTP 307 to `/`. Typecheck clean, Next.js build clean with dynamically rendered `/menu` and `/services`, 121 unit tests passing, and 103 integration tests passing.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/components/guest/hero.tsx | Create | Server Component rendering the guest hero with brand-color glow, Fraunces headline, place context, and welcome message |
+| app/(guest)/menu/page.tsx | Edit | Authenticate session cookie, fetch venue and place context, and render GuestHero above menu preparation placeholder |
+| app/(guest)/services/page.tsx | Edit | Authenticate session cookie, fetch venue and place context, and render GuestHero above services preparation placeholder |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.1 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0097, update ledger, update Section 7 snapshot to Task 4.4.2 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Compiled successfully in 566ms
+  Running TypeScript ...
+  Finished TypeScript in 361ms ...
+  Generating static pages using 15 workers (16/16) in 286ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  02:26:41
+   Duration  755ms (tests 41%, import 28%, transform 25%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  02:26:50
+   Duration  60.12s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | `src/components/guest/hero.tsx` exists as Server Component | Inspect file | No "use client", accepts venue and placeContext, renders brand glow, Fraunces headline, context, and welcome message | Verified |
+| 2 | Brand glow uses venue.brandColor | Inspect file | `<div ... style={{ backgroundColor: venue.brandColor }} aria-hidden="true" />` | Verified |
+| 3 | `/menu` fetches session & venue and renders GuestHero | Scan TABLE token, inspect `/menu` | Renders "Juniper House", "Table 1", brand glow, and preparation notice | Verified |
+| 4 | `/services` fetches session & venue and renders GuestHero | Inspect `services/page.tsx` | Authenticates session, resolves placeContext, renders GuestHero | Verified |
+| 5 | Unauthenticated access redirects to `/` | Request `/menu` without cookie | HTTP 307 redirect to `/` | Verified |
+| 6 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 755ms) |
+| 7 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 60.12s) |
+| 8 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 9 | Build passes | `pnpm build` | Clean exit code 0; dynamic routes `/menu` and `/services` rendered on demand | Verified (compiled in 566ms) |
+| 10 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 11 | ROADMAP.md marks Task 4.4.1 as Complete | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete | Verified |
+| 12 | PROGRESS.md has ENTRY-0097 and §7 snapshot names Task 4.4.2 | Inspect `docs/PROGRESS.md` | Entry recorded, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- In Task 4.4.2, the primary action button ("View Menu" or "Explore Services") will be added beneath the hero.
+- The preparation placeholder text in `/menu` will be replaced by the live menu view in Task 4.4.4.
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.2, §4.5.4, §4.13.1 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.1 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0097, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.2 — Add the primary action (View Menu or Explore Services).
+
+Awaiting Human Verification: NO
 
 ENTRY-0096 — 2026-10-18 — Task 4.3.4 — Verify the QR landing (Milestone 4.3 Close)
 Status: STRUCTURAL
@@ -2224,9 +2352,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.4 — The guest landing screen.
 
-Current task: Task 4.4.1 — Add the venue hero (name, logo, brand color, hero image, welcome message).
+Current task: Task 4.4.2 — Add the primary action (View Menu or Explore Services).
 
-Current status: Milestone 4.3 is closed. Verified the QR landing Route Handler, inactive screen redirect, and cookie setting against real PostgreSQL in tests/integration/guest/qr-landing.test.ts (3/3 passing). Typecheck clean, build clean, 121 unit tests passing, and 103 integration tests passing. Next task is Task 4.4.1.
+Current status: Task 4.4.1 completed. Created GuestHero Server Component with ambient brand-color glow, Fraunces headline, place context, and welcome message. Wired /menu and /services to authenticate guest session, resolve venue and place context, and render GuestHero. Verified against Next.js build, unit tests (121/121), and full integration suite (103/103). Next task is Task 4.4.2.
 
 ## 8. How the File Evolves
 

@@ -324,7 +324,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                         | Status | Depends on |
 | ----- | ---------------------------------------------------------------------------- | ------ | ---------- |
-| 4.4.1 | Add the venue hero (name, logo, brand color, hero image, welcome message)    | ⬜     | 4.3.4      |
+| 4.4.1 | Add the venue hero (name, logo, brand color, hero image, welcome message)    | ✅ Complete | 4.3.4      |
 | 4.4.2 | Add the primary action (View Menu or Explore Services)                       | ⬜     | 4.4.1      |
 | 4.4.3 | Add the quiet secondary actions (Call a waiter, Request the bill)            | ⬜     | 4.4.2      |
 | 4.4.4 | Add the menu preview (a few featured items)                                  | ⬜     | 4.4.3      |
