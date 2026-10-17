@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0091 | 2026-10-18 | Task 4.2.4 — Verify the guest session lifecycle (Milestone 4.2 Close) | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0090 | 2026-10-17 | Task 4.2.3 — Add the guest session invalidation on table close and room checkout | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0089 | 2026-10-17 | Task 4.2.2 — Add the guest cookie helpers | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0088 | 2026-10-17 | Task 4.2.1 — Add the guest session service (create, read, invalidate) | PASS | Milestone 4.2 | §5.3 |
@@ -141,13 +142,200 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0091.
+Next entry number: 0092.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.2 (The Guest Session)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0091 — 2026-10-18 — Task 4.2.4 — Verify the guest session lifecycle (Milestone 4.2 Close)
+Status: PASS
+
+Task: Task 4.2.4 — Verify: a guest session is created on scan, is invalidated on close, and the next scan starts fresh
+
+Summary:
+Verified the guest session lifecycle end-to-end against real PostgreSQL with six integration tests in `tests/integration/guest/guest-session-lifecycle.test.ts`. Proved that a scanned QR token creates a guest session, the session is retrievable by its token, invalidating sessions for a place terminates active sessions, the old token is rejected with UNAUTHORIZED, a fresh scan creates a new session with no memory of the old one, and previous session rows are preserved in the database with endedAt set. Milestone 4.2 is now closed.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| tests/integration/guest/guest-session-lifecycle.test.ts | Create | Six-step lifecycle integration test against real PostgreSQL |
+| docs/ROADMAP.md | Edit | Add Milestone 4.2 closure note backed by ENTRY-0091 evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0091, update ledger, advance §7 to Task 4.3.1 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/guest/guest-session-lifecycle.test.ts
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+stderr | tests/integration/guest/guest-session-lifecycle.test.ts
+◇ injected env (0) from .env.local
+
+(node:29976) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/integration/guest/guest-session-lifecycle.test.ts (6 tests) 2370ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  00:37:10
+   Duration  2.61s (tests 95%, setup 3%, transform 2%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  21 passed (21)
+      Tests  100 passed (100)
+   Start at  00:37:28
+   Duration  59.24s (tests 96%, setup 2%, transform 1%, import 1%)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/money.test.ts (16 tests) 28ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 11ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 8ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 9ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 101ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 4ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 527ms
+
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  00:38:38
+   Duration  830ms (tests 39%, transform 28%, import 27%, worker 5%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 635ms
+  Running TypeScript ...
+  Finished TypeScript in 430ms ...
+  Collecting page data using 14 workers ...
+  Generating static pages using 14 workers (0/13) ...
+  Generating static pages using 14 workers (3/13) 
+  Generating static pages using 14 workers (6/13) 
+  Generating static pages using 14 workers (9/13) 
+✓ Generating static pages using 14 workers (13/13) in 621ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The lifecycle test file exists at the exact path | PASS | `Test-Path tests/integration/guest/guest-session-lifecycle.test.ts` returned True |
+| 2 | The file contains six `it(...)` cases in the order of Step 4 | PASS | Exactly six `it(...)` cases: scan → read → close → old rejected → fresh scan → no memory |
+| 3 | The new test passes against real PostgreSQL | PASS | `pnpm vitest run --config vitest.integration.config.ts tests/integration/guest/guest-session-lifecycle.test.ts` passed (6 passed, exit code 0) |
+| 4 | The full integration suite still passes | PASS | `pnpm test:integration` passed (21 test files passed, 100 tests passed, exit code 0) |
+| 5 | The unit suite is unchanged and passes | PASS | `pnpm test:unit` passed (20 test files passed, 121 tests passed, exit code 0) |
+| 6 | Typecheck passes | PASS | `pnpm exec tsc --noEmit` exited cleanly with code 0 |
+| 7 | Build passes | PASS | `pnpm build` completed with "Compiled successfully in 635ms" (exit code 0) |
+| 8 | ROADMAP 4.2.4 is ✅ backed by ENTRY-0091 (or reverted on FAIL) | PASS | Task 4.2.4 row backed by ENTRY-0091 evidence; Milestone 4.2 closure note added |
+| 9 | PROGRESS has ENTRY-0091 with all nine sections | PASS | All nine sections recorded; §5.2 ledger updated; §7 advanced to Task 4.3.1 |
+| 10 | No file outside the three in Scope was changed | PASS | `git status --short` shows only the three scope paths |
+| 11 | No production source file was modified | PASS | `git status --short` and `git diff --stat` contain no src/** paths |
+| 12 | No `any`, `@ts-ignore`, or new `as unknown as` in the new test | PASS | File inspected; none present |
+| 13 | The test uses withTransaction for isolation | PASS | All six `it` cases wrapped in withTransaction |
+
+Deviations from Contract:
+Task 4.2.4 was prematurely marked ✅ Complete in docs/ROADMAP.md before this session ran, with no PROGRESS entry behind it. This session performed the task for real, produced the integration test, and, because Step 6 passed, the ✅ is now backed by ENTRY-0091. If Step 6 had failed, the ✅ would have been reverted and the task reported FAIL.
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | None | No change |
+| DECISIONS.md | No | None | No change |
+| SYSTEM.md | No | None | No change |
+| BUILD.md | No | None | No change |
+| ROADMAP.md | Yes | Added Milestone 4.2 closure note | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0091, updated ledger, advanced snapshot to Task 4.3.1 | Updated |
+
+Contradiction Check:
+None found. Follows SYSTEM.md §6.2, §8.3, DECISIONS.md D-2.1, D-2.3, D-2.5, D-16.2, and BUILD.md §8.8.
+
+Next:
+Task 4.3.1 — Add the QR landing page (resolves the token, creates the session, redirects).
+
+Awaiting Human Verification: NO
 
 ENTRY-0090 — 2026-10-17 — Task 4.2.3 — Add the guest session invalidation on table close and room checkout
 Status: PASS
@@ -1090,11 +1278,11 @@ Updated at the end of every session.
 
 Current phase: Phase 4 — QR Codes and Guest Context.
 
-Current milestone: Milestone 4.2 — The guest session.
+Current milestone: Milestone 4.3 — The QR landing.
 
-Current task: Task 4.2.4 — Verify: a guest session is created on scan, is invalidated on close, and the next scan starts fresh.
+Current task: Task 4.3.1 — Add the QR landing page (resolves the token, creates the session, redirects).
 
-Current status: Task 4.2.3 is complete. Added invalidateSessionsForPlace pure domain function wrapping GuestSessionRepository.invalidateByPlace for table close and room checkout workflows. 121 unit tests passing, typecheck and build pass. Next task is Task 4.2.4.
+Current status: Milestone 4.2 is closed. Task 4.2.4 verified the guest session lifecycle (scan → read → close → old rejected → fresh scan → no memory) against real PostgreSQL with 6 integration tests in tests/integration/guest/guest-session-lifecycle.test.ts. All 21 integration test suites (100 tests) and 20 unit test suites (121 tests) pass cleanly. Next task is Task 4.3.1.
 
 ## 8. How the File Evolves
 

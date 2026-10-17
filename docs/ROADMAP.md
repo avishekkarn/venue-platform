@@ -307,6 +307,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 *(Guest cookie helpers are in place; the guest session is now visible to the browser.)*
 *(The capability is in place. The staff close-table and room-checkout routes that will invoke it are scheduled for Phase 7 (Tasks 7.1.4, 7.1.5, 7.2.8, 7.2.9).)*
+*(Milestone 4.2 is closed — the guest session lifecycle is verified against real PostgreSQL by ENTRY-0091.)*
 
 ### Milestone 4.3 — The QR landing
 
