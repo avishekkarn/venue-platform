@@ -8,7 +8,7 @@ export interface GuestHeroProps {
 
 export function GuestHero({ venue, placeContext }: GuestHeroProps): JSX.Element {
   return (
-    <section className="relative overflow-hidden pt-24 pb-16 px-4 text-center">
+    <section className="relative overflow-hidden pt-10 pb-6 md:pt-16 md:pb-10 px-4 text-center">
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full blur-[100px] opacity-20"
         style={{ backgroundColor: venue.brandColor }}
@@ -18,12 +18,12 @@ export function GuestHero({ venue, placeContext }: GuestHeroProps): JSX.Element 
         {venue.name}
       </h1>
       {placeContext ? (
-        <p className="relative z-10 mt-4 text-lg text-guest-text-muted animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 ease-guest-entrance">
+        <p className="relative z-10 mt-2 md:mt-4 text-lg text-guest-text-muted animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 ease-guest-entrance">
           {placeContext}
         </p>
       ) : null}
       {venue.welcomeMessage ? (
-        <p className="relative z-10 mt-6 max-w-md mx-auto text-base leading-relaxed text-guest-text-secondary animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 ease-guest-entrance">
+        <p className="relative z-10 mt-4 md:mt-6 max-w-md mx-auto text-base leading-relaxed text-guest-text-secondary animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 ease-guest-entrance">
           {venue.welcomeMessage}
         </p>
       ) : null}

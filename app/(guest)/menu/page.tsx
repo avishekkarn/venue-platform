@@ -80,14 +80,14 @@ export default async function MenuPage(): Promise<JSX.Element> {
     : [];
 
   return (
-    <div className="min-h-dvh flex flex-col items-center">
+    <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
       <GuestHero venue={venue.value} placeContext={placeContext} />
-      <div className="mt-8 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
+      <div className="mt-6 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
         <Button size="xl" variant="primary">
           View Menu
         </Button>
       </div>
-      <div className="mt-8 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
+      <div className="mt-4 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
         <Button variant="ghost" size="md">
           Call a waiter
         </Button>
@@ -96,7 +96,7 @@ export default async function MenuPage(): Promise<JSX.Element> {
         </Button>
       </div>
       {featuredItems.length > 0 ? (
-        <div className="mt-16 w-full max-w-4xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
+        <div className="mt-8 w-full max-w-4xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
           <h2 className="font-display text-2xl text-guest-text-primary mb-6 text-center">
             Chef's Picks
           </h2>
@@ -110,14 +110,14 @@ export default async function MenuPage(): Promise<JSX.Element> {
                 <Card
                   key={item.id}
                   interactive={true}
-                  className="min-w-[240px] max-w-[240px] snap-center overflow-hidden flex flex-col justify-between"
+                  className="min-w-[200px] max-w-[200px] snap-center overflow-hidden flex flex-col justify-between"
                 >
                   {imageUrl ? (
                     <CardMedia>
                       <img
                         src={imageUrl}
                         alt={item.name}
-                        className="h-40 w-full object-cover"
+                        className="h-28 w-full object-cover"
                       />
                     </CardMedia>
                   ) : null}
@@ -138,6 +138,38 @@ export default async function MenuPage(): Promise<JSX.Element> {
           </div>
         </div>
       ) : null}
+      <div className="mt-8 max-w-2xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center">
+          <div>
+            <span className="font-display text-2xl text-guest-brand mb-2 block">
+              1.
+            </span>
+            <span className="text-sm font-semibold text-guest-text-primary">
+              Browse the menu.
+            </span>
+          </div>
+          <div>
+            <span className="font-display text-2xl text-guest-brand mb-2 block">
+              2.
+            </span>
+            <span className="text-sm font-semibold text-guest-text-primary">
+              Order from your phone.
+            </span>
+          </div>
+          <div>
+            <span className="font-display text-2xl text-guest-brand mb-2 block">
+              3.
+            </span>
+            <span className="text-sm font-semibold text-guest-text-primary">
+              We bring it to your table.
+            </span>
+          </div>
+        </div>
+      </div>
+      <footer className="mt-12 mb-6 text-center text-sm text-guest-text-muted">
+        <p className="font-display text-guest-text-secondary">{venue.value.name}</p>
+        <p className="mt-1">Open daily. Powered by IronMan.</p>
+      </footer>
     </div>
   );
 }

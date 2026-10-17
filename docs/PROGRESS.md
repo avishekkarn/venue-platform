@@ -132,6 +132,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0102 | 2026-10-18 | Task 4.4.6 — The Footer & The Single-Viewport Fit | PASS | Milestone 4.4 | §5.3 |
+| ENTRY-0101 | 2026-10-18 | Task 4.4.5 — Add the "how it works" strip | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0100 | 2026-10-18 | Task 4.4.4 — Add the menu preview (Real Seed Data + Photos) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0099 | 2026-10-18 | Task 4.4.3 — Add the quiet secondary actions (Call a waiter, Request the bill) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0098 | 2026-10-18 | Task 4.4.2 — Add the primary action (View Menu or Explore Services) | PASS | Milestone 4.4 | §5.3 |
@@ -151,13 +153,269 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0101.
+Next entry number: 0103.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0102 — 2026-10-18 — Task 4.4.6 — The Footer & The Single-Viewport Fit
+Status: PASS
+
+Task: Task 4.4.6 — The Footer & The Single-Viewport Fit
+
+Summary:
+Compressed vertical spacing across the guest landing screens and hero component, enabling the full page layout (Hero, primary CTA, secondary actions, Chef's Picks preview, How It Works strip, and footer) to fit inside a single mobile viewport without scrolling. Updated `src/components/guest/hero.tsx` padding from `pt-24 pb-16` to `pt-10 pb-6 md:pt-16 md:pb-10`, place context margin to `mt-2 md:mt-4`, and welcome message margin to `mt-4 md:mt-6`. In `app/(guest)/menu/page.tsx` and `app/(guest)/services/page.tsx`, wrapped root in `flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]`, compressed CTA container margin to `mt-6`, secondary action margin to `mt-4`, and How It Works margin to `mt-8` with `gap-4 md:gap-8`. In `app/(guest)/menu/page.tsx`, compressed Chef's Picks container to `mt-8`, card widths to `min-w-[200px] max-w-[200px]`, and image heights to `h-28`. Added the landing footer displaying the venue's name in Fraunces and "Open daily. Powered by Venue Platform." in muted caption text. Typecheck clean, Next.js build clean with dynamic routes, 121 unit tests passing across 20 files, 103 integration tests passing across 22 files, and manual checks verified against dev server.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/components/guest/hero.tsx | Edit | Compress padding and margins for single-viewport fit |
+| app/(guest)/menu/page.tsx | Edit | Center vertically with min-h-[calc(100dvh-4rem)], compress spacing, add footer |
+| app/(guest)/services/page.tsx | Edit | Center vertically with min-h-[calc(100dvh-4rem)], compress spacing, add footer |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.6 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0102, update ledger, advance Section 7 snapshot to Task 4.4.7 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+✓ Compiled successfully in 279ms
+  Running TypeScript ...
+  Finished TypeScript in 390ms ...
+  Generating static pages using 15 workers (16/16) in 337ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  03:12:49
+   Duration  735ms (tests 40%, import 27%, transform 26%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  03:13:00
+   Duration  61.57s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | Hero padding compressed | Inspect `hero.tsx` | `pt-10 pb-6 md:pt-16 md:pb-10` | Verified |
+| 2 | Hero place context and welcome margins compressed | Inspect `hero.tsx` | `mt-2 md:mt-4` and `mt-4 md:mt-6` | Verified |
+| 3 | `/menu` wrapper vertically centered with 100dvh offset | Inspect `menu/page.tsx` | `flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]` | Verified |
+| 4 | `/services` wrapper vertically centered with 100dvh offset | Inspect `services/page.tsx` | `flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]` | Verified |
+| 5 | Action & section margins compressed | Inspect pages | CTA `mt-6`, secondary `mt-4`, preview/how-it-works `mt-8` | Verified |
+| 6 | Menu preview cards compressed | Inspect `menu/page.tsx` | `min-w-[200px] max-w-[200px]`, image `h-28` | Verified |
+| 7 | Footer renders venue name and copyright line on both pages | Inspect pages & HTTP response | `<footer className="mt-12 mb-6 text-center text-sm text-guest-text-muted">` | Verified |
+| 8 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 735ms) |
+| 9 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 61.57s) |
+| 10 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 11 | Build passes | `pnpm build` | Clean exit code 0; dynamic routes rendered | Verified (compiled in 279ms) |
+| 12 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 13 | ROADMAP.md marks Task 4.4.6 as Complete | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete | Verified |
+| 14 | PROGRESS.md has ENTRY-0102 and §7 snapshot names Task 4.4.7 | Inspect `docs/PROGRESS.md` | Entry recorded, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Task 4.4.7 will execute the milestone verification on the landing screen on a real mobile viewport.
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements (§979, §991) | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4, D-10.2 | No change |
+| SYSTEM.md | No | Adheres to §4, §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.9, §4.7.10, §4.4.1 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.6 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0102, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.7 — Verify: the landing screen renders with the venue's branding on a real phone.
+
+Awaiting Human Verification: NO
+
+ENTRY-0101 — 2026-10-18 — Task 4.4.5 — Add the "how it works" strip
+Status: PASS
+
+Task: Task 4.4.5 — Add the "how it works" strip
+
+Summary:
+Implemented the "How It Works" three-step strip on both `app/(guest)/menu/page.tsx` and `app/(guest)/services/page.tsx`. On `/menu`, the strip sits below the Chef's Picks preview section explaining the dining ordering process with steps "1. Browse the menu.", "2. Order from your phone.", and "3. We bring it to your table." On `/services`, the strip sits below the secondary actions explaining the room service process with steps "1. Choose a service.", "2. Tell us what you need.", and "3. We take care of it." Built using guest tokens with `text-guest-brand` Fraunces display numbers, responsive flex layout (vertical stack on mobile, horizontal row on desktop), centered layout (`max-w-2xl mx-auto px-4`), and smooth guest entrance animation (`animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance`). Typecheck clean, Next.js build clean with dynamic routes, 121 unit tests passing across 20 files, 103 integration tests passing across 22 files, and live HTTP check verified on running dev server.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/page.tsx | Edit | Add 3-step How It Works strip for dining context |
+| app/(guest)/services/page.tsx | Edit | Add 3-step How It Works strip for room context |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.5 as ✅ Complete on verified evidence |
+| docs/PROGRESS.md | Edit | Append ENTRY-0101, update ledger, advance Section 7 snapshot to Task 4.4.6 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+✓ Compiled successfully in 679ms
+  Running TypeScript ...
+  Finished TypeScript in 398ms ...
+  Generating static pages using 15 workers (16/16) in 274ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  03:04:22
+   Duration  741ms (tests 46%, import 30%, transform 17%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  03:04:29
+   Duration  61.85s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | `/menu` has a three-step "How It Works" strip below Chef's Picks | Inspect `menu/page.tsx` & HTTP response | Strip rendered below preview with 3 steps | Verified |
+| 2 | `/services` has a three-step strip with room-appropriate copy | Inspect `services/page.tsx` & HTTP response | Strip rendered with 3 room service steps | Verified |
+| 3 | Step copy on `/menu` matches spec | Check text | "Browse the menu.", "Order from your phone.", "We bring it to your table." | Verified |
+| 4 | Step copy on `/services` matches spec | Check text | "Choose a service.", "Tell us what you need.", "We take care of it." | Verified |
+| 5 | Step numbers use `text-guest-brand` in Fraunces | Inspect markup | `<span className="font-display text-2xl text-guest-brand mb-2 block">` | Verified |
+| 6 | Responsive layout: vertical stack on mobile, horizontal row on desktop | Inspect classes | `flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 text-center` | Verified |
+| 7 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 741ms) |
+| 8 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 61.85s) |
+| 9 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 10 | Build passes | `pnpm build` | Clean exit code 0; dynamic routes rendered | Verified (compiled in 679ms) |
+| 11 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 12 | ROADMAP.md marks Task 4.4.5 as Complete | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete | Verified |
+| 13 | PROGRESS.md has ENTRY-0101 and §7 snapshot names Task 4.4.6 | Inspect `docs/PROGRESS.md` | Entry recorded, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Task 4.4.6 will add the footer at the bottom of the landing screens.
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements (§182, §352) | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4, D-10.2 | No change |
+| SYSTEM.md | No | Adheres to §4, §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.7, §4.13.1, §4.15 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.5 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0101, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.6 — Add the footer.
+
+Awaiting Human Verification: NO
 
 ENTRY-0100 — 2026-10-18 — Task 4.4.4 — Add the menu preview (Real Seed Data + Photos)
 Status: PASS
@@ -2736,9 +2994,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.4 — The guest landing screen.
 
-Current task: Task 4.4.5 — Add the "how it works" strip.
+Current task: Task 4.4.7 — Verify: the landing screen renders with the venue's branding on a real phone.
 
-Current status: Task 4.4.4 completed. Added menu preview section on /menu with "Chef's Picks" heading and 3 horizontal scrolling cards using real seed data, Card with hover-lift, CardMedia for photos when present, CardHeader, CardTitle, CardDescription, and CardBody with formatMoney localized price. Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.5.
+Current status: Task 4.4.6 completed. Compressed vertical spacing across hero and guest landing screens (/menu and /services) with min-h-[calc(100dvh-4rem)] centered layout, compact preview cards (200px width, h-28 photo), and added landing footer rendering venue name and copyright line. Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.7.
 
 ## 8. How the File Evolves
 

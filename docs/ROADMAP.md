@@ -328,8 +328,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 4.4.2 | Add the primary action (View Menu or Explore Services)                       | ✅ Complete | 4.4.1      |
 | 4.4.3 | Add the quiet secondary actions (Call a waiter, Request the bill)            | ✅ Complete | 4.4.2      |
 | 4.4.4 | Add the menu preview (a few featured items)                                  | ✅ Complete | 4.4.3      |
-| 4.4.5 | Add the "how it works" strip                                                 | ⬜     | 4.4.4      |
-| 4.4.6 | Add the footer                                                               | ⬜     | 4.4.5      |
+| 4.4.5 | Add the "how it works" strip                                                 | ✅ Complete | 4.4.4      |
+| 4.4.6 | Add the footer                                                               | ✅ Complete | 4.4.5      |
 | 4.4.7 | Verify: the landing screen renders with the venue's branding on a real phone | ⬜     | 4.4.6      |
 
 ### Milestone 4.5 — Admin QR management
