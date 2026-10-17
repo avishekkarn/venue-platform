@@ -25,6 +25,7 @@ import {
 import {
   type QrTokenRepository,
   type QrToken,
+  type ResolvedQrContext,
   type GenerateTokenInput,
   type ListQrTokensOptions,
   QrTokenState,
@@ -142,28 +143,33 @@ export function createPrismaQrTokenRepository(
       }
     },
 
-    async revoke(id: string): Promise<Result<QrToken>> {
+    async revoke(tokenOrId: string): Promise<Result<QrToken>> {
       try {
-        const existing = await client.qrToken.findUnique({
-          where: { id },
+        const existing = await client.qrToken.findFirst({
+          where: {
+            OR: [
+              { id: tokenOrId },
+              { token: tokenOrId },
+            ],
+          },
         });
 
         if (!existing) {
           return fail(
             DomainErrorCode.NOT_FOUND,
-            `QR token with id '${id}' not found`
+            `QR token '${tokenOrId}' not found`
           );
         }
 
         if (existing.state === PrismaQrTokenState.REVOKED) {
           return fail(
             DomainErrorCode.INVALID_STATE,
-            `QR token with id '${id}' is already revoked`
+            `QR token '${tokenOrId}' is already revoked`
           );
         }
 
         const updated = await client.qrToken.update({
-          where: { id },
+          where: { id: existing.id },
           data: {
             state: PrismaQrTokenState.REVOKED,
             revokedAt: new Date(),
@@ -195,6 +201,35 @@ export function createPrismaQrTokenRepository(
         });
 
         return ok(tokens.map(mapQrToken));
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database read operation failed"
+        );
+      }
+    },
+
+    async resolve(token: string): Promise<Result<ResolvedQrContext>> {
+      try {
+        const qrToken = await client.qrToken.findUnique({
+          where: { token },
+        });
+
+        if (!qrToken) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `QR token '${token}' not found`
+          );
+        }
+
+        if (qrToken.state === PrismaQrTokenState.REVOKED) {
+          return fail(
+            DomainErrorCode.INVALID_STATE,
+            `QR token '${token}' is revoked`
+          );
+        }
+
+        return ok(mapQrToken(qrToken));
       } catch {
         return fail(
           DomainErrorCode.INTERNAL,

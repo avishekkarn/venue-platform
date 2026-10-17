@@ -71,6 +71,8 @@ export type QrToken = {
   readonly revokedAt: Date | null;
 } & QrTokenPlace;
 
+export type ResolvedQrContext = QrToken;
+
 export interface ListQrTokensOptions {
   readonly state?: QrTokenState;
 }
@@ -79,9 +81,11 @@ export interface QrTokenRepository {
   findByToken(token: string): Promise<Result<QrToken>>;
   findById(id: string): Promise<Result<QrToken>>;
   generate(input: GenerateTokenInput): Promise<Result<QrToken>>;
-  revoke(id: string): Promise<Result<QrToken>>;
+  revoke(tokenOrId: string): Promise<Result<QrToken>>;
   listForVenue(
     venueId: string,
     options?: ListQrTokensOptions
   ): Promise<Result<QrToken[]>>;
+  resolve(token: string): Promise<Result<ResolvedQrContext>>;
 }
+

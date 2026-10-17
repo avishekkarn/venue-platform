@@ -132,15 +132,311 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0084 | 2026-10-17 | Task 4.1.3 — Add the revokeToken domain function | PASS | Milestone 4.1 | §5.3 |
+| ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0083.
+Next entry number: 0085.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.1 (The QR Code Domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0084 — 2026-10-17 — Task 4.1.3 — Add the revokeToken domain function
+Status: PASS
+
+Task: Task 4.1.3 — Add the revokeToken domain function
+
+Summary:
+Created the pure domain function `revokeToken` in `src/domain/qr/revoke-token.ts`. It performs boundary validation ensuring the input token is a well-formed UUID (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i), returning `fail(DomainErrorCode.VALIDATION_FAILED, "Invalid token format")` on malformed inputs without calling the repository, and delegates valid tokens to `QrTokenRepository.revoke`. Enabled `revoke` on `QrTokenRepository` and the Prisma adapter to support revoking by token or by id via `findFirst` and setting state to `REVOKED` and `revokedAt` to `now()`. Added 4 unit tests in `tests/unit/qr/revoke-token.test.ts` covering invalid UUID rejection, successful revocation returning `ok(undefined)`, `NOT_FOUND` propagation, and `INVALID_STATE` propagation for already-revoked tokens. All 102 unit tests and production build pass cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/qr/revoke-token.ts | Create | Pure domain function for QR token revocation with UUID validation |
+| tests/unit/qr/revoke-token.test.ts | Create | Unit tests covering invalid UUID, ok(undefined), NOT_FOUND, and INVALID_STATE |
+| src/domain/qr/qr-token.repository.ts | Edit | Allow revoke method to accept token or id |
+| src/infrastructure/db/repositories/qr-token.repo.ts | Edit | Implement revoke by token or id in Prisma QrTokenRepository adapter |
+| docs/ROADMAP.md | Edit | Mark Task 4.1.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0084, update ledger, advance §7 to Task 4.1.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 26ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 27ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 8ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 3ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 408ms
+
+ Test Files  17 passed (17)
+      Tests  102 passed (102)
+   Start at  22:29:27
+   Duration  669ms (tests 40%, import 28%, transform 25%, worker 6%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 12ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 448ms
+  Running TypeScript ...
+  Finished TypeScript in 398ms ...
+  Collecting page data using 14 workers ...
+  Generating static pages using 14 workers (0/13) ...
+  Generating static pages using 14 workers (3/13) 
+  Generating static pages using 14 workers (6/13) 
+  Generating static pages using 14 workers (9/13) 
+✓ Generating static pages using 14 workers (13/13) in 714ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | revoke-token.ts exists and exports revokeToken | Get-Content src/domain/qr/revoke-token.ts | The file exists and validates the UUID before calling the repo | Verified |
+| 2 | Unit tests pass | pnpm test:unit | 102 tests passing (4 new) | Verified: 102 passed across 17 test files |
+| 3 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit code 0) |
+| 4 | Build passes | pnpm build | Compiled successfully | Verified (exit code 0) |
+| 5 | ROADMAP.md marks Task 4.1.3 complete | Select-String | Row shows ✅ Complete | Verified |
+| 6 | PROGRESS.md has ENTRY-0084 and §7 names Task 4.1.4 | Select-String | Entry recorded, snapshot updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+QR image generator (Task 4.1.4) will follow in this milestone.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-16.2 | No change |
+| SYSTEM.md | No | Adheres to §8.4, §8.6 | No change |
+| BUILD.md | No | Adheres to §2.9 boundary validation rules | No change |
+| ROADMAP.md | Yes | Marked Task 4.1.3 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0084, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.1.4 — Add the QR image generator (the adapter that produces a scannable image).
+
+Awaiting Human Verification: NO
+
+ENTRY-0083 — 2026-10-17 — Task 4.1.2 — Add the resolveToken domain function
+Status: PASS
+
+Task: Task 4.1.2 — Add the resolveToken domain function
+
+Summary:
+Created the pure domain function `resolveToken` in `src/domain/qr/resolve-token.ts`. It validates that the incoming token string conforms to the required UUID format (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i), returning `fail(DomainErrorCode.VALIDATION_FAILED, "Invalid token format")` on malformed inputs without querying the repository, and delegates valid tokens to `QrTokenRepository.resolve`. Added 4 unit tests in `tests/unit/qr/resolve-token.test.ts` covering invalid UUID rejection, valid resolution returning `ok(context)`, `NOT_FOUND` propagation, and `INVALID_STATE` propagation for revoked tokens. All 98 unit tests and production build pass cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/qr/resolve-token.ts | Create | Pure domain function for resolving QR tokens with UUID validation |
+| tests/unit/qr/resolve-token.test.ts | Create | Unit tests covering invalid UUID, ok, NOT_FOUND, and INVALID_STATE |
+| src/domain/qr/qr-token.repository.ts | Edit | Export ResolvedQrContext and add resolve method to QrTokenRepository |
+| src/infrastructure/db/repositories/qr-token.repo.ts | Edit | Implement resolve method on Prisma QrTokenRepository adapter |
+| tests/unit/qr/generate-token.test.ts | Edit | Add resolve method mock to QrTokenRepository mock |
+| docs/ROADMAP.md | Edit | Mark Task 4.1.2 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0083, update ledger, advance §7 to Task 4.1.3 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 9ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 16ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 29ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 6ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 7ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 409ms
+
+ Test Files  16 passed (16)
+      Tests  98 passed (98)
+   Start at  22:21:11
+   Duration  680ms (tests 37%, transform 32%, import 24%, worker 6%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 12ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 475ms
+  Running TypeScript ...
+  Finished TypeScript in 470ms ...
+  Collecting page data using 14 workers ...
+  Generating static pages using 14 workers (0/13) ...
+  Generating static pages using 14 workers (3/13) 
+  Generating static pages using 14 workers (6/13) 
+  Generating static pages using 14 workers (9/13) 
+✓ Generating static pages using 14 workers (13/13) in 601ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | resolve-token.ts exists and exports resolveToken | Get-Content src/domain/qr/resolve-token.ts | The file exists and validates the UUID before calling the repo | Verified |
+| 2 | Unit tests pass | pnpm test:unit | 98 tests passing (4 new) | Verified: 98 passed across 16 test files |
+| 3 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit code 0) |
+| 4 | Build passes | pnpm build | Compiled successfully | Verified (exit code 0) |
+| 5 | ROADMAP.md marks Task 4.1.2 complete | Select-String | Row shows ✅ Complete | Verified |
+| 6 | PROGRESS.md has ENTRY-0083 and §7 names Task 4.1.3 | Select-String | Entry recorded, snapshot updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Token revocation (revokeToken, Task 4.1.3) and QR image generator (Task 4.1.4) will follow in this milestone.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-16.2 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.6 | No change |
+| BUILD.md | No | Adheres to §2.9 boundary validation rules | No change |
+| ROADMAP.md | Yes | Marked Task 4.1.2 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0083, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.1.3 — Add the `revokeToken` domain function.
+
+Awaiting Human Verification: NO
 
 ENTRY-0082 — 2026-10-17 — Task 4.1.1 — Add the generateToken domain function
 Status: PASS
@@ -301,9 +597,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.1 — The QR code domain.
 
-Current task: Task 4.1.2 — Add the `resolveToken` domain function.
+Current task: Task 4.1.4 — Add the QR image generator (the adapter that produces a scannable image).
 
-Current status: Task 4.1.1 is complete. Implemented generateToken pure domain function in src/domain/qr/generate-token.ts with input boundary validation for TABLE, ROOM, and COUNTER place types and delegation to QrTokenRepository. 94 unit tests passing, clean typecheck and production build. Next task is Task 4.1.2.
+Current status: Task 4.1.3 is complete. Implemented revokeToken pure domain function in src/domain/qr/revoke-token.ts with UUID format boundary validation and delegation to QrTokenRepository.revoke. 102 unit tests passing, clean typecheck and production build. Next task is Task 4.1.4.
 
 ## 8. How the File Evolves
 

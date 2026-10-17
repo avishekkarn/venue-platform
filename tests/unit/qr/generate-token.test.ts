@@ -24,6 +24,7 @@ describe("generateToken domain function", () => {
       generate: vi.fn(),
       revoke: vi.fn(),
       listForVenue: vi.fn(),
+      resolve: vi.fn(),
     };
     deps = { qrTokenRepo: mockRepo };
   });
