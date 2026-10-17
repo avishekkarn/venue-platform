@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0063 | 2026-10-17 | Task 3.2.6 — Add the single-session-per-staff-member logic | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0062 | 2026-10-17 | Task 3.2.5 — Add the password-change invalidation logic | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0061 | 2026-10-17 | Task 3.2.4 — Add the canAccess domain function (roles and areas) | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0060 | 2026-10-17 | Task 3.2.3 — Add the getSession domain function | PASS | Milestone 3.2 | §5.3 |
@@ -137,13 +138,157 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0063.
+Next entry number: 0064.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.2 (The auth domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0063 — 2026-10-17 — Task 3.2.6 — Add the single-session-per-staff-member logic
+Status: PASS
+
+Task: Task 3.2.6 — Add the single-session-per-staff-member logic
+
+Summary:
+Implemented `enforceSingleSession` in `src/domain/auth/enforce-single-session.ts` and exported it from `src/domain/auth/index.ts`. Enforces DECISIONS.md D-3.4 (single session per staff member across all devices) by wrapping `invalidateAllSessions` in a pure domain function. Wrote an integration test in `tests/integration/auth/single-session.test.ts` running against the PostgreSQL database in transactional rollback via `withTransaction`, proving that creating session A, calling `enforceSingleSession`, and creating session B renders session A's token invalid (`null` from `validateSession`) while session B remains active.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/auth/enforce-single-session.ts | Create | Implemented enforceSingleSession domain function |
+| src/domain/auth/index.ts | Edit | Exported enforceSingleSession from auth module |
+| tests/integration/auth/single-session.test.ts | Create | Added 2 integration tests proving DB session invalidation and idempotency |
+| docs/ROADMAP.md | Edit | Marked Task 3.2.6 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0063, updated ledger, advanced §7 to Task 3.2.7 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/auth/single-session.test.ts
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 3179ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:54:31
+   Duration  3.42s (tests 96%, setup 2%, transform 2%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 10ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 26ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 27ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 384ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  15:54:47
+   Duration  631ms (tests 55%, import 24%, transform 14%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 2241ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2259ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2489ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2131ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 1990ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2287ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2195ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2049ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2345ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2371ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2308ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 1579ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 1824ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 1555ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 1823ms
+
+ Test Files  16 passed (16)
+      Tests  80 passed (80)
+   Start at  15:54:54
+   Duration  44.70s (tests 97%, setup 2%)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `enforceSingleSession` domain function implemented with pure DI | PASS | Defined in `src/domain/auth/enforce-single-session.ts` |
+| 2 | `enforceSingleSession` exported from `src/domain/auth/index.ts` | PASS | Exported via `export * from "./enforce-single-session"` |
+| 3 | Integration test with real DB transaction proves multi-session invalidation | PASS | Session A invalidated after enforcement, session B remains valid |
+| 4 | Idempotency verified when no sessions exist | PASS | Returns `ok(undefined)` on empty session set |
+| 5 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 6 | Unit suite green with 77 tests | PASS | 11 files passed, 77 tests passed |
+| 7 | Integration suite green with 80 tests | PASS | 16 files passed, 80 tests passed |
+| 8 | Domain boundary respected | PASS | Boundary check regex produced empty output |
+| 9 | ROADMAP.md updated | PASS | Task 3.2.6 marked `✅ Complete` |
+| 10 | PROGRESS.md updated | PASS | ENTRY-0063 appended, ledger updated, snapshot advanced to Task 3.2.7 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+The `login` domain function (Task 3.2.1) already invokes `invalidateAllSessions` inline prior to session creation; `enforceSingleSession` provides a standalone domain primitive for explicit invocation and integration testing.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.4 | No change |
+| SYSTEM.md | No | Conforms with §7.2 | No change |
+| BUILD.md | No | Conforms with §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.2.6 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0063 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.2.7 — Verify: every domain function has unit tests; all pass. The first action: verify test coverage across all domain functions in src/domain/auth, ensure all domain unit tests pass with empirical proof, and close Milestone 3.2.
+
+Awaiting Human Verification: YES
 
 ENTRY-0062 — 2026-10-17 — Task 3.2.5 — Add the password-change invalidation logic
 Status: PASS
@@ -1856,9 +2001,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.2 — The auth domain.
 
-Current task: Task 3.2.6 — Add the single-session-per-staff-member logic.
+Current task: Task 3.2.7 — Verify: every domain function has unit tests; all pass.
 
-Current status: Task 3.2.5 is complete. The `changePassword` domain function is implemented in `src/domain/auth/change-password.ts` and exported from `src/domain/auth/index.ts`. Hashes the new password, updates the staff password hash in the database, and immediately invalidates all active sessions for the staff member to enforce D-3.3 and SYSTEM.md §6.3/§15.3. 77 unit tests and 78 integration tests passing. Next task is Task 3.2.6.
+Current status: Task 3.2.6 is complete. The `enforceSingleSession` domain function is implemented in `src/domain/auth/enforce-single-session.ts` and exported from `src/domain/auth/index.ts`. Enforces DECISIONS.md D-3.4 (single session per staff member across all devices). Proved via integration test in `tests/integration/auth/single-session.test.ts` running in transaction rollback on the real database. 77 unit tests and 80 integration tests passing. Next task is Task 3.2.7.
 
 ## 8. How the File Evolves
 
