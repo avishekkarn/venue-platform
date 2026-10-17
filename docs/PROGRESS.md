@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0096 | 2026-10-18 | Task 4.3.4 — Verify the QR landing (Milestone 4.3 Close) | STRUCTURAL | Milestone 4.3 | §5.3 |
 | ENTRY-0095 | 2026-10-18 | Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0094 | 2026-10-18 | Task 4.3.2 — Add the "QR no longer active" screen | PASS | Milestone 4.3 | §5.3 |
 | ENTRY-0093 | 2026-10-18 | Task 4.3.1 — Re-issue QR landing as Route Handler | STRUCTURAL | Milestone 4.3 | §5.3 |
@@ -146,13 +147,199 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0096.
+Next entry number: 0097.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.3 (The QR Landing)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0096 — 2026-10-18 — Task 4.3.4 — Verify the QR landing (Milestone 4.3 Close)
+Status: STRUCTURAL
+
+Task: Task 4.3.4 — Verify: a valid token opens the guest landing; a revoked token shows the "no longer active" screen
+
+Summary:
+Verified the QR landing resolution pipeline, cookie setting, and redirection behavior against real PostgreSQL by writing an integration test suite at `tests/integration/guest/qr-landing.test.ts`. The suite invokes the Route Handler `GET` from `app/(guest)/qr/[token]/route.ts` with mock `NextRequest` objects and resolves promises, asserting that: (1) a valid active table token redirects with HTTP 307 to `/menu` and sets the `venue_guest` HTTP-only cookie; (2) a revoked token redirects with HTTP 307 to `/qr/inactive` with no cookie; (3) a malformed token string ("not-a-uuid") redirects with HTTP 307 to `/qr/inactive` with no cookie. Used `withTransaction` with Prisma delegate forwarding to ensure full transactional isolation without persistent database side effects. All 103 integration tests (22 files), 121 unit tests (20 files), typecheck, and Next.js build pass cleanly. Milestone 4.3 is now closed.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| tests/integration/guest/qr-landing.test.ts | Create | Integration tests verifying Route Handler redirects, cookie setting, and error handling |
+| docs/ROADMAP.md | Edit | Mark Task 4.3.4 as ✅ Complete and record Milestone 4.3 closure note |
+| docs/PROGRESS.md | Edit | Append ENTRY-0096 (STRUCTURAL), update ledger, advance §7 to Task 4.4.1 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/guest/qr-landing.test.ts
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/guest/qr-landing.test.ts (3 tests) 2323ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  01:58:02
+   Duration  2.64s (tests 94%, setup 3%, import 2%, transform 2%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  01:58:14
+   Duration  61.82s (tests 97%, setup 2%, import 1%)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/login.test.ts (5 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 9ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 16ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 12ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 30ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 29ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 85ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 5ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 3ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 430ms
+
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  01:59:26
+   Duration  701ms (tests 41%, import 29%, transform 22%, worker 7%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 697ms
+  Running TypeScript ...
+  Finished TypeScript in 405ms ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/16) ...
+  Generating static pages using 15 workers (4/16) 
+  Generating static pages using 15 workers (8/16) 
+  Generating static pages using 15 workers (12/16) 
+✓ Generating static pages using 15 workers (16/16) in 276ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ○ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ○ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | tests/integration/guest/qr-landing.test.ts exists with three test cases | Inspect file | Three test cases (valid, revoked, malformed) calling Route Handler | Verified |
+| 2 | New test passes against test database with withTransaction | Run vitest on `qr-landing.test.ts` | 3/3 passed | Verified (3 passed in 2.64s) |
+| 3 | Full integration suite passes | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 61.82s) |
+| 4 | Unit test suite passes | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 701ms) |
+| 5 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 6 | Build passes | `pnpm build` | Compiled successfully; dynamic and static routes correct | Verified (exit code 0) |
+| 7 | Valid TABLE token returns 307 redirect to /menu and sets venue_guest cookie | Run case 1 | Status 307, location /menu, cookie set | Verified |
+| 8 | Revoked token returns 307 redirect to /qr/inactive with no cookie | Run case 2 | Status 307, location /qr/inactive, cookie null | Verified |
+| 9 | Malformed token returns 307 redirect to /qr/inactive with no cookie | Run case 3 | Status 307, location /qr/inactive, cookie null | Verified |
+| 10 | ROADMAP 4.3.4 marked ✅ Complete and Milestone 4.3 closed | Inspect `docs/ROADMAP.md` | Row marked ✅ Complete with closure note | Verified |
+| 11 | PROGRESS has ENTRY-0096 (STRUCTURAL) and §7 names Task 4.4.1 | Inspect `docs/PROGRESS.md` | Entry appended, §7 updated | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- Milestone 4.4 (The guest landing screen) begins with Task 4.4.1 (venue hero).
+- Barrels `src/domain/qr/index.ts` and `src/domain/organization/index.ts` remain empty as tracked previously.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to guest tokens and voice | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.3.4 as ✅ Complete, closed Milestone 4.3 | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0096 (STRUCTURAL), updated ledger, advanced snapshot to Task 4.4.1 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.4.1 — Add the venue hero (name, logo, brand color, hero image, welcome message).
+
+Awaiting Human Verification: NO
 
 ENTRY-0095 — 2026-10-18 — Task 4.3.3 — Add the "scan the QR" screen for guests who land at the root without a token
 Status: PASS
@@ -2035,11 +2222,11 @@ Updated at the end of every session.
 
 Current phase: Phase 4 — QR Codes and Guest Context.
 
-Current milestone: Milestone 4.3 — The QR landing.
+Current milestone: Milestone 4.4 — The guest landing screen.
 
-Current task: Task 4.3.4 — Verify: a valid token opens the guest landing; a revoked token shows the "no longer active" screen.
+Current task: Task 4.4.1 — Add the venue hero (name, logo, brand color, hero image, welcome message).
 
-Current status: Task 4.3.3 is complete. Replaced default placeholder app/page.tsx with the platform front-door "Scan the QR code." screen wrapped in data-world="guest" and styled with guest tokens (sand background, Fraunces headline, Inter body, no inline styles or raw hex). Typecheck, build, 121 unit tests, and 100 integration tests pass. Next task is Task 4.3.4.
+Current status: Milestone 4.3 is closed. Verified the QR landing Route Handler, inactive screen redirect, and cookie setting against real PostgreSQL in tests/integration/guest/qr-landing.test.ts (3/3 passing). Typecheck clean, build clean, 121 unit tests passing, and 103 integration tests passing. Next task is Task 4.4.1.
 
 ## 8. How the File Evolves
 
