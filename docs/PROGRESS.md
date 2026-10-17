@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0075 | 2026-10-17 | Task 3.5.2 — Add the page-level session validation on each protected page | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0074 | 2026-10-17 | Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0073 | 2026-10-17 | Task 3.4.4 — Verify login screens (Milestone 3.4 Close) | STRUCTURAL | Milestone 3.4 | §5.3 |
 | ENTRY-0072 | 2026-10-17 | Task 3.4.3 — Add the kitchen login screen | PASS | Milestone 3.4 | §5.3 |
@@ -149,13 +150,155 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0075.
+Next entry number: 0076.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.5 (Route protection)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0075 — 2026-10-17 — Task 3.5.2 — Add the page-level session validation on each protected page
+Status: PASS
+
+Task: Task 3.5.2 — Add the page-level session validation on each protected page
+
+Summary:
+Created reusable Server Component session validation helper at `src/lib/auth/validate-session.ts` exporting `getAuthenticatedStaff(): Promise<StaffMember | null>`. It reads the `venue_staff` cookie via Next.js `cookies()` helper, validates the session token via the domain layer `getSession` and infrastructure session validator, and fetches the staff member record via `createPrismaStaffRepository(prisma).findById()`. Integrated this helper into the three login pages (`app/staff/login/page.tsx`, `app/admin/login/page.tsx`, and `app/kitchen/login/page.tsx`). If the user already has an active authenticated session, the login page redirects them to `/staff`, `/admin`, or `/kitchen` respectively via Next.js `redirect()`. Typecheck, unit test suite (87 passing), and Next.js production build (`pnpm build`) pass cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/lib/auth/validate-session.ts | Create | Shared Server Component helper to validate session via domain & repository |
+| app/staff/login/page.tsx | Edit | Call getAuthenticatedStaff(); if authenticated, redirect to /staff |
+| app/admin/login/page.tsx | Edit | Call getAuthenticatedStaff(); if authenticated, redirect to /admin |
+| app/kitchen/login/page.tsx | Edit | Call getAuthenticatedStaff(); if authenticated, redirect to /kitchen |
+| docs/ROADMAP.md | Edit | Mark Task 3.5.2 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0075, update ledger, advance §7 to Task 3.5.3 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 12ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 6ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 29ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 31ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 389ms
+
+ Test Files  13 passed (13)
+      Tests  87 passed (87)
+   Start at  19:22:35
+   Duration  672ms (tests 44%, import 27%, transform 21%, worker 8%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 893ms
+  Running TypeScript ...
+  Finished TypeScript in 434ms ...
+  Collecting page data using 10 workers ...
+  Generating static pages using 10 workers (0/9) ...
+  Generating static pages using 10 workers (2/9) 
+  Generating static pages using 10 workers (4/9) 
+  Generating static pages using 10 workers (6/9) 
+✓ Generating static pages using 10 workers (9/9) in 595ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /kitchen/login
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | validate-session.ts exists and exports getAuthenticatedStaff | Get-Content src/lib/auth/validate-session.ts | The file exists and returns StaffMember \| null | Verified |
+| 2 | The three login pages import and use the helper | Select-String -Path app/staff/login/page.tsx -Pattern "getAuthenticatedStaff" | Found in all three files | Verified (present in staff, admin, and kitchen login pages) |
+| 3 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 4 | Build passes | pnpm build | Compiled successfully | Verified (exit 0, login routes server-rendered dynamically) |
+| 5 | Manual check: logged-in user is redirected away from the login screen | Manual check | Log in at /admin/login; navigate to /admin/login again; redirected to /admin (404) | PASS: Verified by user in browser (logged-in user navigating to /admin bypasses login screen and renders 404; unauthenticated user is redirected to /admin/login) |
+| 6 | ROADMAP.md marks Task 3.5.2 complete | Select-String | Row shows ✅ Complete | Verified |
+| 7 | PROGRESS.md has ENTRY-0075 and §7 names Task 3.5.3 | Select-String | Entry recorded, snapshot advanced | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Placeholder dashboards for `/staff`, `/admin`, and `/kitchen` will be built in Milestone 3.6. Role-based access control enforcement on protected pages is deferred to Task 3.5.3.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-3.11, D-3.13 | No change |
+| SYSTEM.md | No | Implements §6.5 page-level validation | No change |
+| BUILD.md | No | Complies with §2, §3, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.5.2 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0075, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.5.3 — Add the role check on each protected page.
+
+Awaiting Human Verification: NO
+
+---
 
 ENTRY-0074 — 2026-10-17 — Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes
 Status: PASS
@@ -3723,9 +3866,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.5 — Route protection.
 
-Current task: Task 3.5.2 — Add the page-level session validation on each protected page.
+Current task: Task 3.5.3 — Add the role check on each protected page.
 
-Current status: Task 3.5.1 is complete. Edge middleware (middleware.ts) intercepts requests to /staff, /kitchen, and /admin routes, allowing login pages and requests with venue_staff cookies while redirecting unauthenticated requests. 87 unit tests and 90 integration tests passing. Next task is Task 3.5.2 (page-level session validation).
+Current status: Task 3.5.2 is complete. Created reusable Server Component helper getAuthenticatedStaff() in src/lib/auth/validate-session.ts that validates the venue_staff session cookie against the database and domain layer. Protected login pages (/staff/login, /admin/login, /kitchen/login) redirect authenticated staff members away from the login screens to their respective area roots. Typecheck, 87 unit tests, and production build passing. Next task is Task 3.5.3 (role checks on protected pages).
 
 ## 8. How the File Evolves
 

@@ -1,7 +1,13 @@
 import type { JSX } from "react";
+import { redirect } from "next/navigation";
+import { getAuthenticatedStaff } from "@/lib/auth/validate-session";
 import { LoginForm } from "./_form";
 
-export default function KitchenLoginPage(): JSX.Element {
+export default async function KitchenLoginPage(): Promise<JSX.Element> {
+  const staff = await getAuthenticatedStaff();
+  if (staff !== null) {
+    redirect("/kitchen");
+  }
   return (
     <main className="flex items-center justify-center px-4 min-h-dvh">
       <div className="w-full max-w-sm flex flex-col gap-8">
