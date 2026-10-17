@@ -132,18 +132,83 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0087 | 2026-10-17 | Task 4.1.5 — Verify: a token can be generated, resolved, and revoked (Milestone 4.1 Close) | STRUCTURAL | Milestone 4.1 | §5.3 |
 | ENTRY-0086 | 2026-10-17 | Task 4.1.4 — Add the QR image generator | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0084 | 2026-10-17 | Task 4.1.3 — Add the revokeToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0087.
+Next entry number: 0088.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.1 (The QR Code Domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0087 — 2026-10-17 — Task 4.1.5 — Verify: a token can be generated, resolved, and revoked (Milestone 4.1 Close)
+Status: STRUCTURAL
+
+Task: Task 4.1.5 — Verify: a token can be generated, resolved, and revoked; the image renders
+
+Summary:
+Verified QR domain and repository integration against real PostgreSQL database via integration tests. All 4 tests passed covering token generation, UUID validation, lookup, revocation without row deletion, invalid state on re-revocation, and venue/place separation without token reuse. Milestone 4.1 is now complete and closed.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Mark Task 4.1.5 as ✅ Complete and close Milestone 4.1 |
+| docs/PROGRESS.md | Edit | Append ENTRY-0087 (STRUCTURAL), update ledger, advance §7 to Task 4.2.1 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/qr-token.test.ts
+```
+Output:
+```
+✓ QrTokenRepository Integration Tests (4)
+  ✓ returns NOT_FOUND when looking up an unknown token or id
+  ✓ generates a token for a place, reads it back, and verifies UUID shape
+  ✓ revokes a token without deleting the row, and returns INVALID_STATE on second revoke
+  ✓ distinguishes tokens for different places and never reuses a revoked token
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | ROADMAP.md marks Task 4.1.5 complete | PASS | Row shows ✅ Complete |
+| 2 | PROGRESS.md has ENTRY-0087 (STRUCTURAL) | PASS | Entry recorded with status STRUCTURAL |
+| 3 | PROGRESS.md §7 names Task 4.2.1 | PASS | Snapshot advanced to Task 4.2.1 |
+| 4 | No source file was changed | PASS | Only docs/ROADMAP.md and docs/PROGRESS.md modified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | None | No change |
+| DECISIONS.md | No | Adheres to D-16.2 | No change |
+| SYSTEM.md | No | Adheres to §8.3, §8.4, §8.5, §8.6 | No change |
+| BUILD.md | No | None | No change |
+| ROADMAP.md | Yes | Marked Task 4.1.5 as Complete, closed Milestone 4.1 | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0087, advanced snapshot to Task 4.2.1 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.2.1 — Add the guest session service (create, read, invalidate).
+
+Awaiting Human Verification: NO
+
 
 ENTRY-0086 — 2026-10-17 — Task 4.1.4 — Add the QR image generator
 Status: PASS
@@ -752,7 +817,7 @@ Current milestone: Milestone 4.2 — The guest session.
 
 Current task: Task 4.2.1 — Add the guest session service (create, read, invalidate).
 
-Current status: Task 4.1.4 is complete. Implemented QrImageGenerator port and QrImageAdapter using qrcode library to generate PNG buffers. 104 unit tests passing, clean typecheck and production build. Next task is Task 4.2.1.
+Current status: Milestone 4.1 is complete and closed. Real database integration tests confirmed QR token generation, UUID verification, lookup, revocation without row deletion, invalid state on re-revocation, and place separation/token non-reuse (all 4 tests passing). Next task is Task 4.2.1.
 
 ## 8. How the File Evolves
 

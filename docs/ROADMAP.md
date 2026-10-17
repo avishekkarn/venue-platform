@@ -292,7 +292,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 4.1.2 | Add the `resolveToken` domain function                                     | ✅ Complete | 4.1.1      |
 | 4.1.3 | Add the `revokeToken` domain function                                      | ✅ Complete | 4.1.1      |
 | 4.1.4 | Add the QR image generator (the adapter that produces a scannable image)   | ✅ Complete | 4.1.1      |
-| 4.1.5 | Verify: a token can be generated, resolved, and revoked; the image renders | ⬜     | 4.1.4      |
+| 4.1.5 | Verify: a token can be generated, resolved, and revoked; the image renders | ✅ Complete | 4.1.4      |
+
+*(Milestone 4.1 is closed — QR token domain and image generator verified against real database integration tests.)*
 
 ### Milestone 4.2 — The guest session
 
