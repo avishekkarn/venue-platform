@@ -132,19 +132,122 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0088 | 2026-10-17 | Task 4.2.1 — Add the guest session service (create, read, invalidate) | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0087 | 2026-10-17 | Task 4.1.5 — Verify: a token can be generated, resolved, and revoked (Milestone 4.1 Close) | STRUCTURAL | Milestone 4.1 | §5.3 |
 | ENTRY-0086 | 2026-10-17 | Task 4.1.4 — Add the QR image generator | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0084 | 2026-10-17 | Task 4.1.3 — Add the revokeToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0088.
+Next entry number: 0089.
 
-### 5.3 Current Milestone — Phase 4 Milestone 4.1 (The QR Code Domain)
+### 5.3 Current Milestone — Phase 4 Milestone 4.2 (The Guest Session)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0088 — 2026-10-17 — Task 4.2.1 — Add the guest session service (create, read, invalidate)
+Status: PASS
+
+Task: Task 4.2.1 — Add the guest session service (create, read, invalidate)
+
+Summary:
+Created the `GuestSessionRepository` domain port and domain types in `src/domain/guest/guest-session.repository.ts`, the Prisma adapter in `src/infrastructure/db/repositories/guest-session.repo.ts`, and the pure domain service in `src/domain/guest/guest-session.service.ts` with `createGuestSession`, `getGuestSession`, and `invalidateGuestSession`. Exported all via `src/domain/guest/index.ts`. All 114 unit tests pass, 4 integration tests against PostgreSQL pass, typecheck passes, and production build compiles cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/guest/guest-session.repository.ts | Create | Port interface and domain types for guest sessions |
+| src/infrastructure/db/repositories/guest-session.repo.ts | Create | Prisma adapter implementing GuestSessionRepository |
+| src/domain/guest/guest-session.service.ts | Create | Pure domain service for create, get, and invalidate |
+| src/domain/guest/index.ts | Create | Barrel export for guest domain module |
+| vitest.config.ts | Edit | Add tests/unit/guest to test include pattern |
+| tests/unit/guest/guest-session.service.test.ts | Create | Unit tests for guest session service with mocked repo |
+| tests/integration/repositories/guest-session.test.ts | Create | Integration tests for Prisma adapter with real database |
+| docs/ROADMAP.md | Edit | Mark Task 4.2.1 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0088, update ledger, advance §7 to Task 4.2.2 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+Test Files  19 passed (19)
+     Tests  114 passed (114)
+```
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/repositories/guest-session.test.ts
+```
+Output:
+```
+✓ tests/integration/repositories/guest-session.test.ts (4 tests) 2439ms
+
+Test Files  1 passed (1)
+     Tests  4 passed (4)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+✓ Compiled successfully in 703ms
+Finished TypeScript in 451ms ...
+Generating static pages using 14 workers (13/13) in 621ms
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Port exists | PASS | src/domain/guest/guest-session.repository.ts present |
+| 2 | Adapter exists | PASS | src/infrastructure/db/repositories/guest-session.repo.ts present |
+| 3 | Service exists | PASS | src/domain/guest/guest-session.service.ts exports 3 functions |
+| 4 | Unit tests pass | PASS | 114 unit tests passing |
+| 5 | Integration tests pass | PASS | 4 integration tests passing |
+| 6 | Typecheck passes | PASS | pnpm exec tsc --noEmit exit code 0 |
+| 7 | Build passes | PASS | pnpm build compiles cleanly |
+| 8 | ROADMAP marks 4.2.1 complete | PASS | Row shows ✅ Complete |
+| 9 | PROGRESS has ENTRY-0088 and §7 names 4.2.2 | PASS | Entry recorded and snapshot advanced |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | None | No change |
+| DECISIONS.md | No | Adheres to D-2.1, D-2.3, D-2.5 | No change |
+| SYSTEM.md | No | Adheres to §6.2, §6.4, §8.3 | No change |
+| BUILD.md | No | Adheres to §2, §5 standards | No change |
+| ROADMAP.md | Yes | Marked Task 4.2.1 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0088, advanced snapshot to Task 4.2.2 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.2.2 — Add the guest cookie helpers.
+
+Awaiting Human Verification: NO
+
 
 ENTRY-0087 — 2026-10-17 — Task 4.1.5 — Verify: a token can be generated, resolved, and revoked (Milestone 4.1 Close)
 Status: STRUCTURAL
@@ -815,9 +918,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.2 — The guest session.
 
-Current task: Task 4.2.1 — Add the guest session service (create, read, invalidate).
+Current task: Task 4.2.2 — Add the guest cookie helpers.
 
-Current status: Milestone 4.1 is complete and closed. Real database integration tests confirmed QR token generation, UUID verification, lookup, revocation without row deletion, invalid state on re-revocation, and place separation/token non-reuse (all 4 tests passing). Next task is Task 4.2.1.
+Current status: Task 4.2.1 is complete. Implemented GuestSessionRepository port, Prisma adapter, and pure domain service (create, get, invalidate). 114 unit tests and 4 integration tests passing against live PostgreSQL. Next task is Task 4.2.2.
 
 ## 8. How the File Evolves
 
