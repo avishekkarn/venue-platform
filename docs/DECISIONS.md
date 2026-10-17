@@ -13,7 +13,7 @@
 
 1. Venue Identity — D-1.1 to D-1.3
 2. Guest Identity — D-2.1 to D-2.5
-3. Staff Identity — D-3.1 to D-3.8
+3. Staff Identity — D-3.1 to D-3.9
 4. Order Identity — D-4.1 to D-4.12
 5. Service Request Identity — D-5.1 to D-5.7
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
@@ -370,6 +370,34 @@
 - The admin panel has a prominent "Reset password" action on each staff account.
 
 **What would make us revisit:** If a venue grows large enough that a manager is not always available, we add email-based self-service reset as an option.
+
+---
+
+### D-3.9 — Passwords are hashed with Argon2id
+
+**Decision:** Staff passwords are hashed with the Argon2id variant of the Argon2 password-hashing function, using the `argon2` npm package. The hash and verify functions live in `src/infrastructure/auth/password.ts`. The exact parameters (memory cost, time cost, parallelism) are set in code at implementation time and never changed by a config toggle. All staff passwords, including the seeded staff accounts in Task 3.1.2, go through this service.
+
+**Context:** SYSTEM.md §15.3 says "Passwords are hashed with a strong hashing function." BUILD.md §7.4 names the same rule. Before Task 3.1.1, no hashing library was installed. package.json (verified at commit 23bf672) contained no argon2, bcrypt, or bcryptjs. The choice of algorithm must be recorded before the code is written (BUILD.md §10.6, applied to dependency choices by direct analogy).
+
+**Alternatives considered:**
+
+- bcrypt — rejected. Well-established, but lacks Argon2id's memory-hardness property, which makes GPU/ASIC cracking more expensive.
+- bcryptjs — rejected. Pure JavaScript, slower at equivalent work factors, and not the OWASP-recommended function for new code.
+- scrypt — rejected. Good memory-hardness, but less reviewed than Argon2id in the Node ecosystem, and no mature native binding is available for this project's toolchain.
+- Argon2i — rejected. Data-independent memory access makes it less secure against side-channel attacks than Argon2id.
+- Argon2d — rejected. Data-dependent memory access is faster but weakens side-channel resistance.
+
+**Consequences:**
+
+- `package.json` gains the `argon2` dependency.
+- `src/infrastructure/auth/password.ts` exports `hashPassword(plain: string): Promise<string>` and `verifyPassword(plain: string, hash: string): Promise<boolean>`.
+- The unit test at `tests/unit/infrastructure/auth/password.test.ts` covers hashing, verification, wrong-plain rejection, salting (two hashes of the same plain differ), and malformed-hash rejection.
+- The plain password is never stored, logged, or transmitted (SYSTEM.md §15.3).
+- The parameters are chosen at implementation time in Task 3.1.1 and recorded in the code's constants. Changing them later would invalidate every existing hash, so a change requires a new decision record.
+
+**What would make us revisit:** If argon2 becomes unmaintained, or if a native binding issue blocks deployment, we switch to bcrypt via a new decision record. The old hashes stay valid via a migration that re-hashes at next login.
+
+**Traces to:** SYSTEM.md §15.3 (passwords hashed with a strong function), BUILD.md §7.4 (the security rules), BUILD.md §10.6 (a dependency choice requires a decision), D-3.1 (staff log in with username and password), D-3.3 (password change invalidates sessions — which reads the hash service), D-3.8 (only the manager resets a password — the reset re-hashes).
 
 ---
 
@@ -2128,7 +2156,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 93
+**Total decisions:** 94
 **Categories:** 17
 **Status:** All locked.
 
