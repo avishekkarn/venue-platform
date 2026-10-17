@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0065 | 2026-10-17 | Task 3.3.1 — Add POST /api/auth/login | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0064 | 2026-10-17 | Task 3.2.7 — Verify: every domain function has unit tests; all pass (Milestone 3.2 Close) | STRUCTURAL | Milestone 3.2 | §5.3 |
 | ENTRY-0063 | 2026-10-17 | Task 3.2.6 — Add the single-session-per-staff-member logic | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0062 | 2026-10-17 | Task 3.2.5 — Add the password-change invalidation logic | PASS | Milestone 3.2 | §5.3 |
@@ -139,13 +140,170 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0065.
+Next entry number: 0066.
 
-### 5.3 Current Milestone — Phase 3 Milestone 3.2 (The auth domain)
+### 5.3 Current Milestone — Phase 3 Milestone 3.3 (The auth routes)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0065 — 2026-10-17 — Task 3.3.1 — Add POST /api/auth/login
+Status: PASS
+
+Task: Task 3.3.1 — Add POST /api/auth/login
+
+Summary:
+Implemented the `POST /api/auth/login` route handler in `app/api/auth/login/route.ts`. The route functions as an adapter conforming to BUILD.md §6: parses and validates the request body (`username`, `password`), dynamically resolves the installation venue via `VENUE_SLUG` (defaulting to `juniper-house`), delegates authentication to the `login` domain function with injected database repositories and session primitives, issues the HTTP-only `venue_staff` session cookie via `setSessionCookie`, computes `allowedAreas` by filtering with `canAccess`, and returns the canonical envelope `{ data: { staff, allowedAreas } }` with HTTP 200 on success, or maps domain errors (`UNAUTHORIZED` -> 401, `VALIDATION_FAILED` -> 400, `INTERNAL` -> 500). Verified with 3 integration tests in `tests/integration/auth/login-route.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/auth/login/route.ts | Create | Implemented POST /api/auth/login route handler |
+| tests/integration/auth/login-route.test.ts | Create | Added 3 integration tests covering valid login (200), invalid password (401), and missing fields (400) |
+| docs/ROADMAP.md | Edit | Marked Task 3.3.1 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0065, updated ledger, advanced §7 to Task 3.3.2 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/auth/login-route.test.ts
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 3743ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:16:04
+   Duration  4.03s (tests 95%, transform 2%, setup 2%, import 1%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 10ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 26ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 29ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 368ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  16:16:21
+   Duration  574ms (tests 57%, import 23%, transform 13%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 2402ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2361ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2478ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2317ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2399ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2289ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2370ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 2236ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2286ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 1835ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1740ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2272ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2083ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 3110ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 1859ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2289ms
+
+ Test Files  17 passed (17)
+      Tests  83 passed (83)
+   Start at  16:16:30
+   Duration  50.53s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path app/api/auth/login/route.ts -Pattern "from ['`"]@/domain/orders"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `POST /api/auth/login` route created | PASS | Implemented in `app/api/auth/login/route.ts` |
+| 2 | Body validation rejects missing/malformed input with 400 | PASS | Verified in integration test returning `VALIDATION_FAILED` (400) |
+| 3 | Venue resolved dynamically from environment/database | PASS | Resolves slug `juniper-house` via `createPrismaVenueRepository` |
+| 4 | Delegates to `login` domain function | PASS | Injects repository and session primitives cleanly |
+| 5 | Sets `venue_staff` session cookie on success | PASS | Calls `setSessionCookie` upon valid authentication |
+| 6 | Computes `allowedAreas` via `canAccess` | PASS | Evaluates all areas against logged-in staff roles |
+| 7 | Success returns standard `{ data: { staff, allowedAreas } }` with 200 | PASS | Verified in integration test |
+| 8 | Wrong password returns `{ error: { code: "UNAUTHORIZED", ... } }` with 401 | PASS | Verified in integration test |
+| 9 | 3 integration tests pass in `tests/integration/auth/login-route.test.ts` | PASS | All 3 tests passed cleanly |
+| 10 | TypeScript typecheck clean | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 11 | Unit test suite passes with 77 tests | PASS | 11 files passed, 77 tests passed |
+| 12 | Integration test suite passes with 83 tests | PASS | 17 files passed, 83 tests passed (50.53s duration) |
+| 13 | Route boundary pure (no cross-domain order imports) | PASS | Regex check produced empty output |
+| 14 | ROADMAP.md updated | PASS | Task 3.3.1 marked `✅ Complete` |
+| 15 | PROGRESS.md updated | PASS | ENTRY-0065 appended, ledger updated, snapshot advanced to Task 3.3.2 |
+
+Deviations from Contract:
+`@/infrastructure/auth/cookies` is stubbed via `vi.mock` in `tests/integration/auth/login-route.test.ts` because Next.js `cookies()` requires an active HTTP server request context not present during direct route function calls in Vitest (explicitly authorized in Task 3.3.1 Step 4).
+
+Noticed but Out of Scope:
+CSRF protection and login rate limiting are scheduled for Phase 10 release requirements per BUILD.md §7.4.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.1, D-3.2 | No change |
+| SYSTEM.md | No | Conforms with §5, §6.3, §12.1, §15.3 | No change |
+| BUILD.md | No | Conforms with §6, §7.4 | No change |
+| ROADMAP.md | Yes | Marked Task 3.3.1 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0065 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.3.2 — Add `POST /api/auth/logout`. The first action: read `src/domain/auth/logout.ts` and `src/infrastructure/auth/cookies.ts`, then implement `app/api/auth/logout/route.ts` to clear the session cookie, end the session in the database, and return the standard envelope.
+
+Awaiting Human Verification: YES
 
 ENTRY-0064 — 2026-10-17 — Task 3.2.7 — Verify: every domain function has unit tests; all pass (Milestone 3.2 Close)
 Status: STRUCTURAL
@@ -2165,9 +2323,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.3 — The auth routes.
 
-Current task: Task 3.3.1 — Add `POST /api/auth/login`.
+Current task: Task 3.3.2 — Add `POST /api/auth/logout`.
 
-Current status: Milestone 3.2 is complete and verified. Every auth domain function is implemented, exported, and backed by comprehensive unit tests (77 unit tests passing across the project) and integration tests (80 integration tests passing). The domain layer boundary is completely pure. Next milestone is Milestone 3.3 — The auth routes, beginning with Task 3.3.1.
+Current status: Task 3.3.1 is complete. `POST /api/auth/login` is implemented in `app/api/auth/login/route.ts` and covered by integration tests in `tests/integration/auth/login-route.test.ts`. Authenticates credentials, sets `venue_staff` session cookie, and returns `{ data: { staff, allowedAreas } }` with 200, or maps domain failures. 77 unit tests and 83 integration tests passing. Next task is Task 3.3.2.
 
 ## 8. How the File Evolves
 
