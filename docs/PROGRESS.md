@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0069 | 2026-10-17 | Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses (Milestone 3.3 Close) | STRUCTURAL | Milestone 3.3 | §5.3 |
 | ENTRY-0068 | 2026-10-17 | Task 3.3.3.S — Structural: Record D-3.10, D-3.11, D-3.12 (Architectural implementation details) | STRUCTURAL | Milestone 3.3 | §5.3 |
 | ENTRY-0067 | 2026-10-17 | Task 3.3.3 — Add GET /api/auth/session | PASS | Milestone 3.3 | §5.3 |
 | ENTRY-0066 | 2026-10-17 | Task 3.3.2 — Add POST /api/auth/logout | PASS | Milestone 3.3 | §5.3 |
@@ -143,13 +144,263 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0069.
+Next entry number: 0070.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.3 (The auth routes)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0069 — 2026-10-17 — Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses (Milestone 3.3 Close)
+Status: STRUCTURAL
+
+Task: Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses
+
+Summary:
+Verified that the three authentication routes (`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/session`) return canonical API envelopes and correct HTTP status codes, and verified complete domain boundary purity with zero cross-domain imports. Confirmed that all 12 auth integration tests and all 77 unit tests pass cleanly, and closed Milestone 3.3.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Marked Task 3.3.4 as ✅ Complete; closed Milestone 3.3 |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0069, updated ledger, advanced §7 to Milestone 3.4 Task 3.4.1 |
+
+Commands Run:
+
+```powershell
+git log --oneline -1
+```
+Output:
+```
+755b25c Task 3.3.3.S — Record D-3.10, D-3.11, D-3.12 (route injection, API routes over server actions, test isolation)
+```
+
+```powershell
+git status --short
+```
+Output:
+```
+(empty output, clean working tree)
+```
+
+```powershell
+git ls-files app/api/auth
+```
+Output:
+```
+app/api/auth/login/route.ts
+app/api/auth/logout/route.ts
+app/api/auth/session/route.ts
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 13ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 26ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 30ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 5ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 412ms
+
+ Test Files  11 passed (11)
+      Tests  77 passed (77)
+   Start at  17:06:25
+   Duration  638ms (tests 59%, import 22%, transform 12%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/auth/session-route.test.ts (4 tests) 2384ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 2289ms
+ ✓ tests/integration/auth/logout-route.test.ts (3 tests) 2012ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2244ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2222ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2414ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 3519ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2153ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2300ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1728ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 1808ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2364ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 5970ms
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 2434ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2048ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2078ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2091ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2145ms
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2200ms
+
+ Test Files  19 passed (19)
+      Tests  90 passed (90)
+   Start at  17:06:32
+   Duration  59.43s (tests 97%, setup 2%)
+```
+
+```powershell
+pnpm vitest run --config vitest.integration.config.ts tests/integration/auth
+```
+Output:
+```
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/auth/login-route.test.ts (3 tests) 3412ms
+ ✓ tests/integration/auth/session-route.test.ts (4 tests) 2348ms
+ ✓ tests/integration/auth/single-session.test.ts (2 tests) 2227ms
+ ✓ tests/integration/auth/logout-route.test.ts (3 tests) 1855ms
+
+ Test Files  4 passed (4)
+      Tests  12 passed (12)
+   Start at  17:09:35
+   Duration  10.73s (tests 95%, setup 2%, import 2%, transform 1%)
+```
+
+```powershell
+Select-String -Path app/api/auth/login/route.ts -Pattern "NextResponse.json"
+```
+Output:
+```
+app\api\auth\login\route.ts:70:    return NextResponse.json(
+app\api\auth\login\route.ts:84:    return NextResponse.json(
+app\api\auth\login\route.ts:100:    return NextResponse.json(
+app\api\auth\login\route.ts:130:    return NextResponse.json(
+app\api\auth\login\route.ts:145:  return NextResponse.json(
+```
+
+```powershell
+Select-String -Path app/api/auth/logout/route.ts -Pattern "NextResponse.json"
+```
+Output:
+```
+app\api\auth\logout\route.ts:48:  return NextResponse.json({ data: { success: true } }, { status: 200 });
+```
+
+```powershell
+Select-String -Path app/api/auth/session/route.ts -Pattern "NextResponse.json"
+```
+Output:
+```
+app\api\auth\session\route.ts:64:    return NextResponse.json(
+app\api\auth\session\route.ts:73:    return NextResponse.json(
+app\api\auth\session\route.ts:88:    return NextResponse.json(
+app\api\auth\session\route.ts:102:    return NextResponse.json(
+app\api\auth\session\route.ts:114:  return NextResponse.json(
+```
+
+```powershell
+Select-String -Path app/api/auth/login/route.ts -Pattern "status:\s*\d+"
+```
+Output:
+```
+app\api\auth\login\route.ts:72:      { status: 400 }
+app\api\auth\login\route.ts:91:      { status: 400 }
+app\api\auth\login\route.ts:102:      { status: 500 }
+app\api\auth\login\route.ts:157:    { status: 200 }
+```
+
+```powershell
+Select-String -Path app/api/auth/logout/route.ts -Pattern "status:\s*\d+"
+```
+Output:
+```
+app\api\auth\logout\route.ts:48:  return NextResponse.json({ data: { success: true } }, { status: 200 });
+```
+
+```powershell
+Select-String -Path app/api/auth/session/route.ts -Pattern "status:\s*\d+"
+```
+Output:
+```
+app\api\auth\session\route.ts:66:      { status: 401 }
+app\api\auth\session\route.ts:75:      { status: 500 }
+app\api\auth\session\route.ts:90:      { status: 401 }
+app\api\auth\session\route.ts:104:      { status: 401 }
+app\api\auth\session\route.ts:130:    { status: 200 }
+```
+
+```powershell
+Get-ChildItem -Path app/api/auth -Recurse -Filter "route.ts" | Select-String -Pattern "from ['`"]@/domain/orders|from ['`"]@/domain/menu|from ['`"]@/domain/requests|from ['`"]@/domain/payments|from ['`"]@/domain/qr"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | HEAD is 755b25c and working tree is clean | PASS | `git log --oneline -1` and `git status --short` verified |
+| 2 | The three auth route files exist | PASS | `git ls-files app/api/auth` lists login, logout, and session routes |
+| 3 | The typecheck passes | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 4 | The unit suite is 77 passing | PASS | 11 files passed, 77 tests passed |
+| 5 | The integration suite is 90 passing | PASS | 19 files passed, 90 tests passed |
+| 6 | All auth integration tests pass (12 tests) | PASS | 4 files passed, 12 tests passed |
+| 7 | The three routes use the standard envelope | PASS | `NextResponse.json` outputs verified for all three routes |
+| 8 | The three routes map the correct status codes | PASS | Login (400, 401, 500, 200), Logout (200), Session (401, 500, 200) verified |
+| 9 | The three routes import no other domain modules | PASS | `Get-ChildItem` boundary regex produced clean empty output |
+| 10 | ROADMAP.md marks Task 3.3.4 complete and Milestone 3.3 closed | PASS | All tasks 3.3.1 through 3.3.4 marked `✅ Complete` |
+| 11 | PROGRESS.md has ENTRY-0069 and §7 names Task 3.4.1 | PASS | Appended ENTRY-0069, updated ledger, advanced §7 to Task 3.4.1 |
+| 12 | No source file was changed | PASS | `git status --short` shows only the two documentation files |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Per D-3.11, login forms in Milestone 3.4 will submit credentials via `fetch` to `POST /api/auth/login` and inspect `allowedAreas` to determine post-login navigation. Route protection middleware in Milestone 3.5 will rely on the 401 status from `GET /api/auth/session` to redirect unauthenticated requests to `/staff/login`. Full Phase 3 end-to-end acceptance per PHASE_TESTS.md §5 will be executed upon completion of Milestone 3.6.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.1 through D-3.12 | No change |
+| SYSTEM.md | No | Conforms with §5, §6.3, §12.1, §15.3 | No change |
+| BUILD.md | No | Conforms with §6, §11, §13 | No change |
+| ROADMAP.md | Yes | Marked Task 3.3.4 as complete; Milestone 3.3 closed | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0069 | Updated |
+
+Contradiction Check:
+- Does the session contradict a decision in DECISIONS.md? No.
+- Does the session contradict the system's shape in SYSTEM.md? No.
+- Does the session contradict a build rule in BUILD.md? No.
+- Does the session contradict a fact in PRODUCT.md? No.
+- Does the session contradict a task or status in ROADMAP.md? No.
+
+Next:
+Task 3.4.1 — Add the staff login screen. The first action: read DESIGN.md §4.10.1 (the admin's day) and §4.6.1 (the Button component) and app/staff/login/ to understand the current state, then implement the login form in app/staff/login/page.tsx and app/staff/login/_form.tsx (or equivalent).
+
+Awaiting Human Verification: YES
 
 ENTRY-0068 — 2026-10-17 — Task 3.3.3.S — Structural: Record D-3.10, D-3.11, D-3.12 (Architectural implementation details)
 Status: STRUCTURAL
@@ -2765,11 +3016,11 @@ Updated at the end of every session.
 
 Current phase: Phase 3 — Authentication and Sessions.
 
-Current milestone: Milestone 3.3 — The auth routes.
+Current milestone: Milestone 3.4 — The login screens.
 
-Current task: Task 3.3.4 — Verify: the three routes return the correct envelopes and statuses.
+Current task: Task 3.4.1 — Add the staff login screen.
 
-Current status: Task 3.3.3 is complete. `GET /api/auth/session` is implemented in `app/api/auth/session/route.ts` and covered by integration tests in `tests/integration/auth/session-route.test.ts`. Validates session token, retrieves staff profile, computes `allowedAreas`, and returns `{ data: { session, staff, allowedAreas } }` with 200, or returns 401 if unauthenticated. 77 unit tests and 90 integration tests passing. Next task is Task 3.3.4 (Milestone 3.3 verification and close).
+Current status: Milestone 3.3 is complete and closed. The three auth routes (`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/session`) are implemented, return standard API envelopes, map correct status codes, and enforce domain boundary isolation. 77 unit tests and 90 integration tests passing (including 12 auth integration tests). Next task is Task 3.4.1 (add the staff login screen).
 
 ## 8. How the File Evolves
 

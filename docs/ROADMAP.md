@@ -245,7 +245,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 3.3.1 | Add `POST /api/auth/login`                                         | ✅ Complete | 3.2.7      |
 | 3.3.2 | Add `POST /api/auth/logout`                                        | ✅ Complete | 3.3.1      |
 | 3.3.3 | Add `GET /api/auth/session`                                        | ✅ Complete | 3.3.1      |
-| 3.3.4 | Verify: the three routes return the correct envelopes and statuses | ⬜     | 3.3.3      |
+| 3.3.4 | Verify: the three routes return the correct envelopes and statuses | ✅ Complete | 3.3.3      |
 
 ### Milestone 3.4 — The login screens
 
