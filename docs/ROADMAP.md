@@ -263,7 +263,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 3.5.1 | Add the middleware that guards the staff, kitchen, and admin routes                                                                                   | ✅ Complete | 3.4.4      |
 | 3.5.2 | Add the page-level session validation on each protected page                                                                                          | ✅ Complete | 3.5.1      |
 | 3.5.3 | Add the role check on each protected page                                                                                                             | ✅ Complete | 3.5.2      |
-| 3.5.4 | Verify: a signed-out request is redirected; a signed-in request with the wrong role is redirected; a signed-in request with the right role is allowed | ⬜     | 3.5.3      |
+| 3.5.4 | Verify: a signed-out request is redirected; a signed-in request with the wrong role is redirected; a signed-in request with the right role is allowed | ✅ Complete | 3.5.3      |
 
 ### Milestone 3.6 — Placeholder dashboards
 
