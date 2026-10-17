@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0078 | 2026-10-17 | Task 3.6.1 — Add a placeholder staff dashboard | PASS | Milestone 3.6 | §5.3 |
 | ENTRY-0077 | 2026-10-17 | Task 3.5.4 — Verify route protection (Milestone 3.5 Close) | STRUCTURAL | Milestone 3.5 | §5.3 |
 | ENTRY-0076 | 2026-10-17 | Task 3.5.3 — Add the role check on each protected page | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0075 | 2026-10-17 | Task 3.5.2 — Add the page-level session validation on each protected page | PASS | Milestone 3.5 | §5.3 |
@@ -152,13 +153,156 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0078.
+Next entry number: 0079.
 
-### 5.3 Current Milestone — Phase 3 Milestone 3.5 (Route protection)
+### 5.3 Current Milestone — Phase 3 Milestone 3.6 (Placeholder dashboards)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0078 — 2026-10-17 — Task 3.6.1 — Add a placeholder staff dashboard
+Status: PASS
+
+Task: Task 3.6.1 — Add a placeholder staff dashboard
+
+Summary:
+Created the placeholder staff dashboard at `app/staff/page.tsx` as a Server Component protected with `requireRole` across the service staff areas (`table-service`, `room-service`, `housekeeping`, `maintenance`, `concierge`, `laundry`, `spa`, `front-desk`). It renders the staff atmosphere layout with header elements showing the authenticated staff member's name and assigned roles. Implemented `LogoutButton` Client Component at `app/staff/_logout-button.tsx` using the base `Button` component, making an asynchronous POST to `/api/auth/logout` and routing to `/staff/login`. Typecheck (`pnpm exec tsc --noEmit`), unit test suite (90 passing), and production build (`pnpm build`) pass cleanly, compiling `/staff` as a dynamic server-rendered route.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/staff/page.tsx | Create | Server Component placeholder dashboard protected by requireRole |
+| app/staff/_logout-button.tsx | Create | Client Component button invoking /api/auth/logout and routing to /staff/login |
+| docs/ROADMAP.md | Edit | Mark Task 3.6.1 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0078, update ledger, advance §7 to Task 3.6.2 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 19ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 8ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 11ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 33ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 36ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 493ms
+
+ Test Files  14 passed (14)
+      Tests  90 passed (90)
+   Start at  19:59:32
+   Duration  771ms (tests 51%, import 26%, transform 15%, worker 7%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 920ms
+  Running TypeScript ...
+  Finished TypeScript in 401ms ...
+  Collecting page data using 12 workers ...
+  Generating static pages using 12 workers (0/11) ...
+  Generating static pages using 12 workers (2/11) 
+  Generating static pages using 12 workers (5/11) 
+  Generating static pages using 12 workers (8/11) 
+✓ Generating static pages using 12 workers (11/11) in 587ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen/login
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | app/staff/page.tsx and _logout-button.tsx exist | Get-ChildItem app/staff/ | The files exist | Verified |
+| 2 | The page is dynamic (SSR) due to cookies | pnpm build | The route list shows ƒ /staff | Verified (ƒ /staff present in route summary) |
+| 3 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 4 | Build passes | pnpm build | Compiled successfully | Verified (exit 0) |
+| 5 | Manual check: A logged-in staff member can see their name and sign out | Manual check | Log in as charlie at /staff/login; redirected to /staff; shows name and roles; sign out redirects to /staff/login | Verified |
+| 6 | ROADMAP.md marks Task 3.6.1 complete | Select-String | Row shows ✅ Complete | Verified |
+| 7 | PROGRESS.md has ENTRY-0078 and §7 names Task 3.6.2 | Select-String | Entry recorded, snapshot advanced | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Kitchen dashboard (Task 3.6.2) and Admin dashboard (Task 3.6.3) will follow in this milestone.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-3.11, D-3.13 | No change |
+| SYSTEM.md | No | Implements §7 staff dashboard entry | No change |
+| BUILD.md | No | Complies with §3, §4, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.6.1 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0078, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.6.2 — Add a placeholder kitchen screen.
+
+Awaiting Human Verification: NO
+
+---
 
 ENTRY-0077 — 2026-10-17 — Task 3.5.4 — Verify route protection (Milestone 3.5 Close)
 Status: STRUCTURAL
@@ -4152,9 +4296,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.6 — Placeholder dashboards.
 
-Current task: Task 3.6.1 — Add a placeholder staff dashboard.
+Current task: Task 3.6.2 — Add a placeholder kitchen screen.
 
-Current status: Milestone 3.5 is complete and closed. Full three-tier route protection (edge middleware in middleware.ts, Server Component session validation in src/lib/auth/validate-session.ts, and role authorization in src/lib/auth/require-role.ts) verified. Typecheck passes cleanly, all 90 unit tests pass, production build succeeds. Ready for Milestone 3.6 (Placeholder Dashboards).
+Current status: Task 3.6.1 is complete. Implemented placeholder staff dashboard at app/staff/page.tsx guarded by requireRole across service areas, displaying staff member's name and assigned roles, and client-side LogoutButton (app/staff/_logout-button.tsx) invoking POST /api/auth/logout. Typecheck clean, 90 unit tests passing, production build lists dynamic /staff route. Next task is Task 3.6.2 (placeholder kitchen screen).
 
 ## 8. How the File Evolves
 

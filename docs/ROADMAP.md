@@ -269,7 +269,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                    | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------- | ------ | ---------- |
-| 3.6.1 | Add a placeholder staff dashboard                                                       | ⬜     | 3.5.4      |
+| 3.6.1 | Add a placeholder staff dashboard                                                       | ✅ Complete | 3.5.4      |
 | 3.6.2 | Add a placeholder kitchen screen                                                        | ⬜     | 3.6.1      |
 | 3.6.3 | Add a placeholder admin dashboard                                                       | ⬜     | 3.6.2      |
 | 3.6.4 | Verify: each placeholder renders after login and shows the staff member's name and role | ⬜     | 3.6.3      |
