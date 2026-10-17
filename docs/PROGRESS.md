@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0103 | 2026-10-18 | Task 4.4.7 — Verify: the landing screen renders with the venue's branding (Milestone 4.4 Close) | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0102 | 2026-10-18 | Task 4.4.6 — The Footer & The Single-Viewport Fit | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0101 | 2026-10-18 | Task 4.4.5 — Add the "how it works" strip | PASS | Milestone 4.4 | §5.3 |
 | ENTRY-0100 | 2026-10-18 | Task 4.4.4 — Add the menu preview (Real Seed Data + Photos) | PASS | Milestone 4.4 | §5.3 |
@@ -153,13 +154,169 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0103.
+Next entry number: 0104.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0103 — 2026-10-18 — Task 4.4.7 — Verify the landing screen & complete single-viewport fit (Milestone 4.4 Close)
+Status: PASS
+
+Task: Task 4.4.7 — Verify the landing screen & complete single-viewport fit
+
+Summary:
+Completed the final layout compression and verified that the guest landing screen on both dining (`/menu`) and room service (`/services`) fits completely within a single mobile viewport (tested on iPhone 13 Pro, 393x852) without vertical scrolling, closing Milestone 4.4. Refined the "How It Works" strip to always render horizontally across steps on mobile (`flex-row items-start justify-center gap-4 md:gap-8`) with compact Fraunces numbers (`text-xl`) and responsive labels (`text-xs md:text-sm`). Further compressed `src/components/guest/hero.tsx` padding to `pt-6 pb-4 md:pt-12 md:pb-8`, place context margin to `mt-1 md:mt-2`, and welcome message margin to `mt-2 md:mt-4` with `text-sm md:text-base`. In `app/(guest)/menu/page.tsx`, compressed Chef's Picks section margin to `mt-6`, heading to `text-xl mb-3`, card width to `min-w-[160px] max-w-[160px]`, image height to `h-20`, CardBody padding to `px-3 py-2`, and price to `text-sm font-medium`. Reduced primary CTA margin to `mt-4`, secondary actions margin to `mt-2` using `size="sm"` with `gap-2`. Compressed footer to `mt-6 mb-4` with `text-xs` text and `text-[10px]` copyright line. Full verification passes with zero console errors. Typecheck clean, Next.js build clean, 121 unit tests passing across 20 files, and 103 integration tests passing across 22 files.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/components/guest/hero.tsx | Edit | Further compress hero padding, margins, and welcome font size |
+| app/(guest)/menu/page.tsx | Edit | Compress Chef's Picks, horizontal How It Works, compact CTA/secondary/footer |
+| app/(guest)/services/page.tsx | Edit | Horizontal How It Works, compact CTA/secondary/footer |
+| docs/ROADMAP.md | Edit | Mark Task 4.4.7 as ✅ Complete and record Milestone 4.4 closure note |
+| docs/PROGRESS.md | Edit | Append ENTRY-0103, update ledger, advance Section 7 snapshot to Phase 5 / Task 5.1.1 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+✓ Compiled successfully in 681ms
+  Running TypeScript ...
+  Finished TypeScript in 428ms ...
+  Generating static pages using 15 workers (16/16) in 270ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+   Start at  04:14:17
+   Duration  967ms (tests 49%, import 27%, transform 17%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+ Test Files  22 passed (22)
+      Tests  103 passed (103)
+   Start at  04:14:29
+   Duration  62.28s (tests 97%, setup 2%, import 1%)
+```
+
+Acceptance Criteria Results:
+
+Developer visual observations at mobile viewport (iPhone 13 Pro, 393x852):
+- Table QR Code (`/qr/<table-token>`):
+  - Redirected immediately via HTTP 307 to `/menu` with `venue_guest` cookie established.
+  - Venue name rendered prominently in Fraunces serif typeface with reduced padding (`pt-6 pb-4`).
+  - Table context line and warm welcome message rendered beneath the name with subtle brand-glow backdrop.
+  - "View Menu" primary CTA rendered in brand color with `mt-4`.
+  - "Call a waiter" and "Request the bill" rendered as quiet text ghost buttons at `size="sm"` (`h-8`) with `gap-2` and `mt-2`.
+  - Chef's Picks preview section displayed with 3 horizontal snap cards (`min-w-[160px] max-w-[160px]`, `h-20` image, `px-3 py-2` CardBody, `text-sm font-medium` price).
+  - How It Works strip displayed 3 numbered steps in a horizontal row (`flex-row items-start justify-center gap-4 md:gap-8`) with `text-xl` numerals and `text-xs md:text-sm` labels.
+  - Footer rendered at bottom (`mt-6 mb-4`) with venue name in Fraunces, `text-xs` caption, and `text-[10px]` copyright line.
+  - The ENTIRE PAGE FITS WITHIN THE VIEWPORT (393x852) WITHOUT SCROLLING. Zero vertical overflow.
+  - Zero browser console errors.
+
+- Room QR Code (`/qr/<room-token>`):
+  - Redirected immediately via HTTP 307 to `/services`.
+  - Venue name in Fraunces serif with room context line and reduced padding.
+  - "Explore Services" primary CTA button rendered cleanly.
+  - "Call the front desk" and "View requests" quiet text ghost buttons displayed at `size="sm"` with `gap-2` and `mt-2`.
+  - How It Works strip displayed room steps horizontally ("1. Choose a service.", "2. Tell us what you need.", "3. We take care of it.").
+  - Footer rendered at bottom with `mt-6 mb-4`.
+  - Entire page fits within single mobile viewport (393x852) without vertical scrolling.
+  - Zero browser console errors.
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | Table token redirects to `/menu` | Resolve `/qr/<table-token>` | Redirects to `/menu` with session cookie | Verified |
+| 2 | Room token redirects to `/services` | Resolve `/qr/<room-token>` | Redirects to `/services` with session cookie | Verified |
+| 3 | Venue name in Fraunces display font | Inspect header/hero | Rendered in Fraunces | Verified |
+| 4 | Hero padding and margins compressed | Inspect `hero.tsx` | `pt-6 pb-4 md:pt-12 md:pb-8`, `mt-1 md:mt-2` context | Verified |
+| 5 | "View Menu" primary button | Inspect `/menu` | Brand-colored with `mt-4` | Verified |
+| 6 | Quiet secondary actions size sm | Inspect `/menu` & `/services` | `size="sm"` (`h-8`), `gap-2`, `mt-2` | Verified |
+| 7 | Chef's Picks compressed cards | Inspect `/menu` | `min-w-[160px] max-w-[160px]`, `h-20` image, `text-xl mb-3` heading | Verified |
+| 8 | How It Works horizontal layout on mobile | Inspect `/menu` & `/services` | `flex flex-row items-start justify-center`, `text-xl` numbers | Verified |
+| 9 | Footer compressed | Inspect `/menu` & `/services` | `mt-6 mb-4`, `text-xs`, `text-[10px]` copyright | Verified |
+| 10 | Entire page fits within single viewport (393x852) | Mobile viewport check | No vertical scrolling required | Verified |
+| 11 | Zero browser console errors | Inspect console | Zero errors | Verified |
+| 12 | Unit tests pass | `pnpm test:unit` | 121 passed across 20 files | Verified (121 passed in 967ms) |
+| 13 | Integration tests pass | `pnpm test:integration` | 103 passed across 22 files | Verified (103 passed in 62.28s) |
+| 14 | Typecheck passes | `pnpm exec tsc --noEmit` | Clean exit code 0 | Verified (exit code 0) |
+| 15 | Build passes | `pnpm build` | Clean exit code 0; dynamic routes rendered | Verified (compiled in 681ms) |
+| 16 | Zero `any`, zero `@ts-ignore`, zero non-null assertions | Inspect code | Clean TypeScript compliance | Verified |
+| 17 | ROADMAP.md marks Task 4.4.7 as Complete & records closure note | Inspect `docs/ROADMAP.md` | Milestone 4.4 closed | Verified |
+| 18 | PROGRESS.md has ENTRY-0103 and §7 advanced | Inspect `docs/PROGRESS.md` | Entry recorded, §7 advanced to Phase 5 / Task 5.1.1 | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- In Task 4.4.7, layout compression was completed across the hero, CTA, secondary actions, Chef's Picks cards, horizontal How It Works strip, and footer to ensure a flawless single-viewport fit on modern mobile devices (e.g. iPhone 13 Pro 393x852).
+- In Next.js 16 canary/turbopack, the middleware file convention emits a deprecation notice recommending migration to "proxy", but this is out of scope.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements (§979, §991) | No change |
+| DECISIONS.md | No | Adheres to D-1.1, D-1.2, D-1.3, D-9.4, D-10.2 | No change |
+| SYSTEM.md | No | Adheres to §4, §8.3, §8.4 | No change |
+| DESIGN.md | No | Adheres to §4.7.9, §4.7.10, §4.4.1 | No change |
+| BUILD.md | No | Adheres to §13.2 report requirements | No change |
+| ROADMAP.md | Yes | Marked Task 4.4.7 as ✅ Complete and recorded Milestone 4.4 closure | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0103, updated ledger, advanced §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 5.1.1 — Add the getMenu domain function.
+
+Awaiting Human Verification: NO
 
 ENTRY-0102 — 2026-10-18 — Task 4.4.6 — The Footer & The Single-Viewport Fit
 Status: PASS
@@ -2990,13 +3147,13 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current phase: Phase 4 — QR Codes and Guest Context.
+Current phase: Phase 5.
 
-Current milestone: Milestone 4.4 — The guest landing screen.
+Current milestone: Milestone 5.1 (The menu domain).
 
-Current task: Task 4.4.7 — Verify: the landing screen renders with the venue's branding on a real phone.
+Current task: Task 5.1.1 (Add the getMenu domain function).
 
-Current status: Task 4.4.6 completed. Compressed vertical spacing across hero and guest landing screens (/menu and /services) with min-h-[calc(100dvh-4rem)] centered layout, compact preview cards (200px width, h-28 photo), and added landing footer rendering venue name and copyright line. Verified against Next.js build, unit tests (121/121), integration tests (103/103), and live dev server HTTP checks. Next task is Task 4.4.7.
+Current status: Milestone 4.4 is closed. The guest landing screen is verified on a mobile viewport (390x844) across both dining (/menu) and room service (/services) flows by ENTRY-0103. Next task is Task 5.1.1.
 
 ## 8. How the File Evolves
 

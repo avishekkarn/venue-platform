@@ -63,50 +63,50 @@ export default async function ServicesPage(): Promise<JSX.Element> {
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
       <GuestHero venue={venue.value} placeContext={placeContext} />
-      <div className="mt-6 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
+      <div className="mt-4 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
         <Button size="xl" variant="primary">
           Explore Services
         </Button>
       </div>
-      <div className="mt-4 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
-        <Button variant="ghost" size="md">
+      <div className="mt-2 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
+        <Button variant="ghost" size="sm">
           Call the front desk
         </Button>
-        <Button variant="ghost" size="md">
+        <Button variant="ghost" size="sm">
           View requests
         </Button>
       </div>
       <div className="mt-8 max-w-2xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center">
+        <div className="flex flex-row items-start justify-center gap-4 md:gap-8 text-center">
           <div>
-            <span className="font-display text-2xl text-guest-brand mb-2 block">
+            <span className="font-display text-xl text-guest-brand mb-2 block">
               1.
             </span>
-            <span className="text-sm font-semibold text-guest-text-primary">
+            <span className="text-xs md:text-sm font-semibold text-guest-text-primary">
               Choose a service.
             </span>
           </div>
           <div>
-            <span className="font-display text-2xl text-guest-brand mb-2 block">
+            <span className="font-display text-xl text-guest-brand mb-2 block">
               2.
             </span>
-            <span className="text-sm font-semibold text-guest-text-primary">
+            <span className="text-xs md:text-sm font-semibold text-guest-text-primary">
               Tell us what you need.
             </span>
           </div>
           <div>
-            <span className="font-display text-2xl text-guest-brand mb-2 block">
+            <span className="font-display text-xl text-guest-brand mb-2 block">
               3.
             </span>
-            <span className="text-sm font-semibold text-guest-text-primary">
+            <span className="text-xs md:text-sm font-semibold text-guest-text-primary">
               We take care of it.
             </span>
           </div>
         </div>
       </div>
-      <footer className="mt-12 mb-6 text-center text-sm text-guest-text-muted">
+      <footer className="mt-6 mb-4 text-center text-xs text-guest-text-muted">
         <p className="font-display text-guest-text-secondary">{venue.value.name}</p>
-        <p className="mt-1">Open daily. Powered by IronMan.</p>
+        <p className="mt-1 text-[10px]">Open daily. Powered by IronMan.</p>
       </footer>
     </div>
   );

@@ -330,7 +330,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 4.4.4 | Add the menu preview (a few featured items)                                  | ✅ Complete | 4.4.3      |
 | 4.4.5 | Add the "how it works" strip                                                 | ✅ Complete | 4.4.4      |
 | 4.4.6 | Add the footer                                                               | ✅ Complete | 4.4.5      |
-| 4.4.7 | Verify: the landing screen renders with the venue's branding on a real phone | ⬜     | 4.4.6      |
+| 4.4.7 | Verify: the landing screen renders with the venue's branding on a real phone | ✅ Complete | 4.4.6      |
+
+*(Milestone 4.4 is closed — the guest landing screen is verified on a mobile viewport by ENTRY-0103.)*
 
 ### Milestone 4.5 — Admin QR management
 
