@@ -126,16 +126,162 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0055 | 2026-10-17 | Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0055.
+Next entry number: 0056.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.1 (Session infrastructure)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0055 — 2026-10-17 — Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all)
+Status: PASS
+
+Task: Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all)
+
+Summary:
+Implemented the staff session service in `src/infrastructure/auth/session.ts` providing `createSession`, `validateSession`, `deleteSession`, and `invalidateAllSessions`. The service generates cryptographically secure random session tokens via `crypto.randomUUID()`, handles optional expiration timestamps, enforces active state validation, and integrates with the `StaffSessionRepository` adapter. Added 5 unit tests with repository mocking in `tests/unit/infrastructure/auth/session.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/infrastructure/auth/session.ts | Edit | Implemented session service lifecycle functions (create, validate, delete, invalidateAll) |
+| tests/unit/infrastructure/auth/session.test.ts | Create | Added 5 unit tests covering creation, validation, expiration, termination, and bulk invalidation |
+| docs/ROADMAP.md | Edit | Marked Task 3.1.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0055, updated ledger, advanced §7 to Task 3.1.4 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/infrastructure/auth/session.test.ts
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  14:58:57
+   Duration  175ms (transform 64%, import 24%, tests 6%, worker 5%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/money.test.ts (16 tests) 17ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 17ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 351ms
+
+ Test Files  5 passed (5)
+      Tests  53 passed (53)
+   Start at  14:59:08
+   Duration  516ms (tests 75%, import 16%, transform 5%, worker 4%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2076ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2390ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2137ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 2363ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2314ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2125ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2115ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 3090ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 2312ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2139ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2315ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2154ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2268ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2194ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  14:59:21
+   Duration  48.76s (tests 98%, setup 2%)
+```
+
+```powershell
+Select-String -Path src/infrastructure/auth/session.ts -Pattern "from ['`"]@/domain/orders|from ['`"]react|from ['`"]@prisma/client"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `createSession` generates UUID token and persists session | PASS | Calls `repo.create` with generated UUID and returns `StaffSession` |
+| 2 | `validateSession` returns session if active and not expired | PASS | Verified in unit test with future expiration and null `endedAt` |
+| 3 | `validateSession` returns null when session is expired | PASS | Returns `null` when `expiresAt < new Date()` |
+| 4 | `validateSession` returns null when session is ended | PASS | Returns `null` when `endedAt !== null` |
+| 5 | `deleteSession` ends individual session via repository | PASS | Calls `repo.endById(sessionId)` and tolerates NOT_FOUND |
+| 6 | `invalidateAllSessions` ends all active sessions for staff | PASS | Calls `repo.endAllForStaff(staffMemberId)` and returns count |
+| 7 | 5 unit tests pass in `tests/unit/infrastructure/auth/session.test.ts` | PASS | All 5 test cases passed |
+| 8 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 9 | Full unit test suite passes with 53 tests | PASS | 5 files passed, 53 tests passed |
+| 10 | Full integration test suite remains green with 78 tests | PASS | 15 files passed, 78 tests passed (48.76s) |
+| 11 | Architectural boundary respected | PASS | Boundary check regex produced empty output |
+| 12 | ROADMAP.md updated | PASS | Task 3.1.3 marked `✅ Complete` |
+| 13 | PROGRESS.md updated | PASS | ENTRY-0055 appended, ledger updated, snapshot advanced to Task 3.1.4 |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+`session.ts` derives `DbClient` from `Parameters<typeof createPrismaStaffSessionRepository>[0]`, completely avoiding any `@prisma/client` import in `src/infrastructure/auth/session.ts` while preserving full strict typing.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.2, D-3.3, D-3.4 | No change |
+| SYSTEM.md | No | Conforms with §6.3, §15.3 | No change |
+| BUILD.md | No | Conforms with §5, §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.1.3 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0055 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.1.4 — Add the session cookie helpers (set, read, clear). The first action: read SYSTEM.md §15.3 and DECISIONS.md regarding cookie security (HttpOnly, Secure, SameSite=Lax, Path=/), then implement the cookie helper functions in src/infrastructure/auth/cookie.ts with unit tests.
+
+Awaiting Human Verification: YES
 
 ENTRY-0054 — 2026-10-17 — Task 3.1.2 — Seed the staff members with different roles
 Status: PASS
@@ -604,9 +750,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.1 — Session infrastructure.
 
-Current task: Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all).
+Current task: Task 3.1.4 — Add the session cookie helpers (set, read, clear).
 
-Current status: Task 3.1.2 is complete. 5 staff accounts with roles (MANAGER, CHEF, TABLE_SERVICE, HOUSEKEEPING, FRONT_DESK) have been seeded with Argon2id password hashes into the database, with verified idempotency. All unit tests (48/48) and integration tests (78/78) pass. TypeScript check clean. Next task is Task 3.1.3.
+Current status: Task 3.1.3 is complete. The staff session service is implemented in `src/infrastructure/auth/session.ts` and verified with 5 unit tests. All unit tests (53/53) and integration tests (78/78) pass. TypeScript check clean. Next task is Task 3.1.4.
 
 ## 8. How the File Evolves
 
