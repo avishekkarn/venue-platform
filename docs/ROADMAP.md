@@ -313,7 +313,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                               | Status | Depends on |
 | ----- | -------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 4.3.1 | Add the QR landing page (resolves the token, creates the session, redirects)                       | ⬜     | 4.2.4      |
+| 4.3.1 | Add the QR landing page (resolves the token, creates the session, redirects)                       | ✅ Complete | 4.2.4      |
 | 4.3.2 | Add the "QR no longer active" screen                                                               | ⬜     | 4.3.1      |
 | 4.3.3 | Add the "scan the QR" screen for guests who land at the root without a token                       | ⬜     | 4.3.1      |
 | 4.3.4 | Verify: a valid token opens the guest landing; a revoked token shows the "no longer active" screen | ⬜     | 4.3.3      |
