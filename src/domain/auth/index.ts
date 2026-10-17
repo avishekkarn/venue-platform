@@ -7,3 +7,4 @@
 export * from "./staff.repository";
 export * from "./staff-session.repository";
 export * from "./login";
+export * from "./logout";
