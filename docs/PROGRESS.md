@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0076 | 2026-10-17 | Task 3.5.3 — Add the role check on each protected page | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0075 | 2026-10-17 | Task 3.5.2 — Add the page-level session validation on each protected page | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0074 | 2026-10-17 | Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0073 | 2026-10-17 | Task 3.4.4 — Verify login screens (Milestone 3.4 Close) | STRUCTURAL | Milestone 3.4 | §5.3 |
@@ -150,13 +151,156 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0076.
+Next entry number: 0077.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.5 (Route protection)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0076 — 2026-10-17 — Task 3.5.3 — Add the role check on each protected page
+Status: PASS
+
+Task: Task 3.5.3 — Add the role check on each protected page
+
+Summary:
+Created reusable Server Component role-checking helper `requireRole(allowedAreas: Area[]): Promise<StaffMember>` in `src/lib/auth/require-role.ts`. The helper fetches the authenticated staff session via `getAuthenticatedStaff()`, redirects unauthenticated users to `/staff/login`, evaluates permissions against `allowedAreas` using the `canAccess` domain function, and redirects unauthorized users to `/forbidden`. Implemented staff-world 403 page at `app/forbidden/page.tsx` adhering to the staff design tokens (`data-world="staff"`, `bg-staff-surface`, secondary return link to `/staff/login`). Created unit test suite at `tests/unit/auth/require-role.test.ts` covering unauthenticated redirect to `/staff/login`, unauthorized role redirect to `/forbidden`, and permitted role pass-through. Typecheck, all 90 unit tests across 14 test suites, and Next.js production build (`pnpm build`) pass cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/lib/auth/require-role.ts | Create | Reusable Server Component role authorization helper |
+| app/forbidden/page.tsx | Create | Staff-world 403 Forbidden page |
+| tests/unit/auth/require-role.test.ts | Create | Unit tests for requireRole (unauthenticated, forbidden, permitted) |
+| docs/ROADMAP.md | Edit | Mark Task 3.5.3 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0076, update ledger, advance §7 to Task 3.5.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 13ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 25ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 9ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 5ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 367ms
+
+ Test Files  14 passed (14)
+      Tests  90 passed (90)
+   Start at  19:32:22
+   Duration  711ms (tests 38%, transform 29%, import 27%, worker 6%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 993ms
+  Running TypeScript ...
+  Finished TypeScript in 385ms ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/10) ...
+  Generating static pages using 11 workers (2/10) 
+  Generating static pages using 11 workers (4/10) 
+  Generating static pages using 11 workers (7/10) 
+✓ Generating static pages using 11 workers (10/10) in 582ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen/login
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | require-role.ts exists and exports requireRole | Get-Content src/lib/auth/require-role.ts | The file exists | Verified |
+| 2 | The forbidden page exists | Get-ChildItem app/forbidden/page.tsx | The file exists | Verified |
+| 3 | Unit tests for role checks pass | pnpm test:unit | 90 tests passing | Verified (90 passed across 14 test files) |
+| 4 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 5 | Build passes | pnpm build | Compiled successfully; /forbidden in route list | Verified (/forbidden present in route summary) |
+| 6 | ROADMAP.md marks Task 3.5.3 complete | Select-String | Row shows ✅ Complete | Verified |
+| 7 | PROGRESS.md has ENTRY-0076 and §7 names Task 3.5.4 | Select-String | Entry recorded, snapshot advanced | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Placeholder dashboards for `/staff`, `/admin`, and `/kitchen` will integrate `requireRole` in Milestone 3.6. Verification of the complete three-tier route protection flow occurs in Task 3.5.4.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Adheres to D-3.6, D-3.11, D-3.13 | No change |
+| SYSTEM.md | No | Implements §6.5, §7.1 role check layer | No change |
+| BUILD.md | No | Complies with §2, §3, §11, §13 | No change |
+| ROADMAP.md | Yes | Marked Task 3.5.3 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0076, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.5.4 — Verify: a signed-out request is redirected; a signed-in request with the wrong role is redirected; a signed-in request with the right role is allowed (Milestone 3.5 Close).
+
+Awaiting Human Verification: NO
+
+---
 
 ENTRY-0075 — 2026-10-17 — Task 3.5.2 — Add the page-level session validation on each protected page
 Status: PASS
@@ -3866,9 +4010,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.5 — Route protection.
 
-Current task: Task 3.5.3 — Add the role check on each protected page.
+Current task: Task 3.5.4 — Verify: a signed-out request is redirected; a signed-in request with the wrong role is redirected; a signed-in request with the right role is allowed.
 
-Current status: Task 3.5.2 is complete. Created reusable Server Component helper getAuthenticatedStaff() in src/lib/auth/validate-session.ts that validates the venue_staff session cookie against the database and domain layer. Protected login pages (/staff/login, /admin/login, /kitchen/login) redirect authenticated staff members away from the login screens to their respective area roots. Typecheck, 87 unit tests, and production build passing. Next task is Task 3.5.3 (role checks on protected pages).
+Current status: Task 3.5.3 is complete. Implemented requireRole(allowedAreas: Area[]) in src/lib/auth/require-role.ts guarding pages with role authorization via canAccess, redirecting unauthorized users to /forbidden and unauthenticated users to /staff/login. Created staff-world 403 page at app/forbidden/page.tsx and unit tests in tests/unit/auth/require-role.test.ts. 90 unit tests passing, typecheck passing, Next.js production build passing. Ready for Milestone 3.5 verification (Task 3.5.4).
 
 ## 8. How the File Evolves
 
