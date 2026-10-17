@@ -126,6 +126,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0074 | 2026-10-17 | Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes | PASS | Milestone 3.5 | §5.3 |
 | ENTRY-0073 | 2026-10-17 | Task 3.4.4 — Verify login screens (Milestone 3.4 Close) | STRUCTURAL | Milestone 3.4 | §5.3 |
 | ENTRY-0072 | 2026-10-17 | Task 3.4.3 — Add the kitchen login screen | PASS | Milestone 3.4 | §5.3 |
 | ENTRY-0071 | 2026-10-17 | Task 3.4.2 — Add the manager login screen | PASS | Milestone 3.4 | §5.3 |
@@ -148,13 +149,154 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0074.
+Next entry number: 0075.
 
-### 5.3 Current Milestone — Phase 3 Milestone 3.4 (The login screens)
+### 5.3 Current Milestone — Phase 3 Milestone 3.5 (Route protection)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0074 — 2026-10-17 — Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes
+Status: PASS
+
+Task: Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes
+
+Summary:
+Created Next.js edge middleware at `middleware.ts` guarding `/staff/:path*`, `/kitchen/:path*`, and `/admin/:path*`. The middleware passes through `/login` endpoints and requests bearing the `venue_staff` session cookie. For requests without the `venue_staff` cookie, it redirects to the appropriate login page (`/staff/login`, `/kitchen/login`, `/admin/login`). Created unit test suite (`tests/unit/auth/middleware.test.ts`) covering all 5 edge routing scenarios using `NextRequest`. Typecheck, unit test suite (87 passing across 13 files), and Next.js production build (`pnpm build`) pass cleanly, compiling the middleware edge proxy.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| middleware.ts | Create | Edge middleware guarding staff, kitchen, and admin routes |
+| tests/unit/auth/middleware.test.ts | Create | Unit tests verifying edge middleware redirects and pass-through |
+| docs/ROADMAP.md | Edit | Mark Task 3.5.1 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Append ENTRY-0074, update ledger, advance §7 to Task 3.5.2 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/money.test.ts (16 tests) 32ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 33ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 12ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 10ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 16ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 7ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 6ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 393ms
+
+ Test Files  13 passed (13)
+      Tests  87 passed (87)
+   Start at  19:06:34
+   Duration  735ms (tests 42%, import 27%, transform 23%, worker 8%)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 1032ms
+  Running TypeScript ...
+  Finished TypeScript in 451ms ...
+  Collecting page data using 10 workers ...
+  Generating static pages using 10 workers (0/9) ...
+  Generating static pages using 10 workers (2/9) 
+  Generating static pages using 10 workers (4/9) 
+  Generating static pages using 10 workers (6/9) 
+✓ Generating static pages using 10 workers (9/9) in 640ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin/login
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /kitchen/login
+└ ○ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | middleware.ts exists at the root | Get-ChildItem middleware.ts | The file exists | Verified |
+| 2 | The middleware logic works | pnpm test:unit | 87 tests passing (5 new middleware tests pass) | 87 passed across 13 files |
+| 3 | Typecheck passes | pnpm exec tsc --noEmit | Exit code 0 | Verified (exit 0) |
+| 4 | Build passes and includes middleware | pnpm build | Output shows ƒ Proxy (Middleware) in build summary | Verified (ƒ Proxy (Middleware) present) |
+| 5 | Manual check: navigating to /admin redirects to /admin/login | Manual check | User manually verifies in browser | PASS: Verified by user in browser (incognito redirects to /admin/login; authenticated bypasses login to /admin) |
+| 6 | Manual check: navigating to /staff/login does not redirect | Manual check | Page loads normally | Confirmed |
+| 7 | ROADMAP.md marks Task 3.5.1 complete | Select-String docs/ROADMAP.md | Row shows ✅ Complete | Verified |
+| 8 | PROGRESS.md has ENTRY-0074 and §7 names Task 3.5.2 | Select-String docs/PROGRESS.md | Entry recorded, snapshot advanced | Verified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+Next.js 16 emits a deprecation advisory suggesting the "proxy" convention for edge middleware (`npx @next/codemod@canary middleware-to-proxy .`). The canonical convention `middleware.ts` remains fully operational. Full session validation and role authorization are deferred to Tasks 3.5.2 and 3.5.3.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Follows established decisions D-3.11, D-3.13 | No change |
+| SYSTEM.md | No | Implements §6.5 middleware layer | No change |
+| BUILD.md | No | Aligns with §3, §7.4, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 3.5.1 as Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0074, advanced snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.5.2 — Add the page-level session validation on each protected page.
+
+Awaiting Human Verification: NO
+
+---
 
 ENTRY-0073 — 2026-10-17 — Task 3.4.4 — Verify login screens (Milestone 3.4 Close)
 Status: STRUCTURAL
@@ -3581,9 +3723,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.5 — Route protection.
 
-Current task: Task 3.5.1 — Add the middleware that guards the staff, kitchen, and admin routes.
+Current task: Task 3.5.2 — Add the page-level session validation on each protected page.
 
-Current status: Milestone 3.4 is complete and closed. The three login screens (/staff/login, /admin/login, /kitchen/login) are verified and functional. 82 unit tests and 90 integration tests passing. Production build succeeds with all three login routes prerendered. Next milestone is Milestone 3.5 (Route protection) starting with Task 3.5.1.
+Current status: Task 3.5.1 is complete. Edge middleware (middleware.ts) intercepts requests to /staff, /kitchen, and /admin routes, allowing login pages and requests with venue_staff cookies while redirecting unauthenticated requests. 87 unit tests and 90 integration tests passing. Next task is Task 3.5.2 (page-level session validation).
 
 ## 8. How the File Evolves
 
