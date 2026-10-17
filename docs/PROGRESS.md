@@ -126,19 +126,169 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0058 | 2026-10-17 | Task 3.2.1 — Add the login domain function | PASS | Milestone 3.2 | §5.3 |
 | ENTRY-0057 | 2026-10-17 | Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified | STRUCTURAL | Milestone 3.1 | §5.3 |
 | ENTRY-0056 | 2026-10-17 | Task 3.1.4 — Add the session cookie helpers (set, read, clear) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0055 | 2026-10-17 | Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0058.
+Next entry number: 0059.
 
-### 5.3 Current Milestone — Phase 3 Milestone 3.1 (Session infrastructure)
+### 5.3 Current Milestone — Phase 3 Milestone 3.2 (The auth domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0058 — 2026-10-17 — Task 3.2.1 — Add the login domain function
+Status: PASS
+
+Task: Task 3.2.1 — Add the login domain function
+
+Summary:
+Implemented the `login` domain function in `src/domain/auth/login.ts` and exported it from `src/domain/auth/index.ts`. The function orchestrates user lookup via `StaffRepository`, password verification via `verifyPassword`, active status verification (D-3.7), single-session enforcement via `invalidateAllSessions` (D-3.4), and session creation via `createSession`. Returns generic `UNAUTHORIZED` messages on nonexistent user, invalid password, or deactivated account to eliminate user enumeration (BUILD.md §7.4). Verified with 5 unit tests in `tests/unit/auth/login.test.ts`.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/auth/login.ts | Edit | Implemented login domain function with LoginDependencies and LoginInput |
+| src/domain/auth/index.ts | Edit | Exported login domain function and types |
+| tests/unit/auth/login.test.ts | Create | Added 5 unit tests covering valid login, user not found, wrong password, deactivated staff, and call order |
+| vitest.config.ts | Edit | Widened include pattern to include tests/unit/auth/login.test.ts per user authorization |
+| docs/ROADMAP.md | Edit | Marked Task 3.2.1 as ✅ Complete |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0058, updated ledger, advanced §7 to Task 3.2.2 |
+
+Commands Run:
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/auth/login.test.ts
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/auth/login.test.ts (5 tests) 5ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  15:23:51
+   Duration  131ms (import 40%, transform 27%, tests 19%, worker 13%, environment 1%)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/money.test.ts (16 tests) 18ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 19ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 5ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 387ms
+
+ Test Files  7 passed (7)
+      Tests  61 passed (61)
+   Start at  15:24:41
+   Duration  554ms (tests 64%, import 16%, transform 15%, worker 4%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 1840ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2447ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 1993ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2278ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 1984ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2095ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2140ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2067ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 1798ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 2318ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 2347ms
+ ✓ tests/integration/harness.test.ts (2 tests) 2203ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1725ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 1700ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  15:25:04
+   Duration  43.53s (tests 97%, setup 2%)
+```
+
+```powershell
+Select-String -Path src/domain/auth/login.ts -Pattern "from ['`"]@prisma/client|from ['`"]react|from ['`"]next"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `login` domain function accepts LoginDependencies and LoginInput | PASS | Declared with pure interfaces and dependencies injection |
+| 2 | `login` exported from `src/domain/auth/index.ts` | PASS | Exported via `export * from "./login"` |
+| 3 | Returns generic UNAUTHORIZED on nonexistent user | PASS | Returns `fail(DomainErrorCode.UNAUTHORIZED, "Incorrect username or password")` |
+| 4 | Returns generic UNAUTHORIZED on incorrect password | PASS | Returns `fail(DomainErrorCode.UNAUTHORIZED, "Incorrect username or password")` |
+| 5 | Returns generic UNAUTHORIZED on deactivated staff | PASS | Checks `staff.state === StaffState.DEACTIVATED` and returns generic error |
+| 6 | Single session enforced by calling invalidateAllSessions before createSession | PASS | Tested call order: `invalidateAllSessions` precedes `createSession` |
+| 7 | 5 unit tests pass in `tests/unit/auth/login.test.ts` | PASS | All 5 test cases passed cleanly |
+| 8 | Clean TypeScript compilation | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 9 | Full unit suite passes with 61 tests | PASS | 7 files passed, 61 tests passed |
+| 10 | Full integration suite remains green with 78 tests | PASS | 15 files passed, 78 tests passed (43.53s duration) |
+| 11 | Domain boundary respected (no framework/infrastructure imports) | PASS | Boundary check regex produced empty output |
+| 12 | ROADMAP.md updated | PASS | Task 3.2.1 marked `✅ Complete` |
+| 13 | PROGRESS.md updated | PASS | ENTRY-0058 appended, ledger updated, snapshot advanced to Task 3.2.2 |
+
+Deviations from Contract:
+Widened `vitest.config.ts` to include `tests/unit/auth/login.test.ts` upon explicit user authorization (expanding touched files from 5 to 6), resolving test runner path filtering while keeping empty placeholder test files isolated.
+
+Noticed but Out of Scope:
+The `login` function strips credentials and returns a clean `StaffMember` and `sessionToken` string. Next API route `POST /api/auth/login` (Task 3.3.1) will wire this token to `setSessionCookie`.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.1, D-3.4, D-3.7 | No change |
+| SYSTEM.md | No | Conforms with §6.2, §6.3, §7 | No change |
+| BUILD.md | No | Conforms with §5, §7.4, §8.8 | No change |
+| ROADMAP.md | Yes | Task 3.2.1 marked complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0058 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.2.2 — Add the `logout` domain function. The first action: read src/domain/auth/staff-session.repository.ts, then implement src/domain/auth/logout.ts to delete the session by its token/id via injected dependencies with unit tests.
+
+Awaiting Human Verification: YES
 
 ENTRY-0057 — 2026-10-17 — Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified
 Status: STRUCTURAL
@@ -1099,9 +1249,9 @@ Current phase: Phase 3 — Authentication and Sessions.
 
 Current milestone: Milestone 3.2 — The auth domain.
 
-Current task: Task 3.2.1 — Add the login domain function.
+Current task: Task 3.2.2 — Add the `logout` domain function.
 
-Current status: Milestone 3.1 is closed and verified. All session infrastructure primitives (Argon2id password hashing/verification, session lifecycle service, session cookie helpers) are complete, strictly typed, isolated behind the infrastructure boundary, and verified with 13 unit tests. Next milestone is Milestone 3.2, starting with Task 3.2.1.
+Current status: Task 3.2.1 is complete. The `login` domain function is implemented in `src/domain/auth/login.ts` and exported from `src/domain/auth/index.ts`. Enforces active staff checks, single session invalidation (D-3.4), and returns generic UNAUTHORIZED messages. 61 unit tests and 78 integration tests passing. Next task is Task 3.2.2.
 
 ## 8. How the File Evolves
 

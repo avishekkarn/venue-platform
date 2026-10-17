@@ -230,7 +230,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                   | Status | Depends on |
 | ----- | ------------------------------------------------------ | ------ | ---------- |
-| 3.2.1 | Add the `login` domain function                        | ⬜     | 3.1.5      |
+| 3.2.1 | Add the `login` domain function                        | ✅ Complete | 3.1.5      |
 | 3.2.2 | Add the `logout` domain function                       | ⬜     | 3.2.1      |
 | 3.2.3 | Add the `getSession` domain function                   | ⬜     | 3.2.1      |
 | 3.2.4 | Add the `canAccess` domain function (roles and areas)  | ⬜     | 3.2.3      |

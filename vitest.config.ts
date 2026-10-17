@@ -28,6 +28,7 @@ export default defineConfig({
     include: [
       "tests/unit/lib/**/*.test.ts",
       "tests/unit/infrastructure/**/*.test.ts",
+      "tests/unit/auth/login.test.ts",
     ],
     environment: "node",
     globals: false,
