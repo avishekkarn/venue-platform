@@ -126,18 +126,223 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0057 | 2026-10-17 | Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified | STRUCTURAL | Milestone 3.1 | §5.3 |
 | ENTRY-0056 | 2026-10-17 | Task 3.1.4 — Add the session cookie helpers (set, read, clear) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0055 | 2026-10-17 | Task 3.1.3 — Add the session service (create, validate, delete, invalidate-all) | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0054 | 2026-10-17 | Task 3.1.2 — Seed the staff members with different roles | PASS | Milestone 3.1 | §5.3 |
 | ENTRY-0053 | 2026-10-17 | Task 3.1.1 — Add the password hashing service (hash and verify) | PASS | Milestone 3.1 | §5.3 |
 
-Next entry number: 0057.
+Next entry number: 0058.
 
 ### 5.3 Current Milestone — Phase 3 Milestone 3.1 (Session infrastructure)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0057 — 2026-10-17 — Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified
+Status: STRUCTURAL
+
+Task: Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified
+
+Summary:
+Proven that all four primitives of Milestone 3.1 (Argon2id password hashing/verification, session lifecycle service, session cookie helpers, and seeded staff accounts) function correctly and are strictly isolated behind the infrastructure boundary. Milestone 3.1 is closed.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Marked Task 3.1.5 as ✅ Complete; closed Milestone 3.1 |
+| docs/PROGRESS.md | Edit | Appended ENTRY-0057, updated ledger, advanced §7 to Milestone 3.2 (Task 3.2.1) |
+
+Commands Run:
+
+```powershell
+git log --oneline -1
+```
+Output:
+```
+d2a6633 Task 3.1.4 — Add the session cookie helpers (set, read, clear)
+```
+
+```powershell
+git ls-files src/infrastructure/auth
+```
+Output:
+```
+src/infrastructure/auth/cookies.ts
+src/infrastructure/auth/password.ts
+src/infrastructure/auth/session.ts
+```
+
+```powershell
+git status --short
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 21ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 12ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 29ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 348ms
+
+ Test Files  6 passed (6)
+      Tests  56 passed (56)
+   Start at  15:09:37
+   Duration  505ms (tests 74%, import 14%, transform 7%, worker 5%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```
+$ vitest run --config vitest.integration.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/integration/repositories/order.test.ts (13 tests) 2038ms
+ ✓ tests/integration/repositories/request.test.ts (13 tests) 2492ms
+ ✓ tests/integration/repositories/payment.test.ts (13 tests) 1965ms
+ ✓ tests/integration/harness.test.ts (2 tests) 1801ms
+ ✓ tests/integration/repositories/qr-token.test.ts (4 tests) 1714ms
+ ✓ tests/integration/repositories/room.test.ts (3 tests) 2290ms
+ ✓ tests/integration/repositories/venue.test.ts (5 tests) 1999ms
+ ✓ tests/integration/api/kitchen-orders.test.ts (0 test) 2094ms
+ ✓ tests/integration/api/admin-menu.test.ts (0 test) 2083ms
+ ✓ tests/integration/repositories/menu.test.ts (13 tests) 2304ms
+ ✓ tests/integration/repositories/table.test.ts (3 tests) 1709ms
+ ✓ tests/integration/repositories/staff.test.ts (5 tests) 2270ms
+ ✓ tests/integration/api/staff-orders.test.ts (0 test) 2130ms
+ ✓ tests/integration/repositories/staff-session.test.ts (4 tests) 2230ms
+ ✓ tests/integration/api/guest-orders.test.ts (0 test) 2123ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  15:09:47
+   Duration  43.44s (tests 97%, setup 2%)
+```
+
+```powershell
+pnpm vitest run --config vitest.config.ts tests/unit/infrastructure/auth
+```
+Output:
+```
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 357ms
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  15:10:40
+   Duration  492ms (tests 83%, import 10%, transform 5%, worker 2%)
+```
+
+```powershell
+Get-ChildItem -Path src/infrastructure/auth -Filter "*.ts" | Select-String -Pattern "from ['`"]@/domain/orders|from ['`"]react"
+```
+Output:
+```
+(empty output, clean exit with code 0)
+```
+
+```powershell
+Select-String -Path src/infrastructure/auth/password.ts -Pattern "argon2id"
+```
+Output:
+```
+src\infrastructure\auth\password.ts:4: * Provides functions to hash passwords using Argon2id and to verify
+src\infrastructure\auth\password.ts:8: * - Uses the Argon2id variant per DECISIONS.md D-3.9.
+src\infrastructure\auth\password.ts:19:  return argon2.hash(plain, { type: argon2.argon2id });
+```
+
+```powershell
+Select-String -Path src/infrastructure/auth/session.ts -Pattern "createPrismaStaffSessionRepository"
+```
+Output:
+```
+src\infrastructure\auth\session.ts:12:import { createPrismaStaffSessionRepository } from "@/infrastructure/db/repositories/staff-session.repo";
+src\infrastructure\auth\session.ts:16:export type DbClient = Parameters<typeof createPrismaStaffSessionRepository>[0];
+src\infrastructure\auth\session.ts:28:  const repo = createPrismaStaffSessionRepository(client);
+src\infrastructure\auth\session.ts:51:  const repo = createPrismaStaffSessionRepository(client);
+src\infrastructure\auth\session.ts:81:  const repo = createPrismaStaffSessionRepository(client);
+src\infrastructure\auth\session.ts:97:  const repo = createPrismaStaffSessionRepository(client);
+```
+
+```powershell
+Select-String -Path src/infrastructure/auth/cookies.ts -Pattern "venue_staff"
+```
+Output:
+```
+src\infrastructure\auth\cookies.ts:7: * Reference: SYSTEM.md §6.4 (cookie names — venue_staff),
+src\infrastructure\auth\cookies.ts:14:const COOKIE_NAME = "venue_staff";
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | HEAD is d2a6633 and working tree is clean | PASS | `git log --oneline -1` returned `d2a6633` and `git status --short` was empty |
+| 2 | The three auth infrastructure files exist | PASS | `git ls-files` returned `cookies.ts`, `password.ts`, `session.ts` |
+| 3 | The typecheck passes | PASS | `pnpm exec tsc --noEmit` exited code 0 |
+| 4 | The unit suite is 56 passing | PASS | `Test Files 6 passed (6), Tests 56 passed (56)` |
+| 5 | The integration suite is 78 passing | PASS | `Test Files 15 passed (15), Tests 78 passed (78)` in 43.44s |
+| 6 | The three auth test files pass, totaling 13 tests | PASS | `Test Files 3 passed (3), Tests 13 passed (13)` |
+| 7 | The auth infrastructure folder has no forbidden imports | PASS | `Get-ChildItem ... Select-String` produced empty output |
+| 8 | `password.ts` uses Argon2id | PASS | Line 19: `return argon2.hash(plain, { type: argon2.argon2id });` |
+| 9 | `session.ts` uses `createPrismaStaffSessionRepository` | PASS | Imported and used across `createSession`, `validateSession`, `deleteSession`, `invalidateAllSessions` |
+| 10 | `cookies.ts` uses `venue_staff` | PASS | Line 14: `const COOKIE_NAME = "venue_staff";` |
+| 11 | ROADMAP.md marks Task 3.1.5 complete and Milestone 3.1 closed | PASS | Line 227 marked `✅ Complete` |
+| 12 | PROGRESS.md has ENTRY-0057 and §7 names Task 3.2.1 | PASS | Recorded ENTRY-0057, §7 advanced to Milestone 3.2 (Task 3.2.1) |
+| 13 | No source file was changed | PASS | `git status --short` shows only `docs/PROGRESS.md` and `docs/ROADMAP.md` |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+No domain function calls the session service yet (Task 3.2.1 will be the first to consume `createSession`). No API route or middleware guards are in place yet (deferred to Milestone 3.3 through 3.5).
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | No | Conforms with D-3.2, D-3.3, D-3.4, D-3.9 | No change |
+| SYSTEM.md | No | Conforms with §6.3, §6.4, §6.5, §15.3 | No change |
+| BUILD.md | No | Conforms with §5, §8.8, §11, §13 | No change |
+| ROADMAP.md | Yes | Task 3.1.5 marked complete; Milestone 3.1 closed | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0057 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 3.2.1 — Add the login domain function. The first action: read src/domain/auth/staff.repository.ts, src/domain/auth/staff-session.repository.ts, and src/infrastructure/auth/password.ts, then write src/domain/auth/login.ts to verify a username/password pair and create a session.
+
+Awaiting Human Verification: YES
 
 ENTRY-0056 — 2026-10-17 — Task 3.1.4 — Add the session cookie helpers (set, read, clear)
 Status: PASS
@@ -892,11 +1097,11 @@ Updated at the end of every session.
 
 Current phase: Phase 3 — Authentication and Sessions.
 
-Current milestone: Milestone 3.1 — Session infrastructure.
+Current milestone: Milestone 3.2 — The auth domain.
 
-Current task: Task 3.1.5 — Verify: a session can be created, validated, and deleted; a password can be hashed and verified.
+Current task: Task 3.2.1 — Add the login domain function.
 
-Current status: Task 3.1.4 is complete. Implemented `setSessionCookie`, `getSessionCookie`, and `clearSessionCookie` in `src/infrastructure/auth/cookies.ts`. Verified with 3 unit tests (56/56 unit tests passing, 78/78 integration tests passing). Next task is Task 3.1.5.
+Current status: Milestone 3.1 is closed and verified. All session infrastructure primitives (Argon2id password hashing/verification, session lifecycle service, session cookie helpers) are complete, strictly typed, isolated behind the infrastructure boundary, and verified with 13 unit tests. Next milestone is Milestone 3.2, starting with Task 3.2.1.
 
 ## 8. How the File Evolves
 
