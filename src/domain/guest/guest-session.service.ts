@@ -119,3 +119,36 @@ export async function invalidateGuestSession(
 
   return deps.repo.invalidateByToken(token);
 }
+
+/**
+ * Invalidates all active guest sessions for a specific place (table, room, or counter).
+ *
+ * Called during staff table close and room checkout workflows (Phase 7).
+ * Validates that venueId and placeId are non-empty and placeType is valid.
+ */
+export async function invalidateSessionsForPlace(
+  deps: { repo: GuestSessionRepository },
+  venueId: string,
+  placeType: PlaceType,
+  placeId: string
+): Promise<Result<number>> {
+  if (
+    !venueId ||
+    typeof venueId !== "string" ||
+    venueId.trim() === "" ||
+    !placeId ||
+    typeof placeId !== "string" ||
+    placeId.trim() === "" ||
+    (placeType !== PlaceType.TABLE &&
+      placeType !== PlaceType.ROOM &&
+      placeType !== PlaceType.COUNTER)
+  ) {
+    return fail(
+      DomainErrorCode.VALIDATION_FAILED,
+      "Invalid place details for the given place type"
+    );
+  }
+
+  return deps.repo.invalidateByPlace(venueId, placeType, placeId);
+}
+

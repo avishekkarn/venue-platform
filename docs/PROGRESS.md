@@ -132,6 +132,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0090 | 2026-10-17 | Task 4.2.3 — Add the guest session invalidation on table close and room checkout | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0089 | 2026-10-17 | Task 4.2.2 — Add the guest cookie helpers | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0088 | 2026-10-17 | Task 4.2.1 — Add the guest session service (create, read, invalidate) | PASS | Milestone 4.2 | §5.3 |
 | ENTRY-0087 | 2026-10-17 | Task 4.1.5 — Verify: a token can be generated, resolved, and revoked (Milestone 4.1 Close) | STRUCTURAL | Milestone 4.1 | §5.3 |
@@ -140,13 +141,99 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0090.
+Next entry number: 0091.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.2 (The Guest Session)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+ENTRY-0090 — 2026-10-17 — Task 4.2.3 — Add the guest session invalidation on table close and room checkout
+Status: PASS
+
+Task: Task 4.2.3 — Add the guest session invalidation on table close and room checkout
+
+Summary:
+Added `invalidateSessionsForPlace` pure domain function to `src/domain/guest/guest-session.service.ts` and re-exported it from `src/domain/guest/index.ts`. It validates venueId, placeId, and placeType and delegates to `GuestSessionRepository.invalidateByPlace` returning the count of ended sessions for table close and room checkout workflows (Phase 7). Added unit tests in `tests/unit/guest/guest-session.service.test.ts` verifying valid delegation and rejection on empty venueId, empty placeId, and invalid placeType. All 121 unit tests, typecheck, and production build pass cleanly.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/guest/guest-session.service.ts | Edit | Add invalidateSessionsForPlace domain function |
+| src/domain/guest/index.ts | Edit | Re-export invalidateSessionsForPlace |
+| tests/unit/guest/guest-session.service.test.ts | Edit | Unit tests for invalidateSessionsForPlace |
+| docs/ROADMAP.md | Edit | Mark Task 4.2.3 as ✅ Complete with Phase 7 scheduling note |
+| docs/PROGRESS.md | Edit | Append ENTRY-0090, update ledger, advance §7 to Task 4.2.4 |
+
+Commands Run:
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```
+(clean exit with code 0)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 10ms
+ Test Files  20 passed (20)
+      Tests  121 passed (121)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```
+✓ Compiled successfully in 453ms
+Finished TypeScript in 369ms ...
+Generating static pages using 14 workers (13/13) in 731ms
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | invalidateSessionsForPlace is exported from guest-session.service.ts | PASS | Exported function present |
+| 2 | Unit tests pass | PASS | 121 tests passing (3 new) |
+| 3 | Typecheck passes | PASS | pnpm exec tsc --noEmit exit code 0 |
+| 4 | Build passes | PASS | pnpm build compiled successfully |
+| 5 | ROADMAP.md marks Task 4.2.3 complete, with Phase 7 note | PASS | Row shows ✅ Complete and note present |
+| 6 | PROGRESS.md has ENTRY-0090 and §7 names Task 4.2.4 | PASS | Entry recorded and snapshot advanced |
+| 7 | Scope respected | PASS | Exactly the expected paths modified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+None.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | None | No change |
+| DECISIONS.md | No | Adheres to D-2.3, D-2.5 | No change |
+| SYSTEM.md | No | Adheres to §6.2, §8.4 | No change |
+| BUILD.md | No | Adheres to §2, §5, §15 standards | No change |
+| ROADMAP.md | Yes | Marked Task 4.2.3 as Complete, noted Phase 7 | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0090, advanced snapshot to Task 4.2.4 | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Task 4.2.4 — Verify: a guest session is created on scan, is invalidated on close, and the next scan starts fresh.
+
+Awaiting Human Verification: NO
+
 
 ENTRY-0089 — 2026-10-17 — Task 4.2.2 — Add the guest cookie helpers
 Status: PASS
@@ -1005,9 +1092,9 @@ Current phase: Phase 4 — QR Codes and Guest Context.
 
 Current milestone: Milestone 4.2 — The guest session.
 
-Current task: Task 4.2.3 — Add the guest session invalidation on table close and room checkout.
+Current task: Task 4.2.4 — Verify: a guest session is created on scan, is invalidated on close, and the next scan starts fresh.
 
-Current status: Task 4.2.2 is complete. Implemented guest cookie helpers (setGuestCookie, getGuestCookie, clearGuestCookie) using venue_guest cookie name. 118 unit tests passing, typecheck and build pass. Next task is Task 4.2.3.
+Current status: Task 4.2.3 is complete. Added invalidateSessionsForPlace pure domain function wrapping GuestSessionRepository.invalidateByPlace for table close and room checkout workflows. 121 unit tests passing, typecheck and build pass. Next task is Task 4.2.4.
 
 ## 8. How the File Evolves
 

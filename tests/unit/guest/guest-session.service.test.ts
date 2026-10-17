@@ -3,6 +3,7 @@ import {
   createGuestSession,
   getGuestSession,
   invalidateGuestSession,
+  invalidateSessionsForPlace,
 } from "@/domain/guest/guest-session.service";
 import {
   type GuestSessionRepository,
@@ -189,4 +190,70 @@ describe("guest-session.service unit tests", () => {
       expect(repo.invalidateByToken).not.toHaveBeenCalled();
     });
   });
+
+  describe("invalidateSessionsForPlace", () => {
+    it("calls repo.invalidateByPlace and returns ok(count) with valid inputs", async () => {
+      const repo = createMockRepo({
+        invalidateByPlace: vi.fn().mockResolvedValue(ok(3)),
+      });
+
+      const result = await invalidateSessionsForPlace(
+        { repo },
+        "venue-1",
+        PlaceType.TABLE,
+        "table-1"
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe(3);
+      }
+      expect(repo.invalidateByPlace).toHaveBeenCalledWith(
+        "venue-1",
+        PlaceType.TABLE,
+        "table-1"
+      );
+    });
+
+    it("returns fail(VALIDATION_FAILED) without calling repo.invalidateByPlace when venueId is empty", async () => {
+      const repo = createMockRepo();
+
+      const result = await invalidateSessionsForPlace(
+        { repo },
+        "",
+        PlaceType.TABLE,
+        "table-1"
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
+        expect(result.error.message).toBe(
+          "Invalid place details for the given place type"
+        );
+      }
+      expect(repo.invalidateByPlace).not.toHaveBeenCalled();
+    });
+
+    it("returns fail(VALIDATION_FAILED) without calling repo.invalidateByPlace when placeId is empty", async () => {
+      const repo = createMockRepo();
+
+      const result = await invalidateSessionsForPlace(
+        { repo },
+        "venue-1",
+        PlaceType.TABLE,
+        "   "
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
+        expect(result.error.message).toBe(
+          "Invalid place details for the given place type"
+        );
+      }
+      expect(repo.invalidateByPlace).not.toHaveBeenCalled();
+    });
+  });
 });
+
