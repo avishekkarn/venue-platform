@@ -236,7 +236,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 3.2.4 | Add the `canAccess` domain function (roles and areas)  | ✅ Complete | 3.2.3      |
 | 3.2.5 | Add the password-change invalidation logic             | ✅ Complete | 3.2.4      |
 | 3.2.6 | Add the single-session-per-staff-member logic          | ✅ Complete | 3.2.5      |
-| 3.2.7 | Verify: every domain function has unit tests; all pass | ⬜     | 3.2.6      |
+| 3.2.7 | Verify: every domain function has unit tests; all pass | ✅ Complete | 3.2.6      |
 
 ### Milestone 3.3 — The auth routes
 
