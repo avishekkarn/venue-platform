@@ -20,6 +20,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "./_logout-button";
+import { GenerateButton } from "./_generate-button";
+import type { PlacesByType } from "./_types";
 
 export default async function AdminQrPage(): Promise<JSX.Element> {
   await requireRole(["admin"]);
@@ -50,7 +52,30 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
   }
 
   const qrRepo = createPrismaQrTokenRepository(prisma);
-  const tokensResult = await qrRepo.listForVenue(venue.value.id);
+
+  const [tokensResult, allTables, allRooms, allCounters] = await Promise.all([
+    qrRepo.listForVenue(venue.value.id),
+    prisma.table.findMany({
+      where: { venueId: venue.value.id },
+      select: { id: true, number: true },
+      orderBy: { number: "asc" },
+    }),
+    prisma.room.findMany({
+      where: { venueId: venue.value.id },
+      select: { id: true, number: true },
+      orderBy: { number: "asc" },
+    }),
+    prisma.counter.findMany({
+      where: { venueId: venue.value.id },
+      select: { id: true },
+    }),
+  ]);
+
+  const placesByType: PlacesByType = {
+    TABLE: allTables.map((t) => ({ id: t.id, label: `Table ${t.number}` })),
+    ROOM: allRooms.map((r) => ({ id: r.id, label: `Room ${r.number}` })),
+    COUNTER: allCounters.map((c) => ({ id: c.id, label: "Counter" })),
+  };
 
   if (!tokensResult.ok) {
     return (
@@ -65,7 +90,10 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
                 Every QR code for {venue.value.name}.
               </p>
             </div>
-            <LogoutButton />
+            <div className="flex items-center gap-2">
+              <GenerateButton placesByType={placesByType} />
+              <LogoutButton />
+            </div>
           </header>
           <p className="text-[14px] leading-[20px] text-staff-text-muted">
             Could not load QR codes.
@@ -88,7 +116,10 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
                 Every QR code for {venue.value.name}.
               </p>
             </div>
-            <LogoutButton />
+            <div className="flex items-center gap-2">
+              <GenerateButton placesByType={placesByType} />
+              <LogoutButton />
+            </div>
           </header>
           <p className="text-[14px] leading-[20px] text-staff-text-muted">
             No QR codes yet.
@@ -98,53 +129,18 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
     );
   }
 
-  const tableIds: string[] = [];
-  const roomIds: string[] = [];
-  const counterIds: string[] = [];
-
-  for (const token of tokensResult.value) {
-    if (token.placeType === PlaceType.TABLE && token.tableId !== null) {
-      tableIds.push(token.tableId);
-    } else if (token.placeType === PlaceType.ROOM && token.roomId !== null) {
-      roomIds.push(token.roomId);
-    } else if (token.placeType === PlaceType.COUNTER && token.counterId !== null) {
-      counterIds.push(token.counterId);
-    }
-  }
-
-  const [tables, rooms, counters] = await Promise.all([
-    tableIds.length > 0
-      ? prisma.table.findMany({
-          where: { venueId: venue.value.id, id: { in: tableIds } },
-          select: { id: true, number: true },
-        })
-      : Promise.resolve([]),
-    roomIds.length > 0
-      ? prisma.room.findMany({
-          where: { venueId: venue.value.id, id: { in: roomIds } },
-          select: { id: true, number: true },
-        })
-      : Promise.resolve([]),
-    counterIds.length > 0
-      ? prisma.counter.findMany({
-          where: { venueId: venue.value.id, id: { in: counterIds } },
-          select: { id: true },
-        })
-      : Promise.resolve([]),
-  ]);
-
   const tableMap = new Map<string, string>();
-  for (const t of tables) {
+  for (const t of allTables) {
     tableMap.set(t.id, `Table ${t.number}`);
   }
 
   const roomMap = new Map<string, string>();
-  for (const r of rooms) {
+  for (const r of allRooms) {
     roomMap.set(r.id, `Room ${r.number}`);
   }
 
   const counterMap = new Map<string, string>();
-  for (const c of counters) {
+  for (const c of allCounters) {
     counterMap.set(c.id, "Counter");
   }
 
@@ -173,7 +169,10 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
               Every QR code for {venue.value.name}.
             </p>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <GenerateButton placesByType={placesByType} />
+            <LogoutButton />
+          </div>
         </header>
 
         <div className="rounded-lg border border-staff-border-subtle bg-staff-surface-raised overflow-hidden">
