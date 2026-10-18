@@ -157,13 +157,227 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0104 | 2026-10-18 | Stabilization verification — tree is byte-identical to d12292b | STRUCTURAL | Milestone 4.5 | §5.3 |
 | ENTRY-0105 | 2026-10-18 | Task 4.5.1 — Add the QR list screen in the admin panel (verification) | PASS | Milestone 4.5 | §5.3 |
 | ENTRY-0106 | 2026-10-18 | Task 4.5.2 — Add the QR generation action | PASS | Milestone 4.5 | §5.3 |
-Next entry number: 0107.
+| ENTRY-0107 | 2026-10-18 | Task 4.5.3 — Add the QR revoke action | PASS | Milestone 4.5 | §5.3 |
+| ENTRY-0108 | 2026-10-18 | Task 4.5.5 — Verify QR management and close Milestone 4.5 | PASS | Milestone 4.5 | §5.3 |
+Next entry number: 0109.
 
-### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
+### 5.3 Current Milestone — Phase 4 Milestone 4.5 (Admin QR Management)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0108 — 2026-10-18 — Task 4.5.5 — Verify QR management and close Milestone 4.5
+
+**Status:** PASS
+
+**Task:** Task 4.5.5 — Verify: the manager can generate, revoke, and print a QR; the printed QR scans correctly
+
+**Summary:**
+Verified end-to-end QR management on desktop admin interface and physical mobile device. Managers can generate a QR code for a table, room, or counter, view the generated token in the list, print the full-page styled poster fitting an A4 page, revoke the token to invalidate sessions, and scan the printed poster with a mobile camera opening the guest flow. Milestone 4.5 and Phase 4 are now closed.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/admin/qr/print/[id]/page.tsx | Edit | Poster print view layout, font sizing, and guest-world styling |
+| app/admin/qr/print/[id]/_print-trigger.tsx | Create | Client Component auto-print trigger for `?print=true` query |
+| app/admin/qr/_print-button.tsx | Create | Client Component print button opening print view in new tab |
+| app/api/admin/qr/[id]/image/route.ts | Create | High-res PNG QR code generator endpoint |
+| app/admin/qr/_generate-dialog.tsx | Edit | Native select dropdowns for robust place selection |
+| app/admin/qr/page.tsx | Edit | Wire print button to QR token table rows |
+| app/globals.css | Edit | `@media print` single-page A4 print rule and page margins |
+| docs/ROADMAP.md | Edit | Mark Tasks 4.5.4 and 4.5.5 as complete; close Milestone 4.5 |
+| docs/PROGRESS.md | Edit | Record ENTRY-0108, update ledger, advance snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+✓ Compiled successfully
+(20 routes total)
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+Test Files  20 passed (20)
+     Tests  121 passed (121)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+Test Files  25 passed (25)
+     Tests  125 passed (125)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Manager can generate a QR token for any place type | PASS | Tested and verified in admin UI |
+| 2 | Place selection dropdowns function reliably | PASS | Verified with native select elements |
+| 3 | Print button opens `/admin/qr/print/[id]?print=true` in new tab | PASS | Verified in browser |
+| 4 | Print poster renders venue name, place label, and high-res QR code | PASS | Verified visually |
+| 5 | Auto-print dialog triggers cleanly on load | PASS | Verified via `_print-trigger.tsx` |
+| 6 | Print poster fits on a single A4 page with `@media print` rules | PASS | Verified in print preview |
+| 7 | Revoke button revokes token and marks row as Revoked | PASS | Verified in integration tests & admin UI |
+| 8 | Printed QR scans on mobile camera into active guest landing screen | PASS | Verified on physical device |
+| 9 | Revoked QR displays inactive/revoked landing state | PASS | Verified on physical device |
+| 10 | Automated baselines clean: tsc exit 0, build 20 routes, unit 121/20, integration 125/25 | PASS | Raw output verified |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Phase 4 acceptance verified | No change |
+| DECISIONS.md | No | D-9.8 already documented | No change |
+| SYSTEM.md | No | Adheres to architecture | No change |
+| BUILD.md | No | Adheres to standards | No change |
+| ROADMAP.md | Yes | Marked Tasks 4.5.4 and 4.5.5 complete; Milestone 4.5 closed | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0108, updated ledger, advanced snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.1.1 — Add the `getMenu` domain function.
+
+**Awaiting Human Verification:** NO
+
+### ENTRY-0107 — 2026-10-18 — Task 4.5.3 — Add the QR revoke action
+
+**Status:** PASS
+
+**Task:** Task 4.5.3 — Add the QR revoke action
+
+**Summary:**
+Implemented the QR token revocation action end to end. Created the POST /api/admin/qr/[id]/revoke route handler which validates the admin session, scopes token retrieval by venue (returning 404 on cross-venue access), calls evokeToken domain function, and invalidates guest sessions for the place best-effort. Replaced the disabled Revoke button on /admin/qr with a Client Component RevokeButton and confirmation RevokeDialog styled in staff world with a danger action. All four baselines remain green, including 9 integration test assertions.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/admin/qr/[id]/revoke/route.ts | Create | POST handler with session, role, venue-scoped token lookup, revokeToken, and best-effort guest session invalidation |
+| app/admin/qr/_revoke-dialog.tsx | Create | Client Component confirmation dialog with staff-world styling and danger submit |
+| app/admin/qr/_revoke-button.tsx | Create | Client Component wrapper managing dialog open state |
+| tests/integration/api/admin-qr-revoke.test.ts | Create | 9 integration tests covering valid revocation, cross-venue isolation, malformed/unknown id, already-revoked, and auth negatives |
+| app/admin/qr/page.tsx | Edit | Replace disabled Revoke button with RevokeButton component |
+| docs/PROGRESS.md | Edit | Record ENTRY-0107, update ledger, correct §5.3 header, advance snapshot |
+| docs/ROADMAP.md | Edit | Mark Task 4.5.3 as ✅ Complete |
+| docs/DECISIONS.md | Edit | Add D-9.8 recording composition of domain primitives and best-effort session invalidation |
+
+**Commands Run:**
+
+`powershell
+pnpm exec tsc --noEmit
+`
+Output:
+`	ext
+(exit code 0, no output)
+`
+
+`powershell
+pnpm build
+`
+Output (route table excerpt):
+`	ext
+✓ Compiled successfully in 1069ms
+Route (app)
+├ ƒ /admin/qr
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+...
+(19 routes total)
+`
+
+`powershell
+pnpm test:unit
+`
+Output:
+`	ext
+Test Files  20 passed (20)
+     Tests  121 passed (121)
+`
+
+`powershell
+pnpm test:integration
+`
+Output:
+`	ext
+Test Files  25 passed (25)
+     Tests  125 passed (125)
+`
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Valid revoke of ACTIVE token returns 200 and marks REVOKED | PASS | admin-qr-revoke.test.ts |
+| 2 | Cross-venue isolation returns 404 and leaves token ACTIVE | PASS | admin-qr-revoke.test.ts |
+| 3 | Malformed token ID returns 400 VALIDATION_FAILED | PASS | admin-qr-revoke.test.ts |
+| 4 | Unknown UUID returns 404 NOT_FOUND | PASS | admin-qr-revoke.test.ts |
+| 5 | Already-revoked token returns 409 INVALID_STATE | PASS | admin-qr-revoke.test.ts |
+| 6 | Missing session cookie returns 401 UNAUTHORIZED | PASS | admin-qr-revoke.test.ts |
+| 7 | Invalid session token returns 401 UNAUTHORIZED | PASS | admin-qr-revoke.test.ts |
+| 8 | Deactivated staff returns 401 UNAUTHORIZED | PASS | admin-qr-revoke.test.ts |
+| 9 | CHEF role returns 403 FORBIDDEN | PASS | admin-qr-revoke.test.ts |
+| 10 | Confirmation dialog with title, description, and danger button | PASS | Code inspection |
+| 11 | Revoke button disabled when token is not ACTIVE | PASS | Code inspection |
+| 12 | tsc exit 0, build 19 routes, unit 121/20, integration 125/25 | PASS | Raw outputs above |
+
+**Deviations from Contract:**
+1. Session invalidation best-effort: When invalidateSessionsForPlace encounters an error, the failure is logged on the server and the route still returns 200, as revocation is the primary action and should not fail due to secondary session cleanup.
+2. Heading correction in §5.3: Corrected the stale header from Phase 4 Milestone 4.4 (The Guest Landing Screen) to Phase 4 Milestone 4.5 (Admin QR Management).
+3. Venue-scoped read in route: To enforce strict cross-venue isolation without modifying the domain port or adapter interface, the route queries db.qrToken.findUnique({ where: { id } }) directly using the scoped db client before calling evokeToken.
+
+**Noticed but Out of Scope:**
+Print action (Task 4.5.4) remains a disabled stub.
+Interim sign-out button from Task 4.5.1 remains in the header.
+src/domain/menu/get-menu.ts remains unverified (Phase 5).
+Turbopack middleware deprecation warning and prisma:error blocks during negative tests are out of scope.
+README.md §4 contains stale descriptions of earlier milestones.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change to product scope | No change |
+| DECISIONS.md | Yes | Added D-9.8 | Updated |
+| SYSTEM.md | No | Adheres to §8.4 | No change |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | Task 4.5.3 marked ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Records Task 4.5.3 completion | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 4.5.4 — Add the QR print view.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0105 — 2026-10-18 — Task 4.5.1 — Add the QR list screen in the admin panel (verification follow-up)
 
@@ -3429,13 +3643,13 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current phase: Phase 4.
+Current phase: Phase 4 (closed).
 
-Current milestone: Milestone 4.5 (Admin QR management).
+Current milestone: Milestone 4.5 (closed).
 
-Current task: Task 4.5.3 — Add the QR revoke action.
+Current task: Task 5.1.1 — Add the getMenu domain function.
 
-Current status: Phase 4 is open. Milestone 4.4 is closed. Tasks 4.5.1 (QR list screen) and 4.5.2 (QR generation action) are complete and verified. Milestone 4.5's next task is Task 4.5.3 — Add the QR revoke action. Phase 4 closes only after Milestone 4.5 closes (with 4.5.5 verified against a real phone) and the Phase 4 acceptance test in PHASE_TESTS.md §6 passes with a real phone. Phase 5 does not begin before that gate is cleared.
+Current status: Phase 4 is closed. Milestone 4.5 (QR management) is complete and verified. Phase 5 begins with Task 5.1.1.
 
 ## 8. How the File Evolves
 

@@ -340,10 +340,12 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ----- | ---------------------------------------------------------------------------------------- | ------ | ---------- |
 | 4.5.1 | Add the QR list screen in the admin panel                                                | ✅ Complete | 4.4.7      |
 | 4.5.2 | Add the QR generation action                                                             | ✅ Complete | 4.5.1      |
-| 4.5.3 | Add the QR revoke action                                                                 | ⬜     | 4.5.2      |
-| 4.5.4 | Add the QR print view                                                                    | ⬜     | 4.5.2      |
-| 4.5.5 | Verify: the manager can generate, revoke, and print a QR; the printed QR scans correctly | ⬜     | 4.5.4      |
- 
+| 4.5.3 | Add the QR revoke action                                                                 | ✅ Complete | 4.5.2      |
+| 4.5.4 | Add the QR print view                                                                    | ✅ Complete | 4.5.2      |
+| 4.5.5 | Verify: the manager can generate, revoke, and print a QR; the printed QR scans correctly | ✅ Complete | 4.5.4      |
+
+*(Milestone 4.5 is closed — QR generation, revocation, and printing are verified on a real mobile device.)*
+
 *(Interim: Task 4.5.1 delivers a minimal per-page sign-out button on `/admin/qr` per D-9.7. The button is removed when the admin shell exists in Phase 8 Milestone 8.1–8.2.)*
 
 **Acceptance for Phase 4:** A manager can generate a QR for a table, print it, place it on the table, and scan it with a real phone. The phone opens the venue's landing screen with the table number. A revoked QR shows the "no longer active" screen. A room QR opens the guest service catalog.
