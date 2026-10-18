@@ -3147,13 +3147,13 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current phase: Phase 5.
+Current phase: Phase 4.
 
-Current milestone: Milestone 5.1 (The menu domain).
+Current milestone: Milestone 4.5 (Admin QR management).
 
-Current task: Task 5.1.1 (Add the getMenu domain function).
+Current task: Task 4.5.1 — Add the QR list screen in the admin panel.
 
-Current status: Milestone 4.4 is closed. The guest landing screen is verified on a mobile viewport (390x844) across both dining (/menu) and room service (/services) flows by ENTRY-0103. Next task is Task 5.1.1.
+Current status: Milestone 4.4 is closed. The guest landing screen is verified on a mobile viewport (390x844) across both dining (/menu) and room service (/services) flows by ENTRY-0103. Next task is Task 4.5.1 — Add the QR list screen in the admin panel.
 
 ## 8. How the File Evolves
 
