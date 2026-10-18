@@ -3153,7 +3153,7 @@ Current milestone: Milestone 4.5 (Admin QR management).
 
 Current task: Task 4.5.1 — Add the QR list screen in the admin panel.
 
-Current status: Milestone 4.4 is closed. The guest landing screen is verified on a mobile viewport (390x844) across both dining (/menu) and room service (/services) flows by ENTRY-0103. Next task is Task 4.5.1 — Add the QR list screen in the admin panel.
+Current status: Phase 4 is open. Milestone 4.4 is closed (the guest landing screen is verified on a mobile viewport 390x844 across both /menu and /services by ENTRY-0103). Milestone 4.5 (Admin QR management: Tasks 4.5.1 through 4.5.5) is unstarted. The next task is Task 4.5.1 — Add the QR list screen in the admin panel. Phase 4 closes only after Milestone 4.5 closes (with 4.5.5 verified against a real phone) and the Phase 4 acceptance test in PHASE_TESTS.md §6 passes with a real phone. Phase 5 does not begin before that gate is cleared.
 
 ## 8. How the File Evolves
 
