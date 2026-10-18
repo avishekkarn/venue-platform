@@ -123,13 +123,189 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0109 | 2026-10-18 | Task 5.1.1 — Add the getMenu domain function | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0110 | 2026-10-18 | Task 5.1.2 — Add the getMenuItem domain function | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0111 | 2026-10-19 | Task 5.1.3 — Add the isOrderable domain function | PASS | Milestone 5.1 | §5.3 |
-Next entry number: 0112.
+| ENTRY-0112 | 2026-10-19 | Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones (Milestone 5.1 Close) | PASS | Milestone 5.1 | §5.3 |
+Next entry number: 0113.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.1 (The Menu Domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0112 — 2026-10-19 — Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones (Milestone 5.1 Close)
+
+**Status:** PASS
+
+**Task:** Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones
+
+**Summary:**
+Four integration assertions executed against real PostgreSQL prove the D-4.2 rule that HIDDEN menu items and categories containing only HIDDEN items are pruned by getMenu, getMenuItem returns NOT_FOUND for HIDDEN items, and isOrderable returns false for UNAVAILABLE and HIDDEN items. Milestone 5.1 (the menu domain) is fully verified and closed, unblocking Milestone 5.2.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| tests/integration/menu/get-menu-hidden-filter.test.ts | Create | Integration test proving HIDDEN items are excluded from getMenu against real PostgreSQL, and that getMenuItem returns NOT_FOUND for them |
+| docs/PROGRESS.md | Edit | Record ENTRY-0112, update ledger, advance snapshot |
+| docs/ROADMAP.md | Edit | Mark Task 5.1.4 as ✅ Complete and record Milestone 5.1 close |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 13ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 525ms
+  Running TypeScript ...
+  Finished TypeScript in 404ms ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/18) ...
+  Generating static pages using 15 workers (4/18) 
+  Generating static pages using 15 workers (8/18) 
+  Generating static pages using 15 workers (13/18) 
+✓ Generating static pages using 15 workers (18/18) in 276ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 27ms
+ ✓ tests/unit/menu/get-menu.test.ts (6 tests) 10ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 10ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/menu/get-menu-item.test.ts (6 tests) 9ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 107ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 8ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 5ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/menu/is-orderable.test.ts (4 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 616ms
+
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  00:19:00
+   Duration  925ms (tests 44%, import 28%, transform 21%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  00:19:14
+   Duration  67.89s (tests 96%, setup 3%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | getMenu excludes a HIDDEN item against real PostgreSQL | pnpm test:integration | returned tree includes AVAILABLE item and excludes HIDDEN item by ID | PASS |
+| 2 | A category whose only item is HIDDEN is excluded entirely | pnpm test:integration | category with only HIDDEN item pruned from returned tree | PASS |
+| 3 | getMenuItem returns NOT_FOUND for the HIDDEN item | pnpm test:integration | returns fail(NOT_FOUND, "Menu item not found") | PASS |
+| 4 | isOrderable returns false for UNAVAILABLE and HIDDEN items | pnpm test:integration | returns false for UNAVAILABLE and HIDDEN items | PASS |
+| 5 | TypeScript typecheck clean | pnpm exec tsc --noEmit | Exit code 0, no output | PASS |
+| 6 | Production build compiles clean | pnpm build | 20 routes | PASS |
+| 7 | Unit tests pass exact count | pnpm test:unit | 137 passed across 23 files | PASS |
+| 8 | Integration tests pass exact count | pnpm test:integration | 133 passed across 27 files | PASS |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Milestone 5.2 (the menu screen) is unblocked; the guest menu page still consumes listItems until Task 5.2.1; isOrderable's first caller is Task 5.2.4.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to §5.3 | No change |
+| DECISIONS.md | No | Adheres to D-4.2 | No change |
+| SYSTEM.md | No | Adheres to §4, §5, §11.3, §15.4 | No change |
+| BUILD.md | No | Adheres to §1, §5, §8.8, §11, §13.2, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 5.1.4 as ✅ Complete and recorded Milestone 5.1 close | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0112, updated ledger, advanced snapshot to Milestone 5.2 | Updated |
+| DESIGN.md | No | Adheres to specifications | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.1 — Add the menu screen with category tabs.
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0111 — 2026-10-19 — Task 5.1.3 — Add the isOrderable domain function
 
@@ -681,11 +857,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.1 (The Menu Domain).
+Current milestone: Milestone 5.2 (The Menu Screen).
 
-Current task: Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones.
+Current task: Task 5.2.1 — Add the menu screen with category tabs.
 
-Current status: Task 5.1.3 is complete and verified. Task 5.1.4 (the milestone verification) is next. Phase 5 closes only after Milestone 5.8's verification task and the Phase 5 acceptance test in PHASE_TESTS.md §7 pass with a real phone.
+Current status: Phase 5 is open. Milestone 5.1 (the menu domain) is closed — getMenu, getMenuItem, and isOrderable are complete, verified against real PostgreSQL by ENTRY-0112, and exercise the D-4.2 rule that HIDDEN items are excluded at the domain layer. Milestone 5.2 (the menu screen on the phone) begins with Task 5.2.1. The guest menu page at app/(guest)/menu/page.tsx continues to consume listItems for Chef's Picks until Task 5.2.1 replaces its data source with getMenu. Phase 5 closes only after Milestone 5.8's verification and the Phase 5 acceptance test in PHASE_TESTS.md §7 pass with a real phone.
 
 ## 8. How the File Evolves
 

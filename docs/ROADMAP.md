@@ -365,7 +365,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.1.1 | Add the `getMenu` domain function                                                | ✅ Complete | 4.5.5      |
 | 5.1.2 | Add the `getMenuItem` domain function                                            | ✅ Complete | 5.1.1      |
 | 5.1.3 | Add the `isOrderable` domain function (item state check)                         | ✅ Complete | 5.1.2      |
-| 5.1.4 | Verify: the menu returns only available and unavailable items, never hidden ones | ⬜     | 5.1.3      |
+| 5.1.4 | Verify: the menu returns only available and unavailable items, never hidden ones | ✅ Complete | 5.1.3      |
+
+*(Milestone 5.1 is closed — the menu domain primitives (getMenu, getMenuItem, isOrderable) are verified against real PostgreSQL, including the D-4.2 HIDDEN-item exclusion at the database layer. Milestone 5.2 is unblocked.)*
 
 ### Milestone 5.2 — The menu screen
 
