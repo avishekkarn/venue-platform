@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "./_logout-button";
 import { GenerateButton } from "./_generate-button";
+import { RevokeButton } from "./_revoke-button";
+import { PrintButton } from "./_print-button";
 import type { PlacesByType } from "./_types";
 
 export default async function AdminQrPage(): Promise<JSX.Element> {
@@ -213,24 +215,11 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex items-center justify-end gap-2">
-                        <span title="Available in a later task">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled
-                          >
-                            Print
-                          </Button>
-                        </span>
-                        <span title="Available in a later task">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled
-                          >
-                            Revoke
-                          </Button>
-                        </span>
+                        <PrintButton tokenId={token.id} />
+                        <RevokeButton
+                          tokenId={token.id}
+                          disabled={!isActive}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

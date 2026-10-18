@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type JSX, type FormEvent } from "react";
+import { useState, type JSX, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -11,13 +11,6 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import type { PlacesByType } from "./_types";
 
@@ -42,19 +35,18 @@ export function GenerateDialog({
 
   const availablePlaces = placesByType[placeType] ?? [];
 
-  const handlePlaceTypeChange = (value: unknown): void => {
-    if (typeof value === "string" && (value === "TABLE" || value === "ROOM" || value === "COUNTER")) {
+  const handlePlaceTypeChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    const value = e.target.value;
+    if (value === "TABLE" || value === "ROOM" || value === "COUNTER") {
       setPlaceType(value);
       setSelectedPlaceId("");
       setErrorMessage(null);
     }
   };
 
-  const handlePlaceChange = (value: unknown): void => {
-    if (typeof value === "string") {
-      setSelectedPlaceId(value);
-      setErrorMessage(null);
-    }
+  const handlePlaceChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    setSelectedPlaceId(e.target.value);
+    setErrorMessage(null);
   };
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
@@ -136,20 +128,17 @@ export function GenerateDialog({
               >
                 Place type
               </label>
-              <Select
+              <select
+                id="place-type-select"
                 value={placeType}
-                onValueChange={handlePlaceTypeChange}
+                onChange={handlePlaceTypeChange}
                 disabled={loading}
+                className="h-10 w-full rounded-md border border-staff-border-subtle bg-staff-surface-raised px-3 text-[14px] text-staff-text-primary outline-none transition-none focus:border-ring focus:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-staff-surface-sunken disabled:text-staff-text-muted"
               >
-                <SelectTrigger id="place-type-select">
-                  <SelectValue placeholder="Select place type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TABLE">TABLE</SelectItem>
-                  <SelectItem value="ROOM">ROOM</SelectItem>
-                  <SelectItem value="COUNTER">COUNTER</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="TABLE">TABLE</option>
+                <option value="ROOM">ROOM</option>
+                <option value="COUNTER">COUNTER</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -159,28 +148,24 @@ export function GenerateDialog({
               >
                 Place
               </label>
-              <Select
+              <select
+                id="place-select"
                 value={selectedPlaceId}
-                onValueChange={handlePlaceChange}
+                onChange={handlePlaceChange}
                 disabled={loading || availablePlaces.length === 0}
+                className="h-10 w-full rounded-md border border-staff-border-subtle bg-staff-surface-raised px-3 text-[14px] text-staff-text-primary outline-none transition-none focus:border-ring focus:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-staff-surface-sunken disabled:text-staff-text-muted"
               >
-                <SelectTrigger id="place-select">
-                  <SelectValue
-                    placeholder={
-                      availablePlaces.length === 0
-                        ? `No ${placeType.toLowerCase()}s available`
-                        : `Select a ${placeType.toLowerCase()}`
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePlaces.map((place) => (
-                    <SelectItem key={place.id} value={place.id}>
-                      {place.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="" disabled>
+                  {availablePlaces.length === 0
+                    ? `No ${placeType.toLowerCase()}s available`
+                    : `Select a ${placeType.toLowerCase()}`}
+                </option>
+                {availablePlaces.map((place) => (
+                  <option key={place.id} value={place.id}>
+                    {place.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {errorMessage ? (

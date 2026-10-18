@@ -612,4 +612,36 @@ body {
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+@media print {
+  [data-staff-hide="true"] { display: none !important; }
+  body { 
+    background: white !important; 
+    margin: 0 !important; 
+    padding: 0 !important;
+  }
+  main { 
+    display: block !important;
+    padding: 0 !important; 
+    margin: 0 !important; 
+  }
+  .print-poster { 
+    width: 100% !important; 
+    max-width: 100% !important;
+    height: 100vh !important;
+    border: none !important; 
+    box-shadow: none !important; 
+    padding: 4rem !important; 
+    page-break-after: avoid !important; 
+    page-break-inside: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
 }

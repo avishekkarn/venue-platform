@@ -19,7 +19,7 @@
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
 7. Payments — D-7.1 to D-7.8
 8. Real-Time, Offline, and Reliability — D-8.1 to D-8.5
-9. Branding and Theming — D-9.1 to D-9.7
+9. Branding and Theming — D-9.1 to D-9.8
 10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.5
 11. Languages, Currencies, and Regions — D-11.1 to D-11.4
 12. Reporting — D-12.1 to D-12.4
@@ -1478,6 +1478,30 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 **Traces to:** DESIGN.md §4.10.3 (the admin layout with a 240px sidebar, a 56px header bar, and a content area), §4.10.4 (the navigation list), PRODUCT.md §8.2 (the admin home with a header that includes sign-out), ROADMAP.md §7 (Milestone 4.5 — Task 4.5.1) and §11 (Milestone 8.1–8.2), BUILD.md §12.3 rule 1 (one concern per task), Task 3.6.3 (the placeholder admin dashboard's sign-out button, the precedent for this pattern).
 
+
+---
+
+### D-9.8 — The QR revoke action composes two domain primitives and invalidates guest sessions best-effort
+
+**Decision:** The QR revoke endpoint (POST /api/admin/qr/[id]/revoke) composes two existing domain primitives: evokeToken (qr module) and invalidateSessionsForPlace (guest module). No new combined domain function is created. Revocation requires an explicit confirmation dialog in the UI (Option D1). If the session invalidation fails, the failure is logged on the server and does not roll back the revocation: the endpoint still returns 200.
+
+**Context:** Revoking a QR token is a destructive action that terminates active guest interactions (SYSTEM §8.4). When a token is revoked, guest sessions associated with that physical place (table, room, counter) should no longer remain valid. However, the revocation of the QR token is the primary operation; an operational failure while ending guest sessions must not prevent the token from being marked revoked or force the manager's request to fail.
+
+**Alternatives considered:**
+- **Create a combined domain function in src/domain/:** Rejected (Option A chosen). evokeToken and invalidateSessionsForPlace already exist as independent pure domain functions with complete unit test coverage from Tasks 4.1.3 and 4.2.3. Composing them in the route handler avoids redundant abstraction layers.
+- **Immediate revocation without UI confirmation:** Rejected (Option D1 chosen). Revocation immediately invalidates guest sessions and displays the inactive screen to current diners; an accidental click would disrupt active service.
+- **Roll back revocation or return 500 if session invalidation fails:** Rejected. The QR token's revoked state in the database is the primary security boundary preventing future scans. Leaving a compromised or replaced token active because of a transient session cleanup error would be counterproductive.
+
+**Consequences:**
+- The route handler directly orchestrates evokeToken followed by invalidateSessionsForPlace.
+- The row action on /admin/qr presents a confirmation dialog styled in staff world with a destructive (danger) action button before sending the POST request.
+- If session invalidation encounters an error, the error is logged to console.error and the client receives HTTP 200 with { data: { id, state: "REVOKED", revokedAt } }.
+- Cross-venue isolation is strictly enforced at the route level: querying a token belonging to another venue returns 404 NOT_FOUND, never modifying the foreign token.
+
+**What would make us revisit:** If guest sessions require transactional atomicity with QR token revocation across distributed stores.
+
+**Traces to:** SYSTEM.md §8.4 (the revocation flow), SYSTEM.md §15.4, DECISIONS.md D-10.2, Task 4.5.3.
+
 ---
 
 ## 10. Multi-Venue and Multi-Tenant
@@ -2229,7 +2253,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 98
+**Total decisions:** 99
 **Categories:** 17
 **Status:** All locked.
 
