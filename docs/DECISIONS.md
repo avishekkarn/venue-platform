@@ -19,7 +19,7 @@
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
 7. Payments — D-7.1 to D-7.8
 8. Real-Time, Offline, and Reliability — D-8.1 to D-8.5
-9. Branding and Theming — D-9.1 to D-9.6
+9. Branding and Theming — D-9.1 to D-9.7
 10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.5
 11. Languages, Currencies, and Regions — D-11.1 to D-11.4
 12. Reporting — D-12.1 to D-12.4
@@ -1449,6 +1449,37 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ---
 
+### D-9.7 — The interim per-page sign-out button is added to admin pages until Phase 8's admin shell exists
+
+**Decision:** Until the admin shell (DESIGN.md §4.10.3–§4.10.4, PRODUCT.md §8.2, ROADMAP.md Milestone 8.1–8.2) exists, each authenticated admin page carries its own minimal sign-out button. The first such page is `/admin/qr` (Task 4.5.1). The button is a Client Component at `app/admin/qr/_logout-button.tsx`, calls `POST /api/auth/logout`, and redirects to `/admin/login` on completion. When the admin shell exists, the per-page sign-out buttons are removed, and a single sign-out in the shell's header bar serves every admin page. The interim buttons are not a permanent design decision; they are a bridge to the shell.
+
+**Context:** The placeholder admin dashboard (`app/admin/page.tsx`, Task 3.6.3) already carried a per-page sign-out button (`app/admin/_logout-button.tsx`). When Task 4.5.1 added `/admin/qr`, the new page had no sign-out, and the absence was noticed during the manual desktop verification. The admin shell that would carry a shared sign-out is scheduled for Phase 8. A user who is on `/admin/qr` and cannot sign out must navigate to `/admin` — one back step — to sign out. That is a UX defect, not a security defect, because the `/admin` placeholder dashboard's sign-out works. The correct long-term design is the shell's header, not per-page buttons.
+
+**Alternatives considered:**
+
+- **Add the sign-out to the admin shell now, before Phase 8.** Rejected. The shell is a substantial piece of infrastructure (DESIGN.md §4.10.3 describes a 240px sidebar, a 56px header bar, a content area, an optional right panel, and a navigation model with 10 items). Building it inside Task 4.5.1 would violate BUILD.md §12.3 rule 1 (one concern per task) and §12.3 rule 6 (structural changes and behavioural changes are separate tasks). It would also pull Milestone 8.1–8.2 forward, unbalancing the roadmap.
+
+- **Accept the absence of sign-out on `/admin/qr` until Phase 8.** Rejected by the operator during manual verification. The operator's request was explicit: sign-out should be reachable from every authenticated admin page.
+
+- **Make `/admin/qr` redirect to `/admin` if the user wants to sign out.** Rejected. The sign-out should be one click, not two.
+
+- **Add sign-out to the placeholder pages (`/admin`, `/staff`, `/kitchen`) as a shared component and reuse it in `/admin/qr`.** Rejected. The existing three placeholder pages each have their own `_logout-button.tsx` — three files with near-identical content, all of which will be removed when the shell exists. Adding a fourth copy of the same logic doubles the cleanup surface. The fourth copy is what this decision accepts, with the explicit record that all four are temporary.
+
+**Consequences:**
+
+- `/admin/qr` renders a `Sign Out` button in the page's top-right, inside the header. The button is visible in every rendered state, including the three error/empty states.
+- The button calls the existing `POST /api/auth/logout` route (Phase 3.3.2). No new auth infrastructure is added.
+- The button redirects to `/admin/login` on completion.
+- The file `app/admin/qr/_logout-button.tsx` exists as a fourth near-duplicate of `app/admin/_logout-button.tsx`, `app/staff/_logout-button.tsx`, and `app/kitchen/_logout-button.tsx`.
+- When the admin shell (Phase 8 Milestone 8.1 or 8.2) exists, all four `_logout-button.tsx` files are removed, and the shell's header carries the single sign-out. That cleanup is a task in Phase 8 and is noted in ROADMAP.md's Milestone 8.1–8.2 entries.
+- `BUILD.md` §12.3 rule 1 is documented as having been overridden for Task 4.5.1 by this decision. The override is scoped to the sign-out button only.
+
+**What would make us revisit:** The construction of the admin shell in Phase 8. At that point, this decision is superseded by a new record that places the sign-out in the shell's header and removes the per-page buttons. The supersession is not a "revisit" in the sense of a changed decision — it is the intended expiry of an interim decision.
+
+**Traces to:** DESIGN.md §4.10.3 (the admin layout with a 240px sidebar, a 56px header bar, and a content area), §4.10.4 (the navigation list), PRODUCT.md §8.2 (the admin home with a header that includes sign-out), ROADMAP.md §7 (Milestone 4.5 — Task 4.5.1) and §11 (Milestone 8.1–8.2), BUILD.md §12.3 rule 1 (one concern per task), Task 3.6.3 (the placeholder admin dashboard's sign-out button, the precedent for this pattern).
+
+---
+
 ## 10. Multi-Venue and Multi-Tenant
 
 ### D-10.1 — One venue per installation in the first version
@@ -2198,7 +2229,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 97
+**Total decisions:** 98
 **Categories:** 17
 **Status:** All locked.
 
