@@ -32,6 +32,10 @@ import {
   type ModifierGroup,
   type ModifierOption,
   type MenuItemWithModifiers,
+  type MenuCategoryView,
+  type MenuItemView,
+  type ModifierGroupView,
+  type ModifierOptionView,
   type CreateCategoryInput,
   type CreateItemInput,
   type CreateModifierGroupInput,
@@ -145,6 +149,58 @@ function mapMenuItemWithModifiers(
       ...mapModifierGroup(group),
       options: group.options.map(mapModifierOption),
     })),
+  };
+}
+
+function mapModifierOptionView(raw: PrismaModifierOption): ModifierOptionView {
+  return {
+    id: raw.id,
+    name: raw.name,
+    additionalPrice: raw.additionalPrice.toFixed(2),
+  };
+}
+
+function mapModifierGroupView(
+  raw: PrismaModifierGroup & { options: PrismaModifierOption[] }
+): ModifierGroupView {
+  return {
+    id: raw.id,
+    name: raw.name,
+    required: raw.isRequired,
+    multiple: raw.choiceType === PrismaModifierChoiceType.MULTIPLE,
+    options: raw.options.map(mapModifierOptionView),
+  };
+}
+
+function mapMenuItemView(
+  raw: PrismaMenuItem & {
+    modifierGroups: (PrismaModifierGroup & { options: PrismaModifierOption[] })[];
+  }
+): MenuItemView {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description ?? null,
+    photoUrl: raw.photoUrl ?? null,
+    price: raw.price.toFixed(2),
+    state: PRISMA_TO_DOMAIN_MENU_ITEM_STATE[raw.state],
+    order: raw.sortOrder,
+    modifierGroups: raw.modifierGroups.map(mapModifierGroupView),
+  };
+}
+
+function mapMenuCategoryView(
+  raw: PrismaMenuCategory & {
+    items: (PrismaMenuItem & {
+      modifierGroups: (PrismaModifierGroup & { options: PrismaModifierOption[] })[];
+    })[];
+  }
+): MenuCategoryView {
+  return {
+    id: raw.id,
+    name: raw.name,
+    order: raw.sortOrder,
+    items: raw.items.map(mapMenuItemView),
   };
 }
 
@@ -378,6 +434,39 @@ export function createPrismaMenuRepository(
         return fail(
           DomainErrorCode.INTERNAL,
           "Database write operation failed"
+        );
+      }
+    },
+
+    async getFullMenu(
+      venueId: string
+    ): Promise<Result<MenuCategoryView[]>> {
+      try {
+        const categories = await client.menuCategory.findMany({
+          where: { venueId },
+          orderBy: { sortOrder: "asc" },
+          include: {
+            items: {
+              orderBy: { sortOrder: "asc" },
+              include: {
+                modifierGroups: {
+                  orderBy: { sortOrder: "asc" },
+                  include: {
+                    options: {
+                      orderBy: { sortOrder: "asc" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        return ok(categories.map(mapMenuCategoryView));
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Could not load menu"
         );
       }
     },

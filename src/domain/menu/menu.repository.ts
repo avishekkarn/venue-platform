@@ -82,6 +82,38 @@ export interface MenuItemWithModifiers extends MenuItem {
   readonly modifierGroups: readonly ModifierGroupWithOptions[];
 }
 
+export interface ModifierOptionView {
+  readonly id: string;
+  readonly name: string;
+  readonly additionalPrice: string;
+}
+
+export interface ModifierGroupView {
+  readonly id: string;
+  readonly name: string;
+  readonly required: boolean;
+  readonly multiple: boolean;
+  readonly options: readonly ModifierOptionView[];
+}
+
+export interface MenuItemView {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly photoUrl: string | null;
+  readonly price: string;
+  readonly state: MenuItemState;
+  readonly order: number;
+  readonly modifierGroups: readonly ModifierGroupView[];
+}
+
+export interface MenuCategoryView {
+  readonly id: string;
+  readonly name: string;
+  readonly order: number;
+  readonly items: readonly MenuItemView[];
+}
+
 export interface CreateCategoryInput {
   readonly venueId: string;
   readonly name: string;
@@ -137,4 +169,5 @@ export interface MenuRepository {
   createModifierOption(
     input: CreateModifierOptionInput
   ): Promise<Result<ModifierOption>>;
+  getFullMenu(venueId: string): Promise<Result<MenuCategoryView[]>>;
 }
