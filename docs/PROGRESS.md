@@ -155,13 +155,200 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
 | ENTRY-0104 | 2026-10-18 | Stabilization verification — tree is byte-identical to d12292b | STRUCTURAL | Milestone 4.5 | §5.3 |
-Next entry number: 0105.
+| ENTRY-0105 | 2026-10-18 | Task 4.5.1 — Add the QR list screen in the admin panel (verification) | PASS | Milestone 4.5 | §5.3 |
+| ENTRY-0106 | 2026-10-18 | Task 4.5.2 — Add the QR generation action | PASS | Milestone 4.5 | §5.3 |
+Next entry number: 0107.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0105 — 2026-10-18 — Task 4.5.1 — Add the QR list screen in the admin panel (verification follow-up)
+
+**Status:** PASS
+
+**Task:** Task 4.5.1 — Add the QR list screen in the admin panel
+
+**Summary:**
+Recorded the verification of Task 4.5.1's commit (`acf72fd`) as a separate STRUCTURAL entry because the original implementation report and the corrective tooltip/sign-out report both ended with `Awaiting Human Verification: YES`, and the code was committed before this entry was written. The entry records that Task 4.5.1 is complete and that both manual desktop observations passed. It does not change the historical commits; it fills in the log's missing verification record per `BUILD.md` §11.2 and §13.3.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/PROGRESS.md | Edit | Record ENTRY-0105 (this entry), update ledger, advance snapshot |
+
+**Commands Run:**
+
+None at commit time. The verification evidence is the two manual desktop observations performed by the human:
+
+- **Observation set 1 (Task 4.5.1's original 11-point check):** confirmed layout, palette, headings, column headers, 21 rows, monospace tokens, Active badges, `/forbidden` role-gate for the CHEF role, `/staff/login` redirect for signed-out access, and zero console errors.
+- **Observation set 2 (Task 4.5.1's corrective 3-point check):** confirmed token tooltip on cell hover, Print/Revoke tooltips on hover, and the interim Sign Out button visible in the header and functional (redirects to `/admin/login` on click).
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | All 11 layout observations from the original Task 4.5.1 plan | PASS | Manual desktop observation 1 |
+| 2 | Token tooltip fires on cell hover | PASS | Manual desktop observation 2 |
+| 3 | Print and Revoke tooltips fire on hover | PASS | Manual desktop observation 2 |
+| 4 | Sign Out button visible and functional | PASS | Manual desktop observation 2 |
+| 5 | `tsc` exit 0, `build` 17 routes, unit 121/20, integration 104/23 | PASS | Corrective report + closing baselines |
+
+**Deviations from Contract:**
+The verification entry was written **after** the commit `acf72fd` rather than before it, which is a deviation from the standard closure sequence (where the PROGRESS entry is written before the closing commit). The deviation is recorded here in the entry itself so the historical record is honest. The two commits (`acf72fd` for code, the follow-up STRUCTURAL commit for this entry) together represent the correct state.
+
+**Noticed but Out of Scope:**
+The interim per-page sign-out is recorded in D-9.7 and will be consolidated in Phase 8. `src/domain/menu/get-menu.ts` remains unverified (Phase 5). Print (4.5.4) and Revoke (4.5.3) remain stubs.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | Already recorded D-9.7 in `acf72fd` | No change |
+| SYSTEM.md | No | No system change | No change |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | Task 4.5.1 marked ✅ Complete in Step 8 | Updated |
+| PROGRESS.md | Yes (this entry) | Records Task 4.5.1 verification | Updated |
+
+**Contradiction Check:**
+None found. The commit-then-verify deviation is named and recorded in the entry itself.
+
+**Next:**
+Task 4.5.2 — Add the QR generation action.
+
+**Awaiting Human Verification:** NO
+
+### ENTRY-0106 — 2026-10-18 — Task 4.5.2 — Add the QR generation action
+
+**Status:** PASS
+
+**Task:** Task 4.5.2 — Add the QR generation action
+
+**Summary:**
+Delivered the `POST /api/admin/qr/generate` route handler, the `_generate-dialog.tsx` and `_generate-button.tsx` Client Components, and the twelve-assertion integration test at `tests/integration/api/admin-qr-generate.test.ts`. The route validates the caller's session, checks the admin role via `canAccess`, resolves the venue from `VENUE_SLUG`, validates the request body's `placeType` and matching place ID, and delegates to `generateToken` from the domain. The dialog populates its Place selector from server-provided place options and calls `router.refresh()` after successful creation. A small corrective extraction created `app/admin/qr/_types.ts` to break the circular type import between the button and the dialog, and the four baselines remain green (tsc 0, build 18 routes with `ƒ /api/admin/qr/generate`, unit 121/20, integration 116/24). The seven manual observations passed.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/admin/qr/generate/route.ts | Create | POST handler with session, role, venue, validation, domain call |
+| app/admin/qr/_generate-dialog.tsx | Create | Client Component dialog with place type and place selectors |
+| app/admin/qr/_generate-button.tsx | Create | Client Component wrapper managing dialog state |
+| app/admin/qr/_types.ts | Create | Shared type file to break the circular import |
+| tests/integration/api/admin-qr-generate.test.ts | Create | 12 assertions including mandatory unauthorized and forbidden negative tests |
+| app/admin/qr/page.tsx | Edit | Query venue places, build placesByType, render GenerateButton in header |
+
+**Commands Run:**
+
+`powershell
+pnpm exec tsc --noEmit
+`
+Output:
+`	ext
+(exit code 0, no output)
+`
+
+`powershell
+pnpm build
+`
+Output (final lines and route table):
+`	ext
+✓ Compiled successfully in 1157ms
+...
+Route (app)
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+...
+(18 routes total)
+`
+
+`powershell
+pnpm test:unit
+`
+Output (final lines):
+`	ext
+Test Files  20 passed (20)
+     Tests  121 passed (121)
+`
+
+`powershell
+pnpm test:integration
+`
+Output (final lines):
+`	ext
+Test Files  24 passed (24)
+     Tests  116 passed (116)
+`
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Route TABLE generation returns 201 with token envelope | PASS | admin-qr-generate.test.ts |
+| 2 | Route ROOM generation returns 201 | PASS | admin-qr-generate.test.ts |
+| 3 | Route COUNTER generation returns 201 | PASS | admin-qr-generate.test.ts |
+| 4 | Invalid placeType returns 400 | PASS | admin-qr-generate.test.ts |
+| 5 | Mismatched place ID returns 400 | PASS | admin-qr-generate.test.ts |
+| 6 | Missing place ID returns 400 | PASS | admin-qr-generate.test.ts |
+| 7 | Malformed JSON returns 400 | PASS | admin-qr-generate.test.ts |
+| 8 | No cookie returns 401 | PASS | admin-qr-generate.test.ts |
+| 9 | Invalid session returns 401 | PASS | admin-qr-generate.test.ts |
+| 10 | Deactivated staff returns 401 | PASS | admin-qr-generate.test.ts |
+| 11 | CHEF role returns 403 (mandatory negative) | PASS | admin-qr-generate.test.ts |
+| 12 | Client-supplied venueId ignored | PASS | admin-qr-generate.test.ts |
+| 13 | Generate QR button in header | PASS | Manual desktop observation |
+| 14 | Dialog title and description | PASS | Manual desktop observation |
+| 15 | Place type and Place selectors | PASS | Manual desktop observation |
+| 16 | Selecting type populates places | PASS | Manual desktop observation |
+| 17 | Generate creates a token and refreshes the table | PASS | Manual desktop observation |
+| 18 | Validation error surfaced when no place selected | PASS | Manual desktop observation |
+| 19 | Zero console errors | PASS | Manual desktop observation |
+| 20 | tsc exit 0, build 18 routes, unit 121/20, integration 116/24 | PASS | Raw outputs above |
+| 21 | _types.ts extracted, circular import removed | PASS | Code inspection |
+
+**Deviations from Contract:**
+_types.ts was extracted as a small corrective addition to break a circular type import between _generate-button.tsx and _generate-dialog.tsx. The behavior does not change; the cycle is removed. The IDE hint that surfaced the cycle is gone.
+
+The exact test count 116 / 24 matches the prediction in the instruction (116 / 24). No deviation.
+
+The dialog uses @base-ui/react/dialog and @base-ui/react/select (recorded in the original Task 4.5.2 report). The DialogBody subcomponent is used where the standard shadcn pattern would use an inline <div className="p-6">; the actual component provides DialogBody natively.
+
+**Noticed but Out of Scope:**
+Print (4.5.4) and Revoke (4.5.3) remain stubs.
+
+The interim sign-out from Task 4.5.1 remains in the header.
+
+src/domain/menu/get-menu.ts remains unverified (Phase 5).
+
+Turbopack middleware deprecation warning and prisma:error blocks are out of scope.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No new decision needed | No change |
+| SYSTEM.md | No | No system change | No change |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | Task 4.5.2 marked ✅ Complete in Step 8 | Updated |
+| PROGRESS.md | Yes (this entry) | Records Task 4.5.2 completion | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 4.5.3 — Add the QR revoke action.
+
+**Awaiting Human Verification:** NO
 
 ### ENTRY-0104 — 2026-10-18 — Stabilization verification — tree is byte-identical to d12292b
 
@@ -3246,9 +3433,9 @@ Current phase: Phase 4.
 
 Current milestone: Milestone 4.5 (Admin QR management).
 
-Current task: Task 4.5.1 — Add the QR list screen in the admin panel.
+Current task: Task 4.5.3 — Add the QR revoke action.
 
-Current status: Phase 4 is open. Milestone 4.4 is closed (the guest landing screen is verified on a mobile viewport 390x844 across both /menu and /services by ENTRY-0103). Milestone 4.5 (Admin QR management: Tasks 4.5.1 through 4.5.5) is unstarted. The next task is Task 4.5.1 — Add the QR list screen in the admin panel. Phase 4 closes only after Milestone 4.5 closes (with 4.5.5 verified against a real phone) and the Phase 4 acceptance test in PHASE_TESTS.md §6 passes with a real phone. Phase 5 does not begin before that gate is cleared.
+Current status: Phase 4 is open. Milestone 4.4 is closed. Tasks 4.5.1 (QR list screen) and 4.5.2 (QR generation action) are complete and verified. Milestone 4.5's next task is Task 4.5.3 — Add the QR revoke action. Phase 4 closes only after Milestone 4.5 closes (with 4.5.5 verified against a real phone) and the Phase 4 acceptance test in PHASE_TESTS.md §6 passes with a real phone. Phase 5 does not begin before that gate is cleared.
 
 ## 8. How the File Evolves
 

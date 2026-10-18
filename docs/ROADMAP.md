@@ -338,8 +338,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                     | Status | Depends on |
 | ----- | ---------------------------------------------------------------------------------------- | ------ | ---------- |
-| 4.5.1 | Add the QR list screen in the admin panel                                                |  ✅ Complete    | 4.4.7      |
-| 4.5.2 | Add the QR generation action                                                             | ⬜     | 4.5.1      |
+| 4.5.1 | Add the QR list screen in the admin panel                                                | ✅ Complete | 4.4.7      |
+| 4.5.2 | Add the QR generation action                                                             | ✅ Complete | 4.5.1      |
 | 4.5.3 | Add the QR revoke action                                                                 | ⬜     | 4.5.2      |
 | 4.5.4 | Add the QR print view                                                                    | ⬜     | 4.5.2      |
 | 4.5.5 | Verify: the manager can generate, revoke, and print a QR; the printed QR scans correctly | ⬜     | 4.5.4      |
