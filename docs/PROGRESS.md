@@ -154,13 +154,108 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0083 | 2026-10-17 | Task 4.1.2 — Add the resolveToken domain function | PASS | Milestone 4.1 | §5.3 |
 | ENTRY-0082 | 2026-10-17 | Task 4.1.1 — Add the generateToken domain function | PASS | Milestone 4.1 | §5.3 |
 
-Next entry number: 0104.
+| ENTRY-0104 | 2026-10-18 | Stabilization verification — tree is byte-identical to d12292b | STRUCTURAL | Milestone 4.5 | §5.3 |
+Next entry number: 0105.
 
 ### 5.3 Current Milestone — Phase 4 Milestone 4.4 (The Guest Landing Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0104 — 2026-10-18 — Stabilization verification — tree is byte-identical to d12292b
+
+**Status:** STRUCTURAL
+
+**Task:** None (stabilization verification session)
+
+**Summary:**
+Independently verified that the working tree is byte-identical to commit d12292b (no commits between them, no file diffs), that all three drift artifacts are gone (app/admin/qr does not exist, tests/integration/admin does not exist, app/admin/qr/loading.tsx does not exist), and that the four baselines are green (tsc exit 0, build clean with exactly 16 routes and no /admin/qr, unit 121 passed across 20 files, integration 103 passed across 22 files). Recorded this verification so that Task 4.5.1 begins from a proven-clean foundation and so that a future session reading §5.3 can see why the tree was clean.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/PROGRESS.md | Edit | Insert ENTRY-0104 into §5.3, add ledger row, update Next entry number to 0105 |
+
+**Commands Run:**
+
+Steps 1–4 of this session ran the following commands. Raw output is captured below.
+
+`powershell
+git rev-parse HEAD
+git log --oneline -3
+git status --short
+git status --short --untracked-files=all
+git stash list
+`
+
+`powershell
+Test-Path app/admin/qr
+Test-Path tests/integration/admin
+Test-Path app/admin/qr/loading.tsx
+Get-ChildItem -Recurse -File -Path app/api/admin, app/admin/qr, tests/integration/admin -ErrorAction SilentlyContinue
+`
+
+`powershell
+git log --oneline d12292b..HEAD
+git diff --stat d12292b HEAD
+git diff --name-only d12292b HEAD
+`
+
+`powershell
+pnpm exec tsc --noEmit
+pnpm build
+pnpm test:unit
+pnpm test:integration
+`
+
+The full raw outputs of each of these are pasted in the session report; the summary below records their results.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | HEAD is d12292b | PASS | git rev-parse HEAD |
+| 2 | git status --short empty | PASS | git status --short |
+| 3 | git status --untracked-files=all empty | PASS | git status --short --untracked-files=all |
+| 4 | git stash list empty | PASS | git stash list |
+| 5 | app/admin/qr does not exist | PASS | Test-Path app/admin/qr → False |
+| 6 | tests/integration/admin does not exist | PASS | Test-Path tests/integration/admin → False |
+| 7 | app/admin/qr/loading.tsx does not exist | PASS | Test-Path app/admin/qr/loading.tsx → False |
+| 8 | No files under app/api/admin, app/admin/qr, tests/integration/admin | PASS | Get-ChildItem returned no rows |
+| 9 | git log d12292b..HEAD empty | PASS | git log --oneline d12292b..HEAD |
+| 10 | git diff --stat d12292b HEAD empty | PASS | git diff --stat d12292b HEAD |
+| 11 | git diff --name-only d12292b HEAD empty | PASS | git diff --name-only d12292b HEAD |
+| 12 | pnpm exec tsc --noEmit | PASS | exit code 0, no output |
+| 13 | pnpm build clean, 16 routes, no /admin/qr | PASS | build output |
+| 14 | pnpm test:unit 121/20 | PASS | test:unit output |
+| 15 | pnpm test:integration 103/22 | PASS | test:integration output |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+The empty scaffolding files under app/api/admin/** and app/admin/{dashboard,menu,modules,orders,payments,reports,rooms,services,settings,staff,tables}/**, plus tests/integration/api/*.test.ts, are Phase 1 reserved placeholders per SYSTEM.md §3. They remain empty and were not modified. src/domain/menu/get-menu.ts exists and remains unverified (Phase 5's first task). The Turbopack middleware deprecation warning is out of scope. The cosmetic prisma:error blocks during negative-path integration tests are expected per D-16.4.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change | No change |
+| SYSTEM.md | No | No system change | No change |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | No | No roadmap change | No change |
+| PROGRESS.md | Yes (this entry) | Records the stabilization verification | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 4.5.1 — Add the QR list screen in the admin panel. Implemented in a new session on the clean tree verified by this entry.
+
+**Awaiting Human Verification:** YES
 
 ENTRY-0103 — 2026-10-18 — Task 4.4.7 — Verify the landing screen & complete single-viewport fit (Milestone 4.4 Close)
 Status: PASS
