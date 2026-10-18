@@ -122,13 +122,191 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 |-------|------|-------|--------|-----------|----------|
 | ENTRY-0109 | 2026-10-18 | Task 5.1.1 — Add the getMenu domain function | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0110 | 2026-10-18 | Task 5.1.2 — Add the getMenuItem domain function | PASS | Milestone 5.1 | §5.3 |
-Next entry number: 0111.
+| ENTRY-0111 | 2026-10-19 | Task 5.1.3 — Add the isOrderable domain function | PASS | Milestone 5.1 | §5.3 |
+Next entry number: 0112.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.1 (The Menu Domain)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0111 — 2026-10-19 — Task 5.1.3 — Add the isOrderable domain function
+
+**Status:** PASS
+
+**Task:** Task 5.1.3 — Add the `isOrderable` domain function (item state check)
+
+**Summary:**
+isOrderable is a pure synchronous predicate over MenuItemView.state answering whether a menu item can currently be added to the cart. It returns true only when item state is AVAILABLE, treating UNAVAILABLE and HIDDEN as not orderable, with four unit assertions shipped and no new integration test because the function is a pure in-memory predicate with no database path.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/menu/is-orderable.ts | Create | Pure synchronous predicate isOrderable(item: MenuItemView): boolean |
+| src/domain/menu/index.ts | Edit | Export is-orderable from menu domain barrel |
+| tests/unit/menu/is-orderable.test.ts | Create | Four unit assertions covering AVAILABLE, UNAVAILABLE, HIDDEN, and determinism |
+| docs/PROGRESS.md | Edit | Record ENTRY-0111, update ledger, advance snapshot |
+| docs/ROADMAP.md | Edit | Mark Task 5.1.3 as ✅ Complete |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 534ms
+  Running TypeScript ...
+  Finished TypeScript in 373ms ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/18) ...
+  Generating static pages using 15 workers (4/18) 
+  Generating static pages using 15 workers (8/18) 
+  Generating static pages using 15 workers (13/18) 
+✓ Generating static pages using 15 workers (18/18) in 276ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 27ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 14ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 11ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 6ms
+ ✓ tests/unit/menu/get-menu.test.ts (6 tests) 10ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 118ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/menu/get-menu-item.test.ts (6 tests) 9ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 10ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 5ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 5ms
+ ✓ tests/unit/menu/is-orderable.test.ts (4 tests) 3ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 540ms
+
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  00:04:55
+   Duration  824ms (tests 42%, import 25%, transform 25%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  26 passed (26)
+      Tests  129 passed (129)
+   Start at  00:05:06
+   Duration  73.68s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | AVAILABLE returns true | pnpm test:unit | item with AVAILABLE state returns true | PASS |
+| 2 | UNAVAILABLE returns false (D-4.2 rule) | pnpm test:unit | item with UNAVAILABLE state returns false | PASS |
+| 3 | HIDDEN returns false (defense in depth) | pnpm test:unit | item with HIDDEN state returns false | PASS |
+| 4 | Determinism (no clock, no random, no cache drift) | pnpm test:unit | two calls on same item return true | PASS |
+| 5 | TypeScript typecheck clean | pnpm exec tsc --noEmit | Exit code 0, no output | PASS |
+| 6 | Production build compiles clean | pnpm build | 20 routes | PASS |
+| 7 | Unit tests pass exact count | pnpm test:unit | 137 passed across 23 files | PASS |
+| 8 | Integration tests pass exact count | pnpm test:integration | 129 passed across 26 files | PASS |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 5.1.4 (milestone verification) is next; the guest menu page still consumes listItems until Task 5.2.1; isOrderable's caller is Task 5.2.4 (the unavailable-item state on the menu screen).
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to §5.3 | No change |
+| DECISIONS.md | No | Adheres to D-4.2, D-4.6 | No change |
+| SYSTEM.md | No | Adheres to §4, §5, §9.4, §11.3 | No change |
+| BUILD.md | No | Adheres to §1, §2, §5, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Marked Task 5.1.3 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0111, updated ledger, advanced snapshot | Updated |
+| DESIGN.md | No | Adheres to §4.6.17.1 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones.
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0110 — 2026-10-18 — Task 5.1.2 — Add the getMenuItem domain function
 
@@ -505,9 +683,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.1 (The Menu Domain).
 
-Current task: Task 5.1.3 — Add the isOrderable domain function (item state check).
+Current task: Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones.
 
-Current status: Task 5.1.2 is complete and verified. Task 5.1.3 is next. Phase 5 closes only after Milestone 5.8's verification task and the Phase 5 acceptance test in PHASE_TESTS.md §7 pass with a real phone.
+Current status: Task 5.1.3 is complete and verified. Task 5.1.4 (the milestone verification) is next. Phase 5 closes only after Milestone 5.8's verification task and the Phase 5 acceptance test in PHASE_TESTS.md §7 pass with a real phone.
 
 ## 8. How the File Evolves
 

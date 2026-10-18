@@ -364,7 +364,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ----- | -------------------------------------------------------------------------------- | ------ | ---------- |
 | 5.1.1 | Add the `getMenu` domain function                                                | ✅ Complete | 4.5.5      |
 | 5.1.2 | Add the `getMenuItem` domain function                                            | ✅ Complete | 5.1.1      |
-| 5.1.3 | Add the `isOrderable` domain function (item state check)                         | ⬜     | 5.1.2      |
+| 5.1.3 | Add the `isOrderable` domain function (item state check)                         | ✅ Complete | 5.1.2      |
 | 5.1.4 | Verify: the menu returns only available and unavailable items, never hidden ones | ⬜     | 5.1.3      |
 
 ### Milestone 5.2 — The menu screen
