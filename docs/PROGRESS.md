@@ -130,13 +130,35 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0116 | 2026-10-27 | Task 5.2.3 — Add the search bar | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0117 | 2026-10-27 | Task 5.2.4 — Add the unavailable-item state (greyed out, with a label) | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0118 | 2026-10-27 | Task 5.2.5 — Add the floating cart bar | PASS | Milestone 5.2 | §5.3 |
-Next entry number: 0119.
+| ENTRY-0119 | 2026-10-27 | Task 5.2.6 — Verify the menu screen (Milestone 5.2 Close) | PASS | Milestone 5.2 | §5.3 |
+Next entry number: 0120
 
-### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.1 — Add the modifier sheet layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0119 — 2026-10-27 — Task 5.2.6 — Verify the menu screen (Milestone 5.2 Close)
+
+**Status:** PASS
+
+**Task:** Task 5.2.6 — Verify: the menu renders on a real phone; the categories work; the search filters; an unavailable item is not orderable.
+
+**Summary:**
+Milestone 5.2 is verified and closed. The menu screen correctly renders the `getMenu` tree with a sticky category tab strip, a live search bar, the unavailable-item state using the `isOrderable` predicate, and a floating cart bar. Automated baselines pass cleanly, and the manual mobile checks (393×852) are confirmed.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/PROGRESS.md | Edit | Record ENTRY-0119, update ledger, advance snapshot |
+| docs/ROADMAP.md | Edit | Mark Task 5.2.6 as ✅ Complete and note Milestone 5.2 closure |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
 
 ### ENTRY-0118 — 2026-10-27 — Task 5.2.5 — Add the floating cart bar
 
