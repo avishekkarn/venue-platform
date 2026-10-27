@@ -369,14 +369,14 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 *(Milestone 5.1 is closed — the menu domain primitives (getMenu, getMenuItem, isOrderable) are verified against real PostgreSQL, including the D-4.2 HIDDEN-item exclusion at the database layer. Milestone 5.2 is unblocked.)*
 
-### Milestone 5.2 — The menu screen
+### Milestone 5.2 — The menu screen    
 
 | ID    | Task                                                                                                                    | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 5.2.1 | Add the menu screen with category tabs                                                                                  | ✅ Complete | 5.1.4      |
 | 5.2.2 | Add the item list with photos, names, descriptions, and prices                                                          | ✅ Complete | 5.2.1      |
 | 5.2.3 | Add the search bar                                                                                                      | ✅ Complete | 5.2.2      |
-| 5.2.4 | Add the unavailable-item state (greyed out, with a label)                                                               | ⬜     | 5.2.3      |
+| 5.2.4 | Add the unavailable-item state (greyed out, with a label)                                                               | ✅ Complete | 5.2.3      |
 | 5.2.5 | Add the floating cart bar                                                                                               | ⬜     | 5.2.4      |
 | 5.2.6 | Verify: the menu renders on a real phone; the categories work; the search filters; an unavailable item is not orderable | ⬜     | 5.2.5      |
 

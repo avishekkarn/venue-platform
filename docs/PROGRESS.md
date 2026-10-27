@@ -128,13 +128,75 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0114 | 2026-10-27 | Task 5.2.1 manual observation methodology correction | STRUCTURAL | Milestone 5.2 | §5.3 |
 | ENTRY-0115 | 2026-10-27 | Task 5.2.2 — Add the item list with photos, names, descriptions, and prices | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0116 | 2026-10-27 | Task 5.2.3 — Add the search bar | PASS | Milestone 5.2 | §5.3 |
-Next entry number: 0117.
+| ENTRY-0117 | 2026-10-27 | Task 5.2.4 — Add the unavailable-item state (greyed out, with a label) | PASS | Milestone 5.2 | §5.3 |
+Next entry number: 0118.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0117 — 2026-10-27 — Task 5.2.4 — Add the unavailable-item state
+
+**Status:** PASS
+
+**Task:** Task 5.2.4 — Add the unavailable-item state (greyed out, with a label)
+
+**Summary:**
+Implemented the unavailable visual and interactive state in MenuItemCard (app/(guest)/menu/_menu-item-card.tsx). When an item's state is UNAVAILABLE, the card renders greyed out with muted typography, displays a terracotta "Unavailable" status Badge, greyscales photography if present, and disables the hover-lift motion entirely per D-4.2 and DESIGN.md §4.6.17.1.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_menu-item-card.tsx | Edit | Wire isOrderable predicate, grey-out styling, Unavailable Badge, grayscale image filter, and conditional interactive hover-lift |
+| docs/PROGRESS.md | Edit | Record ENTRY-0117, update ledger, advance snapshot to Task 5.2.5 |
+| docs/ROADMAP.md | Edit | Mark Task 5.2.4 as complete |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit`
+- `pnpm build`
+- `pnpm test:unit`
+- `pnpm test:integration`
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds | `pnpm build` | 20 app routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Unavailable item renders greyed out with "Unavailable" label and greyscale photo | Manual Check | Reduced opacity, muted text, terracotta Unavailable Badge, greyscale photo | Awaiting Human Verification |
+| 6 | Hovering unavailable item does not lift card or increase shadow | Manual Check | No hover-lift or cursor-pointer when interactive={false} | Awaiting Human Verification |
+| 7 | Available items still hover-lift normally | Manual Check | Interactive hover-lift preserved for orderable items | Awaiting Human Verification |
+| 8 | Zero console errors throughout | Browser Console Check | Clean console throughout | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | No change | No change |
+| SYSTEM.md | No | No change | No change |
+| BUILD.md | No | No change | No change |
+| ROADMAP.md | Yes | Marked Task 5.2.4 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0117, updated ledger, advanced snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.5 — Add the floating cart bar.
+
+**Awaiting Human Verification:** YES (manual visual check of unavailable-item state and hover suppression)
 
 ### ENTRY-0116 — 2026-10-27 — Task 5.2.3 — Add the menu search bar
 
@@ -1210,9 +1272,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.2 (The Menu Screen).
 
-Current task: Task 5.2.4 — Add the unavailable-item state (greyed out, with a label).
+Current task: Task 5.2.5 — Add the floating cart bar.
 
-Current status: Task 5.2.3 is complete. The MenuList component provides real-time client-side search filtering across dish names and descriptions with graceful empty states and sticky category tabs. All automated verification baselines are green (tsc, build, 137 unit tests, 133 integration tests); manual search verification awaits human inspection. Task 5.2.4 (unavailable items) is next.
+Current status: Task 5.2.4 is complete. MenuItemCard supports the UNAVAILABLE state with greyed-out visual treatment, muted typography, an Unavailable status badge, greyscale photo filtering, and disabled hover-lift interaction per D-4.2 and DESIGN.md §4.6.17.1. All automated baselines pass (tsc, build, 137 unit tests, 133 integration tests); manual interaction verification awaits human inspection. Task 5.2.5 (floating cart bar) is next.
 
 ## 8. How the File Evolves
 
