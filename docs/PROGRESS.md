@@ -125,7 +125,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0111 | 2026-10-19 | Task 5.1.3 — Add the isOrderable domain function | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0112 | 2026-10-19 | Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones (Milestone 5.1 Close) | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0113 | 2026-10-19 | Task 5.2.1 — Add the menu screen with category tabs | PASS | Milestone 5.2 | §5.3 |
-Next entry number: 0114.
+| ENTRY-0114 | 2026-10-27 | Task 5.2.1 manual observation methodology correction | STRUCTURAL | Milestone 5.2 | §5.3 |
+Next entry number: 0115.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
 
@@ -133,6 +134,51 @@ New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
 
+### ENTRY-0114 — 2026-10-27 — Task 5.2.1 manual observation methodology correction
+
+**Status:** STRUCTURAL
+
+**Task:** None (structural session)
+
+**Summary:**
+The initial manual check for Task 5.2.1 was performed under conditions that produced two false-positive defects: the `"Starters"` tab appeared absent due to residual horizontal scroll on the overflow-x-auto tab strip, and the item card appeared stretched due to observing at a desktop viewport. Re-observation under controlled mobile conditions (393×852) confirmed the tab strip and card anatomy render correctly per DESIGN.md, and the task was committed without code changes.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/PROGRESS.md | Edit | Record ENTRY-0114, update ledger |
+
+**Commands Run:**
+None.
+
+**Acceptance Criteria Results:**
+None.
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+The tab strip's hide-scrollbar behaviour should be observed by swiping, not assumed visible from the current scroll position — this is now a project-level observation habit.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | No change | No change |
+| SYSTEM.md | No | No change | No change |
+| BUILD.md | No | No change | No change |
+| ROADMAP.md | No | No change | No change |
+| PROGRESS.md | Yes (this entry) | Updated | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.2 — Add the item list with photos, names, descriptions, and prices.
+
+**Awaiting Human Verification:** NO
 ### ENTRY-0113 — 2026-10-19 — Task 5.2.1 — Add the menu screen with category tabs
 
 **Status:** PASS
@@ -1040,7 +1086,7 @@ Current milestone: Milestone 5.2 (The Menu Screen).
 
 Current task: Task 5.2.2 — Add the item list with photos, names, descriptions, and prices.
 
-Current status: Task 5.2.1 is complete. The menu screen renders the getMenu tree with a sticky category tab strip and item list. Automated verification is passing across all suites; manual mobile check on 393×852 is pending human verification before commit. Task 5.2.2 (photos and hover-lift) is next.
+Current status: Task 5.2.1 is complete and committed. The menu screen renders the getMenu tree with a sticky category tab strip and item list. All baselines are green, and the manual mobile check on 393×852 is verified and passed. Task 5.2.2 (photos and hover-lift) is next.
 
 ## 8. How the File Evolves
 
