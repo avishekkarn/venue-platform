@@ -9,6 +9,7 @@ import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
+import { getMenu } from "@/domain/menu/get-menu";
 import { GuestHero } from "@/components/guest/hero";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,8 @@ import {
   CardBody,
 } from "@/components/ui/card";
 import { formatMoney } from "@/lib/money";
+import { CategoryTabs } from "./_category-tabs";
+import { MenuItemCard } from "./_menu-item-card";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -72,6 +75,7 @@ export default async function MenuPage(): Promise<JSX.Element> {
   }
 
   const menuRepo = createPrismaMenuRepository(prisma);
+  const menuResult = await getMenu({ menuRepo }, venue.value.id);
   const itemsResult = await menuRepo.listItems(venue.value.id);
   const featuredItems = itemsResult.ok
     ? itemsResult.value
@@ -83,9 +87,11 @@ export default async function MenuPage(): Promise<JSX.Element> {
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
       <GuestHero venue={venue.value} placeContext={placeContext} />
       <div className="mt-4 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
-        <Button size="xl" variant="primary">
-          View Menu
-        </Button>
+        <a href="#menu-heading">
+          <Button size="xl" variant="primary">
+            View Menu
+          </Button>
+        </a>
       </div>
       <div className="mt-2 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
         <Button variant="ghost" size="sm">
@@ -166,6 +172,65 @@ export default async function MenuPage(): Promise<JSX.Element> {
           </div>
         </div>
       </div>
+      <section aria-labelledby="menu-heading" className="mt-8 px-4 max-w-2xl mx-auto w-full">
+        <h2 id="menu-heading" className="font-display text-[28px] leading-[34px] text-guest-text-primary mb-4">
+          Menu
+        </h2>
+        {!menuResult.ok ? (
+          <div className="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-6 text-center">
+            <p className="text-[14px] leading-[22px] text-guest-text-secondary">
+              We couldn't load the menu. Please try again.
+            </p>
+            <a
+              href="/menu"
+              className="mt-3 inline-block text-[14px] font-medium text-guest-brand hover:underline"
+            >
+              Retry
+            </a>
+          </div>
+        ) : menuResult.value.length === 0 ? (
+          <div className="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-6 text-center">
+            <p className="text-[14px] leading-[22px] text-guest-text-secondary">
+              The menu is being updated. Please check back in a moment.
+            </p>
+            <a
+              href="/menu"
+              className="mt-3 inline-block text-[14px] font-medium text-guest-brand hover:underline"
+            >
+              Retry
+            </a>
+          </div>
+        ) : (
+          <>
+            <CategoryTabs categories={menuResult.value.map((c) => ({ id: c.id, name: c.name }))} />
+            <div className="mt-4 flex flex-col gap-3">
+              {menuResult.value.map((category) => (
+                <section
+                  key={category.id}
+                  id={`category-${category.id}`}
+                  aria-labelledby={`category-heading-${category.id}`}
+                  className="scroll-mt-[64px] flex flex-col gap-3"
+                >
+                  <h3
+                    id={`category-heading-${category.id}`}
+                    className="font-display text-[22px] leading-[28px] text-guest-text-primary mt-2"
+                  >
+                    {category.name}
+                  </h3>
+                  {category.items.map((item) => (
+                    <MenuItemCard
+                      key={item.id}
+                      item={item}
+                      locale={venue.value.language}
+                      currency={venue.value.currency}
+                    />
+                  ))}
+                </section>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
       <footer className="mt-6 mb-4 text-center text-xs text-guest-text-muted">
         <p className="font-display text-guest-text-secondary">{venue.value.name}</p>
         <p className="mt-1 text-[10px]">Open daily. Powered by IronMan.</p>
@@ -173,3 +238,4 @@ export default async function MenuPage(): Promise<JSX.Element> {
     </div>
   );
 }
+
