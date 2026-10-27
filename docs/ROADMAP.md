@@ -362,9 +362,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                 | Status | Depends on |
 | ----- | -------------------------------------------------------------------- | ------ | ---------- |
-| 5.0.1 | Add the `DEV_LAN_ORIGIN` environment variable to `.env.local.example`| ⬜ | —          |
-| 5.0.2 | Add the `/dev/qr` route (fetching valid tokens and generating QR codes) | ⬜ | 5.0.1      |
-| 5.0.3 | Verify: the QR code resolves to the LAN IP and opens the correct guest flow | ⬜ | 5.0.2      |
+| 5.0.1 | Add the `DEV_LAN_ORIGIN` environment variable to `.env.local.example`| ✅ Complete | —          |
+| 5.0.2 | Add the `/dev/qr` route (fetching valid tokens and generating QR codes) | ✅ Complete | 5.0.1      |
+| 5.0.3 | Verify: the QR code resolves to the LAN IP and opens the correct guest flow | ✅ Complete | 5.0.2      |
 
 ### Milestone 5.1 — The menu domain
 

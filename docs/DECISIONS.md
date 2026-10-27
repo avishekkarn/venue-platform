@@ -2254,7 +2254,7 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ### D-17.4 — Development LAN and Mobile Verification Infrastructure
 
-**Decision:** The project includes a development-only interface at `/dev/qr` to facilitate physical mobile testing over a local area network (LAN). The interface provides scannable QR codes for existing valid table, room, and counter tokens. It resolves the LAN origin from a configurable environment variable (`DEV_LAN_ORIGIN`), defaulting to `http://localhost:3000` if not set. This interface is strictly blocked in production builds.
+**Decision:** The project includes a development-only interface at `/dev/qr` to facilitate physical mobile testing over a local area network (LAN). The interface provides scannable QR codes for existing valid table, room, and counter tokens. The interface resolves the LAN origin dynamically from the incoming Host header via next/headers. This interface is strictly blocked in production builds.
 
 **Context:** Manual mobile verification (mandated by BUILD.md §8.8) requires developers to scan QR codes with physical phones. Currently, developers must manually generate external QR codes or alter databases to test flows. A built-in dev tool streamlines verification for the guest, staff, and kitchen screens.
 
