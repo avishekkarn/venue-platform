@@ -358,6 +358,14 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 **Goal:** A guest can browse the menu, customize an item, add it to a cart, place an order, and track it. The order is stored with frozen prices and tax.
 
+### Milestone 5.0 — Development Infrastructure (Mobile Testing)
+
+| ID    | Task                                                                 | Status | Depends on |
+| ----- | -------------------------------------------------------------------- | ------ | ---------- |
+| 5.0.1 | Add the `DEV_LAN_ORIGIN` environment variable to `.env.local.example`| ⬜ | —          |
+| 5.0.2 | Add the `/dev/qr` route (fetching valid tokens and generating QR codes) | ⬜ | 5.0.1      |
+| 5.0.3 | Verify: the QR code resolves to the LAN IP and opens the correct guest flow | ⬜ | 5.0.2      |
+
 ### Milestone 5.1 — The menu domain
 
 | ID    | Task                                                                             | Status | Depends on |

@@ -27,7 +27,7 @@
 14. Deployment — D-14.1 to D-14.3
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
 16. Implementation Contracts — D-16.1 to D-16.4
-17. Development Process — D-17.1 to D-17.3
+17. Development Process — D-17.1 to D-17.4
 
 ---
 
@@ -1483,17 +1483,20 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ### D-9.8 — The QR revoke action composes two domain primitives and invalidates guest sessions best-effort
 
-**Decision:** The QR revoke endpoint (POST /api/admin/qr/[id]/revoke) composes two existing domain primitives: evokeToken (qr module) and invalidateSessionsForPlace (guest module). No new combined domain function is created. Revocation requires an explicit confirmation dialog in the UI (Option D1). If the session invalidation fails, the failure is logged on the server and does not roll back the revocation: the endpoint still returns 200.
+**Decision:** The QR revoke endpoint (POST /api/admin/qr/[id]/revoke) composes two existing domain primitives: 
+evokeToken (qr module) and invalidateSessionsForPlace (guest module). No new combined domain function is created. Revocation requires an explicit confirmation dialog in the UI (Option D1). If the session invalidation fails, the failure is logged on the server and does not roll back the revocation: the endpoint still returns 200.
 
 **Context:** Revoking a QR token is a destructive action that terminates active guest interactions (SYSTEM §8.4). When a token is revoked, guest sessions associated with that physical place (table, room, counter) should no longer remain valid. However, the revocation of the QR token is the primary operation; an operational failure while ending guest sessions must not prevent the token from being marked revoked or force the manager's request to fail.
 
 **Alternatives considered:**
-- **Create a combined domain function in src/domain/:** Rejected (Option A chosen). evokeToken and invalidateSessionsForPlace already exist as independent pure domain functions with complete unit test coverage from Tasks 4.1.3 and 4.2.3. Composing them in the route handler avoids redundant abstraction layers.
+- **Create a combined domain function in src/domain/:** Rejected (Option A chosen). 
+evokeToken and invalidateSessionsForPlace already exist as independent pure domain functions with complete unit test coverage from Tasks 4.1.3 and 4.2.3. Composing them in the route handler avoids redundant abstraction layers.
 - **Immediate revocation without UI confirmation:** Rejected (Option D1 chosen). Revocation immediately invalidates guest sessions and displays the inactive screen to current diners; an accidental click would disrupt active service.
 - **Roll back revocation or return 500 if session invalidation fails:** Rejected. The QR token's revoked state in the database is the primary security boundary preventing future scans. Leaving a compromised or replaced token active because of a transient session cleanup error would be counterproductive.
 
 **Consequences:**
-- The route handler directly orchestrates evokeToken followed by invalidateSessionsForPlace.
+- The route handler directly orchestrates 
+evokeToken followed by invalidateSessionsForPlace.
 - The row action on /admin/qr presents a confirmation dialog styled in staff world with a destructive (danger) action button before sending the POST request.
 - If session invalidation encounters an error, the error is logged to console.error and the client receives HTTP 200 with { data: { id, state: "REVOKED", revokedAt } }.
 - Cross-venue isolation is strictly enforced at the route level: querying a token belonging to another venue returns 404 NOT_FOUND, never modifying the foreign token.
@@ -2249,11 +2252,28 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 **Traces to:** SYSTEM.md §4 (the organization module owns venue configuration), §11.1 (the counter is a place), §17.1 (the counter module is developer-set configuration), PRODUCT.md §2 (one counter per venue), §15 (the counter is one of the three physical places), BUILD.md §9.4 (the seed's contents), §12.3 rule 6 (structural and behavioural changes are separate tasks), D-17.2 (the precedent for splitting a task whose premise fails).
 
+### D-17.4 — Development LAN and Mobile Verification Infrastructure
+
+**Decision:** The project includes a development-only interface at `/dev/qr` to facilitate physical mobile testing over a local area network (LAN). The interface provides scannable QR codes for existing valid table, room, and counter tokens. It resolves the LAN origin from a configurable environment variable (`DEV_LAN_ORIGIN`), defaulting to `http://localhost:3000` if not set. This interface is strictly blocked in production builds.
+
+**Context:** Manual mobile verification (mandated by BUILD.md §8.8) requires developers to scan QR codes with physical phones. Currently, developers must manually generate external QR codes or alter databases to test flows. A built-in dev tool streamlines verification for the guest, staff, and kitchen screens.
+
+**Alternatives considered:**
+- Hardcoding the LAN IP in code — rejected (inflexible, breaks for other developers).
+- Relying on external QR generators — rejected (slow, error-prone, doesn't dynamically fetch valid tokens).
+
+**Consequences:**
+- `process.env.DEV_LAN_ORIGIN` is added to `.env.local.example`.
+- The `/dev/qr` route checks `process.env.NODE_ENV === "development"` and returns 404 in production.
+- No existing authentication or QR validation rules are bypassed.
+
+**What would make us revisit:** If the project adds a built-in tunnel (e.g., Ngrok or Cloudflare Tunnel) that obviates the need for LAN IP testing.
+
 ---
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 99
+**Total decisions:** 100
 **Categories:** 17
 **Status:** All locked.
 
