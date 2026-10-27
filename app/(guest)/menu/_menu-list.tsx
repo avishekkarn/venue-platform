@@ -113,6 +113,44 @@ export function MenuList({
         dangerouslySetInnerHTML={{
           __html: `
   (function() {
+    var currency = ${JSON.stringify(safeCurrency)};
+    var locale = ${JSON.stringify(safeLocale)};
+
+    function formatMoney(amount) {
+      try {
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: currency }).format(amount);
+      } catch (e) {
+        return '$' + Number(amount).toFixed(2);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function updateModifierPrice() {
+      var sheet = document.getElementById('modifier-sheet');
+      var priceEl = document.getElementById('modifier-sheet-price');
+      if (!sheet || !priceEl) return;
+
+      var basePrice = parseFloat(sheet.getAttribute('data-base-price') || '0') || 0;
+      var selectedRadios = sheet.querySelectorAll('input[type="radio"]:checked');
+      var modifierTotal = 0;
+      selectedRadios.forEach(function(radio) {
+        var p = parseFloat(radio.getAttribute('data-price') || '0') || 0;
+        modifierTotal += p;
+      });
+
+      var total = Math.round((basePrice + modifierTotal) * 100) / 100;
+      priceEl.textContent = formatMoney(total);
+    }
+
     function init() {
       var input = document.getElementById('menu-search-input');
       var container = document.getElementById('menu-list-container');
@@ -152,17 +190,65 @@ export function MenuList({
         if (card) {
           var name = card.getAttribute('data-item-name');
           var price = card.getAttribute('data-item-price');
+          var rawPriceStr = card.getAttribute('data-item-raw-price');
           var desc = card.getAttribute('data-item-description');
+          var optionsStr = card.getAttribute('data-item-options');
           
           var titleEl = document.getElementById('modifier-sheet-title');
           var priceEl = document.getElementById('modifier-sheet-price');
           var descEl = document.getElementById('modifier-sheet-desc');
           var sheet = document.getElementById('modifier-sheet');
+          var groupsContainer = document.getElementById('modifier-groups-container');
           
           if (titleEl) titleEl.textContent = name;
-          if (priceEl) priceEl.textContent = price;
           if (descEl) descEl.textContent = desc || '';
-          if (sheet) sheet.style.display = 'flex';
+          
+          var basePrice = 0;
+          if (rawPriceStr) {
+            basePrice = parseFloat(rawPriceStr) || 0;
+          } else if (price) {
+            basePrice = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
+          }
+          
+          if (sheet) {
+            sheet.setAttribute('data-base-price', String(basePrice));
+            sheet.style.display = 'flex';
+          }
+          
+          if (groupsContainer) {
+            var options = [];
+            try {
+              options = JSON.parse(optionsStr || '[]');
+            } catch (err) {
+              options = [];
+            }
+            
+            var html = '';
+            options.forEach(function(group) {
+              if (group.multiple) return;
+              html += '<div class="modifier-group mb-4" data-group-id="' + escapeHtml(group.id) + '">';
+              html += '<p class="font-semibold text-[16px] mb-2 text-guest-text-primary">' + escapeHtml(group.name) + '</p>';
+              if (group.options && group.options.length > 0) {
+                group.options.forEach(function(opt) {
+                  var optPriceNum = parseFloat(opt.additionalPrice || '0') || 0;
+                  var priceLabel = '';
+                  if (optPriceNum > 0) {
+                    priceLabel = ' (+' + formatMoney(optPriceNum) + ')';
+                  }
+                  html += '<label class="flex items-center gap-2 mb-2 cursor-pointer text-[15px] text-guest-text-secondary select-none">';
+                  html += '<input type="radio" name="group-' + escapeHtml(group.id) + '" value="' + escapeHtml(opt.id) + '" data-price="' + escapeHtml(opt.additionalPrice || '0') + '" class="size-4 accent-guest-brand" />';
+                  html += '<span>' + escapeHtml(opt.name) + priceLabel + '</span>';
+                  html += '</label>';
+                });
+              }
+              html += '</div>';
+            });
+            groupsContainer.innerHTML = html;
+          }
+          
+          if (priceEl) {
+            priceEl.textContent = price || formatMoney(basePrice);
+          }
         }
         
         var closeBtn = e.target.closest('#modifier-sheet-close');
@@ -170,6 +256,14 @@ export function MenuList({
         if (closeBtn || overlay) {
           var sheet = document.getElementById('modifier-sheet');
           if (sheet) sheet.style.display = 'none';
+        }
+      });
+
+      document.addEventListener('change', function(e) {
+        var sheet = document.getElementById('modifier-sheet');
+        if (!sheet) return;
+        if (e.target && e.target.closest('#modifier-sheet') && e.target.type === 'radio') {
+          updateModifierPrice();
         }
       });
     }

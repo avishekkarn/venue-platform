@@ -51,9 +51,10 @@ export function ModifierSheet(): JSX.Element {
               $0.00
             </span>
           </div>
-          <div className="mt-4 p-4 border border-dashed border-guest-border-subtle text-center text-guest-text-muted">
-            Modifier options go here in 5.3.2
-          </div>
+          <div
+            id="modifier-groups-container"
+            className="mt-4 flex flex-col gap-4 overflow-y-auto max-h-[50vh]"
+          />
           <div className="mt-6">
             <Button
               type="button"

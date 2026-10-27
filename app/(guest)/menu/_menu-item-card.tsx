@@ -31,6 +31,8 @@ export function MenuItemCard({
       data-item-name={item.name}
       data-item-description={item.description ?? ""}
       data-item-price={formattedPrice}
+      data-item-raw-price={item.price}
+      data-item-options={JSON.stringify(item.modifierGroups ?? [])}
       data-orderable={orderable ? "true" : "false"}
       interactive={orderable}
       className={cn(
