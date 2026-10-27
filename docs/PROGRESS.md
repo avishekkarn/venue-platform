@@ -139,13 +139,145 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0126 | 2026-10-27 | Task 5.0.3 Corrective — Native DOM Script Manipulation for Search and Tabs | PASS | Milestone 5.0 | §5.3 |
 | ENTRY-0127 | 2026-10-27 | Task 5.3.1 — Add the modifier sheet layout | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0128 | 2026-10-27 | Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0129
+| ENTRY-0129 | 2026-10-27 | Task 5.3.2 — Add the single-choice modifier group | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0130
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.2 — Add the single-choice modifier group.
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.3 — Add the multiple-choice modifier group.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0129 — 2026-10-27 — Task 5.3.2 — Add the single-choice modifier group
+
+**Status:** PASS
+
+**Task:** Task 5.3.2 — Add the single-choice modifier group
+
+**Summary:**
+Rendered single-choice modifier groups (radio buttons) inside the Modifier Sheet using the native DOM script pattern to ensure reliable execution across mobile browsers without hydration or synthetic event swallowing. In `_modifier-sheet.tsx`, replaced the placeholder with `<div id="modifier-groups-container">`. In `_menu-item-card.tsx`, added `data-item-options` (JSON-encoded modifier groups) and `data-item-raw-price`. In `_menu-list.tsx`, extended the native inline `<script>` to generate and inject radio button HTML for single-choice modifier groups upon item selection, displaying group names and option labels with localized additional prices (e.g., `Option Name (+$1.50)`). Attached a native `change` event listener that dynamically recalculates base price plus selected modifier prices and updates `#modifier-sheet-price` in real time.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Edit | Replaced static placeholder with `#modifier-groups-container` |
+| app/(guest)/menu/_menu-item-card.tsx | Edit | Added `data-item-options` and `data-item-raw-price` attributes |
+| app/(guest)/menu/_menu-list.tsx | Edit | Dynamically inject single-choice modifier HTML and attached `change` event listener for live price recalculation |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.2 as complete |
+| docs/PROGRESS.md | Edit | Record ENTRY-0129, bump ledger to 0130 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /api/dev/qr
+├ ƒ /dev/qr
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+ƒ Proxy (Middleware)
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  19:55:30
+   Duration  936ms (import 34%, tests 32%, transform 27%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  19:55:38
+   Duration  81.33s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds (21 routes + 1 proxy) | `pnpm build` | 21 routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Tapping an item with modifiers opens the sheet and renders the radio buttons on mobile | Manual Mobile Check | Radio buttons injected into `#modifier-groups-container` with group name and option prices | Awaiting Human Verification |
+| 6 | Selecting a modifier with an extra cost updates the price at the bottom of the sheet | Manual Mobile Check | Native `change` listener sums base and modifier prices | Awaiting Human Verification |
+| 7 | The price updates correctly (base + modifier) | Manual Mobile Check | `#modifier-sheet-price` shows formatted total | Awaiting Human Verification |
+| 8 | Search filtering continues to function | Manual Mobile Check | Search input listener continues to hide/show cards and categories | Awaiting Human Verification |
+| 9 | No console errors | Browser Console | Clean execution without errors | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Mark Task 5.3.2 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0129, bumped ledger to 0130 | Updated |
+| DESIGN.md | No | Adheres to §4.6.4, §4.6.17.2, §4.8.2 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.3 — Add the multiple-choice modifier group.
+
+**Awaiting Human Verification:** YES (manual mobile observation: radio button rendering in modifier sheet, selection price updates, base + modifier math)
+
+
 
 ### ENTRY-0128 — 2026-10-27 — Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction
 
@@ -2380,9 +2512,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.3 (The Modifier Sheet).
 
-Current task: Task 5.3.2 — Add the single-choice modifier group.
+Current task: Task 5.3.3 — Add the multiple-choice modifier group.
 
-Current status: Task 5.3.1 is complete. The modifier sheet layout component is built in _modifier-sheet.tsx with direct DOM script manipulation for mobile interaction. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.2 (single-choice modifier group).
+Current status: Task 5.3.2 is complete. Single-choice modifier groups are rendered as radio buttons with live price recalculation on selection in the modifier sheet via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.3 (multiple-choice modifier group).
 
 ## 8. How the File Evolves
 
