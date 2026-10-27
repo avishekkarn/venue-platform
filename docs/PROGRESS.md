@@ -137,13 +137,276 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0124 | 2026-10-27 | Task 5.0.3 Corrective — Mobile Menu Search Input & Category Tab Underline Fix | PASS | Milestone 5.0 | §5.3 |
 | ENTRY-0125 | 2026-10-27 | Task 5.0.3 Corrective — Native Event Listener for Search & Button Category Tabs | PASS | Milestone 5.0 | §5.3 |
 | ENTRY-0126 | 2026-10-27 | Task 5.0.3 Corrective — Native DOM Script Manipulation for Search and Tabs | PASS | Milestone 5.0 | §5.3 |
-Next entry number: 0127
+| ENTRY-0127 | 2026-10-27 | Task 5.3.1 — Add the modifier sheet layout | PASS | Milestone 5.3 | §5.3 |
+| ENTRY-0128 | 2026-10-27 | Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0129
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.1 — Add the modifier sheet layout.
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.2 — Add the single-choice modifier group.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0128 — 2026-10-27 — Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction
+
+**Status:** PASS
+
+**Task:** Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction
+
+**Summary:**
+Replaced React synthetic event handling (`onClick` and `onOpenChange`) for the modifier bottom sheet on mobile devices with direct DOM manipulation via a native `<script>`, eliminating hydration/event failure when accessing over LAN IP. Updated `_modifier-sheet.tsx` to render with container ID `#modifier-sheet` (initially `style={{ display: "none" }}`), backdrop `[data-sheet-overlay]`, close button `#modifier-sheet-close`, title `#modifier-sheet-title`, description `#modifier-sheet-desc`, and price `#modifier-sheet-price`. Updated `_menu-item-card.tsx` with data attributes (`data-item-card`, `data-item-id`, `data-item-name`, `data-item-description`, `data-item-price`, and `data-orderable`). In `_menu-list.tsx`, removed React state for sheet opening/closing and attached native DOM click delegation that dynamically populates and displays `#modifier-sheet` when an orderable item card is clicked, and closes it when the overlay or close button is tapped. Preserved the native DOM search filtering script.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Edit | Container markup and IDs for direct DOM control, removing React item and onClose props |
+| app/(guest)/menu/_menu-item-card.tsx | Edit | Added data-* attributes for DOM click delegation |
+| app/(guest)/menu/_menu-list.tsx | Edit | Removed React state for selected item; added native DOM click handlers for opening and closing sheet |
+| docs/PROGRESS.md | Edit | Record ENTRY-0128, bump ledger to 0129 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /api/dev/qr
+├ ƒ /dev/qr
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+ƒ Proxy (Middleware)
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  19:23:51
+   Duration  943ms (import 33%, tests 32%, transform 29%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  19:24:16
+   Duration  81.26s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds (21 routes + 1 proxy) | `pnpm build` | 21 routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Tapping an orderable item card opens the modifier sheet on mobile | Manual Mobile Check | Click listener populates title, desc, price and sets `display: flex` | Awaiting Human Verification |
+| 6 | Sheet displays selected item name, description, and price | Manual Mobile Check | Text contents match card's data attributes | Awaiting Human Verification |
+| 7 | Tapping backdrop overlay or close button dismisses sheet | Manual Mobile Check | Script sets `display: none` on `#modifier-sheet` | Awaiting Human Verification |
+| 8 | Tapping unavailable items does not open sheet | Manual Mobile Check | Unavailable items have `data-orderable="false"` and are ignored | Awaiting Human Verification |
+| 9 | Search filtering continues to function | Manual Mobile Check | Search input listener continues to hide/show cards and categories | Awaiting Human Verification |
+| 10 | No console errors | Browser Console | Clean execution without errors | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | No | Already updated | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0128, bumped ledger to 0129 | Updated |
+| DESIGN.md | No | Adheres to §4.6.6, §4.6.17.2, §4.15 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.2 — Add the single-choice modifier group.
+
+**Awaiting Human Verification:** YES (manual mobile device verification of tap-to-open modifier sheet, correct item details display, tap-to-dismiss via backdrop/close button, and search coexistence)
+
+### ENTRY-0127 — 2026-10-27 — Task 5.3.1 — Add the modifier sheet layout
+
+**Status:** PASS
+
+**Task:** Task 5.3.1 — Add the modifier sheet layout
+
+**Summary:**
+Created the modifier sheet layout component (`_modifier-sheet.tsx`) for the guest menu using the base `Sheet` primitives from `src/components/ui/sheet.tsx`. Wired item selection in `_menu-item-card.tsx` via `onSelect` and `cursor-pointer` (active only when `orderable` is true), and managed `selectedItem` state in `_menu-list.tsx`. The sheet slides up as a bottom sheet (`side="bottom" world="guest"`) displaying the item's name, description, price, a placeholder for modifier groups, and an "Add to Cart" CTA button, while preserving the direct DOM mobile search script.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Create | Client Component bottom sheet displaying selected item name, description, price, and modifier group placeholder |
+| app/(guest)/menu/_menu-item-card.tsx | Edit | Add `onSelect` prop and `cursor-pointer` when item is orderable |
+| app/(guest)/menu/_menu-list.tsx | Edit | Manage `selectedItem` state, pass `onSelect` to item cards, and render `ModifierSheet` |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.1 as complete |
+| docs/PROGRESS.md | Edit | Record ENTRY-0127, bump ledger to 0128, and advance snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /api/dev/qr
+├ ƒ /dev/qr
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+ƒ Proxy (Middleware)
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  19:10:03
+   Duration  961ms (import 35%, tests 33%, transform 25%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  19:10:12
+   Duration  76.25s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds (21 routes + 1 proxy) | `pnpm build` | 21 routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Tapping an orderable item card opens the bottom sheet | Manual Check | Bottom sheet slides up over 320ms | Awaiting Human Verification |
+| 6 | Sheet displays item name, description, and price | Manual Check | Name (22px font-display), description (14px), and formatted price render correctly | Awaiting Human Verification |
+| 7 | Tapping outside sheet or close button closes it | Manual Check | onOpenChange(false) resets selectedItem to null | Awaiting Human Verification |
+| 8 | Tapping an unavailable item does not open sheet | Manual Check | Unavailable item card has no click handler and does not trigger onSelect | Awaiting Human Verification |
+| 9 | Mobile search bar still filters list | Manual Mobile Check | Native search script continues to filter DOM items correctly | Awaiting Human Verification |
+| 10 | No console errors | Browser Console | Clean execution without errors | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Marked Task 5.3.1 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0127, bumped ledger to 0128, and advance snapshot | Updated |
+| DESIGN.md | No | Adheres to §4.6.6, §4.6.17.2, §4.15 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.2 — Add the single-choice modifier group.
+
+**Awaiting Human Verification:** YES (manual observation of bottom sheet opening, content display, close mechanics, and unavailable item non-interactivity)
+
+
 
 ### ENTRY-0126 — 2026-10-27 — Task 5.0.3 Corrective — Native DOM Script Manipulation for Search and Tabs
 
@@ -2117,9 +2380,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.3 (The Modifier Sheet).
 
-Current task: Task 5.3.1 — Add the modifier sheet layout.
+Current task: Task 5.3.2 — Add the single-choice modifier group.
 
-Current status: Milestone 5.0 infrastructure tasks (5.0.1 and 5.0.2) are complete. The `/dev/qr` interface enables physical phone scanning over LAN per D-17.4. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.1 (The modifier sheet layout).
+Current status: Task 5.3.1 is complete. The modifier sheet layout component is built in _modifier-sheet.tsx with direct DOM script manipulation for mobile interaction. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.2 (single-choice modifier group).
 
 ## 8. How the File Evolves
 
