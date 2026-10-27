@@ -1,6 +1,8 @@
 import type { JSX } from "react";
 import type { MenuItemView } from "@/domain/menu/menu.repository";
+import { isOrderable } from "@/domain/menu/is-orderable";
 import { Card, CardMedia } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +20,14 @@ export function MenuItemCard({
   const safeLocale = isCurrency ? "en-US" : locale === "en" ? "en-US" : locale;
 
   const hasPhoto = item.photoUrl !== null;
+  const orderable = isOrderable(item);
 
   return (
     <Card
-      interactive
+      interactive={orderable}
       className={cn(
         "overflow-hidden",
+        !orderable && "opacity-60",
         // motion-reduce: suppress the lift entirely
         "motion-reduce:transition-none motion-reduce:[transform:none] motion-reduce:shadow-sm",
       )}
@@ -34,7 +38,10 @@ export function MenuItemCard({
           <img
             src={item.photoUrl!}
             alt=""
-            className="aspect-[16/9] w-full object-cover rounded-t-lg"
+            className={cn(
+              "aspect-[16/9] w-full object-cover rounded-t-lg",
+              !orderable && "grayscale",
+            )}
           />
         </CardMedia>
       ) : null}
@@ -48,11 +55,28 @@ export function MenuItemCard({
       >
         {/* Name + description */}
         <div className="flex-1 flex flex-col gap-1">
-          <h3 className="text-[18px] leading-[24px] font-semibold text-guest-text-primary">
-            {item.name}
-          </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3
+              className={cn(
+                "text-[18px] leading-[24px] font-semibold",
+                orderable ? "text-guest-text-primary" : "text-guest-text-muted",
+              )}
+            >
+              {item.name}
+            </h3>
+            {!orderable ? (
+              <Badge variant="status" status="cancelled">
+                Unavailable
+              </Badge>
+            ) : null}
+          </div>
           {item.description ? (
-            <p className="text-[14px] leading-[22px] text-guest-text-secondary">
+            <p
+              className={cn(
+                "text-[14px] leading-[22px]",
+                orderable ? "text-guest-text-secondary" : "text-guest-text-muted",
+              )}
+            >
               {item.description}
             </p>
           ) : null}
@@ -60,7 +84,12 @@ export function MenuItemCard({
 
         {/* Price */}
         <div className="shrink-0 text-right">
-          <span className="text-[16px] leading-[24px] font-medium text-guest-text-primary">
+          <span
+            className={cn(
+              "text-[16px] leading-[24px] font-medium",
+              orderable ? "text-guest-text-primary" : "text-guest-text-muted",
+            )}
+          >
             {formatMoney(item.price, safeCurrency, safeLocale)}
           </span>
         </div>
