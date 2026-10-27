@@ -124,13 +124,192 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0110 | 2026-10-18 | Task 5.1.2 — Add the getMenuItem domain function | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0111 | 2026-10-19 | Task 5.1.3 — Add the isOrderable domain function | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0112 | 2026-10-19 | Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones (Milestone 5.1 Close) | PASS | Milestone 5.1 | §5.3 |
-Next entry number: 0113.
+| ENTRY-0113 | 2026-10-19 | Task 5.2.1 — Add the menu screen with category tabs | PASS | Milestone 5.2 | §5.3 |
+Next entry number: 0114.
 
-### 5.3 Current Milestone — Phase 5 Milestone 5.1 (The Menu Domain)
+### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0113 — 2026-10-19 — Task 5.2.1 — Add the menu screen with category tabs
+
+**Status:** PASS
+
+**Task:** Task 5.2.1 — Add the menu screen with category tabs
+
+**Summary:**
+The menu section below the hero in app/(guest)/menu/page.tsx now renders the getMenu tree with a sticky category tab strip and a scrollable item list, providing smooth in-page navigation across menu categories. Automated validation passed with zero TypeScript issues and all unit/integration tests green; guest-facing mobile manual verification on 393×852 is pending human inspection.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_category-tabs.tsx | Create | Client Component rendering sticky category tabs with active-tab underline and smooth scrolling |
+| app/(guest)/menu/_menu-item-card.tsx | Create | Server Component rendering menu item name, description, and localized price via formatMoney |
+| app/(guest)/menu/page.tsx | Edit | Call getMenu, wrap View Menu CTA in anchor, render sticky tabs and category sections with error/empty handling |
+| docs/PROGRESS.md | Edit | Record ENTRY-0113, update ledger, advance snapshot to Task 5.2.2 |
+| docs/ROADMAP.md | Edit | Mark Task 5.2.1 as ✅ Complete |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 14ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 981ms
+  Running TypeScript ...
+  Finished TypeScript in 448ms ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/18) ...
+  Generating static pages using 15 workers (4/18) 
+  Generating static pages using 15 workers (8/18) 
+  Generating static pages using 15 workers (13/18) 
+✓ Generating static pages using 15 workers (18/18) in 302ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 27ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/menu/get-menu.test.ts (6 tests) 10ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 8ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 10ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 7ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 7ms
+ ✓ tests/unit/menu/get-menu-item.test.ts (6 tests) 9ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 11ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 7ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 108ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 6ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 5ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 5ms
+ ✓ tests/unit/menu/is-orderable.test.ts (4 tests) 3ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 557ms
+
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  00:37:16
+   Duration  818ms (tests 38%, import 29%, transform 28%, worker 6%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  00:37:33
+   Duration  76.03s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Command or Action | Expected Result | Actual Result |
+|---|-----------|-------------------|-----------------|---------------|
+| 1 | Landing renders | Manual Mobile Check (393×852) | Page renders with venue name in Fraunces, warm sand background, View Menu CTA, clean console | Awaiting Human Verification |
+| 2 | Menu section appears below Chef's Picks | Manual Mobile Check (393×852) | Menu heading (28px Fraunces), sticky category tabs (Starters, Mains, Desserts) | Awaiting Human Verification |
+| 3 | Tapping a tab scrolls to that category | Manual Mobile Check (393×852) | Tapping Mains scrolls to category heading below sticky tab strip; active underline moves | Awaiting Human Verification |
+| 4 | Item cards render name, description, price | Manual Mobile Check (393×852) | Name (18px semibold), description (14px secondary), price right-aligned via formatMoney | Awaiting Human Verification |
+| 5 | Chef's Picks still works; console clean | Manual Mobile Check (393×852) | Chef's Picks row renders from listItems; zero console errors | Awaiting Human Verification |
+| 6 | TypeScript typecheck clean | pnpm exec tsc --noEmit | Exit code 0, no output | PASS |
+| 7 | Production build compiles clean | pnpm build | 20 routes | PASS |
+| 8 | Unit tests pass exact count | pnpm test:unit | 137 passed across 23 files | PASS |
+| 9 | Integration tests pass exact count | pnpm test:integration | 133 passed across 27 files | PASS |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Chef's Picks still consumes listItems; the consolidation to getMenu is deferred. Card hover-lift, photos, search bar, unavailable-item styling, and floating cart bar belong to Tasks 5.2.2 through 5.2.5.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to §5.2, §5.3, §5.6 | No change |
+| DECISIONS.md | No | Adheres to D-4.2, D-9.2, D-9.4, D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §5, §15.4 | No change |
+| BUILD.md | No | Adheres to §1, §3, §4, §8.8, §12.3, §13.2, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 5.2.1 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0113, updated ledger, advanced snapshot | Updated |
+| DESIGN.md | No | Adheres to §4.6.7, §4.6.10, §4.6.17.1, §4.8.1, §4.13.1, §4.15 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.2 — Add the item list with photos, names, descriptions, and prices.
+
+**Awaiting Human Verification:** YES (the manual mobile check)
+
 
 ### ENTRY-0112 — 2026-10-19 — Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones (Milestone 5.1 Close)
 
@@ -859,9 +1038,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.2 (The Menu Screen).
 
-Current task: Task 5.2.1 — Add the menu screen with category tabs.
+Current task: Task 5.2.2 — Add the item list with photos, names, descriptions, and prices.
 
-Current status: Phase 5 is open. Milestone 5.1 (the menu domain) is closed — getMenu, getMenuItem, and isOrderable are complete, verified against real PostgreSQL by ENTRY-0112, and exercise the D-4.2 rule that HIDDEN items are excluded at the domain layer. Milestone 5.2 (the menu screen on the phone) begins with Task 5.2.1. The guest menu page at app/(guest)/menu/page.tsx continues to consume listItems for Chef's Picks until Task 5.2.1 replaces its data source with getMenu. Phase 5 closes only after Milestone 5.8's verification and the Phase 5 acceptance test in PHASE_TESTS.md §7 pass with a real phone.
+Current status: Task 5.2.1 is complete. The menu screen renders the getMenu tree with a sticky category tab strip and item list. Automated verification is passing across all suites; manual mobile check on 393×852 is pending human verification before commit. Task 5.2.2 (photos and hover-lift) is next.
 
 ## 8. How the File Evolves
 
