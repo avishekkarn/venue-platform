@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState, type JSX } from "react";
+import { useState, type JSX } from "react";
 import { Search } from "lucide-react";
 import type { MenuCategoryView } from "@/domain/menu/menu.repository";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/money";
 import { CategoryTabs } from "./_category-tabs";
@@ -20,7 +19,6 @@ export function MenuList({
   locale,
   currency = "USD",
 }: MenuListProps): JSX.Element {
-  const [query, setQuery] = useState("");
   const [cart] = useState({
     itemCount: 3,
     total: "42.50",
@@ -30,26 +28,6 @@ export function MenuList({
   const safeCurrency = currency || (isCurrency ? locale : "USD");
   const safeLocale = isCurrency ? "en-US" : locale === "en" ? "en-US" : locale;
 
-  const filteredMenu = useMemo(() => {
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed) {
-      return menu;
-    }
-
-    return menu
-      .map((category) => ({
-        ...category,
-        items: category.items.filter((item) => {
-          const nameMatches = item.name.toLowerCase().includes(trimmed);
-          const descMatches = item.description
-            ? item.description.toLowerCase().includes(trimmed)
-            : false;
-          return nameMatches || descMatches;
-        }),
-      }))
-      .filter((category) => category.items.length > 0);
-  }, [menu, query]);
-
   return (
     <div className={cart.itemCount > 0 ? "pb-20" : undefined}>
       <div className="relative mb-4">
@@ -57,56 +35,58 @@ export function MenuList({
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-guest-text-muted"
           aria-hidden="true"
         />
-        <Input
-          id="menu-search"
+        <input
+          id="menu-search-input"
           type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search menu..."
-          className="pl-9"
+          className="block w-full rounded-md border border-guest-border-subtle bg-guest-surface-raised px-3 py-2 pl-9 text-[16px] leading-[24px] text-guest-text-primary placeholder:text-guest-text-muted outline-none focus:border-guest-brand focus:ring-0"
           aria-label="Search menu"
         />
       </div>
 
-      {filteredMenu.length > 0 ? (
+      {menu.length > 0 ? (
         <CategoryTabs
-          categories={filteredMenu.map((c) => ({ id: c.id, name: c.name }))}
+          categories={menu.map((c) => ({ id: c.id, name: c.name }))}
         />
       ) : null}
 
-      {filteredMenu.length === 0 ? (
-        <div className="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-6 text-center mt-4">
-          <p className="text-[14px] leading-[22px] text-guest-text-secondary">
-            No items match your search.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-4 flex flex-col gap-3">
-          {filteredMenu.map((category) => (
-            <section
-              key={category.id}
-              id={`category-${category.id}`}
-              aria-labelledby={`category-heading-${category.id}`}
-              className="scroll-mt-[64px] flex flex-col gap-3"
+      <div
+        id="menu-empty-state"
+        style={{ display: "none" }}
+        className="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-6 text-center mt-4"
+      >
+        <p className="text-[14px] leading-[22px] text-guest-text-secondary">
+          No items match your search.
+        </p>
+      </div>
+
+      <div id="menu-list-container" className="mt-4 flex flex-col gap-3">
+        {menu.map((category) => (
+          <section
+            key={category.id}
+            id={`category-${category.id}`}
+            data-category-section
+            aria-labelledby={`category-heading-${category.id}`}
+            className="scroll-mt-[64px] flex flex-col gap-3"
+          >
+            <h3
+              id={`category-heading-${category.id}`}
+              className="font-display text-[22px] leading-[28px] text-guest-text-primary mt-2"
             >
-              <h3
-                id={`category-heading-${category.id}`}
-                className="font-display text-[22px] leading-[28px] text-guest-text-primary mt-2"
-              >
-                {category.name}
-              </h3>
-              {category.items.map((item) => (
+              {category.name}
+            </h3>
+            {category.items.map((item) => (
+              <div key={item.id} data-item-card>
                 <MenuItemCard
-                  key={item.id}
                   item={item}
                   locale={locale}
                   currency={currency}
                 />
-              ))}
-            </section>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </section>
+        ))}
+      </div>
 
       {cart.itemCount > 0 ? (
         <aside
@@ -126,6 +106,55 @@ export function MenuList({
           </Button>
         </aside>
       ) : null}
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+  (function() {
+    function init() {
+      var input = document.getElementById('menu-search-input');
+      var container = document.getElementById('menu-list-container');
+      if (!input || !container) return;
+      
+      input.addEventListener('input', function(e) {
+        var query = e.target.value.toLowerCase().trim();
+        var sections = container.querySelectorAll('[data-category-section]');
+        var hasVisible = false;
+        
+        sections.forEach(function(section) {
+          var items = section.querySelectorAll('[data-item-card]');
+          var sectionHasVisible = false;
+          
+          items.forEach(function(item) {
+            var text = item.textContent.toLowerCase();
+            if (query === '' || text.includes(query)) {
+              item.style.display = 'flex';
+              sectionHasVisible = true;
+              hasVisible = true;
+            } else {
+              item.style.display = 'none';
+            }
+          });
+          
+          section.style.display = sectionHasVisible ? 'flex' : 'none';
+        });
+        
+        var emptyState = document.getElementById('menu-empty-state');
+        if (emptyState) {
+          emptyState.style.display = hasVisible ? 'none' : 'block';
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+`,
+        }}
+      />
     </div>
   );
 }
