@@ -4,6 +4,8 @@ import { useMemo, useState, type JSX } from "react";
 import { Search } from "lucide-react";
 import type { MenuCategoryView } from "@/domain/menu/menu.repository";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/lib/money";
 import { CategoryTabs } from "./_category-tabs";
 import { MenuItemCard } from "./_menu-item-card";
 
@@ -19,6 +21,14 @@ export function MenuList({
   currency = "USD",
 }: MenuListProps): JSX.Element {
   const [query, setQuery] = useState("");
+  const [cart] = useState({
+    itemCount: 3,
+    total: "42.50",
+  });
+
+  const isCurrency = locale.length === 3 && locale === locale.toUpperCase();
+  const safeCurrency = currency || (isCurrency ? locale : "USD");
+  const safeLocale = isCurrency ? "en-US" : locale === "en" ? "en-US" : locale;
 
   const filteredMenu = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -41,7 +51,7 @@ export function MenuList({
   }, [menu, query]);
 
   return (
-    <div>
+    <div className={cart.itemCount > 0 ? "pb-20" : undefined}>
       <div className="relative mb-4">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-guest-text-muted"
@@ -97,7 +107,25 @@ export function MenuList({
           ))}
         </div>
       )}
+
+      {cart.itemCount > 0 ? (
+        <aside
+          aria-label="Current cart summary"
+          className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-40 h-14 px-4 flex items-center justify-between rounded-lg bg-guest-brand text-guest-brand-contrast shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 ease-guest-entrance motion-reduce:animate-none"
+        >
+          <span className="text-[15px] font-medium tracking-tight text-guest-brand-contrast">
+            {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"} · {formatMoney(cart.total, safeCurrency, safeLocale)}
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="bg-guest-surface-raised text-guest-text-primary hover:bg-guest-surface-sunken"
+          >
+            View cart
+          </Button>
+        </aside>
+      ) : null}
     </div>
   );
 }
-
