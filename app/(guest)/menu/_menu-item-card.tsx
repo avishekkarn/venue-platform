@@ -14,6 +14,7 @@ export function MenuItemCard({
   item: MenuItemView;
   locale: string;
   currency?: string;
+  onSelect?: (item: MenuItemView) => void;
 }): JSX.Element {
   const isCurrency = locale.length === 3 && locale === locale.toUpperCase();
   const safeCurrency = currency || (isCurrency ? locale : "USD");
@@ -21,12 +22,20 @@ export function MenuItemCard({
 
   const hasPhoto = item.photoUrl !== null;
   const orderable = isOrderable(item);
+  const formattedPrice = formatMoney(item.price, safeCurrency, safeLocale);
 
   return (
     <Card
+      data-item-card
+      data-item-id={item.id}
+      data-item-name={item.name}
+      data-item-description={item.description ?? ""}
+      data-item-price={formattedPrice}
+      data-orderable={orderable ? "true" : "false"}
       interactive={orderable}
       className={cn(
         "overflow-hidden",
+        orderable && "cursor-pointer",
         !orderable && "opacity-60",
         // motion-reduce: suppress the lift entirely
         "motion-reduce:transition-none motion-reduce:[transform:none] motion-reduce:shadow-sm",

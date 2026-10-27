@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/money";
 import { CategoryTabs } from "./_category-tabs";
 import { MenuItemCard } from "./_menu-item-card";
+import { ModifierSheet } from "./_modifier-sheet";
 
 interface MenuListProps {
   readonly menu: readonly MenuCategoryView[];
@@ -76,17 +77,18 @@ export function MenuList({
               {category.name}
             </h3>
             {category.items.map((item) => (
-              <div key={item.id} data-item-card>
-                <MenuItemCard
-                  item={item}
-                  locale={locale}
-                  currency={currency}
-                />
-              </div>
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                locale={locale}
+                currency={currency}
+              />
             ))}
           </section>
         ))}
       </div>
+
+      <ModifierSheet />
 
       {cart.itemCount > 0 ? (
         <aside
@@ -114,34 +116,60 @@ export function MenuList({
     function init() {
       var input = document.getElementById('menu-search-input');
       var container = document.getElementById('menu-list-container');
-      if (!input || !container) return;
-      
-      input.addEventListener('input', function(e) {
-        var query = e.target.value.toLowerCase().trim();
-        var sections = container.querySelectorAll('[data-category-section]');
-        var hasVisible = false;
-        
-        sections.forEach(function(section) {
-          var items = section.querySelectorAll('[data-item-card]');
-          var sectionHasVisible = false;
+      if (input && container) {
+        input.addEventListener('input', function(e) {
+          var query = e.target.value.toLowerCase().trim();
+          var sections = container.querySelectorAll('[data-category-section]');
+          var hasVisible = false;
           
-          items.forEach(function(item) {
-            var text = item.textContent.toLowerCase();
-            if (query === '' || text.includes(query)) {
-              item.style.display = 'flex';
-              sectionHasVisible = true;
-              hasVisible = true;
-            } else {
-              item.style.display = 'none';
-            }
+          sections.forEach(function(section) {
+            var items = section.querySelectorAll('[data-item-card]');
+            var sectionHasVisible = false;
+            
+            items.forEach(function(item) {
+              var text = item.textContent.toLowerCase();
+              if (query === '' || text.includes(query)) {
+                item.style.display = '';
+                sectionHasVisible = true;
+                hasVisible = true;
+              } else {
+                item.style.display = 'none';
+              }
+            });
+            
+            section.style.display = sectionHasVisible ? '' : 'none';
           });
           
-          section.style.display = sectionHasVisible ? 'flex' : 'none';
+          var emptyState = document.getElementById('menu-empty-state');
+          if (emptyState) {
+            emptyState.style.display = hasVisible ? 'none' : 'block';
+          }
         });
+      }
+
+      document.addEventListener('click', function(e) {
+        var card = e.target.closest('[data-orderable="true"]');
+        if (card) {
+          var name = card.getAttribute('data-item-name');
+          var price = card.getAttribute('data-item-price');
+          var desc = card.getAttribute('data-item-description');
+          
+          var titleEl = document.getElementById('modifier-sheet-title');
+          var priceEl = document.getElementById('modifier-sheet-price');
+          var descEl = document.getElementById('modifier-sheet-desc');
+          var sheet = document.getElementById('modifier-sheet');
+          
+          if (titleEl) titleEl.textContent = name;
+          if (priceEl) priceEl.textContent = price;
+          if (descEl) descEl.textContent = desc || '';
+          if (sheet) sheet.style.display = 'flex';
+        }
         
-        var emptyState = document.getElementById('menu-empty-state');
-        if (emptyState) {
-          emptyState.style.display = hasVisible ? 'none' : 'block';
+        var closeBtn = e.target.closest('#modifier-sheet-close');
+        var overlay = e.target.closest('[data-sheet-overlay]');
+        if (closeBtn || overlay) {
+          var sheet = document.getElementById('modifier-sheet');
+          if (sheet) sheet.style.display = 'none';
         }
       });
     }
