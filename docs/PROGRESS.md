@@ -129,13 +129,76 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0115 | 2026-10-27 | Task 5.2.2 — Add the item list with photos, names, descriptions, and prices | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0116 | 2026-10-27 | Task 5.2.3 — Add the search bar | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0117 | 2026-10-27 | Task 5.2.4 — Add the unavailable-item state (greyed out, with a label) | PASS | Milestone 5.2 | §5.3 |
-Next entry number: 0118.
+| ENTRY-0118 | 2026-10-27 | Task 5.2.5 — Add the floating cart bar | PASS | Milestone 5.2 | §5.3 |
+Next entry number: 0119.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0118 — 2026-10-27 — Task 5.2.5 — Add the floating cart bar
+
+**Status:** PASS
+
+**Task:** Task 5.2.5 — Add the floating cart bar
+
+**Summary:**
+Added the floating cart bar component to the menu screen in app/(guest)/menu/_menu-list.tsx. The bar renders fixed 16px from the viewport bottom when the cart is non-empty, displaying the mock item count and localized total formatted via formatMoney alongside a high-contrast "View cart" button on an olive --guest-brand surface with entrance motion.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_menu-list.tsx | Edit | Add mock cart state, floating cart bar layout, formatted total, and slide-in entrance animation |
+| docs/PROGRESS.md | Edit | Record ENTRY-0118, update ledger, advance snapshot to Task 5.2.6 |
+| docs/ROADMAP.md | Edit | Mark Task 5.2.5 as complete |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit`
+- `pnpm build`
+- `pnpm test:unit`
+- `pnpm test:integration`
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds | `pnpm build` | 20 app routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Floating cart bar renders at bottom of screen with mock count and total | Manual Check | Bar renders showing mock count and localized total (3 items · $42.50) | Awaiting Human Verification |
+| 6 | Bar is centered, uses --guest-brand color, and sits 16px from bottom | Manual Check | Max-w-2xl centered, bottom-4 (16px), bg-guest-brand surface | Awaiting Human Verification |
+| 7 | Bar includes "View cart" button | Manual Check | High-contrast View cart button present on the right | Awaiting Human Verification |
+| 8 | Bar slides in with entrance animation | Manual Check | Slide-in animation from bottom triggers cleanly on mount | Awaiting Human Verification |
+| 9 | Zero console errors throughout | Browser Console Check | Clean console throughout | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | No change | No change |
+| SYSTEM.md | No | No change | No change |
+| BUILD.md | No | No change | No change |
+| ROADMAP.md | Yes | Marked Task 5.2.5 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0118, updated ledger, advanced snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.6 — Verify: the menu renders on a real phone; the categories work; the search filters; an unavailable item is not orderable.
+
+**Awaiting Human Verification:** YES (manual visual check of floating cart bar presentation and entrance)
 
 ### ENTRY-0117 — 2026-10-27 — Task 5.2.4 — Add the unavailable-item state
 
@@ -1272,9 +1335,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.2 (The Menu Screen).
 
-Current task: Task 5.2.5 — Add the floating cart bar.
+Current task: Task 5.2.6 — Verify: the menu renders on a real phone; the categories work; the search filters; an unavailable item is not orderable.
 
-Current status: Task 5.2.4 is complete. MenuItemCard supports the UNAVAILABLE state with greyed-out visual treatment, muted typography, an Unavailable status badge, greyscale photo filtering, and disabled hover-lift interaction per D-4.2 and DESIGN.md §4.6.17.1. All automated baselines pass (tsc, build, 137 unit tests, 133 integration tests); manual interaction verification awaits human inspection. Task 5.2.5 (floating cart bar) is next.
+Current status: Task 5.2.5 is complete. The floating cart bar renders fixed 16px from the bottom on a --guest-brand surface with mock items/total and View cart CTA. All automated baselines pass (tsc, build, 137 unit tests, 133 integration tests); manual interaction verification awaits human inspection. Task 5.2.6 (Milestone 5.2 verification close) is next.
 
 ## 8. How the File Evolves
 
