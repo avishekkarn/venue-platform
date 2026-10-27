@@ -126,13 +126,76 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0112 | 2026-10-19 | Task 5.1.4 — Verify: the menu returns only available and unavailable items, never hidden ones (Milestone 5.1 Close) | PASS | Milestone 5.1 | §5.3 |
 | ENTRY-0113 | 2026-10-19 | Task 5.2.1 — Add the menu screen with category tabs | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0114 | 2026-10-27 | Task 5.2.1 manual observation methodology correction | STRUCTURAL | Milestone 5.2 | §5.3 |
-Next entry number: 0115.
+| ENTRY-0115 | 2026-10-27 | Task 5.2.2 — Add the item list with photos, names, descriptions, and prices | PASS | Milestone 5.2 | §5.3 |
+Next entry number: 0116.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0115 — 2026-10-27 — Task 5.2.2 — Add the item list with photos, names, descriptions, and prices
+
+**Status:** PASS
+
+**Task:** Task 5.2.2 — Add the item list with photos, names, descriptions, and prices
+
+**Summary:**
+MenuItemCard in app/(guest)/menu/_menu-item-card.tsx has been upgraded to the full DESIGN.md §4.6.17.1 anatomy, supporting an optional 16:9 photo container, padded text layout, and guest-world hover-lift motion with reduced-motion suppression. All automated baselines pass cleanly (typecheck, 20 routes build, 137 unit tests, 133 integration tests), and manual visual checks await human verification.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_menu-item-card.tsx | Edit | Render optional 16:9 photo, padded text block, and interactive hover-lift |
+| docs/PROGRESS.md | Edit | Record ENTRY-0115, update ledger, advance snapshot to Task 5.2.3 |
+| docs/ROADMAP.md | Edit | Mark Task 5.2.2 as complete |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit`
+- `pnpm build`
+- `pnpm test:unit`
+- `pnpm test:integration`
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds | `pnpm build` | 20 app routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Item card with a photo renders photo at 16:9, rounded top corners | Manual Check | Photo above name, aspect-[16/9], object-cover, rounded-t-lg | Awaiting Human Verification |
+| 6 | Item card without photo renders name, description, price cleanly | Manual Check | No empty photo slot, padded text container, clean layout | Awaiting Human Verification |
+| 7 | Desktop pointer hover lifts card 2px with shadow | Manual Desktop Check (1440×900) | Lifts 2px with shadow expansion over ~200ms; settles back | Awaiting Human Verification |
+| 8 | Touch device tap does not lift card | Manual Mobile Check (393×852) | No hover-lift on touch; clean mobile presentation | Awaiting Human Verification |
+| 9 | Zero console errors | Browser Console Check | Clean console throughout | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | No change | No change |
+| SYSTEM.md | No | No change | No change |
+| BUILD.md | No | No change | No change |
+| ROADMAP.md | Yes | Marked Task 5.2.2 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0115, updated ledger, advanced snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.3 — Add the search bar.
+
+**Awaiting Human Verification:** YES (manual desktop and mobile visual checks)
 
 ### ENTRY-0114 — 2026-10-27 — Task 5.2.1 manual observation methodology correction
 
@@ -1084,9 +1147,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.2 (The Menu Screen).
 
-Current task: Task 5.2.2 — Add the item list with photos, names, descriptions, and prices.
+Current task: Task 5.2.3 — Add the search bar.
 
-Current status: Task 5.2.1 is complete and committed. The menu screen renders the getMenu tree with a sticky category tab strip and item list. All baselines are green, and the manual mobile check on 393×852 is verified and passed. Task 5.2.2 (photos and hover-lift) is next.
+Current status: Task 5.2.2 is complete. MenuItemCard renders full anatomy with optional 16:9 photo, padded text block, and interactive hover-lift motion with reduced-motion safety. All automated verification baselines are green (tsc, build, 137 unit tests, 133 integration tests); manual visual checks await human inspection. Task 5.2.3 (search bar) is next.
 
 ## 8. How the File Evolves
 

@@ -374,7 +374,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ID    | Task                                                                                                                    | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 5.2.1 | Add the menu screen with category tabs                                                                                  | ✅ Complete | 5.1.4      |
-| 5.2.2 | Add the item list with photos, names, descriptions, and prices                                                          | ⬜     | 5.2.1      |
+| 5.2.2 | Add the item list with photos, names, descriptions, and prices                                                          | ✅ Complete | 5.2.1      |
 | 5.2.3 | Add the search bar                                                                                                      | ⬜     | 5.2.2      |
 | 5.2.4 | Add the unavailable-item state (greyed out, with a label)                                                               | ⬜     | 5.2.3      |
 | 5.2.5 | Add the floating cart bar                                                                                               | ⬜     | 5.2.4      |
