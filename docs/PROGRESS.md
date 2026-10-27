@@ -127,13 +127,76 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0113 | 2026-10-19 | Task 5.2.1 — Add the menu screen with category tabs | PASS | Milestone 5.2 | §5.3 |
 | ENTRY-0114 | 2026-10-27 | Task 5.2.1 manual observation methodology correction | STRUCTURAL | Milestone 5.2 | §5.3 |
 | ENTRY-0115 | 2026-10-27 | Task 5.2.2 — Add the item list with photos, names, descriptions, and prices | PASS | Milestone 5.2 | §5.3 |
-Next entry number: 0116.
+| ENTRY-0116 | 2026-10-27 | Task 5.2.3 — Add the search bar | PASS | Milestone 5.2 | §5.3 |
+Next entry number: 0117.
 
 ### 5.3 Current Milestone — Phase 5 Milestone 5.2 (The Menu Screen)
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0116 — 2026-10-27 — Task 5.2.3 — Add the menu search bar
+
+**Status:** PASS
+
+**Task:** Task 5.2.3 — Add the search bar
+
+**Summary:**
+Added a live menu search bar to the guest menu screen by creating the MenuList Client Component in app/(guest)/menu/_menu-list.tsx and refactoring app/(guest)/menu/page.tsx to mount it. Guests can search by dish name or description in real time with immediate filtering across categories, while preserving sticky category tabs and empty state notifications.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_menu-list.tsx | Create | Client Component handling search state, live filtering, CategoryTabs, and item rendering |
+| app/(guest)/menu/page.tsx | Edit | Mount MenuList Client Component with venue menu data |
+| docs/PROGRESS.md | Edit | Record ENTRY-0116, update ledger, advance snapshot to Task 5.2.4 |
+| docs/ROADMAP.md | Edit | Mark Task 5.2.3 as complete |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit`
+- `pnpm build`
+- `pnpm test:unit`
+- `pnpm test:integration`
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds | `pnpm build` | 20 app routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Menu screen renders a search bar | Manual Check | Search input with Lucide Search icon rendered below Menu heading | Awaiting Human Verification |
+| 6 | Typing dish name/description filters list live | Manual Check | Item list and categories filter in real time to matching items | Awaiting Human Verification |
+| 7 | Clearing search restores full list | Manual Check | Empty query restores all menu categories and items | Awaiting Human Verification |
+| 8 | Zero console errors throughout | Browser Console Check | Clean console throughout | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | No change | No change |
+| SYSTEM.md | No | No change | No change |
+| BUILD.md | No | No change | No change |
+| ROADMAP.md | Yes | Marked Task 5.2.3 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0116, updated ledger, advanced snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.2.4 — Add the unavailable-item state (greyed out, with a label).
+
+**Awaiting Human Verification:** YES (manual search interaction checks)
 
 ### ENTRY-0115 — 2026-10-27 — Task 5.2.2 — Add the item list with photos, names, descriptions, and prices
 
@@ -1147,9 +1210,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.2 (The Menu Screen).
 
-Current task: Task 5.2.3 — Add the search bar.
+Current task: Task 5.2.4 — Add the unavailable-item state (greyed out, with a label).
 
-Current status: Task 5.2.2 is complete. MenuItemCard renders full anatomy with optional 16:9 photo, padded text block, and interactive hover-lift motion with reduced-motion safety. All automated verification baselines are green (tsc, build, 137 unit tests, 133 integration tests); manual visual checks await human inspection. Task 5.2.3 (search bar) is next.
+Current status: Task 5.2.3 is complete. The MenuList component provides real-time client-side search filtering across dish names and descriptions with graceful empty states and sticky category tabs. All automated verification baselines are green (tsc, build, 137 unit tests, 133 integration tests); manual search verification awaits human inspection. Task 5.2.4 (unavailable items) is next.
 
 ## 8. How the File Evolves
 
