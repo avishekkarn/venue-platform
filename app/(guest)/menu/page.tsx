@@ -21,8 +21,7 @@ import {
   CardBody,
 } from "@/components/ui/card";
 import { formatMoney } from "@/lib/money";
-import { CategoryTabs } from "./_category-tabs";
-import { MenuItemCard } from "./_menu-item-card";
+import { MenuList } from "./_menu-list";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -201,34 +200,11 @@ export default async function MenuPage(): Promise<JSX.Element> {
             </a>
           </div>
         ) : (
-          <>
-            <CategoryTabs categories={menuResult.value.map((c) => ({ id: c.id, name: c.name }))} />
-            <div className="mt-4 flex flex-col gap-3">
-              {menuResult.value.map((category) => (
-                <section
-                  key={category.id}
-                  id={`category-${category.id}`}
-                  aria-labelledby={`category-heading-${category.id}`}
-                  className="scroll-mt-[64px] flex flex-col gap-3"
-                >
-                  <h3
-                    id={`category-heading-${category.id}`}
-                    className="font-display text-[22px] leading-[28px] text-guest-text-primary mt-2"
-                  >
-                    {category.name}
-                  </h3>
-                  {category.items.map((item) => (
-                    <MenuItemCard
-                      key={item.id}
-                      item={item}
-                      locale={venue.value.language}
-                      currency={venue.value.currency}
-                    />
-                  ))}
-                </section>
-              ))}
-            </div>
-          </>
+          <MenuList
+            menu={menuResult.value}
+            locale={venue.value.language}
+            currency={venue.value.currency}
+          />
         )}
       </section>
       <footer className="mt-6 mb-4 text-center text-xs text-guest-text-muted">
