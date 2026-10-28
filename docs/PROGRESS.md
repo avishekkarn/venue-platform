@@ -31,6 +31,113 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0137 — 2026-10-28 — Task 5.4.2 — Add item-level adjustment (quantity, remove)
+
+**Status:** PASS
+
+**Task:** Task 5.4.2 — Add item-level adjustment (quantity, remove)
+
+**Purpose:**
+Extend `/cart` (`app/(guest)/cart/page.tsx`) to support item-level adjustments via native DOM event delegation: quantity steppers with decrement (floor 1, disabled minus button with opacity-40 and cursor-not-allowed) and increment (ceiling 99, disabled plus button with opacity-40 and cursor-not-allowed), plus a dedicated remove action button per line item. Clicking plus or minus updates `quantity` and recomputes `lineTotal` as `(item.price + sum(modifiers.price)) * quantity` strictly from stored line data without touching the database or menu. Removing an item splices the item out. Mutations recompute `itemCount` and `total` in `localStorage.guest_cart`, write back to `localStorage`, and call `renderCart()`. Removing all items displays `#cart-empty`.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Edit | Added quantity stepper and remove button to line card in `renderCart()`, and implemented delegated native click event listener for `qty-minus`, `qty-plus`, and `remove` actions with localStorage write-back |
+| docs/ROADMAP.md | Edit | Marked Task 5.4.2 as complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0137, bumped ledger to 0138, updated snapshot to Task 5.4.3 next |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: Each cart line renders a quantity stepper (minus, quantity, plus) and a remove control, styled per DESIGN.md §4.6.4 and §4.6.17.3, with touch targets ≥44×44 and aria-labels.
+- [x] Automated: Choice at quantity 1: disabled minus button (`disabled`, `disabled:opacity-40 disabled:cursor-not-allowed`) alongside an explicit dedicated remove button.
+- [x] Automated: A delegated native DOM handler mutates the clicked line: plus increases quantity (cap 99), minus decreases (floor 1, no-op if <= 1), remove splices the line out.
+- [x] Automated: The line's `lineTotal` is recomputed as `(item.price + sum(modifiers.price)) * quantity`, using the stored line data only.
+- [x] Automated: After mutation, `itemCount` and `total` in `localStorage.guest_cart` are recomputed and written back, preserving every other field and overall cart shape; `renderCart()` re-renders.
+- [x] Automated: Removing the last line displays `#cart-empty` and hides `#cart-lines`.
+- [x] Automated: No order-notes, summary/tax/total display, place-order, or pickup-name element is rendered.
+- [x] Automated: No file other than `app/(guest)/cart/page.tsx` was edited.
+- [ ] Awaiting Human Verification: On a real phone via LAN: plus/minus adjust the quantity and the line total visibly; remove deletes the line; removing the last line shows the empty state; refreshing the page keeps the mutated cart (persisted to localStorage).
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2, D-2.4, D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §5, §8.8, §12.3, §13.2 | No change |
+| ROADMAP.md | Yes | Marked 5.4.2 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0137, bumped ledger to 0138, updated snapshot | Updated |
+| DESIGN.md | No | Adheres to §4.6.4 and §4.6.17.3 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.3 — Add the order-level notes field.
+
+**Awaiting Human Verification:** YES
+
+
 ### ENTRY-0136 — 2026-10-28 — Task 5.4.1 — Add the cart screen
 
 **Status:** PASS
@@ -663,9 +770,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0134 | 2026-10-28 | Task 5.3.7 — Add the "Add to cart" action | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0135 | 2026-10-28 | Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0136 | 2026-10-28 | Task 5.4.1 — Add the cart screen | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0137
+| ENTRY-0137 | 2026-10-28 | Task 5.4.2 — Add item-level adjustment (quantity, remove) | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0138
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.2 — Add item-level adjustment (quantity, remove).
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.3 — Add the order-level notes field.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -3297,9 +3405,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.1 — Add the cart screen.
+Current task: Task 5.4.2 — Add item-level adjustment (quantity, remove).
 
-Current status: Milestone 5.4 is in progress. Task 5.4.1 is complete. The cart screen shell (`/cart`) is implemented as a Server Component with native DOM script rendering for line items and empty state from `localStorage.guest_cart`. All 4 verification baselines are clean (tsc 0, build with 22 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.4.2 (item-level adjustment).
+Current status: Milestone 5.4 is in progress. Task 5.4.2 is complete. Quantity steppers (decrement floor 1 / disabled, increment cap 99) and remove action on cart lines are implemented with native event delegation in `app/(guest)/cart/page.tsx`. Stored line data is the price source of truth; itemCount and total in `localStorage.guest_cart` recomputed on every adjustment; removing to empty displays `#cart-empty`. All 4 baselines pass clean. Ready for Task 5.4.3 (order-level notes field).
 
 ## 8. How the File Evolves
 
