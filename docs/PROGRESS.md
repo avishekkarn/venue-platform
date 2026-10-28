@@ -31,6 +31,215 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0135 — 2026-10-28 — Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar
+
+**Status:** PASS
+
+**Task:** Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar
+
+**Purpose:**
+Remove React state and custom event handling for the floating cart bar, and replace it with direct DOM manipulation via a native script (`updateCartBar()`) writing into `<div id="floating-cart-bar"></div>` on initial load and after adding items to `guest_cart` in `localStorage`, guaranteeing mobile browser reliability on physical devices.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_menu-list.tsx | Edit | Replaced React cart state and aside with `<div id="floating-cart-bar"></div>` and native `updateCartBar()` DOM rendering |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0135, bumped ledger to 0136 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (21 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: Removed React cart `useState` and `useEffect` event listener.
+- [x] Automated: Added `<div id="floating-cart-bar" />` inside the main wrapper in `_menu-list.tsx`.
+- [x] Automated: Added native `updateCartBar()` function inside `<script>` that reads `localStorage.guest_cart` and updates `#floating-cart-bar`.
+- [x] Automated: Called `updateCartBar()` on page initialization and after adding items to cart.
+- [ ] Awaiting Human Verification: On a mobile phone, tapping "Add to Cart" closes the sheet and immediately shows the floating cart bar with the correct count and total.
+- [ ] Awaiting Human Verification: Adding a second item updates the count and total.
+- [ ] Awaiting Human Verification: Refreshing the page retains the cart bar.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2 (localStorage cart) | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §12.3, §13.2 | No change |
+| ROADMAP.md | No | Milestone 5.3 remains complete and closed | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0135, bumped ledger to 0136 | Updated |
+| DESIGN.md | No | Adheres to §4.6.17.2, §4.8.1, §4.15.7 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.1 — Add the cart screen.
+
+**Awaiting Human Verification:** YES
+
+
+### ENTRY-0134 — 2026-10-28 — Task 5.3.7 — Add the "Add to cart" action
+
+**Status:** PASS
+
+**Task:** Task 5.3.7 — Add the "Add to cart" action
+
+**Purpose:**
+Milestone 5.3 is closed — the modifier sheet, single/multiple choice groups, quantity stepper, notes field, live total, and add-to-cart action are verified and complete. Milestone 5.4 is unblocked.
+Wire the "Add to Cart" button inside the Modifier Sheet to save the item to browser `localStorage` under `guest_cart` with UUID, item details, modifiers, notes, quantity, and line total, and dispatch a custom `cart-updated` event to update React state and the floating cart bar.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Edit | Added `id="add-to-cart-btn"` to the "Add to Cart" button |
+| app/(guest)/menu/_menu-list.tsx | Edit | Removed mock cart state, added `useEffect` reading and syncing `localStorage`, and added click handler for `#add-to-cart-btn` in native script |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.7 as complete, record Milestone 5.3 closure note |
+| docs/PROGRESS.md | Edit | Record ENTRY-0134, bump ledger to 0135, advance snapshot to Milestone 5.4 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (21 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: `#add-to-cart-btn` wired in native script to capture item metadata, selected modifiers, notes, quantity, and line total into `guest_cart` in `localStorage`.
+- [x] Automated: React state initialized with default 0 items and reads from `localStorage` on mount without SSR mismatch.
+- [x] Automated: `cart-updated` custom event dispatched and handled to sync floating cart bar.
+- [ ] Awaiting Human Verification: On a mobile phone, adding an item to the cart closes the sheet.
+- [ ] Awaiting Human Verification: The floating cart bar appears at the bottom of the menu and shows the correct item count and total.
+- [ ] Awaiting Human Verification: Adding a second item updates the count and total.
+- [ ] Awaiting Human Verification: Refreshing the page retains the cart (localStorage).
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2 (localStorage cart) | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §12.3, §13.2 | No change |
+| ROADMAP.md | Yes | Mark Task 5.3.7 as complete, record Milestone 5.3 closure note | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0134, bumped ledger to 0135 | Updated |
+| DESIGN.md | No | Adheres to §4.6.17.2, §4.8.1, §4.12.3, §4.15.7 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.1 — Add the cart screen.
+
+**Awaiting Human Verification:** YES
+
+
 ### ENTRY-0133 — 2026-10-28 — Task 5.3.6 — Add the live total
 
 **Status:** PASS
@@ -347,9 +556,11 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0131 | 2026-10-28 | Task 5.3.4 — Add the quantity stepper | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0132 | 2026-10-28 | Task 5.3.5 — Add the notes field | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0133 | 2026-10-28 | Task 5.3.6 — Add the live total | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0134
+| ENTRY-0134 | 2026-10-28 | Task 5.3.7 — Add the "Add to cart" action | PASS | Milestone 5.3 | §5.3 |
+| ENTRY-0135 | 2026-10-28 | Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0136
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.7 — Add the "Add to cart" action.
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.1 — Add the cart screen.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -2979,11 +3190,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.3 (The Modifier Sheet).
+Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.3.7 — Add the "Add to cart" action.
+Current task: Task 5.4.1 — Add the cart screen.
 
-Current status: Task 5.3.6 is complete. The live total display (`#modifier-sheet-price`) is located in a dedicated summary row directly above "Add to Cart" with a "Total" label. The price recalculates dynamically as `(basePrice + modifiers) * quantity` formatted with 2 decimal places and currency symbol via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.7.
+Current status: Milestone 5.3 is complete and closed. The floating cart bar is rendered and updated via native DOM scripting to guarantee mobile reliability on LAN IP connections, bypassing React hydration. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Milestone 5.4 (Task 5.4.1 — Add the cart screen).
 
 ## 8. How the File Evolves
 

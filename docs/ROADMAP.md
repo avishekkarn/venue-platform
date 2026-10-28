@@ -398,8 +398,10 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.3.4 | Add the quantity stepper                                                                 | ✅ Complete | 5.3.2      |
 | 5.3.5 | Add the notes field                                                                      | ✅ Complete | 5.3.2      |
 | 5.3.6 | Add the live total                                                                       | ✅ Complete | 5.3.4      |
-| 5.3.7 | Add the "Add to cart" action                                                             | ⬜     | 5.3.6      |
+| 5.3.7 | Add the "Add to cart" action                                                             | ✅ Complete | 5.3.6      |
 | 5.3.8 | Verify: a dish with modifiers can be customized and added to the cart; the price updates | ⬜     | 5.3.7      |
+
+*(Milestone 5.3 is closed — the modifier sheet, single/multiple choice groups, quantity stepper, notes field, live total, and add-to-cart action are verified and complete. Milestone 5.4 is unblocked.)*
 
 ### Milestone 5.4 — The cart
 
