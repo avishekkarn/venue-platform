@@ -47,6 +47,7 @@ export default async function CartPage(): Promise<JSX.Element> {
   const safeCurrency = currency || (isCurrency ? locale : "USD");
   const safeLocale = isCurrency ? "en-US" : locale === "en" ? "en-US" : locale;
   const taxRate = venue.value.taxRate;
+  const hasCounterModule = venue.value.modules.includes("COUNTER");
 
   return (
     <div className="min-h-dvh bg-guest-surface">
@@ -101,6 +102,30 @@ export default async function CartPage(): Promise<JSX.Element> {
             aria-label="Order notes"
             className="w-full rounded-md border border-guest-border-subtle bg-guest-surface-raised px-3 py-2 text-[16px] leading-[24px] text-guest-text-primary placeholder:text-guest-text-muted outline-none focus:border-guest-brand focus:ring-0 transition-colors"
           />
+        </div>
+
+        <div id="cart-pickup-container" className="mt-6" style={{ display: "none" }}>
+          <label
+            htmlFor="cart-pickup-name"
+            className="block text-[14px] font-medium text-guest-text-secondary mb-2"
+          >
+            Pickup name <span className="text-guest-brand" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="cart-pickup-name"
+            type="text"
+            required
+            aria-required="true"
+            aria-describedby="cart-pickup-helper"
+            placeholder="Your name"
+            className="w-full h-12 rounded-md border border-guest-border-subtle bg-guest-surface-raised px-3 text-[16px] leading-[24px] text-guest-text-primary placeholder:text-guest-text-muted outline-none focus:border-guest-brand focus:ring-0 transition-colors"
+          />
+          <p
+            id="cart-pickup-helper"
+            className="mt-1.5 text-[13px] leading-[18px] text-guest-text-muted"
+          >
+            So we can call you when your order is ready.
+          </p>
         </div>
 
         <div
@@ -159,6 +184,7 @@ export default async function CartPage(): Promise<JSX.Element> {
     var currency = ${JSON.stringify(safeCurrency)};
     var locale = ${JSON.stringify(safeLocale)};
     var taxRate = ${JSON.stringify(taxRate)};
+    var hasCounterModule = ${JSON.stringify(hasCounterModule)};
 
     function formatMoney(amount) {
       var num = parseFloat(String(amount)) || 0;
@@ -185,7 +211,7 @@ export default async function CartPage(): Promise<JSX.Element> {
     }
 
     function renderCart() {
-      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '' };
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '', pickupName: '' };
       try {
         var raw = localStorage.getItem('guest_cart');
         if (raw) {
@@ -198,6 +224,8 @@ export default async function CartPage(): Promise<JSX.Element> {
       var emptyContainer = document.getElementById('cart-empty');
       var notesContainer = document.getElementById('cart-notes-container');
       var notesInput = document.getElementById('cart-notes');
+      var pickupContainer = document.getElementById('cart-pickup-container');
+      var pickupInput = document.getElementById('cart-pickup-name');
       var summaryContainer = document.getElementById('cart-summary');
       var footerContainer = document.getElementById('cart-footer');
       if (!linesContainer || !emptyContainer) return;
@@ -208,6 +236,7 @@ export default async function CartPage(): Promise<JSX.Element> {
         linesContainer.style.display = 'none';
         emptyContainer.style.display = 'block';
         if (notesContainer) notesContainer.style.display = 'none';
+        if (pickupContainer) pickupContainer.style.display = 'none';
         if (summaryContainer) summaryContainer.style.display = 'none';
         if (footerContainer) footerContainer.style.display = 'none';
         return;
@@ -216,10 +245,14 @@ export default async function CartPage(): Promise<JSX.Element> {
       emptyContainer.style.display = 'none';
       linesContainer.style.display = 'flex';
       if (notesContainer) notesContainer.style.display = 'block';
+      if (pickupContainer) pickupContainer.style.display = hasCounterModule ? 'block' : 'none';
       if (summaryContainer) summaryContainer.style.display = 'flex';
       if (footerContainer) footerContainer.style.display = 'block';
       if (notesInput && document.activeElement !== notesInput) {
         notesInput.value = cartData.orderNotes || '';
+      }
+      if (pickupInput && document.activeElement !== pickupInput) {
+        pickupInput.value = cartData.pickupName || '';
       }
 
       var html = '';
@@ -302,7 +335,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       var lineId = actionBtn.getAttribute('data-line-id');
       if (!action || !lineId) return;
 
-      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '' };
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '', pickupName: '' };
       try {
         var raw = localStorage.getItem('guest_cart');
         if (raw) {
@@ -369,6 +402,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       cartData.itemCount = totalCount;
       cartData.total = sumTotal.toFixed(2);
       cartData.orderNotes = cartData.orderNotes || '';
+      cartData.pickupName = cartData.pickupName || '';
 
       try {
         localStorage.setItem('guest_cart', JSON.stringify(cartData));
@@ -389,7 +423,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       var target = e.target;
       if (!target || target.id !== 'cart-notes') return;
 
-      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '' };
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '', pickupName: '' };
       try {
         var raw = localStorage.getItem('guest_cart');
         if (raw) {
@@ -405,8 +439,30 @@ export default async function CartPage(): Promise<JSX.Element> {
       } catch (err) {}
     }
 
+    function handlePickupInput(e) {
+      var target = e.target;
+      if (!target || target.id !== 'cart-pickup-name') return;
+
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '', pickupName: '' };
+      try {
+        var raw = localStorage.getItem('guest_cart');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') cartData = parsed;
+        }
+      } catch (err) {}
+
+      cartData.pickupName = target.value;
+
+      try {
+        localStorage.setItem('guest_cart', JSON.stringify(cartData));
+      } catch (err) {}
+    }
+
     document.addEventListener('input', handleNotesInput);
     document.addEventListener('change', handleNotesInput);
+    document.addEventListener('input', handlePickupInput);
+    document.addEventListener('change', handlePickupInput);
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', renderCart);
