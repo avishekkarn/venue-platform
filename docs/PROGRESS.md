@@ -989,13 +989,145 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0140 | 2026-10-28 | STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger | STRUCTURAL | — | §5.3 |
 | ENTRY-0141 | 2026-10-29 | Task 5.4.5 — Add the "Place order" action | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0142 | 2026-10-29 | Task 5.4.6 — Add the empty cart state | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0143
+| ENTRY-0143 | 2026-10-29 | Task 5.4.7 — Add the pickup-name field for the counter flow | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0144
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.7 — Add the pickup-name field for the counter flow.
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0143 — 2026-10-29 — Task 5.4.7 — Add the pickup-name field for the counter flow
+
+**Status:** PASS
+
+**Task:** Task 5.4.7 — Add the pickup-name field for the counter flow
+
+**Summary:**
+Added the pickup-name field (`#cart-pickup-name` inside `#cart-pickup-container`) to the cart page (`app/(guest)/cart/page.tsx`), conditionally rendered only when the venue has the counter module enabled (`hasCounterModule = venue.value.modules.includes("COUNTER")`) and the cart is non-empty. The field is saved locally under `pickupName` in `localStorage.guest_cart` on native input/change events without re-rendering or focus disruption, defaults to `""`, and is preserved across all line mutations. Appended locked decision D-17.5 in `docs/DECISIONS.md` governing the place-identifier-plus-pickup-name double-confirmation rule, and updated active obligation W-0001 in `docs/WIRING.md` to require Task 5.6.1 to transmit both.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Edit | Sourced `hasCounterModule` from venue modules, added `#cart-pickup-container` with `#cart-pickup-name`, toggled visibility in `renderCart()`, persisted input to `pickupName`, and preserved it during line mutations |
+| docs/DECISIONS.md | Edit | Appended D-17.5 (place identifier + pickup name double-confirmation rule) and updated Section 17 index |
+| docs/WIRING.md | Edit | Updated W-0001 obligation to require 5.6.1 to send both place identifier and pickup name, adding Related decision: D-17.5 |
+| docs/ROADMAP.md | Edit | Marked Task 5.4.7 complete and added pickup-name requirement to Milestone 5.6 wiring note |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0143, added §5.2 ledger row, bumped next entry number to 0144, updated §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+git log --oneline -1
+# Output: c60828f STRUCTURAL — Record ENTRY-0142 (Task 5.4.6 complete)
+```
+
+```powershell
+git status --short --untracked-files=all
+# Output: (clean, empty output)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Pickup-name field renders in cart, hidden when empty or counter module missing, shown otherwise | PASS | `#cart-pickup-container` with `#cart-pickup-name`, helper text, and required asterisk rendered; toggled via `hasCounterModule ? 'block' : 'none'` in `renderCart()` |
+| 2 | Field value read on init with focus guard and persisted without re-render | PASS | `pickupInput.value = cartData.pickupName || ''` checked against `document.activeElement !== pickupInput`; `handlePickupInput` writes to `localStorage` without calling `renderCart()` |
+| 3 | pickupName is top-level cart field defaulting to "" and preserved across line mutations | PASS | Default `{ items: [], itemCount: 0, total: '0.00', orderNotes: '', pickupName: '' }`; preserved via `cartData.pickupName = cartData.pickupName || ''` in click handler |
+| 4 | No transmission | PASS | No fetch, no route, no createOrder, no idempotency-key generation, no navigation added |
+| 5 | D-17.5 appended in correct format and number | PASS | Appended to `docs/DECISIONS.md` with Decision, Context, Alternatives, Consequences, What would make us revisit, Traces to |
+| 6 | W-0001 updated to require place identifier + pickup name transmission | PASS | Obligation updated in `docs/WIRING.md` §2 and `Related decision: D-17.5` added; status remains OPEN |
+| 7 | ROADMAP.md marks 5.4.7 complete and carries 5.6.1 pickup-name note | PASS | Task 5.4.7 marked `✅ Complete`; wiring note updated beneath Milestone 5.6 |
+| 8 | 5.4.1–5.4.6 behaviour unchanged | PASS | Line rendering, quantity/remove, notes focus guard, summary calculation, empty state role="status", and Place order footer/seam untouched |
+| 9 | Baselines pass clean | PASS | tsc exit 0, build 22 routes + 1 proxy, unit 137/23, integration 133/27 |
+| 10 | Only named files changed | PASS | Only the five specified files modified |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Aligns with §4.3, §4.4, §7.3–§7.4; no change required | No change |
+| DECISIONS.md | Yes | Appended locked decision D-17.5 | Updated |
+| SYSTEM.md | No | System architecture untouched | No change |
+| BUILD.md | No | Build process untouched | No change |
+| ROADMAP.md | Yes | Marked Task 5.4.7 complete, updated 5.6.1 wiring note | Updated |
+| WIRING.md | Yes | Updated W-0001 obligation to include pickup name and cite D-17.5 | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0143, bumped ledger to 0144, updated snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured.
+
+**Awaiting Human Verification:** YES — on a real phone via LAN, in a venue with the counter module enabled: the pickup-name field shows in the cart and its value survives a refresh and quantity/remove changes; typing does not blur the field; in a table-only or room-only venue the field does not show; with an empty cart the field is hidden.
+
 
 ### ENTRY-0142 — 2026-10-29 — Task 5.4.6 — Add the empty cart state
 
@@ -4005,9 +4137,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.7 — Add the pickup-name field for the counter flow.
+Current task: Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured.
 
-Current status: Milestone 5.4 is in progress. Task 5.4.6 is complete. The empty cart state is verified against DESIGN.md §4.8.3 (warm, brief copy "Your cart is empty." and "Back to menu" link to /menu) with role="status" added for screen-reader announcement. In the empty cart state, the line list, order notes container, cart summary preview, and Place order sticky footer are all verified hidden via native DOM. All 4 baselines pass clean. Ready for Task 5.4.7 (pickup-name field for counter flow).
+Current status: Milestone 5.4 is in progress. Task 5.4.7 is complete. The pickup-name field (#cart-pickup-name) is added to the cart, conditionally rendered when the venue has the counter module enabled (hasCounterModule) and the cart is non-empty. The field is saved locally under pickupName in localStorage.guest_cart via native DOM without re-render, and is preserved by all line mutations. D-17.5 records the place-identifier-plus-pickup-name double-confirmation rule; W-0001 is updated to obligate 5.6.1 to send both. All 4 baselines pass clean. Ready for Task 5.4.8 (Milestone 5.4 verification).
 
 ## 8. How the File Evolves
 

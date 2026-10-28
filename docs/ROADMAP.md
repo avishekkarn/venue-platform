@@ -413,7 +413,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.4.4 | Add the summary (subtotal, tax, total)                                                                         | ✅ Complete | 5.4.2      |
 | 5.4.5 | Add the "Place order" action                                                                                   | ✅ Complete | 5.4.4      |
 | 5.4.6 | Add the empty cart state                                                                                       | ✅ Complete | 5.4.1      |
-| 5.4.7 | Add the pickup-name field for the counter flow                                                                 | ⬜     | 5.4.5      |
+| 5.4.7 | Add the pickup-name field for the counter flow                                                                 | ✅ Complete | 5.4.5      |
 | 5.4.8 | Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | ⬜     | 5.4.7      |
 
 ### Milestone 5.5 — The order domain
@@ -436,7 +436,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.6.3 | Add `GET /api/guest/orders`                                                                | ⬜     | 5.6.1      |
 | 5.6.4 | Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12 | ⬜     | 5.6.3      |
 
-*(Wiring note: Task 5.6.1 must replace the PLACE-ORDER SEAM (W-0001) in `app/(guest)/cart/page.tsx` with the real submission — client idempotency key per D-4.12, POST to `/api/guest/orders`, and on success navigate to 5.7.1).*
+*(Wiring note: Task 5.6.1 must replace the PLACE-ORDER SEAM (W-0001) in `app/(guest)/cart/page.tsx` with the real submission — client idempotency key per D-4.12, POST to `/api/guest/orders`, and on success navigate to 5.7.1. Per D-17.5 and W-0001, 5.6.1 must also send the pickup name alongside the place identifier).*
 
 ### Milestone 5.7 — The order confirmation and tracking
 

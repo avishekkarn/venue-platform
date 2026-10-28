@@ -27,7 +27,7 @@
 14. Deployment — D-14.1 to D-14.3
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
 16. Implementation Contracts — D-16.1 to D-16.4
-17. Development Process — D-17.1 to D-17.4
+17. Development Process — D-17.1 to D-17.5
 
 ---
 
@@ -2268,6 +2268,29 @@ Building the motion abstraction before its first consumer would mean inventing i
 - No existing authentication or QR validation rules are bypassed.
 
 **What would make us revisit:** If the project adds a built-in tunnel (e.g., Ngrok or Cloudflare Tunnel) that obviates the need for LAN IP testing.
+
+---
+
+### D-17.5 — Every order carries its place identifier, and a pickup name where provided, shown together to staff
+
+**Decision:** Every placed order carries its place identifier (table number, room number, or "counter"). Where a pickup name is provided (the cart shows the field whenever the venue has the counter module enabled), the name is carried with the order and shown to staff alongside the place identifier, so staff can match by either — providing "double confirmation" at the counter (e.g. "Table 12 — Ramesh"). In Task 5.4.7, the pickup-name field is captured and saved locally on the guest's phone; transmission to the server and enforcement (required at the counter) are deferred to Task 5.6.1, and staff display is deferred to Phase 7.
+
+**Context:** PRODUCT.md §4.3 and §4.4 describe mixed venues (restaurants with seated dining and a counter, or hotels with rooms and tables). A guest at a table or counter who provides a name gives staff two independent identifiers to match when food is ready. At a pure counter venue, the counter place identifier alone is insufficient to distinguish multiple awaiting guests. Capturing the pickup name whenever the venue has the counter module enabled ensures counter and mixed-venue orders have unambiguous staff-facing identification without confusing guests at table-only or room-only venues.
+
+**Alternatives considered:**
+- Pickup name only, no place identifier (PRODUCT.md §7.3 literal reading) — rejected because mixed venues need both to avoid ambiguity between counter pickup orders and table orders.
+- Place identifier only, no name (table/room only) — rejected because a counter order has no table or room to call, leaving counter guests anonymous.
+- Show the field in every flow regardless of venue — rejected because table-only and room-only venues have no counter, and asking for a pickup name adds friction that confuses the guest.
+
+**Consequences:**
+- The cart screen displays the pickup-name field whenever the venue has the `COUNTER` module enabled and the cart has items.
+- The cart saves the pickup name locally in `localStorage.guest_cart` under the `pickupName` field.
+- Submission transmission and validation rules are deferred to Task 5.6.1 (`POST /api/guest/orders`).
+- Kitchen and staff ticket displays in Phase 6 and Phase 7 will show both the place identifier and the pickup name when present.
+
+**What would make us revisit:** If venues request guest profile names or customer loyalty accounts (reopening D-2.1) that automate name capture.
+
+**Traces to:** PRODUCT.md §4.3, §4.4, §7.3–§7.4; DESIGN.md §4.8.3; D-2.2; W-0001; Tasks 5.4.7, 5.6.1, Phase 7.
 
 ---
 
