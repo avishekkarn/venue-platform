@@ -64,7 +64,7 @@ export default async function CartPage(): Promise<JSX.Element> {
         <div className="size-9" aria-hidden="true" />
       </header>
 
-      <main className="mx-auto w-full max-w-2xl px-4 py-6">
+      <main className="mx-auto w-full max-w-2xl px-4 py-6 pb-32">
         <div id="cart-lines" className="flex flex-col gap-3" />
 
         <div
@@ -126,6 +126,31 @@ export default async function CartPage(): Promise<JSX.Element> {
         </div>
       </main>
 
+      <div
+        id="cart-footer"
+        style={{ display: "none" }}
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-guest-border-subtle bg-guest-surface/95 backdrop-blur-sm p-4"
+      >
+        <div className="mx-auto max-w-2xl flex flex-col items-center gap-2">
+          <button
+            id="place-order-btn"
+            type="button"
+            disabled
+            aria-disabled="true"
+            aria-describedby="place-order-status"
+            className="w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center opacity-40 cursor-not-allowed select-none outline-none"
+          >
+            Place order
+          </button>
+          <p
+            id="place-order-status"
+            className="text-[13px] leading-[18px] text-guest-text-secondary text-center"
+          >
+            Ordering opens soon.
+          </p>
+        </div>
+      </div>
+
       <script
         dangerouslySetInnerHTML={{
           __html: `
@@ -173,6 +198,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       var notesContainer = document.getElementById('cart-notes-container');
       var notesInput = document.getElementById('cart-notes');
       var summaryContainer = document.getElementById('cart-summary');
+      var footerContainer = document.getElementById('cart-footer');
       if (!linesContainer || !emptyContainer) return;
 
       var items = Array.isArray(cartData.items) ? cartData.items : [];
@@ -182,6 +208,7 @@ export default async function CartPage(): Promise<JSX.Element> {
         emptyContainer.style.display = 'block';
         if (notesContainer) notesContainer.style.display = 'none';
         if (summaryContainer) summaryContainer.style.display = 'none';
+        if (footerContainer) footerContainer.style.display = 'none';
         return;
       }
 
@@ -189,6 +216,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       linesContainer.style.display = 'flex';
       if (notesContainer) notesContainer.style.display = 'block';
       if (summaryContainer) summaryContainer.style.display = 'flex';
+      if (footerContainer) footerContainer.style.display = 'block';
       if (notesInput && document.activeElement !== notesInput) {
         notesInput.value = cartData.orderNotes || '';
       }
@@ -347,6 +375,14 @@ export default async function CartPage(): Promise<JSX.Element> {
 
       renderCart();
     });
+
+    // PLACE-ORDER SEAM (W-0001): the real submission is built in Task 5.6.1.
+    // On click, generate the client idempotency key (D-4.12, SYSTEM.md §9.7),
+    // POST { items, orderNotes, placeContext } to /api/guest/orders (5.6.1),
+    // which calls createOrder (5.5.1) — whose compute-price (5.5.2) and
+    // compute-tax snapshot (5.5.3) freeze the totals (D-4.1, D-4.4) — and on
+    // success navigate to the order confirmation (5.7.1). Until then, no order
+    // is created and the button is disabled.
 
     function handleNotesInput(e) {
       var target = e.target;
