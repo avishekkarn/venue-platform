@@ -137,7 +137,13 @@ export function MenuList({
     function updateModifierPrice() {
       var sheet = document.getElementById('modifier-sheet');
       var priceEl = document.getElementById('modifier-sheet-price');
+      var qtyEl = document.getElementById('qty-display');
       if (!sheet || !priceEl) return;
+
+      var qty = 1;
+      if (qtyEl) {
+        qty = parseInt(qtyEl.textContent || '1', 10) || 1;
+      }
 
       var basePrice = parseFloat(sheet.getAttribute('data-base-price') || '0') || 0;
       var selectedInputs = sheet.querySelectorAll('input:checked');
@@ -147,7 +153,7 @@ export function MenuList({
         modifierTotal += p;
       });
 
-      var total = Math.round((basePrice + modifierTotal) * 100) / 100;
+      var total = Math.round((basePrice + modifierTotal) * qty * 100) / 100;
       priceEl.textContent = formatMoney(total);
     }
 
@@ -195,13 +201,14 @@ export function MenuList({
           var optionsStr = card.getAttribute('data-item-options');
           
           var titleEl = document.getElementById('modifier-sheet-title');
-          var priceEl = document.getElementById('modifier-sheet-price');
           var descEl = document.getElementById('modifier-sheet-desc');
           var sheet = document.getElementById('modifier-sheet');
           var groupsContainer = document.getElementById('modifier-groups-container');
+          var qtyEl = document.getElementById('qty-display');
           
           if (titleEl) titleEl.textContent = name;
           if (descEl) descEl.textContent = desc || '';
+          if (qtyEl) qtyEl.textContent = '1';
           
           var basePrice = 0;
           if (rawPriceStr) {
@@ -252,11 +259,33 @@ export function MenuList({
             groupsContainer.innerHTML = html;
           }
           
-          if (priceEl) {
-            priceEl.textContent = price || formatMoney(basePrice);
-          }
+          updateModifierPrice();
         }
         
+        var plusBtn = e.target.closest('#qty-plus');
+        if (plusBtn) {
+          var qtyEl = document.getElementById('qty-display');
+          if (qtyEl) {
+            var currentQty = parseInt(qtyEl.textContent || '1', 10) || 1;
+            if (currentQty < 99) {
+              qtyEl.textContent = String(currentQty + 1);
+              updateModifierPrice();
+            }
+          }
+        }
+
+        var minusBtn = e.target.closest('#qty-minus');
+        if (minusBtn) {
+          var qtyEl = document.getElementById('qty-display');
+          if (qtyEl) {
+            var currentQty = parseInt(qtyEl.textContent || '1', 10) || 1;
+            if (currentQty > 1) {
+              qtyEl.textContent = String(currentQty - 1);
+              updateModifierPrice();
+            }
+          }
+        }
+
         var closeBtn = e.target.closest('#modifier-sheet-close');
         var overlay = e.target.closest('[data-sheet-overlay]');
         if (closeBtn || overlay) {

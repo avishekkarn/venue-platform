@@ -56,6 +56,27 @@ export function ModifierSheet(): JSX.Element {
             className="mt-4 flex flex-col gap-4 overflow-y-auto max-h-[50vh]"
           />
           <div className="mt-6">
+            <div id="quantity-stepper" className="flex items-center gap-4 mb-4">
+              <button
+                id="qty-minus"
+                type="button"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-guest-surface-sunken text-guest-text-primary text-xl font-bold"
+                aria-label="Decrease quantity"
+              >
+                -
+              </button>
+              <span id="qty-display" className="text-[18px] font-semibold w-6 text-center">
+                1
+              </span>
+              <button
+                id="qty-plus"
+                type="button"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-guest-surface-sunken text-guest-text-primary text-xl font-bold"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
             <Button
               type="button"
               variant="primary"
