@@ -205,10 +205,12 @@ export function MenuList({
           var sheet = document.getElementById('modifier-sheet');
           var groupsContainer = document.getElementById('modifier-groups-container');
           var qtyEl = document.getElementById('qty-display');
+          var notesEl = document.getElementById('modifier-notes');
           
           if (titleEl) titleEl.textContent = name;
           if (descEl) descEl.textContent = desc || '';
           if (qtyEl) qtyEl.textContent = '1';
+          if (notesEl) notesEl.value = '';
           
           var basePrice = 0;
           if (rawPriceStr) {
@@ -291,6 +293,8 @@ export function MenuList({
         if (closeBtn || overlay) {
           var sheet = document.getElementById('modifier-sheet');
           if (sheet) sheet.style.display = 'none';
+          var notesEl = document.getElementById('modifier-notes');
+          if (notesEl) notesEl.value = '';
         }
       });
 

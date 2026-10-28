@@ -55,6 +55,14 @@ export function ModifierSheet(): JSX.Element {
             id="modifier-groups-container"
             className="mt-4 flex flex-col gap-4 overflow-y-auto max-h-[50vh]"
           />
+          <div className="mt-4">
+            <textarea
+              id="modifier-notes"
+              rows={2}
+              placeholder="Anything else we should know?"
+              className="w-full rounded-md border border-guest-border-subtle bg-guest-surface-raised px-3 py-2 text-[16px] leading-[24px] text-guest-text-primary placeholder:text-guest-text-muted outline-none focus:border-guest-brand"
+            />
+          </div>
           <div className="mt-6">
             <div id="quantity-stepper" className="flex items-center gap-4 mb-4">
               <button
