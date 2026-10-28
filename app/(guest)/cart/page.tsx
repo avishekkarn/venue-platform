@@ -84,6 +84,22 @@ export default async function CartPage(): Promise<JSX.Element> {
             Back to menu
           </a>
         </div>
+
+        <div id="cart-notes-container" className="mt-6" style={{ display: "none" }}>
+          <label
+            htmlFor="cart-notes"
+            className="block text-[14px] font-medium text-guest-text-secondary mb-2"
+          >
+            Order notes
+          </label>
+          <textarea
+            id="cart-notes"
+            rows={2}
+            placeholder="Anything else we should know?"
+            aria-label="Order notes"
+            className="w-full rounded-md border border-guest-border-subtle bg-guest-surface-raised px-3 py-2 text-[16px] leading-[24px] text-guest-text-primary placeholder:text-guest-text-muted outline-none focus:border-guest-brand focus:ring-0 transition-colors"
+          />
+        </div>
       </main>
 
       <script
@@ -118,7 +134,7 @@ export default async function CartPage(): Promise<JSX.Element> {
     }
 
     function renderCart() {
-      var cartData = { items: [], itemCount: 0, total: '0.00' };
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '' };
       try {
         var raw = localStorage.getItem('guest_cart');
         if (raw) {
@@ -129,6 +145,8 @@ export default async function CartPage(): Promise<JSX.Element> {
 
       var linesContainer = document.getElementById('cart-lines');
       var emptyContainer = document.getElementById('cart-empty');
+      var notesContainer = document.getElementById('cart-notes-container');
+      var notesInput = document.getElementById('cart-notes');
       if (!linesContainer || !emptyContainer) return;
 
       var items = Array.isArray(cartData.items) ? cartData.items : [];
@@ -136,11 +154,16 @@ export default async function CartPage(): Promise<JSX.Element> {
         linesContainer.innerHTML = '';
         linesContainer.style.display = 'none';
         emptyContainer.style.display = 'block';
+        if (notesContainer) notesContainer.style.display = 'none';
         return;
       }
 
       emptyContainer.style.display = 'none';
       linesContainer.style.display = 'flex';
+      if (notesContainer) notesContainer.style.display = 'block';
+      if (notesInput && document.activeElement !== notesInput) {
+        notesInput.value = cartData.orderNotes || '';
+      }
 
       var html = '';
       items.forEach(function(item, index) {
@@ -203,7 +226,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       var lineId = actionBtn.getAttribute('data-line-id');
       if (!action || !lineId) return;
 
-      var cartData = { items: [], itemCount: 0, total: '0.00' };
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '' };
       try {
         var raw = localStorage.getItem('guest_cart');
         if (raw) {
@@ -269,6 +292,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       cartData.items = items;
       cartData.itemCount = totalCount;
       cartData.total = sumTotal.toFixed(2);
+      cartData.orderNotes = cartData.orderNotes || '';
 
       try {
         localStorage.setItem('guest_cart', JSON.stringify(cartData));
@@ -276,6 +300,29 @@ export default async function CartPage(): Promise<JSX.Element> {
 
       renderCart();
     });
+
+    function handleNotesInput(e) {
+      var target = e.target;
+      if (!target || target.id !== 'cart-notes') return;
+
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '' };
+      try {
+        var raw = localStorage.getItem('guest_cart');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') cartData = parsed;
+        }
+      } catch (err) {}
+
+      cartData.orderNotes = target.value;
+
+      try {
+        localStorage.setItem('guest_cart', JSON.stringify(cartData));
+      } catch (err) {}
+    }
+
+    document.addEventListener('input', handleNotesInput);
+    document.addEventListener('change', handleNotesInput);
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', renderCart);
