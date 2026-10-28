@@ -986,13 +986,143 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0137 | 2026-10-28 | Task 5.4.2 — Add item-level adjustment (quantity, remove) | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0138 | 2026-10-28 | Task 5.4.3 — Add the order-level notes field | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0139 | 2026-10-28 | Task 5.4.4 — Add the summary (subtotal, tax, total) | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0140
+| ENTRY-0140 | 2026-10-28 | STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger | STRUCTURAL | — | §5.3 |
+Next entry number: 0141
 
 ### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.5 — Add the "Place order" action.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0140 — 2026-10-28 — STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger
+
+**Status:** STRUCTURAL
+
+**Task:** None (structural session)
+
+**Summary:**
+docs/WIRING.md v1.0 is added as a new, append-only process document that indexes cross-task wiring obligations, deferred seams, and carry-forward reminders. It references — never duplicates or overrides — the canonical documents, and defers to all of them in its §7. It is seeded with the structure (the seven rules, the active and discharged obligation sections, the four deferred follow-ups, the entry template, the evolution rule) and with four deferred follow-ups: F-0001 the Next.js security advisory, F-0002 the CRLF/LF artefact, F-0003 the empty get-venue-tax-rate.ts stub, F-0004 the six placeholder (0 test) integration suites. The first active obligation, W-0001 (the cart "Place order" seam), is left for Task 5.4.5 to append, per the file's Rule 5.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/WIRING.md | Create | Added cross-task wiring ledger v1.0 with 7 rules, empty active/discharged sections, 4 deferred follow-ups (F-0001..F-0004), entry template, evolution rule, and deferral section |
+| docs/PROGRESS.md | Edit | Record ENTRY-0140, add §5.2 ledger row, bump next entry number to 0141 |
+
+**Commands Run:**
+
+```powershell
+git log --oneline -1
+# Output: fe6c0aa STRUCTURAL — Record ENTRY-0139 (Task 5.4.4 complete)
+```
+
+```powershell
+git status --short --untracked-files=all
+# Output: ?? docs/WIRING.md
+```
+
+```powershell
+git diff docs/PROGRESS.md
+# Output: (clean, empty output)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `docs/WIRING.md` exists and matches provided content verbatim | PASS | Verified in full: v1.0 header, §1 (7 rules), §2 (empty active obligations with placeholder line), §3 (empty discharged obligations), §4 (deferred follow-ups F-0001..F-0004), §5 (entry template), §6 (evolution rule), §7 (what this file does not define) |
+| 2 | `ENTRY-0140` appended to `docs/PROGRESS.md` under §5.3 marker | PASS | Appended immediately below `▼ APPEND NEW ENTRIES HERE ▼` in exact project template |
+| 3 | Ledger row added to §5.2 | PASS | Added `| ENTRY-0140 | 2026-10-28 | STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger | STRUCTURAL | — | §5.3 |` |
+| 4 | Next entry number bumped | PASS | Bumped from 0140 to 0141 |
+| 5 | Snapshot unchanged in phase/milestone/current task | PASS | Phase 5 / Milestone 5.4 / Task 5.4.5 (no task executed) |
+| 6 | Four baselines pass clean | PASS | tsc exit 0, build 22 routes + 1 proxy, unit 137/23, integration 133/27 |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Process/documentation addition; no product change | No change |
+| DECISIONS.md | No | No architectural decision changed | No change |
+| SYSTEM.md | No | System architecture untouched | No change |
+| BUILD.md | No | Build process untouched | No change |
+| ROADMAP.md | No | Process document addition, not a roadmap task | No change |
+| WIRING.md | Yes | Created cross-task wiring ledger v1.0 | Added |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0140, updated ledger to 0141 | Updated |
+
+**Contradiction Check:**
+None found. No canonical document is contradicted, because `docs/WIRING.md` owns nothing and defers to every canonical document by name in its §7.
+
+**Next:**
+Task 5.4.5 — Add the "Place order" action (which will append W-0001 to docs/WIRING.md §2 and record it in ENTRY-0141).
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0131 — 2026-10-28 — Task 5.3.4 — Add the quantity stepper
 
@@ -3620,7 +3750,7 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.4 — Add the summary (subtotal, tax, total).
+Current task: Task 5.4.5 — Add the "Place order" action.
 
 Current status: Milestone 5.4 is in progress. Task 5.4.4 is complete. The cart summary block (`#cart-summary`) is added with right-aligned Subtotal, Tax, and Total rows, calculated as a client-side display preview using the venue tax rate (authoritative price and tax recomputed and frozen server-side at order placement in 5.5.2/5.5.3). Tax is not stored in `localStorage`, cart shape is preserved, and summary is hidden when cart is empty. All 4 baselines pass clean. Ready for Task 5.4.5 ("Place order" action).
 
