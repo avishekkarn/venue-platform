@@ -407,7 +407,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                           | Status | Depends on |
 | ----- | -------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 5.4.1 | Add the cart screen                                                                                            | ⬜     | 5.3.8      |
+| 5.4.1 | Add the cart screen                                                                                            | ✅ Complete | 5.3.8      |
 | 5.4.2 | Add item-level adjustment (quantity, remove)                                                                   | ⬜     | 5.4.1      |
 | 5.4.3 | Add the order-level notes field                                                                                | ⬜     | 5.4.1      |
 | 5.4.4 | Add the summary (subtotal, tax, total)                                                                         | ⬜     | 5.4.2      |

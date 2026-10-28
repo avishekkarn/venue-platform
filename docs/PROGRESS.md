@@ -31,6 +31,110 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0136 — 2026-10-28 — Task 5.4.1 — Add the cart screen
+
+**Status:** PASS
+
+**Task:** Task 5.4.1 — Add the cart screen
+
+**Purpose:**
+Implement the cart screen shell (`app/(guest)/cart/page.tsx`) as a Server Component that validates the guest session and reads venue currency/language, rendering the sticky header with back link to `/menu`, an empty line-items container (`#cart-lines`), and a hidden empty-state container (`#cart-empty`). An injected native DOM script reads `localStorage.guest_cart` and renders display-only lines or toggles the empty state without React state or hydration pitfalls.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Create | Server Component for `/cart` shell with sticky header, line container, empty state, and injected DOM rendering script |
+| docs/ROADMAP.md | Edit | Mark Task 5.4.1 as complete, add milestone progress note |
+| docs/PROGRESS.md | Edit | Record ENTRY-0136, bump ledger to 0137, advance snapshot to Task 5.4.2 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; includes new `/cart` route)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: `app/(guest)/cart/page.tsx` exists as a Server Component reading guest session and redirecting on invalid session.
+- [x] Automated: Renders sticky header with `/menu` link and "Your order" title, `#cart-lines` container, and hidden `#cart-empty` container.
+- [x] Automated: Injected native `<script>` reads `localStorage.guest_cart` with exact schema, renders display-only line items (name, modifiers summary, quantity, line total), and toggles empty state.
+- [x] Automated: Out of scope elements omitted (no tax, no subtotal, no total sum, no steppers, no remove button, no notes field, no place order button, no pickup name).
+- [x] Automated: `_menu-list.tsx` unchanged (verified via git diff).
+- [ ] Awaiting Human Verification: On a real phone via LAN, opening `/cart` with empty cart displays the empty state; with items in cart displays display-only line items.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2 (cart lives in localStorage), D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §5, §8.8, §12.3, §13.2 | No change |
+| ROADMAP.md | Yes | Marked 5.4.1 complete, added progress note | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0136, bumped ledger to 0137 | Updated |
+| DESIGN.md | No | Adheres to §4.8.3 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.2 — Add item-level adjustment (quantity, remove).
+
+**Awaiting Human Verification:** YES
+
+
 ### ENTRY-0135 — 2026-10-28 — Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar
 
 **Status:** PASS
@@ -558,9 +662,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0133 | 2026-10-28 | Task 5.3.6 — Add the live total | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0134 | 2026-10-28 | Task 5.3.7 — Add the "Add to cart" action | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0135 | 2026-10-28 | Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0136
+| ENTRY-0136 | 2026-10-28 | Task 5.4.1 — Add the cart screen | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0137
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.1 — Add the cart screen.
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.2 — Add item-level adjustment (quantity, remove).
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -3194,7 +3299,7 @@ Current milestone: Milestone 5.4 (The Cart).
 
 Current task: Task 5.4.1 — Add the cart screen.
 
-Current status: Milestone 5.3 is complete and closed. The floating cart bar is rendered and updated via native DOM scripting to guarantee mobile reliability on LAN IP connections, bypassing React hydration. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Milestone 5.4 (Task 5.4.1 — Add the cart screen).
+Current status: Milestone 5.4 is in progress. Task 5.4.1 is complete. The cart screen shell (`/cart`) is implemented as a Server Component with native DOM script rendering for line items and empty state from `localStorage.guest_cart`. All 4 verification baselines are clean (tsc 0, build with 22 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.4.2 (item-level adjustment).
 
 ## 8. How the File Evolves
 
