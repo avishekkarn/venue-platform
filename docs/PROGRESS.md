@@ -141,13 +141,146 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0128 | 2026-10-27 | Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0129 | 2026-10-27 | Task 5.3.2 — Add the single-choice modifier group | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0130 | 2026-10-27 | Task 5.3.3 — Add the multiple-choice modifier group | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0131
+| ENTRY-0131 | 2026-10-28 | Task 5.3.4 — Add the quantity stepper | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0132
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.4 — Add the quantity stepper.
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.5 — Add the notes field.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0131 — 2026-10-28 — Task 5.3.4 — Add the quantity stepper
+
+**Status:** PASS
+
+**Task:** Task 5.3.4 — Add the quantity stepper
+
+**Summary:**
+Added a quantity stepper container (`#quantity-stepper` with decrement button `#qty-minus`, counter `#qty-display`, and increment button `#qty-plus`) to the Modifier Sheet footer in `_modifier-sheet.tsx`. Updated `_menu-list.tsx` to incorporate quantity into the live price calculation formula: `(basePrice + modifierSum) * quantity`, rendered dynamically to `#modifier-sheet-price`. Attached native click listeners to increment quantity up to 99 on `#qty-plus` and decrement down to 1 on `#qty-minus`, and wired sheet opening to reset `#qty-display` to 1. Ensured live price recalculation fires synchronously on modifier selection changes, quantity clicks, and sheet opens.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Edit | Added quantity stepper controls (`#quantity-stepper`, `#qty-minus`, `#qty-display`, `#qty-plus`) above Add to Cart button |
+| app/(guest)/menu/_menu-list.tsx | Edit | Updated price formula to include quantity multiplier, added stepper click listeners, and reset quantity to 1 on sheet open |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.4 as complete |
+| docs/PROGRESS.md | Edit | Record ENTRY-0131, bump ledger to 0132 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /api/dev/qr
+├ ƒ /dev/qr
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+ƒ Proxy (Middleware)
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  12:00:07
+   Duration  1.08s (tests 34%, import 33%, transform 26%, worker 7%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  12:02:07
+   Duration  89.97s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds (21 routes + 1 proxy) | `pnpm build` | 21 routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Quantity stepper appears in sheet with default 1 on mobile | Manual Mobile Check | Container `#quantity-stepper` displays `#qty-display` with "1" | Awaiting Human Verification |
+| 6 | Tapping "+" increments quantity and multiplies total price correctly | Manual Mobile Check | `#qty-display` increments up to 99; `#modifier-sheet-price` scales by quantity | Awaiting Human Verification |
+| 7 | Tapping "-" decrements quantity and divides total price correctly | Manual Mobile Check | `#qty-display` decrements down to 1; price scales down | Awaiting Human Verification |
+| 8 | Quantity resets to 1 when a new item is opened | Manual Mobile Check | On item card click, `#qty-display` resets to "1" | Awaiting Human Verification |
+| 9 | Modifier price updates still work correctly alongside quantity changes | Manual Mobile Check | Toggling modifiers with quantity > 1 multiplies new sum correctly | Awaiting Human Verification |
+| 10 | Search filtering continues to function | Manual Mobile Check | Search input listener continues to hide/show cards and categories | Awaiting Human Verification |
+| 11 | No console errors | Browser Console | Clean execution without errors | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Mark Task 5.3.4 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0131, bumped ledger to 0132 | Updated |
+| DESIGN.md | No | Adheres to §4.6.4, §4.6.17.2, §4.15.7 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.5 — Add the notes field.
+
+**Awaiting Human Verification:** YES (manual mobile observation: stepper default 1, increment/decrement, price multiplication, reset on open)
+
+
 
 ### ENTRY-0130 — 2026-10-27 — Task 5.3.3 — Add the multiple-choice modifier group
 
@@ -2643,9 +2776,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.3 (The Modifier Sheet).
 
-Current task: Task 5.3.4 — Add the quantity stepper.
+Current task: Task 5.3.5 — Add the notes field.
 
-Current status: Task 5.3.3 is complete. Multiple-choice modifier groups are rendered as checkboxes and sum dynamically alongside single-choice radio buttons into the live total in the modifier sheet via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.4 (quantity stepper).
+Current status: Task 5.3.4 is complete. The quantity stepper is integrated into the modifier sheet with live price multiplication (base + modifiers) * quantity via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.5 (notes field).
 
 ## 8. How the File Evolves
 

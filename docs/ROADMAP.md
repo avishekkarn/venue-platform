@@ -395,7 +395,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.3.1 | Add the modifier sheet layout                                                            | ✅ Complete | 5.2.6      |
 | 5.3.2 | Add the single-choice modifier group                                                     | ✅ Complete | 5.3.1      |
 | 5.3.3 | Add the multiple-choice modifier group                                                   | ✅ Complete | 5.3.1      |
-| 5.3.4 | Add the quantity stepper                                                                 | ⬜     | 5.3.2      |
+| 5.3.4 | Add the quantity stepper                                                                 | ✅ Complete | 5.3.2      |
 | 5.3.5 | Add the notes field                                                                      | ⬜     | 5.3.2      |
 | 5.3.6 | Add the live total                                                                       | ⬜     | 5.3.4      |
 | 5.3.7 | Add the "Add to cart" action                                                             | ⬜     | 5.3.6      |
