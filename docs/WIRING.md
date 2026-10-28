@@ -31,7 +31,15 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
-*No active obligations yet. The first will be created by Task 5.4.5.*
+### W-0001 — OPEN — Cart "Place order" submission seam
+
+- **Originated:** Task 5.4.5 (PROGRESS ENTRY-0141).
+- **Obligation:** Replace the disabled placeholder in `app/(guest)/cart/page.tsx` with the real submission.
+- **Files and call site:** `app/(guest)/cart/page.tsx`, the PLACE-ORDER SEAM comment location.
+- **Satisfied by:** Task 5.6.1 (`POST /api/guest/orders`), with 5.7.1 (confirmation) and 5.5.1–5.5.3 (domain/snapshot) as dependencies.
+- **Depends on:** D-4.12, SYSTEM.md §9.7, BUILD.md §6, ROADMAP.md Task 5.6.1.
+- **Verification:** The PROGRESS entry at the close of 5.6, and the Phase 5/6 boundary per PHASE_TESTS.md §7.
+- **Status:** OPEN
 
 ---
 

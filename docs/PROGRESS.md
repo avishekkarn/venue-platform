@@ -987,13 +987,142 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0138 | 2026-10-28 | Task 5.4.3 — Add the order-level notes field | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0139 | 2026-10-28 | Task 5.4.4 — Add the summary (subtotal, tax, total) | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0140 | 2026-10-28 | STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger | STRUCTURAL | — | §5.3 |
-Next entry number: 0141
+| ENTRY-0141 | 2026-10-29 | Task 5.4.5 — Add the "Place order" action | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0142
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.5 — Add the "Place order" action.
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.6 — Add the empty cart state.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0141 — 2026-10-29 — Task 5.4.5 — Add the "Place order" action
+
+**Status:** PASS
+
+**Task:** Task 5.4.5 — Add the "Place order" action
+
+**Summary:**
+Rendered the "Place order" button in the cart shell (`app/(guest)/cart/page.tsx`) as a full-width, sticky-at-the-bottom primary action styled per DESIGN.md §4.8.3, hidden when the cart is empty and shown when it has items via native DOM toggling in `renderCart()`. The button is an honest initiator with a disabled placeholder state (`disabled`, `aria-disabled="true"`, and `aria-describedby` referencing a visible adjacent line "Ordering opens soon."), creating no order; the real submission is deferred to Task 5.6.1/5.7.1, marked by the exact `PLACE-ORDER SEAM (W-0001)` comment in the client script and recorded as active obligation W-0001 in `docs/WIRING.md`.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Edit | Added sticky bottom footer `#cart-footer` with `#place-order-btn` and visible status `#place-order-status`, toggled visibility in `renderCart()`, and inserted `PLACE-ORDER SEAM (W-0001)` comment |
+| docs/WIRING.md | Edit | Appended W-0001 to §2 (Active Obligations) and removed the placeholder line |
+| docs/ROADMAP.md | Edit | Marked Task 5.4.5 complete and added wiring note beneath Milestone 5.6 |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0141, added §5.2 ledger row, bumped next entry number to 0142, updated §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+git log --oneline -1
+# Output: 7eb4543 STRUCTURAL — Record ENTRY-0140 (WIRING.md added)
+```
+
+```powershell
+git status --short --untracked-files=all
+# Output: (clean, empty output)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | "Place order" button renders full-width, sticky-bottom, primary-styled, hidden when cart empty / shown when cart non-empty | PASS | `#cart-footer` with `#place-order-btn` styled with guest brand tokens, `style.display` toggled in `renderCart()` via native DOM |
+| 2 | Button is disabled with `aria-disabled="true"` and accessible reason; clicking does nothing | PASS | Button carries `disabled`, `aria-disabled="true"`, and `aria-describedby="place-order-status"` pointing to visible "Ordering opens soon."; no click handler |
+| 3 | PLACE-ORDER SEAM comment exists at handler location citing 5.5.1, 5.5.2, 5.5.3, 5.6.1, 5.7.1, D-4.12, SYSTEM.md §9.7 | PASS | Comment present at call site in script in `app/(guest)/cart/page.tsx` |
+| 4 | No fetch, no route, no createOrder, no idempotency-key generation, no navigation added | PASS | Button is an inert initiator creating no order |
+| 5 | W-0001 appended to `docs/WIRING.md` §2 per §5 template with status OPEN; placeholder line removed; §1, §3–§7 unchanged | PASS | W-0001 appended, placeholder removed, §1 and §3–§7 verified byte-identical |
+| 6 | `docs/ROADMAP.md` marks 5.4.5 complete and carries 5.6.1 wiring note | PASS | Task 5.4.5 marked `✅ Complete`; wiring note added beneath Milestone 5.6 table |
+| 7 | All four baselines pass clean | PASS | tsc exit 0, build 22 routes + 1 proxy, unit 137/23, integration 133/27 |
+| 8 | Only the four named files changed | PASS | `git status` verifies only `app/(guest)/cart/page.tsx`, `docs/WIRING.md`, `docs/ROADMAP.md`, `docs/PROGRESS.md` modified |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Order submission deferred to 5.6.1; no product change | No change |
+| DECISIONS.md | No | Confirmed Option A; no new architectural decision | No change |
+| SYSTEM.md | No | System architecture untouched | No change |
+| BUILD.md | No | Build process untouched | No change |
+| ROADMAP.md | Yes | Marked Task 5.4.5 complete, added Task 5.6.1 wiring note | Updated |
+| WIRING.md | Yes | Appended active obligation W-0001, removed placeholder line | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0141, bumped ledger to 0142, updated snapshot | Updated |
+
+**Contradiction Check:**
+None found. No canonical document is contradicted, because `docs/WIRING.md` owns nothing and defers to every canonical document by name in its §7.
+
+**Next:**
+Task 5.4.6 — Add the empty cart state.
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: with an empty cart the button is hidden; with items it shows full-width and disabled, with the accessible reason "Ordering opens soon."; tapping it creates no order and navigates nowhere.
+
 
 ### ENTRY-0140 — 2026-10-28 — STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger
 
@@ -3750,9 +3879,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.5 — Add the "Place order" action.
+Current task: Task 5.4.6 — Add the empty cart state.
 
-Current status: Milestone 5.4 is in progress. Task 5.4.4 is complete. The cart summary block (`#cart-summary`) is added with right-aligned Subtotal, Tax, and Total rows, calculated as a client-side display preview using the venue tax rate (authoritative price and tax recomputed and frozen server-side at order placement in 5.5.2/5.5.3). Tax is not stored in `localStorage`, cart shape is preserved, and summary is hidden when cart is empty. All 4 baselines pass clean. Ready for Task 5.4.5 ("Place order" action).
+Current status: Milestone 5.4 is in progress. Task 5.4.5 is complete. The "Place order" button is rendered full-width, sticky at the bottom, and styled as the primary action per DESIGN.md §4.8.3, hidden when empty and shown when non-empty via native DOM. The button is disabled with aria-disabled="true" and aria-describedby pointing to the visible explanation "Ordering opens soon.", creating no order. The placeholder seam is recorded in the script and tracked in docs/WIRING.md under W-0001, to be satisfied in Task 5.6.1. All 4 baselines pass clean. Ready for Task 5.4.6 (empty cart state).
 
 ## 8. How the File Evolves
 
