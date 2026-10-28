@@ -89,6 +89,7 @@ export function ModifierSheet(): JSX.Element {
               </span>
             </div>
             <Button
+              id="add-to-cart-btn"
               type="button"
               variant="primary"
               size="lg"

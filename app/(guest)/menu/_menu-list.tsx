@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, type JSX } from "react";
+import type { JSX } from "react";
 import { Search } from "lucide-react";
 import type { MenuCategoryView } from "@/domain/menu/menu.repository";
-import { Button } from "@/components/ui/button";
-import { formatMoney } from "@/lib/money";
 import { CategoryTabs } from "./_category-tabs";
 import { MenuItemCard } from "./_menu-item-card";
 import { ModifierSheet } from "./_modifier-sheet";
@@ -20,17 +18,12 @@ export function MenuList({
   locale,
   currency = "USD",
 }: MenuListProps): JSX.Element {
-  const [cart] = useState({
-    itemCount: 3,
-    total: "42.50",
-  });
-
   const isCurrency = locale.length === 3 && locale === locale.toUpperCase();
   const safeCurrency = currency || (isCurrency ? locale : "USD");
   const safeLocale = isCurrency ? "en-US" : locale === "en" ? "en-US" : locale;
 
   return (
-    <div className={cart.itemCount > 0 ? "pb-20" : undefined}>
+    <div className="pb-20">
       <div className="relative mb-4">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-guest-text-muted"
@@ -90,24 +83,7 @@ export function MenuList({
 
       <ModifierSheet />
 
-      {cart.itemCount > 0 ? (
-        <aside
-          aria-label="Current cart summary"
-          className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-40 h-14 px-4 flex items-center justify-between rounded-lg bg-guest-brand text-guest-brand-contrast shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 ease-guest-entrance motion-reduce:animate-none"
-        >
-          <span className="text-[15px] font-medium tracking-tight text-guest-brand-contrast">
-            {cart.itemCount} {cart.itemCount === 1 ? "item" : "items"} · {formatMoney(cart.total, safeCurrency, safeLocale)}
-          </span>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="bg-guest-surface-raised text-guest-text-primary hover:bg-guest-surface-sunken"
-          >
-            View cart
-          </Button>
-        </aside>
-      ) : null}
+      <div id="floating-cart-bar" />
 
       <script
         dangerouslySetInnerHTML={{
@@ -163,7 +139,43 @@ export function MenuList({
       priceEl.textContent = formatMoney(total.toFixed(2));
     }
 
+    function updateCartBar() {
+      var cartData = { items: [], itemCount: 0, total: '0.00' };
+      try {
+        var raw = localStorage.getItem('guest_cart');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') cartData = parsed;
+        }
+      } catch (e) {}
+
+      var container = document.getElementById('floating-cart-bar');
+      if (!container) return;
+
+      var count = parseInt(cartData.itemCount, 10) || 0;
+      if (count === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      var itemWord = count === 1 ? 'item' : 'items';
+      var formattedTotal = formatMoney(cartData.total || '0.00');
+
+      container.innerHTML = 
+        '<aside class="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-40 h-14 px-4 flex items-center justify-between rounded-lg bg-guest-brand text-guest-brand-contrast shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 ease-guest-entrance">' +
+          '<span class="text-[15px] font-medium tracking-tight text-guest-brand-contrast">' +
+            escapeHtml(String(count)) + ' ' + itemWord + ' · ' + escapeHtml(formattedTotal) +
+          '</span>' +
+          '<a href="/cart" class="bg-guest-surface-raised text-guest-text-primary hover:bg-guest-surface-sunken inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3">' +
+            'View cart' +
+          '</a>' +
+        '</aside>';
+    }
+
     function init() {
+      updateCartBar();
       var input = document.getElementById('menu-search-input');
       var container = document.getElementById('menu-list-container');
       if (input && container) {
@@ -200,6 +212,7 @@ export function MenuList({
       document.addEventListener('click', function(e) {
         var card = e.target.closest('[data-orderable="true"]');
         if (card) {
+          var itemId = card.getAttribute('data-item-id') || '';
           var name = card.getAttribute('data-item-name');
           var price = card.getAttribute('data-item-price');
           var rawPriceStr = card.getAttribute('data-item-raw-price');
@@ -226,7 +239,10 @@ export function MenuList({
           }
           
           if (sheet) {
+            sheet.setAttribute('data-item-id', itemId);
+            sheet.setAttribute('data-item-name', name || '');
             sheet.setAttribute('data-base-price', String(basePrice));
+            sheet.setAttribute('data-raw-price', rawPriceStr || String(basePrice));
             sheet.style.display = 'flex';
           }
           
@@ -242,7 +258,7 @@ export function MenuList({
             options.forEach(function(group) {
               var isMultiple = Boolean(group.multiple);
               var inputType = isMultiple ? 'checkbox' : 'radio';
-              html += '<div class="modifier-group mb-4" data-group-id="' + escapeHtml(group.id) + '">';
+              html += '<div class="modifier-group mb-4" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '">';
               html += '<p class="font-semibold text-[16px] mb-2 text-guest-text-primary">' + escapeHtml(group.name) + '</p>';
               if (group.options && group.options.length > 0) {
                 group.options.forEach(function(opt) {
@@ -257,7 +273,7 @@ export function MenuList({
                   var inputClass = isMultiple ? 'size-4 rounded accent-guest-brand' : 'size-4 accent-guest-brand';
 
                   html += '<label class="flex items-center gap-2 mb-2 cursor-pointer text-[15px] text-guest-text-secondary select-none">';
-                  html += '<input type="' + inputType + '" name="' + nameAttr + '" value="' + escapeHtml(opt.id) + '" data-price="' + escapeHtml(opt.additionalPrice || '0') + '" class="' + inputClass + '" />';
+                  html += '<input type="' + inputType + '" name="' + nameAttr + '" value="' + escapeHtml(opt.id) + '" data-option-id="' + escapeHtml(opt.id) + '" data-option-name="' + escapeHtml(opt.name) + '" data-price="' + escapeHtml(opt.additionalPrice || '0') + '" class="' + inputClass + '" />';
                   html += '<span>' + escapeHtml(opt.name) + priceLabel + '</span>';
                   html += '</label>';
                 });
@@ -291,6 +307,104 @@ export function MenuList({
               qtyEl.textContent = String(currentQty - 1);
               updateModifierPrice();
             }
+          }
+        }
+
+        var addToCartBtn = e.target.closest('#add-to-cart-btn');
+        if (addToCartBtn) {
+          var sheet = document.getElementById('modifier-sheet');
+          if (sheet) {
+            var itemId = sheet.getAttribute('data-item-id') || '';
+            var itemName = sheet.getAttribute('data-item-name') || '';
+            var rawPrice = sheet.getAttribute('data-raw-price') || sheet.getAttribute('data-base-price') || '0';
+            var basePriceNum = parseFloat(sheet.getAttribute('data-base-price') || '0') || 0;
+
+            var qtyEl = document.getElementById('qty-display');
+            var quantity = 1;
+            if (qtyEl) {
+              quantity = parseInt(qtyEl.textContent || '1', 10) || 1;
+            }
+
+            var notesEl = document.getElementById('modifier-notes');
+            var notes = notesEl ? notesEl.value.trim() : '';
+
+            var selectedInputs = sheet.querySelectorAll('input:checked');
+            var modifiers = [];
+            var modifierTotal = 0;
+            selectedInputs.forEach(function(input) {
+              var optPrice = input.getAttribute('data-price') || '0';
+              var optPriceNum = parseFloat(optPrice) || 0;
+              modifierTotal += optPriceNum;
+
+              var groupEl = input.closest('.modifier-group');
+              var groupName = groupEl ? (groupEl.getAttribute('data-group-name') || '') : '';
+              var optName = input.getAttribute('data-option-name') || '';
+
+              modifiers.push({
+                group: groupName,
+                option: optName,
+                price: optPrice
+              });
+            });
+
+            var lineTotalNum = (basePriceNum + modifierTotal) * quantity;
+            var lineTotal = lineTotalNum.toFixed(2);
+
+            var itemIdRandom = 'cart-item-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+              try {
+                itemIdRandom = crypto.randomUUID();
+              } catch (err) {
+                // fallback
+              }
+            }
+
+            var newItem = {
+              id: itemIdRandom,
+              itemId: itemId,
+              name: itemName,
+              price: rawPrice,
+              quantity: quantity,
+              modifiers: modifiers,
+              notes: notes,
+              lineTotal: lineTotal
+            };
+
+            var existingCart = { items: [], itemCount: 0, total: '0.00' };
+            try {
+              var rawCart = localStorage.getItem('guest_cart');
+              if (rawCart) {
+                var parsed = JSON.parse(rawCart);
+                if (parsed && Array.isArray(parsed.items)) {
+                  existingCart = parsed;
+                }
+              }
+            } catch (err) {
+              existingCart = { items: [], itemCount: 0, total: '0.00' };
+            }
+
+            existingCart.items.push(newItem);
+
+            var totalCount = 0;
+            var sumTotal = 0;
+            existingCart.items.forEach(function(it) {
+              totalCount += it.quantity;
+              sumTotal += parseFloat(it.lineTotal || '0') || 0;
+            });
+
+            existingCart.itemCount = totalCount;
+            existingCart.total = sumTotal.toFixed(2);
+
+            try {
+              localStorage.setItem('guest_cart', JSON.stringify(existingCart));
+            } catch (err) {
+              // ignore
+            }
+
+            updateCartBar();
+
+            sheet.style.display = 'none';
+            if (notesEl) notesEl.value = '';
           }
         }
 
