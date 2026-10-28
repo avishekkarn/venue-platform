@@ -31,6 +31,112 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0138 — 2026-10-28 — Task 5.4.3 — Add the order-level notes field
+
+**Status:** PASS
+
+**Task:** Task 5.4.3 — Add the order-level notes field
+
+**Purpose:**
+Add a single order-level notes textarea (`#cart-notes`, placeholder "Anything else we should know?") to `/cart` (`app/(guest)/cart/page.tsx`) wrapped in `#cart-notes-container` below line items and empty state. Persist its value natively to `localStorage.guest_cart` under the new top-level `orderNotes` field on `input` and `change` events without re-rendering the whole cart on keystrokes, ensuring no focus loss or cursor jumps. The `orderNotes` field is populated on initial render, defaults safely to `""` if absent, is preserved by all 5.4.2 line mutations (plus, minus, remove), and survives emptying the cart.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Edit | Added order notes textarea `#cart-notes` below cart lines, populated from `orderNotes` on init, and attached native delegated `input` and `change` event listeners persisting to `localStorage.guest_cart` |
+| docs/ROADMAP.md | Edit | Marked Task 5.4.3 as complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0138, bumped ledger to 0139, updated snapshot to Task 5.4.4 next |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: A single labelled order-level notes textarea (`#cart-notes`, placeholder "Anything else we should know?") renders below the line-items and empty-state containers, styled per DESIGN.md §4.6.2.
+- [x] Automated: The textarea's value is read from the cart's new top-level `orderNotes` field on init and defaults to `""` when absent.
+- [x] Automated: Typing in the textarea persists to `localStorage.guest_cart` via native DOM input/change delegation without calling `renderCart()` on each keystroke (no blur/cursor loss).
+- [x] Automated: The new top-level field `orderNotes` is preserved by the 5.4.2 plus/minus/remove write-backs (`cartData.orderNotes = cartData.orderNotes || '';`).
+- [x] Automated: The per-line `item.notes` handling is unchanged.
+- [x] Automated: No summary/tax/total display, place-order, or pickup-name element is rendered.
+- [x] Automated: No file other than `app/(guest)/cart/page.tsx` is edited.
+- [ ] Awaiting Human Verification: On a real phone via LAN: typing in the order-notes field does not blur or lose the cursor; refreshing the page keeps the typed notes; adjusting a line's quantity or removing a line preserves the typed notes; emptying the cart and returning shows the order-notes field per the chosen behaviour.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2, D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §5, §8.8, §12.3, §13.2 | No change |
+| ROADMAP.md | Yes | Marked 5.4.3 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0138, bumped ledger to 0139, updated snapshot | Updated |
+| DESIGN.md | No | Adheres to §4.6.2 and §4.8.3 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.4 — Add the summary (subtotal, tax, total).
+
+**Awaiting Human Verification:** YES
+
+
 ### ENTRY-0137 — 2026-10-28 — Task 5.4.2 — Add item-level adjustment (quantity, remove)
 
 **Status:** PASS
@@ -771,9 +877,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0135 | 2026-10-28 | Task 5.3.7 Corrective — Native DOM script rendering for floating cart bar | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0136 | 2026-10-28 | Task 5.4.1 — Add the cart screen | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0137 | 2026-10-28 | Task 5.4.2 — Add item-level adjustment (quantity, remove) | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0138
+| ENTRY-0138 | 2026-10-28 | Task 5.4.3 — Add the order-level notes field | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0139
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.3 — Add the order-level notes field.
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.4 — Add the summary (subtotal, tax, total).
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -3405,9 +3512,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.2 — Add item-level adjustment (quantity, remove).
+Current task: Task 5.4.3 — Add the order-level notes field.
 
-Current status: Milestone 5.4 is in progress. Task 5.4.2 is complete. Quantity steppers (decrement floor 1 / disabled, increment cap 99) and remove action on cart lines are implemented with native event delegation in `app/(guest)/cart/page.tsx`. Stored line data is the price source of truth; itemCount and total in `localStorage.guest_cart` recomputed on every adjustment; removing to empty displays `#cart-empty`. All 4 baselines pass clean. Ready for Task 5.4.3 (order-level notes field).
+Current status: Milestone 5.4 is in progress. Task 5.4.3 is complete. The order-level notes textarea (`#cart-notes`, placeholder "Anything else we should know?") is added below line items and empty state, persisting to `localStorage.guest_cart` under `orderNotes` on input/change events without keystroke re-rendering (preserving focus and cursor position). The `orderNotes` field defaults to `""` on read, is preserved by all 5.4.2 line mutations (plus/minus/remove), and survives cart emptying. All 4 baselines pass clean. Ready for Task 5.4.4 (summary: subtotal, tax, total).
 
 ## 8. How the File Evolves
 
