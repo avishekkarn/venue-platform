@@ -117,10 +117,16 @@ export function MenuList({
     var locale = ${JSON.stringify(safeLocale)};
 
     function formatMoney(amount) {
+      var num = parseFloat(String(amount)) || 0;
       try {
-        return new Intl.NumberFormat(locale, { style: 'currency', currency: currency }).format(amount);
+        return new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency: currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(num);
       } catch (e) {
-        return '$' + Number(amount).toFixed(2);
+        return '$' + num.toFixed(2);
       }
     }
 
@@ -153,8 +159,8 @@ export function MenuList({
         modifierTotal += p;
       });
 
-      var total = Math.round((basePrice + modifierTotal) * qty * 100) / 100;
-      priceEl.textContent = formatMoney(total);
+      var total = (basePrice + modifierTotal) * qty;
+      priceEl.textContent = formatMoney(total.toFixed(2));
     }
 
     function init() {

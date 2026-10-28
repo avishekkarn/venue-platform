@@ -29,27 +29,19 @@ export function ModifierSheet(): JSX.Element {
           >
             <X className="size-4" aria-hidden="true" />
           </button>
-          <div className="flex justify-between items-start gap-4 pr-6">
-            <div>
-              <h2
-                id="modifier-sheet-title"
-                className="text-[22px] font-display text-guest-text-primary"
-              >
-                Item Name
-              </h2>
-              <p
-                id="modifier-sheet-desc"
-                className="text-[14px] text-guest-text-secondary mt-1"
-              >
-                Item Description
-              </p>
-            </div>
-            <span
-              id="modifier-sheet-price"
-              className="text-[18px] font-semibold text-guest-text-primary shrink-0"
+          <div className="pr-8">
+            <h2
+              id="modifier-sheet-title"
+              className="text-[22px] font-display text-guest-text-primary"
             >
-              $0.00
-            </span>
+              Item Name
+            </h2>
+            <p
+              id="modifier-sheet-desc"
+              className="text-[14px] text-guest-text-secondary mt-1"
+            >
+              Item Description
+            </p>
           </div>
           <div
             id="modifier-groups-container"
@@ -84,6 +76,17 @@ export function ModifierSheet(): JSX.Element {
               >
                 +
               </button>
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[16px] font-medium text-guest-text-secondary">
+                Total
+              </span>
+              <span
+                id="modifier-sheet-price"
+                className="text-[18px] font-semibold text-guest-text-primary"
+              >
+                $0.00
+              </span>
             </div>
             <Button
               type="button"
