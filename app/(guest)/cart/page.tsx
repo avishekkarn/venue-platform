@@ -143,7 +143,8 @@ export default async function CartPage(): Promise<JSX.Element> {
       linesContainer.style.display = 'flex';
 
       var html = '';
-      items.forEach(function(item) {
+      items.forEach(function(item, index) {
+        var lineId = item.id || ('line-' + index);
         var name = escapeHtml(item.name || 'Item');
         var qty = parseInt(item.quantity, 10) || 1;
         var lineTotalFormatted = formatMoney(item.lineTotal || item.price || '0.00');
@@ -159,13 +160,13 @@ export default async function CartPage(): Promise<JSX.Element> {
         var modSummary = modifierLabels.join(', ');
         var notesText = item.notes ? escapeHtml(item.notes.trim()) : '';
 
-        html += '<div class="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-4 flex flex-col gap-2 shadow-sm animate-in fade-in duration-200 motion-reduce:animate-none">';
+        var isMinQty = qty <= 1;
+        var isMaxQty = qty >= 99;
+
+        html += '<div class="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-4 flex flex-col gap-3 shadow-sm animate-in fade-in duration-200 motion-reduce:animate-none" data-line-card data-line-id="' + escapeHtml(lineId) + '">';
         html += '  <div class="flex items-start justify-between gap-3">';
         html += '    <div class="flex-1 min-w-0">';
-        html += '      <div class="flex items-baseline gap-2">';
-        html += '        <span class="text-[14px] font-semibold text-guest-text-secondary shrink-0">' + qty + '&times;</span>';
-        html += '        <h2 class="font-display text-[16px] leading-[22px] font-semibold text-guest-text-primary break-words">' + name + '</h2>';
-        html += '      </div>';
+        html += '      <h2 class="font-display text-[16px] leading-[22px] font-semibold text-guest-text-primary break-words">' + name + '</h2>';
         if (modSummary) {
           html += '      <p class="mt-1 text-[13px] leading-[18px] text-guest-text-secondary break-words">' + modSummary + '</p>';
         }
@@ -173,13 +174,108 @@ export default async function CartPage(): Promise<JSX.Element> {
           html += '      <p class="mt-1 text-[12px] leading-[16px] italic text-guest-text-muted break-words">&ldquo;' + notesText + '&rdquo;</p>';
         }
         html += '    </div>';
-        html += '    <span class="text-[15px] font-semibold text-guest-text-primary shrink-0">' + lineTotalFormatted + '</span>';
+        html += '    <span class="text-[16px] font-semibold text-guest-text-primary shrink-0">' + lineTotalFormatted + '</span>';
+        html += '  </div>';
+        html += '  <div class="flex items-center justify-between pt-2 border-t border-guest-border-subtle">';
+        html += '    <div class="flex items-center gap-1" role="group" aria-label="Quantity for ' + name + '">';
+        html += '      <button type="button" data-action="qty-minus" data-line-id="' + escapeHtml(lineId) + '" aria-label="Decrease quantity" ' + (isMinQty ? 'disabled ' : '') + 'class="inline-flex size-11 items-center justify-center rounded-md border border-guest-border-subtle bg-guest-surface text-guest-text-primary hover:bg-guest-surface-sunken active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 transition-transform motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">';
+        html += '        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
+        html += '      </button>';
+        html += '      <span class="min-w-[36px] text-center text-[15px] font-semibold text-guest-text-primary select-none" aria-live="polite">' + qty + '</span>';
+        html += '      <button type="button" data-action="qty-plus" data-line-id="' + escapeHtml(lineId) + '" aria-label="Increase quantity" ' + (isMaxQty ? 'disabled ' : '') + 'class="inline-flex size-11 items-center justify-center rounded-md border border-guest-border-subtle bg-guest-surface text-guest-text-primary hover:bg-guest-surface-sunken active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 transition-transform motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">';
+        html += '        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+        html += '      </button>';
+        html += '    </div>';
+        html += '    <button type="button" data-action="remove" data-line-id="' + escapeHtml(lineId) + '" aria-label="Remove item" class="inline-flex size-11 items-center justify-center rounded-md text-guest-text-muted hover:text-guest-text-primary hover:bg-guest-surface-sunken active:scale-95 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">';
+        html += '      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+        html += '    </button>';
         html += '  </div>';
         html += '</div>';
       });
 
       linesContainer.innerHTML = html;
     }
+
+    document.addEventListener('click', function(e) {
+      var actionBtn = e.target.closest('[data-action]');
+      if (!actionBtn) return;
+      var action = actionBtn.getAttribute('data-action');
+      var lineId = actionBtn.getAttribute('data-line-id');
+      if (!action || !lineId) return;
+
+      var cartData = { items: [], itemCount: 0, total: '0.00' };
+      try {
+        var raw = localStorage.getItem('guest_cart');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') cartData = parsed;
+        }
+      } catch (err) {}
+
+      var items = Array.isArray(cartData.items) ? cartData.items : [];
+      var targetIndex = -1;
+      for (var i = 0; i < items.length; i++) {
+        var currentId = items[i].id || ('line-' + i);
+        if (String(currentId) === String(lineId)) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex === -1) return;
+
+      var targetItem = items[targetIndex];
+
+      if (action === 'qty-plus') {
+        var curQty = parseInt(targetItem.quantity, 10) || 1;
+        if (curQty < 99) {
+          targetItem.quantity = curQty + 1;
+          var basePrice = parseFloat(targetItem.price || '0') || 0;
+          var modTotal = 0;
+          if (Array.isArray(targetItem.modifiers)) {
+            targetItem.modifiers.forEach(function(m) {
+              modTotal += parseFloat(m.price || '0') || 0;
+            });
+          }
+          var unitPrice = basePrice + modTotal;
+          targetItem.lineTotal = (unitPrice * targetItem.quantity).toFixed(2);
+        }
+      } else if (action === 'qty-minus') {
+        var curQty = parseInt(targetItem.quantity, 10) || 1;
+        if (curQty > 1) {
+          targetItem.quantity = curQty - 1;
+          var basePrice = parseFloat(targetItem.price || '0') || 0;
+          var modTotal = 0;
+          if (Array.isArray(targetItem.modifiers)) {
+            targetItem.modifiers.forEach(function(m) {
+              modTotal += parseFloat(m.price || '0') || 0;
+            });
+          }
+          var unitPrice = basePrice + modTotal;
+          targetItem.lineTotal = (unitPrice * targetItem.quantity).toFixed(2);
+        }
+      } else if (action === 'remove') {
+        items.splice(targetIndex, 1);
+      } else {
+        return;
+      }
+
+      var totalCount = 0;
+      var sumTotal = 0;
+      items.forEach(function(it) {
+        totalCount += (parseInt(it.quantity, 10) || 1);
+        sumTotal += parseFloat(it.lineTotal || '0') || 0;
+      });
+
+      cartData.items = items;
+      cartData.itemCount = totalCount;
+      cartData.total = sumTotal.toFixed(2);
+
+      try {
+        localStorage.setItem('guest_cart', JSON.stringify(cartData));
+      } catch (err) {}
+
+      renderCart();
+    });
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', renderCart);
@@ -193,4 +289,3 @@ export default async function CartPage(): Promise<JSX.Element> {
     </div>
   );
 }
-
