@@ -412,7 +412,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.4.3 | Add the order-level notes field                                                                                | ✅ Complete | 5.4.1      |
 | 5.4.4 | Add the summary (subtotal, tax, total)                                                                         | ✅ Complete | 5.4.2      |
 | 5.4.5 | Add the "Place order" action                                                                                   | ✅ Complete | 5.4.4      |
-| 5.4.6 | Add the empty cart state                                                                                       | ⬜     | 5.4.1      |
+| 5.4.6 | Add the empty cart state                                                                                       | ✅ Complete | 5.4.1      |
 | 5.4.7 | Add the pickup-name field for the counter flow                                                                 | ⬜     | 5.4.5      |
 | 5.4.8 | Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | ⬜     | 5.4.7      |
 

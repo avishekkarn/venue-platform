@@ -988,13 +988,139 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0139 | 2026-10-28 | Task 5.4.4 — Add the summary (subtotal, tax, total) | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0140 | 2026-10-28 | STRUCTURAL — Add docs/WIRING.md cross-task wiring ledger | STRUCTURAL | — | §5.3 |
 | ENTRY-0141 | 2026-10-29 | Task 5.4.5 — Add the "Place order" action | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0142
+| ENTRY-0142 | 2026-10-29 | Task 5.4.6 — Add the empty cart state | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0143
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.6 — Add the empty cart state.
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.7 — Add the pickup-name field for the counter flow.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0142 — 2026-10-29 — Task 5.4.6 — Add the empty cart state
+
+**Status:** PASS
+
+**Task:** Task 5.4.6 — Add the empty cart state
+
+**Summary:**
+Verified the cart screen empty state (`#cart-empty` in `app/(guest)/cart/page.tsx`) against DESIGN.md §4.8.3, confirming warm and brief copy ("Your cart is empty.") and a working link ("Back to menu" navigating to `/menu`). Added `role="status"` to `#cart-empty` for screen reader announcement when appearing, and verified that in `renderCart()` all four supporting containers (`#cart-lines`, `#cart-notes-container`, `#cart-summary`, and `#cart-footer`) are cleanly hidden when the cart is empty.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Edit | Added `role="status"` to `#cart-empty` for accessibility announcement |
+| docs/ROADMAP.md | Edit | Marked Task 5.4.6 complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0142, added §5.2 ledger row, bumped next entry number to 0143, updated §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+git log --oneline -1
+# Output: b09f4e3 STRUCTURAL — Record ENTRY-0141 (Task 5.4.5 complete, W-0001 opened)
+```
+
+```powershell
+git status --short --untracked-files=all
+# Output: (clean, empty output)
+```
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Empty state meets DESIGN.md §4.8.3 copy and link | PASS | Warm, brief copy ("Your cart is empty.", "Explore the menu to add items to your order.") and link ("Back to menu" href="/menu") verified |
+| 2 | Four containers hidden in empty state | PASS | `renderCart()` hides `#cart-lines`, `#cart-notes-container`, `#cart-summary`, and `#cart-footer` when `items.length === 0` |
+| 3 | Accessibility role added | PASS | `role="status"` added to `#cart-empty` |
+| 4 | 5.4.1–5.4.5 behaviour unchanged | PASS | Line rendering, stepper/remove handlers, notes focus guard, summary calculation, and disabled Place order footer untouched |
+| 5 | Baselines pass clean | PASS | tsc exit 0, build 22 routes + 1 proxy, unit 137/23, integration 133/27 |
+| 6 | Only named files changed | PASS | Only `app/(guest)/cart/page.tsx`, `docs/ROADMAP.md`, `docs/PROGRESS.md` modified |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Cart empty state meets existing spec | No change |
+| DECISIONS.md | No | No architectural decision changed | No change |
+| SYSTEM.md | No | System architecture untouched | No change |
+| BUILD.md | No | Build process untouched | No change |
+| ROADMAP.md | Yes | Marked Task 5.4.6 complete | Updated |
+| WIRING.md | No | W-0001 untouched | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0142, bumped ledger to 0143, updated snapshot | Updated |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.7 — Add the pickup-name field for the counter flow.
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: with an empty cart the empty state shows with the "Back to menu" link, and the lines, notes, summary, and Place order footer are all hidden; with items the empty state is hidden and those are shown; tapping "Back to menu" returns to /menu.
+
 
 ### ENTRY-0141 — 2026-10-29 — Task 5.4.5 — Add the "Place order" action
 
@@ -3879,9 +4005,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.6 — Add the empty cart state.
+Current task: Task 5.4.7 — Add the pickup-name field for the counter flow.
 
-Current status: Milestone 5.4 is in progress. Task 5.4.5 is complete. The "Place order" button is rendered full-width, sticky at the bottom, and styled as the primary action per DESIGN.md §4.8.3, hidden when empty and shown when non-empty via native DOM. The button is disabled with aria-disabled="true" and aria-describedby pointing to the visible explanation "Ordering opens soon.", creating no order. The placeholder seam is recorded in the script and tracked in docs/WIRING.md under W-0001, to be satisfied in Task 5.6.1. All 4 baselines pass clean. Ready for Task 5.4.6 (empty cart state).
+Current status: Milestone 5.4 is in progress. Task 5.4.6 is complete. The empty cart state is verified against DESIGN.md §4.8.3 (warm, brief copy "Your cart is empty." and "Back to menu" link to /menu) with role="status" added for screen-reader announcement. In the empty cart state, the line list, order notes container, cart summary preview, and Place order sticky footer are all verified hidden via native DOM. All 4 baselines pass clean. Ready for Task 5.4.7 (pickup-name field for counter flow).
 
 ## 8. How the File Evolves
 
