@@ -140,13 +140,144 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0127 | 2026-10-27 | Task 5.3.1 — Add the modifier sheet layout | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0128 | 2026-10-27 | Task 5.3.1 Corrective — Native DOM Script for Modifier Sheet Mobile Interaction | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0129 | 2026-10-27 | Task 5.3.2 — Add the single-choice modifier group | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0130
+| ENTRY-0130 | 2026-10-27 | Task 5.3.3 — Add the multiple-choice modifier group | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0131
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.3 — Add the multiple-choice modifier group.
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.4 — Add the quantity stepper.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0130 — 2026-10-27 — Task 5.3.3 — Add the multiple-choice modifier group
+
+**Status:** PASS
+
+**Task:** Task 5.3.3 — Add the multiple-choice modifier group
+
+**Summary:**
+Rendered multiple-choice modifier groups (`group.multiple === true`) as checkboxes inside the Modifier Sheet while preserving single-choice modifier groups as radio buttons. Extended the native DOM inline script in `_menu-list.tsx` to inspect `group.multiple`, generate `<input type="checkbox">` elements with option-specific names (`name="group-${group.id}-option-${opt.id}"`), and display formatted additional prices. Updated `updateModifierPrice` to select all checked inputs (`input:checked`) and sum their `data-price` values with the base price. Updated the native `change` listener on `#modifier-sheet` to respond to both radio and checkbox interactions, seamlessly updating the live total price when checkboxes are toggled on or off.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_menu-list.tsx | Edit | Render checkboxes for multiple-choice modifier groups and sum all checked inputs on change |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.3 as complete |
+| docs/PROGRESS.md | Edit | Record ENTRY-0130, bump ledger to 0131 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Output:
+```text
+(exit code 0, no output)
+```
+
+```powershell
+pnpm build
+```
+Output:
+```text
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/qr
+├ ƒ /admin/qr/print/[id]
+├ ƒ /api/admin/qr/[id]/image
+├ ƒ /api/admin/qr/[id]/revoke
+├ ƒ /api/admin/qr/generate
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/session
+├ ƒ /api/dev/qr
+├ ƒ /dev/qr
+├ ○ /forbidden
+├ ƒ /kitchen
+├ ƒ /kitchen/login
+├ ƒ /menu
+├ ƒ /qr/[token]
+├ ○ /qr/inactive
+├ ƒ /services
+├ ƒ /staff
+└ ƒ /staff/login
+
+ƒ Proxy (Middleware)
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+```
+Output:
+```text
+ Test Files  23 passed (23)
+      Tests  137 passed (137)
+   Start at  21:00:08
+   Duration  1.43s (import 34%, tests 31%, transform 27%, worker 8%)
+```
+
+```powershell
+pnpm test:integration
+```
+Output:
+```text
+ Test Files  27 passed (27)
+      Tests  133 passed (133)
+   Start at  21:00:17
+   Duration  113.81s (tests 97%, setup 2%, import 1%)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Verification | Expected | Result |
+|---|-----------|--------------|----------|--------|
+| 1 | TypeScript compiles cleanly | `pnpm exec tsc --noEmit` | Exit code 0, no output | PASS |
+| 2 | Production build succeeds (21 routes + 1 proxy) | `pnpm build` | 21 routes + 1 proxy, exit 0 | PASS |
+| 3 | Unit test suite passes | `pnpm test:unit` | 137 passed (23 files) | PASS |
+| 4 | Integration test suite passes | `pnpm test:integration` | 133 passed (27 files) | PASS |
+| 5 | Tapping an item with a multiple-choice group shows checkboxes on mobile | Manual Mobile Check | Checkboxes rendered with group name and option prices | Awaiting Human Verification |
+| 6 | Checking a checkbox with an extra cost updates the price at the bottom | Manual Mobile Check | Live price increases by modifier additional price | Awaiting Human Verification |
+| 7 | Unchecking the checkbox subtracts the cost from the price | Manual Mobile Check | Live price decreases back accurately | Awaiting Human Verification |
+| 8 | Single-choice groups (radio buttons) still work correctly alongside checkboxes | Manual Mobile Check | Radio button selections toggle mutually exclusively and sum with checked checkboxes | Awaiting Human Verification |
+| 9 | Search filtering continues to function | Manual Mobile Check | Search input listener continues to hide/show cards and categories | Awaiting Human Verification |
+| 10 | No console errors | Browser Console | Clean execution without errors | Awaiting Human Verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Mark Task 5.3.3 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0130, bumped ledger to 0131 | Updated |
+| DESIGN.md | No | Adheres to §4.6.4, §4.6.17.2, §4.8.2 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.4 — Add the quantity stepper.
+
+**Awaiting Human Verification:** YES (manual mobile observation: checkbox rendering, price addition on check, subtraction on uncheck, coexistence with radio buttons)
+
+
 
 ### ENTRY-0129 — 2026-10-27 — Task 5.3.2 — Add the single-choice modifier group
 
@@ -2512,9 +2643,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.3 (The Modifier Sheet).
 
-Current task: Task 5.3.3 — Add the multiple-choice modifier group.
+Current task: Task 5.3.4 — Add the quantity stepper.
 
-Current status: Task 5.3.2 is complete. Single-choice modifier groups are rendered as radio buttons with live price recalculation on selection in the modifier sheet via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.3 (multiple-choice modifier group).
+Current status: Task 5.3.3 is complete. Multiple-choice modifier groups are rendered as checkboxes and sum dynamically alongside single-choice radio buttons into the live total in the modifier sheet via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.4 (quantity stepper).
 
 ## 8. How the File Evolves
 
