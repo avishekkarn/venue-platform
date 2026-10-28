@@ -31,6 +31,113 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0139 — 2026-10-28 — Task 5.4.4 — Add the summary (subtotal, tax, total)
+
+**Status:** PASS
+
+**Task:** Task 5.4.4 — Add the summary (subtotal, tax, total)
+
+**Purpose:**
+Add a summary block (`#cart-summary`) with right-aligned Subtotal, Tax, and Total rows to `/cart` (`app/(guest)/cart/page.tsx`) below the order notes container, using guest-world styling tokens. The Server Component reads the venue's tax rate (`venue.value.taxRate`) and injects it alongside currency and locale into the client script. The script calculates and renders subtotal (sum of stored line totals), tax (`subtotal * rateNum`), and total (`subtotal + tax`) using `formatMoney`. This summary is a client-side display preview; the authoritative price and tax are recomputed and frozen server-side at order placement (Tasks 5.5.2 and 5.5.3, DECISIONS D-4.1 and D-4.4). Tax is not persisted to `localStorage.guest_cart`, the cart shape is preserved, and the summary is hidden when the cart is empty.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/cart/page.tsx | Edit | Added `#cart-summary` shell (Subtotal, Tax, Total rows), passed `taxRate` from Server Component into injected script, computed and rendered preview amounts inside `renderCart()`, and preserved notes focus guard |
+| docs/ROADMAP.md | Edit | Marked Task 5.4.4 as complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0139, bumped ledger to 0140, updated snapshot to Task 5.4.5 next |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (22 routes + 1 proxy middleware; identical route count)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: A summary block with right-aligned Subtotal, Tax, Total rows renders below the order-notes container, using guest tokens, hidden when the cart is empty.
+- [x] Automated: The tax rate is obtained in the Server Component from `venue.value.taxRate` (from `organization.repo.ts`, which reads Prisma's `Decimal` as a string) as a decimal string and passed into the injected script; nothing is hardcoded or invented.
+- [x] Automated: Subtotal = sum of stored line totals; tax = subtotal × rate; total = subtotal + tax; each rendered with the in-script `formatMoney` (two fraction digits).
+- [x] Automated: A code comment states the summary is a client-side display preview and the authoritative figure is frozen server-side at order placement (5.5.2/5.5.3, D-4.1/D-4.4).
+- [x] Automated: Tax is not persisted to `localStorage`; the stored cart shape is unchanged (`items`, `itemCount`, `total`, `orderNotes`).
+- [x] Automated: The notes field focus guard is preserved (`document.activeElement !== notesInput`).
+- [x] Automated: No place-order button or pickup-name field is rendered.
+- [x] Automated: No file other than `app/(guest)/cart/page.tsx` is edited.
+- [ ] Awaiting Human Verification: On a real phone via LAN: the summary shows subtotal, tax, and total for the current cart; adjusting a quantity or removing a line updates all three; emptying the cart hides the summary; typing in the notes field does not blur it.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2, D-4.1, D-4.3, D-4.4 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §5, §7.1, §8.8, §12.3, §13.2 | No change |
+| ROADMAP.md | Yes | Marked 5.4.4 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0139, bumped ledger to 0140, updated snapshot | Updated |
+| DESIGN.md | No | Adheres to §4.8.3 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.4.5 — Add the "Place order" action.
+
+**Awaiting Human Verification:** YES
+
+
 ### ENTRY-0138 — 2026-10-28 — Task 5.4.3 — Add the order-level notes field
 
 **Status:** PASS
@@ -878,9 +985,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0136 | 2026-10-28 | Task 5.4.1 — Add the cart screen | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0137 | 2026-10-28 | Task 5.4.2 — Add item-level adjustment (quantity, remove) | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0138 | 2026-10-28 | Task 5.4.3 — Add the order-level notes field | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0139
+| ENTRY-0139 | 2026-10-28 | Task 5.4.4 — Add the summary (subtotal, tax, total) | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0140
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.4 — Add the summary (subtotal, tax, total).
+### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.5 — Add the "Place order" action.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -3512,9 +3620,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.4 (The Cart).
 
-Current task: Task 5.4.3 — Add the order-level notes field.
+Current task: Task 5.4.4 — Add the summary (subtotal, tax, total).
 
-Current status: Milestone 5.4 is in progress. Task 5.4.3 is complete. The order-level notes textarea (`#cart-notes`, placeholder "Anything else we should know?") is added below line items and empty state, persisting to `localStorage.guest_cart` under `orderNotes` on input/change events without keystroke re-rendering (preserving focus and cursor position). The `orderNotes` field defaults to `""` on read, is preserved by all 5.4.2 line mutations (plus/minus/remove), and survives cart emptying. All 4 baselines pass clean. Ready for Task 5.4.4 (summary: subtotal, tax, total).
+Current status: Milestone 5.4 is in progress. Task 5.4.4 is complete. The cart summary block (`#cart-summary`) is added with right-aligned Subtotal, Tax, and Total rows, calculated as a client-side display preview using the venue tax rate (authoritative price and tax recomputed and frozen server-side at order placement in 5.5.2/5.5.3). Tax is not stored in `localStorage`, cart shape is preserved, and summary is hidden when cart is empty. All 4 baselines pass clean. Ready for Task 5.4.5 ("Place order" action).
 
 ## 8. How the File Evolves
 
