@@ -31,6 +31,106 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0132 — 2026-10-28 — Task 5.3.5 — Add the notes field
+
+**Status:** PASS
+
+**Task:** Task 5.3.5 — Add the notes field
+
+**Purpose:**
+Add the notes field textarea to the modifier sheet so guests can add custom instructions for the kitchen (e.g. allergies, preparation requests), positioned below the modifier groups container and above the quantity stepper, and ensure its value resets cleanly whenever the sheet is opened or closed.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Edit | Added `<textarea id="modifier-notes">` with placeholder "Anything else we should know?", 2 rows, and guest token styling between modifier groups and stepper |
+| app/(guest)/menu/_menu-list.tsx | Edit | Added value reset for `#modifier-notes` on dish card click and sheet close |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.5 as complete |
+| docs/PROGRESS.md | Edit | Record ENTRY-0132, bump ledger to 0133 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ├ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /api/admin/menu/categories
+# ├ ƒ /api/admin/menu/items
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/guest/orders
+# ├ ƒ /api/kitchen/orders
+# ├ ƒ /api/staff/orders
+# ├ ○ /kitchen
+# ├ ○ /login
+# ├ ○ /manager
+# ├ ○ /menu
+# ├ ○ /order-success
+# ├ ○ /order/[orderId]
+# ├ ƒ /qr
+# ├ ○ /qr/inactive
+# ├ ○ /staff
+# ├ ○ /staff/help
+# └ ○ /unauthorized
+# + First Load JS shared by all: 87.5 kB
+# ƒ Middleware (proxy): 149 B
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (21 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Met:**
+1. Textarea with `id="modifier-notes"` added in `_modifier-sheet.tsx` with placeholder "Anything else we should know?" and 2 rows.
+2. Token styling adheres to Design System tokens (`guest-border-subtle`, `guest-surface-raised`, `guest-text-primary`, `guest-text-muted`, `guest-brand`).
+3. Layout positioned below `#modifier-groups-container` and above `#quantity-stepper` with `mt-4`.
+4. Textarea value resets to empty string when opening sheet on dish card click, close button, and backdrop click.
+5. All 4 verification baselines clean.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Mark Task 5.3.5 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0132, bumped ledger to 0133 | Updated |
+| DESIGN.md | No | Adheres to §4.6.2, §4.6.17.2, §4.15.7 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.6 — Add the live total.
+
+**Awaiting Human Verification:** NO
+
+
 ---
 
 ## 2. The Entry Template
@@ -142,9 +242,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0129 | 2026-10-27 | Task 5.3.2 — Add the single-choice modifier group | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0130 | 2026-10-27 | Task 5.3.3 — Add the multiple-choice modifier group | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0131 | 2026-10-28 | Task 5.3.4 — Add the quantity stepper | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0132
+| ENTRY-0132 | 2026-10-28 | Task 5.3.5 — Add the notes field | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0133
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.5 — Add the notes field.
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.6 — Add the live total.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -2776,9 +2877,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.3 (The Modifier Sheet).
 
-Current task: Task 5.3.5 — Add the notes field.
+Current task: Task 5.3.6 — Add the live total.
 
-Current status: Task 5.3.4 is complete. The quantity stepper is integrated into the modifier sheet with live price multiplication (base + modifiers) * quantity via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.5 (notes field).
+Current status: Task 5.3.5 is complete. The notes textarea (`#modifier-notes`) is integrated into the modifier sheet with placeholder "Anything else we should know?" and reset logic on sheet open and close. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.6 (Add the live total).
 
 ## 8. How the File Evolves
 
