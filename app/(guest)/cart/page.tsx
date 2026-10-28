@@ -46,6 +46,7 @@ export default async function CartPage(): Promise<JSX.Element> {
   const isCurrency = locale.length === 3 && locale === locale.toUpperCase();
   const safeCurrency = currency || (isCurrency ? locale : "USD");
   const safeLocale = isCurrency ? "en-US" : locale === "en" ? "en-US" : locale;
+  const taxRate = venue.value.taxRate;
 
   return (
     <div className="min-h-dvh bg-guest-surface">
@@ -100,6 +101,29 @@ export default async function CartPage(): Promise<JSX.Element> {
             className="w-full rounded-md border border-guest-border-subtle bg-guest-surface-raised px-3 py-2 text-[16px] leading-[24px] text-guest-text-primary placeholder:text-guest-text-muted outline-none focus:border-guest-brand focus:ring-0 transition-colors"
           />
         </div>
+
+        <div
+          id="cart-summary"
+          style={{ display: "none" }}
+          className="mt-6 border-t border-guest-border-subtle pt-4 flex flex-col items-end gap-1.5"
+        >
+          <div className="flex justify-between w-full max-w-xs text-[15px] text-guest-text-secondary">
+            <span>Subtotal</span>
+            <span id="cart-subtotal" className="font-medium text-guest-text-primary">
+              $0.00
+            </span>
+          </div>
+          <div className="flex justify-between w-full max-w-xs text-[15px] text-guest-text-secondary">
+            <span>Tax</span>
+            <span id="cart-tax" className="font-medium text-guest-text-primary">
+              $0.00
+            </span>
+          </div>
+          <div className="flex justify-between w-full max-w-xs pt-2 border-t border-guest-border-subtle text-[17px] font-semibold text-guest-text-primary">
+            <span>Total</span>
+            <span id="cart-total">$0.00</span>
+          </div>
+        </div>
       </main>
 
       <script
@@ -108,6 +132,7 @@ export default async function CartPage(): Promise<JSX.Element> {
   (function() {
     var currency = ${JSON.stringify(safeCurrency)};
     var locale = ${JSON.stringify(safeLocale)};
+    var taxRate = ${JSON.stringify(taxRate)};
 
     function formatMoney(amount) {
       var num = parseFloat(String(amount)) || 0;
@@ -147,6 +172,7 @@ export default async function CartPage(): Promise<JSX.Element> {
       var emptyContainer = document.getElementById('cart-empty');
       var notesContainer = document.getElementById('cart-notes-container');
       var notesInput = document.getElementById('cart-notes');
+      var summaryContainer = document.getElementById('cart-summary');
       if (!linesContainer || !emptyContainer) return;
 
       var items = Array.isArray(cartData.items) ? cartData.items : [];
@@ -155,12 +181,14 @@ export default async function CartPage(): Promise<JSX.Element> {
         linesContainer.style.display = 'none';
         emptyContainer.style.display = 'block';
         if (notesContainer) notesContainer.style.display = 'none';
+        if (summaryContainer) summaryContainer.style.display = 'none';
         return;
       }
 
       emptyContainer.style.display = 'none';
       linesContainer.style.display = 'flex';
       if (notesContainer) notesContainer.style.display = 'block';
+      if (summaryContainer) summaryContainer.style.display = 'flex';
       if (notesInput && document.activeElement !== notesInput) {
         notesInput.value = cartData.orderNotes || '';
       }
@@ -217,6 +245,25 @@ export default async function CartPage(): Promise<JSX.Element> {
       });
 
       linesContainer.innerHTML = html;
+
+      // Client-side display preview only; authoritative price and tax are recomputed
+      // and frozen server-side at order placement (Tasks 5.5.2 and 5.5.3, DECISIONS D-4.1 and D-4.4).
+      var subtotal = 0;
+      items.forEach(function(item) {
+        subtotal += parseFloat(item.lineTotal || item.price || '0') || 0;
+      });
+
+      var rateNum = parseFloat(taxRate || '0') || 0;
+      var tax = subtotal * rateNum;
+      var total = subtotal + tax;
+
+      var subtotalEl = document.getElementById('cart-subtotal');
+      var taxEl = document.getElementById('cart-tax');
+      var totalEl = document.getElementById('cart-total');
+
+      if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal.toFixed(2));
+      if (taxEl) taxEl.textContent = formatMoney(tax.toFixed(2));
+      if (totalEl) totalEl.textContent = formatMoney(total.toFixed(2));
     }
 
     document.addEventListener('click', function(e) {
