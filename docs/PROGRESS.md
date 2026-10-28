@@ -31,6 +31,109 @@
 
 **Rule 10 — One obvious place to append.** New entries go at the top of §5.3, immediately below the `▼ APPEND NEW ENTRIES HERE ▼` marker. Nothing else in §5.3 changes.
 
+### ENTRY-0133 — 2026-10-28 — Task 5.3.6 — Add the live total
+
+**Status:** PASS
+
+**Task:** Task 5.3.6 — Add the live total
+
+**Purpose:**
+Finalize the live total calculation and presentation on the modifier sheet. Position the total price element (`#modifier-sheet-price`) in a dedicated summary container directly above the "Add to Cart" button with a "Total" label, and update the client-side interaction script to recalculate `(basePrice + modifiers) * quantity` with 2 decimal places and currency formatting.
+
+**Files Touched:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/(guest)/menu/_modifier-sheet.tsx | Edit | Moved `#modifier-sheet-price` to a dedicated summary row directly above "Add to Cart" with a "Total" label |
+| app/(guest)/menu/_menu-list.tsx | Edit | Updated `updateModifierPrice` and `formatMoney` to guarantee 2 decimal places and currency formatting on arithmetic result |
+| docs/ROADMAP.md | Edit | Mark Task 5.3.6 as complete |
+| docs/PROGRESS.md | Edit | Record ENTRY-0133, bump ledger to 0134 |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  23 passed (23)
+#      Tests  137 passed (137)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (21 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (137 passed across 23 test files)
+- `pnpm test:integration`: PASS (133 passed across 27 test files)
+
+**Acceptance Criteria Results:**
+- [x] Automated: Total formula `(basePrice + modifierTotal) * qty` implemented and verified via local anti-hallucination verification tests.
+- [x] Automated: Formatted as decimal string with `Intl.NumberFormat` / `.toFixed(2)` guaranteeing 2 decimal places and currency symbol.
+- [x] Automated: `#modifier-sheet-price` moved to footer summary block directly above "Add to Cart" button with "Total" label.
+- [ ] Awaiting Human Verification: On a mobile phone, the total price at the bottom of the sheet displays with the currency symbol and 2 decimal places.
+- [ ] Awaiting Human Verification: Adjusting quantity or modifiers updates the total price correctly and instantly.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-16.1 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13.2 | No change |
+| ROADMAP.md | Yes | Mark Task 5.3.6 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0133, bumped ledger to 0134 | Updated |
+| DESIGN.md | No | Adheres to §4.6.17.2, §4.15.7 | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.3.7 — Add the "Add to cart" action.
+
+**Awaiting Human Verification:** YES
+
+
 ### ENTRY-0132 — 2026-10-28 — Task 5.3.5 — Add the notes field
 
 **Status:** PASS
@@ -243,9 +346,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0130 | 2026-10-27 | Task 5.3.3 — Add the multiple-choice modifier group | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0131 | 2026-10-28 | Task 5.3.4 — Add the quantity stepper | PASS | Milestone 5.3 | §5.3 |
 | ENTRY-0132 | 2026-10-28 | Task 5.3.5 — Add the notes field | PASS | Milestone 5.3 | §5.3 |
-Next entry number: 0133
+| ENTRY-0133 | 2026-10-28 | Task 5.3.6 — Add the live total | PASS | Milestone 5.3 | §5.3 |
+Next entry number: 0134
 
-### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.6 — Add the live total.
+### 5.3 Current Milestone —  Milestone 5.3 (The Modifier Sheet). Current task: Task 5.3.7 — Add the "Add to cart" action.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -2877,9 +2981,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.3 (The Modifier Sheet).
 
-Current task: Task 5.3.6 — Add the live total.
+Current task: Task 5.3.7 — Add the "Add to cart" action.
 
-Current status: Task 5.3.5 is complete. The notes textarea (`#modifier-notes`) is integrated into the modifier sheet with placeholder "Anything else we should know?" and reset logic on sheet open and close. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.6 (Add the live total).
+Current status: Task 5.3.6 is complete. The live total display (`#modifier-sheet-price`) is located in a dedicated summary row directly above "Add to Cart" with a "Total" label. The price recalculates dynamically as `(basePrice + modifiers) * quantity` formatted with 2 decimal places and currency symbol via native DOM scripting. All 4 verification baselines are clean (tsc 0, build with 21 routes + 1 proxy, 137 unit tests, 133 integration tests). Ready for Task 5.3.7.
 
 ## 8. How the File Evolves
 
