@@ -69,6 +69,7 @@ export default async function CartPage(): Promise<JSX.Element> {
 
         <div
           id="cart-empty"
+          role="status"
           style={{ display: "none" }}
           className="rounded-lg border border-guest-border-subtle bg-guest-surface-raised p-8 text-center animate-in fade-in duration-300 motion-reduce:animate-none"
         >
