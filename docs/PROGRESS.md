@@ -992,13 +992,114 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0143 | 2026-10-29 | Task 5.4.7 — Add the pickup-name field for the counter flow | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0144 | 2026-10-29 | Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0145 | 2026-10-29 | Task 5.5.1 — Add the price and tax computation (computePrice, computeTax, and the shared decimal-money helper) | PASS | Milestone 5.5 | §5.3 |
-Next entry number: 0146
+| ENTRY-0146 | 2026-10-29 | Task 5.5.2 — Add the createOrder domain function | PASS | Milestone 5.5 | §5.3 |
+Next entry number: 0147
 
-### 5.3 Current Milestone —  Milestone 5.5 (The Order Domain). Current task: Task 5.5.2 — Add the createOrder domain function.
+### 5.3 Current Milestone —  Milestone 5.5 (The Order Domain). Current task: Task 5.5.3 — Verify createOrder against the real database.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0146 — 2026-10-29 — Task 5.5.2 — Add the createOrder domain function
+
+**Status:** PASS
+
+**Task:** Task 5.5.2 — Add the `createOrder` domain function (validate, freeze item prices and modifiers, enforce the idempotency key, call the order repository)
+
+**Summary:**
+Implemented the pure domain orchestrator `createOrder` in `src/domain/orders/create-order.ts` and exported it along with `CreateOrderDeps`, `CreateOrderRequest`, and `CreateOrderItemRequest` via `src/domain/orders/index.ts`. The orchestrator: (1) validates input before any repository call (requiring non-empty venueId, UUID v4 idempotencyKey, valid PlaceType matching place ID, non-empty items array with positive integer quantities); (2) checks the idempotency key first via `orderRepo.findByIdempotencyKey` and returns `ok(existingOrder)` immediately on retry without performing writes or recalculations; (3) queries `venueRepo.findById` to obtain the authoritative venue taxRate; (4) queries `menuRepo.getItemWithModifiers` for each requested item, rejecting nonexistent items with `NOT_FOUND` and non-orderable items (`state !== AVAILABLE`) with `VALIDATION_FAILED`, resolving selected modifiers, and freezing database item names, prices, and modifier options; (5) computes line totals, subtotal, tax amount, and total authoritatively via the 5.5.1 decimal-money functions (`computeLineTotal`, `computeSubtotal`, `computeTax`, `computeTotal`); (6) assembles `CreateOrderInput` and calls `orderRepo.create`, propagating repository results unchanged. Any client-supplied money fields (price, lineTotal, subtotal, taxRate, taxAmount, total) are strictly ignored. Added 13 in-memory fake unit tests in `tests/unit/orders/create-order.test.ts` covering happy path, price tampering rejection, unavailable item rejection, nonexistent item rejection, UUID idempotency validation, idempotency retry returning existing order with 0 writes, repository error propagation, venue tax rate authoritativeness, place type consistency, and modifier validation. All four baselines pass cleanly.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/orders/create-order.ts | Create | Pure domain orchestrator for authoritative order creation |
+| src/domain/orders/index.ts | Edit | Barrel export for `createOrder`, `CreateOrderDeps`, `CreateOrderRequest`, `CreateOrderItemRequest` |
+| tests/unit/orders/create-order.test.ts | Create | 13 unit tests for `createOrder` using in-memory repository fakes |
+| docs/ROADMAP.md | Edit | Marked Task 5.5.2 complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0146, updated §5.2 ledger row, bumped next entry number to 0147, advanced §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  186 passed (186)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+#   Duration  77.69s
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `createOrder` exists, takes its dependencies as an object, validates the request (including UUID idempotency key and place/type consistency), and rejects non-orderable and nonexistent items with documented codes | PASS | Implemented in `src/domain/orders/create-order.ts`; rejects non-orderable with `VALIDATION_FAILED` (SYSTEM.md §5/§9.4) and nonexistent with `NOT_FOUND`; tested in unit suite |
+| 2 | `createOrder` reads item and modifier prices from menu repository and tax rate from venue repository, computing line totals, subtotal, tax, and total via 5.5.1 functions with no client money used | PASS | Verified in happy path and tampering tests; database values are authoritative |
+| 3 | `createOrder` checks `findByIdempotencyKey` first and returns existing order on retry; `orderRepo.create` called exactly once on happy path, zero times on every failure and retry | PASS | Verified in `tests/unit/orders/create-order.test.ts` (happy path, retry path, failure paths) |
+| 4 | Repository failures propagate unchanged | PASS | Verified for `orderRepo.create`, `orderRepo.findByIdempotencyKey`, `venueRepo.findById`, and `menuRepo.getItemWithModifiers` |
+| 5 | Unit suite covers every case with in-memory fakes (no database), and `pnpm test:unit` passes with increased totals | PASS | 13 tests added in `tests/unit/orders/create-order.test.ts`; unit total: 186 passed (27 files) |
+| 6 | Four baselines pass: tsc 0; build 22 routes + 1 proxy (Next.js 16.4.0 Turbopack); unit 186/27; integration 133/27 at 77.69s | PASS | All four commands executed with exit code 0 |
+| 7 | No out-of-scope file is touched | PASS | Only `create-order.ts`, `index.ts`, `create-order.test.ts`, `ROADMAP.md`, `PROGRESS.md` edited |
+| 8 | ROADMAP.md marks 5.5.2 complete; PROGRESS.md records ENTRY-0146 with ledger row on own line, next 0147, snapshot at 5.5.3 next | PASS | Verified via git diff |
+| 9 | Awaiting Human Verification: NO | PASS | Domain function fully unit-tested; real-database proof is 5.5.3 |
+
+**Deviations:**
+None. `vitest.config.ts` already included "tests/unit/orders/**/*.test.ts" from Task 5.5.1, so no config edits were needed.
+
+**Limitations:**
+None. Pure domain orchestrator with full unit test coverage.
+
+**Next:**
+Task 5.5.3 — Verify `createOrder` against the real database.
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0145 — 2026-10-29 — Task 5.5.1 — Add the price and tax computation (computePrice, computeTax, and the shared decimal-money helper)
 
@@ -4322,9 +4423,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.5 (The Order Domain) — in progress.
 
-Current task: Task 5.5.2 — Add the createOrder domain function.
+Current task: Task 5.5.3 — Verify createOrder against the real database.
 
-Current status: Task 5.5.1 complete — pure decimal money helper (src/domain/shared/money.ts), price arithmetic (computePrice.ts), tax and total arithmetic (computeTax.ts), and domain barrel exports verified with 36 new unit tests (173 passed across 26 files); Milestone 5.5 restructured (5.5.1 price/tax arithmetic, 5.5.2 createOrder, 5.5.3 verification). All four baselines green: tsc 0, build 22 routes + 1 proxy, unit 173/26, integration 133/27 (74.14s). Ready for Task 5.5.2.
+Current status: Task 5.5.2 complete — createOrder domain orchestrator (src/domain/orders/create-order.ts) implemented with full input validation (UUID idempotency key, place matching, items), idempotency pre-check, authoritative price/tax freezing from MenuRepository and VenueRepository, and persistence via OrderRepository; verified with 13 in-memory fake unit tests in tests/unit/orders/create-order.test.ts (186 passed across 27 files). All four baselines green: tsc 0, build 22 routes + 1 proxy, unit 186/27, integration 133/27 (77.69s). Ready for Task 5.5.3.
 
 ## 8. How the File Evolves
 
