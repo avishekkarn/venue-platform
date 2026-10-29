@@ -420,20 +420,19 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 5.5 — The order domain
 
-| ID    | Task                                                                                                                     | Status | Depends on |
-| ----- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ---------- |
-| 5.5.1 | Add the `createOrder` domain function                                                                                    | ⬜     | 5.4.8      |
-| 5.5.2 | Add the price and tax computation                                                                                        | ⬜     | 5.5.1      |
-| 5.5.3 | Add the price and tax snapshot on creation                                                                               | ⬜     | 5.5.2      |
-| 5.5.4 | Add the initial state change record                                                                                      | ⬜     | 5.5.3      |
-| 5.5.5 | Add the transaction wrapper (order, items, and state change in one transaction)                                          | ⬜     | 5.5.4      |
-| 5.5.6 | Verify: an order is created with frozen prices and tax; an invalid item is rejected; the transaction rolls back on error | ⬜     | 5.5.5      |
+| ID    | Task                                                                                                                                              | Status | Depends on |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
+| 5.5.1 | Add the price and tax computation (`computePrice`, `computeTax`, and the shared decimal-money helper)                                             | ⬜     | 5.4.8      |
+| 5.5.2 | Add the `createOrder` domain function (validate, freeze item prices and modifiers, enforce the idempotency key, call the order repository)          | ⬜     | 5.5.1      |
+| 5.5.3 | Verify: `createOrder` writes an order with frozen prices and tax and the initial `PLACED` state change in one transaction; a retry with the same idempotency key returns the existing order; the transaction rolls back on error. *(The transactional write and the idempotency constraint are already implemented in `src/infrastructure/db/repositories/order.repo.ts`; this task proves them against the real database.)* | ⬜     | 5.5.2      |
+
+*(Milestone 5.5 is restructured from the original six-task plan: the former 5.5.4 (initial state change), 5.5.5 (transaction wrapper), and 5.5.6 (verification) are consolidated into 5.5.3, because the transactional write and the idempotency constraint are already implemented in the order adapter; the former 5.5.2 (price and tax computation) becomes 5.5.1 because `createOrder` cannot be built before the computations that produce its inputs; and the former 5.5.1 (`createOrder`) becomes 5.5.2. No work is removed; the verification is preserved and made against the real database.)*
 
 ### Milestone 5.6 — The order routes
 
 | ID    | Task                                                                                       | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------------------ | ------ | ---------- |
-| 5.6.1 | Add `POST /api/guest/orders`                                                               | ⬜     | 5.5.6      |
+| 5.6.1 | Add `POST /api/guest/orders`                                                               | ⬜     | 5.5.3      |
 | 5.6.2 | Add `GET /api/guest/orders/[id]`                                                           | ⬜     | 5.6.1      |
 | 5.6.3 | Add `GET /api/guest/orders`                                                                | ⬜     | 5.6.1      |
 | 5.6.4 | Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12 | ⬜     | 5.6.3      |
@@ -810,7 +809,7 @@ The critical path — the sequence that cannot be shortened — is:
  → 3.6.4 (placeholder dashboards)
  → 4.1.5 (QR domain)
  → 4.4.7 (guest landing)
- → 5.5.6 (order domain)
+ → 5.5.3 (order domain)
  → 5.7.6 (order tracking)
  → 6.3.8 (kitchen screen)
  → 7.4.4 (full loop)
