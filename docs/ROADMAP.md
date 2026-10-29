@@ -437,9 +437,11 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.6.1 | Add `POST /api/guest/orders`                                                               | ✅     | 5.5.3      |
 | 5.6.2 | Add `GET /api/guest/orders/[id]`                                                           | ✅     | 5.6.1      |
 | 5.6.3 | Add `GET /api/guest/orders`                                                                | ✅     | 5.6.1      |
-| 5.6.4 | Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12 | ⬜     | 5.6.3      |
+| 5.6.4 | Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12 | ✅     | 5.6.3      |
 
 *(Wiring note: Task 5.6.1 must replace the PLACE-ORDER SEAM (W-0001) in `app/(guest)/cart/page.tsx` with the real submission — client idempotency key per D-4.12, POST to `/api/guest/orders`, and on success navigate to 5.7.1. Per D-17.5 and W-0001, 5.6.1 must also send the pickup name alongside the place identifier).*
+
+*(Milestone 5.6 (The Order Routes) is closed — all four tasks are complete: POST /api/guest/orders (5.6.1), GET /api/guest/orders/[id] (5.6.2), GET /api/guest/orders (5.6.3), and the complete placement, read, list flow and envelope verification (5.6.4) are complete and proven; W-0001 is discharged; Milestone 5.7 (The order confirmation and tracking) is unblocked.)*
 
 ### Milestone 5.7 — The order confirmation and tracking
 

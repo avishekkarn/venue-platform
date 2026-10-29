@@ -996,13 +996,43 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0147 | 2026-10-29 | Task 5.5.3 — Verify createOrder against the real database | PASS | Milestone 5.5 | §5.3 |
 | ENTRY-0148 | 2026-10-29 | Task 5.6.1 — Add POST /api/guest/orders and wire cart Place order seam | PASS | Milestone 5.6 | §5.3 |
 | ENTRY-0149 | 2026-10-29 | Task 5.6.2 & 5.6.3 — Add GET /api/guest/orders/[id] and GET /api/guest/orders | PASS | Milestone 5.6 | §5.3 |
-Next entry number: 0150
+| ENTRY-0150 | 2026-10-29 | Task 5.6.4 — Verify guest order placement, read, list flow and close Milestone 5.6 | PASS | Milestone 5.6 | §5.3 |
+Next entry number: 0151
 
-### 5.3 Current Milestone —  Milestone 5.6 (The Order Routes). Current task: Task 5.6.4 — Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.1 — Add the order confirmation screen.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0150 — 2026-10-29 — Task 5.6.4 — Verify guest order placement, read, list flow and close Milestone 5.6
+
+**Status:** PASS
+
+**Task:** Task 5.6.4 — Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12
+
+**Summary:**
+1. Added an end-to-end integration flow verification test to `tests/integration/api/guest-orders.test.ts` driving all three guest order routes against a real PostgreSQL transaction:
+   - Step A: `POST /api/guest/orders` places an order with frozen database money (unit price $10.00, modifier $2.00, quantity 2 -> subtotal $24.00, tax $2.40, total $26.40) and verifies the success envelope (`{ data: order }`, no `error` field per SYSTEM.md §12.1).
+   - Step B: `GET /api/guest/orders/[id]` reads the order back by ID and confirms the response envelope (`{ data: order }`, matching ID and frozen financial amounts).
+   - Step C: `GET /api/guest/orders` lists orders for the active session and confirms the response envelope (`{ data: orders }`, containing the created order).
+   - Step D: Negative envelope verification: `GET /api/guest/orders/[nonexistent-id]` returns 404 with error envelope (`{ error: { code: "NOT_FOUND", message: ... } }`, no `data` field per SYSTEM.md §12.1).
+2. Milestone 5.6 (The Order Routes) is fully closed: all 4 tasks (5.6.1, 5.6.2, 5.6.3, 5.6.4) are complete and verified; W-0001 is discharged; Milestone 5.7 (The Order Confirmation and Tracking) is unblocked.
+
+**Awaiting Human Verification:** NO — End-to-end API integration flow and JSON envelope conformance are proven against the real PostgreSQL database in the integration suite. Guest UI screens belong to Milestone 5.7.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| tests/integration/api/guest-orders.test.ts | Edit | Added end-to-end integration flow test verifying placement, read, list, and SYSTEM.md §12 envelope conformance (13 tests in file) |
+| docs/ROADMAP.md | Edit | Marked Task 5.6.4 complete (`✅`), appended Milestone 5.6 closure note |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0150, updated §5.2 ledger row, bumped next entry number to 0151, advanced §7 snapshot to Milestone 5.7 |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (24 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (153 passed across 28 test files in 76.66s)
 
 ### ENTRY-0149 — 2026-10-29 — Task 5.6.2 & 5.6.3 — Add GET /api/guest/orders/[id] and GET /api/guest/orders
 
@@ -4801,11 +4831,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.6 (The Order Routes).
+Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.6.4 — Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12.
+Current task: Task 5.7.1 — Add the order confirmation screen.
 
-Current status: Tasks 5.6.2 and 5.6.3 complete in one session — GET /api/guest/orders/[id] and GET /api/guest/orders implemented with strict session isolation and privacy (cross-session and cross-venue reads return 404 NOT_FOUND without leaking existence). 6 new integration tests added to tests/integration/api/guest-orders.test.ts (12 tests passing in file; 152 passed across 28 files in 75.35s). All four baselines green: tsc 0, build 24 routes + 1 proxy, unit 186/27, integration 152/28. Ready for Task 5.6.4.
+Current status: Milestone 5.6 (The Order Routes) is closed. All four tasks (5.6.1, 5.6.2, 5.6.3, 5.6.4) are complete and verified against real PostgreSQL. End-to-end order placement, read, and list flow verified with SYSTEM.md §12 envelope conformance ({ data } on success, { error } on failure). 13 tests passing in tests/integration/api/guest-orders.test.ts. All four baselines green: tsc 0, build 24 routes + 1 proxy, unit 186/27, integration 153/28. W-0001 is discharged. Milestone 5.7 unblocked.
 
 ## 8. How the File Evolves
 
