@@ -32,6 +32,7 @@ export default defineConfig({
       "tests/unit/qr/**/*.test.ts",
       "tests/unit/guest/**/*.test.ts",
       "tests/unit/menu/**/*.test.ts",
+      "tests/unit/orders/**/*.test.ts",
     ],
     passWithNoTests: true,
     environment: "node",
