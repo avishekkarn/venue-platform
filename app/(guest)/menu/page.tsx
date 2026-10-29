@@ -82,6 +82,19 @@ export default async function MenuPage(): Promise<JSX.Element> {
         .slice(0, 3)
     : [];
 
+  const currentItemStates: Record<string, string> = {};
+  if (itemsResult.ok) {
+    for (const item of itemsResult.value) {
+      currentItemStates[item.id] = item.state;
+    }
+  } else if (menuResult.ok) {
+    for (const category of menuResult.value) {
+      for (const item of category.items) {
+        currentItemStates[item.id] = item.state;
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
       <GuestHero venue={venue.value} placeContext={placeContext} />
@@ -216,6 +229,72 @@ export default async function MenuPage(): Promise<JSX.Element> {
         dangerouslySetInnerHTML={{
           __html: `
 (function() {
+  var STORAGE_KEY = 'guest_menu_states';
+  var currentStates = ${JSON.stringify(currentItemStates)};
+
+  function playPing() {
+    try {
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      var ctx = new AudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (e) {
+      // Audio autoplay policy fallback
+    }
+  }
+
+  try {
+    var rawStored = sessionStorage.getItem(STORAGE_KEY);
+    if (rawStored) {
+      var prevStates = JSON.parse(rawStored);
+      var hasChanged = false;
+
+      var currentIds = Object.keys(currentStates);
+      for (var i = 0; i < currentIds.length; i++) {
+        var id = currentIds[i];
+        if (prevStates[id] !== undefined && prevStates[id] !== currentStates[id]) {
+          hasChanged = true;
+          break;
+        }
+      }
+
+      if (!hasChanged) {
+        var prevIds = Object.keys(prevStates);
+        for (var j = 0; j < prevIds.length; j++) {
+          var pid = prevIds[j];
+          if (currentStates[pid] !== undefined && currentStates[pid] !== prevStates[pid]) {
+            hasChanged = true;
+            break;
+          }
+        }
+      }
+
+      if (hasChanged) {
+        playPing();
+      }
+    }
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentStates));
+  } catch (e) {
+    // SessionStorage unavailable fallback
+  }
+
   setInterval(function() {
     if (document.visibilityState === 'visible') {
       window.location.reload();
