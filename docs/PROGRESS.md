@@ -1003,13 +1003,40 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0154 | 2026-10-29 | Task 5.7.0A — Extend ServiceRequest storage and domain for table/counter calls | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0155 | 2026-10-29 | Task 5.7.0B — Show all session orders and combined bill on tracking screen | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0156 | 2026-10-29 | Task 5.7.4 — Add real "Call a waiter" and "Request the bill" actions | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0157
+| ENTRY-0157 | 2026-10-29 | Task 5.7.5 — Add 5-second polling on the tracking screen | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0158
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.5 — Add the polling on the tracking screen.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.6 — Verify order updates live on tracking screen.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0157 — 2026-10-29 — Task 5.7.5 — Add 5-second polling on the tracking screen
+
+**Status:** PASS
+
+**Task:** Task 5.7.5 — Add the polling on the tracking screen
+
+**Summary:**
+1. Tracking Page Polling Script (`app/(guest)/order/[id]/track/page.tsx`):
+   - Added self-contained native DOM `<script dangerouslySetInnerHTML>` block at the bottom of the page (before the closing `</div>`).
+   - Runs an IIFE setting a 5000ms `setInterval`.
+   - On each interval tick, verifies `document.visibilityState === "visible"` before triggering `window.location.reload()`. When the tab is in background or hidden, does not reload, preserving battery.
+   - Does not reload on immediate mount; waits the initial 5 seconds. Uses native DOM and server component data re-fetching rather than React state or manual client fetches.
+2. Verification:
+   - `pnpm exec tsc --noEmit`: 0 errors.
+   - `pnpm build`: exit code 0 on `▲ Next.js 16.4.0 (Turbopack)`.
+   - Route count: Exactly 29 routes + 1 proxy (28 application routes + `/_not-found`).
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: with an order open on the tracking screen, change order status in the database or staff view; verify the tracking screen automatically refreshes after 5 seconds when visible, updating the timeline.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/(guest)/order/[id]/track/page.tsx | Edit | Added 5-second visibility-guarded page reload script |
+| docs/ROADMAP.md | Edit | Marked Task 5.7.5 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0157, updated §5.2 ledger, bumped next entry to 0158, advanced §7 snapshot to Task 5.7.6 next |
 
 ### ENTRY-0156 — 2026-10-29 — Task 5.7.4 — Add real "Call a waiter" and "Request the bill" actions
 
@@ -5046,9 +5073,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.5 — Add the polling on the tracking screen.
+Current task: Task 5.7.6 — Verify order updates live on tracking screen.
 
-Current status: Task 5.7.4 complete. Real "Call a waiter" and "Request the bill" actions delivered on tracking screen with native DOM script, in-flight submission guard, and DESIGN.md §4.13.2 confirmation copy ("A waiter is on the way." / "The bill is on its way."). Route POST /api/guest/call records CALL_WAITER and REQUEST_BILL service requests scoped strictly to session venue and place, with tampered-place protection verified. Dedicated integration suite tests/integration/api/guest-call.test.ts covers happy paths, 401, 400, and session scoping (6/6 passed). All four baselines green: tsc 0, build 27 routes + 1 proxy (including /api/guest/call), unit 186/27, integration 162/29. Ready for Task 5.7.5.
+Current status: Task 5.7.5 complete. Added 5-second visibility-guarded polling script to order tracking screen (/order/[id]/track). When document.visibilityState is visible, triggers window.location.reload() every 5000ms to fetch updated server state without manual client fetches or battery drain when backgrounded. Baselines verified: tsc 0, production build passes with exit code 0 on Next.js 16.4.0 Turbopack (29 routes + 1 proxy). Ready for Task 5.7.6.
 
 ## 8. How the File Evolves
 
