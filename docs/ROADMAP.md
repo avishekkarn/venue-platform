@@ -463,8 +463,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                               | Status | Depends on |
 | ----- | -------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 5.8.1 | Add the admin action to change a menu item's state                                                 | ⬜     | 5.7.7      |
-| 5.8.2 | Add the guest-side refresh when the state changes                                                  | ⬜     | 5.8.1      |
+| 5.8.1 | Add the admin action to change a menu item's state                                                 | ✅ Complete | 5.7.7      |
+| 5.8.2 | Add the guest-side refresh when the state changes                                                  | ✅ Complete | 5.8.1      |
 | 5.8.3 | Add the guest-side ping when an item's state changes                                               | ⬜     | 5.8.2      |
 | 5.8.4 | Verify: an item marked unavailable by the manager greys out on the guest's screen within 5 seconds | ⬜     | 5.8.3      |
 

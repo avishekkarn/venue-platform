@@ -211,6 +211,20 @@ export default async function MenuPage(): Promise<JSX.Element> {
         <p className="font-display text-guest-text-secondary">{venue.value.name}</p>
         <p className="mt-1 text-[10px]">Open daily. Powered by IronMan.</p>
       </footer>
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+(function() {
+  setInterval(function() {
+    if (document.visibilityState === 'visible') {
+      window.location.reload();
+    }
+  }, 5000);
+})();
+`,
+        }}
+      />
     </div>
   );
 }

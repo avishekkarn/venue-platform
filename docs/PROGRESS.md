@@ -1004,14 +1004,51 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0155 | 2026-10-29 | Task 5.7.0B — Show all session orders and combined bill on tracking screen | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0156 | 2026-10-29 | Task 5.7.4 — Add real "Call a waiter" and "Request the bill" actions | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0157 | 2026-10-29 | Task 5.7.5 — Add 5-second polling on the tracking screen | PASS | Milestone 5.7 | §5.3 |
-| ENTRY-0158| 2026-10-29 | Task 5.7.6 and 6 — Verification | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0159
+| ENTRY-0158 | 2026-10-29 | Task 5.7.6 & 5.7.7 — Verify tracking loop and counter loop | PASS | Milestone 5.7 | §5.3 |
+| ENTRY-0159 | 2026-10-29 | Task 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
+Next entry number: 0160
 
-### 5.3 Current Milestone — Milestone 5.8 (The Order Confirmation and Tracking). Current task: 5.8.1 | Add the admin action to change a menu item's state
+### 5.3 Current Milestone — Milestone 5.8 (Menu item state updates). Current task: Task 5.8.3 — Add the guest-side ping when an item's state changes.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0159 — 2026-10-29 — Tasks 5.8.1 & 5.8.2 — Admin item state action and guest menu refresh
+
+**Status:** PASS
+
+**Task:** Task 5.8.1 (Add admin action to change a menu item's state) & Task 5.8.2 (Add guest-side refresh when state changes)
+
+**Summary:**
+1. Admin API Route (`app/api/admin/menu/items/[id]/state/route.ts`):
+   - Implemented `POST /api/admin/menu/items/[id]/state` per SYSTEM.md §12.5 with `setTestDbClient` injection pattern.
+   - Validates active staff session via `getSessionCookie` and `validateSession`, resolving venue via `findBySlug`.
+   - Validates active staff member and enforces admin role access using `canAccess(staff.roles, "admin")`.
+   - Validates UUID route parameter `id` and request body `state: "AVAILABLE" | "UNAVAILABLE" | "HIDDEN"`. Supports both JSON payloads and standard form-encoded requests.
+   - Calls `menuRepo.setItemState(venue.id, itemId, targetState)` to update the menu item state in the database without deletion (D-4.2).
+   - Returns standard envelope 200 `{ data: menuItem }` for JSON requests (or redirects back to `/admin` for form submissions).
+2. Guest Menu Polling Script (`app/(guest)/menu/page.tsx`):
+   - Added 5-second polling via self-contained `<script dangerouslySetInnerHTML>` checking `document.visibilityState === "visible"` before triggering `window.location.reload()`, keeping menu state fresh without battery drain when in background.
+3. Admin Dashboard UI (`app/admin/page.tsx`):
+   - Rendered real menu items list with status badges and availability toggle buttons (Mark Unavailable / Mark Available).
+   - Wired both progressive-enhancement form action and native DOM script that disables the button in-flight, calls the API with JSON payload, and reloads on success.
+4. Verification Results:
+   - `pnpm exec tsc --noEmit`: 0 errors (exit 0).
+   - `pnpm build`: 30 routes + 1 proxy middleware on Next.js 16.4.0 (Turbopack) (exit 0).
+   - `pnpm test:unit`: 186 passed across 27 files (exit 0).
+   - `pnpm test:integration`: 162 passed across 29 files in 79.13s (exit 0).
+
+**Awaiting Human Verification:** YES — on LAN mobile and desktop: login to admin at `/admin`, toggle an item to UNAVAILABLE; observe item badge update on admin dashboard and guest menu at `/menu` reflect UNAVAILABLE within 5 seconds without manual refresh.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/api/admin/menu/items/[id]/state/route.ts | New | Route handler for POST /api/admin/menu/items/[id]/state |
+| app/(guest)/menu/page.tsx | Edit | Added 5-second visibility-guarded page reload script |
+| app/admin/page.tsx | Edit | Added menu item availability list and toggle action buttons |
+| docs/ROADMAP.md | Edit | Marked Tasks 5.8.1 and 5.8.2 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0159, updated §5.2 ledger, bumped next entry to 0160, advanced §7 snapshot to Task 5.8.3 next |
 
 ### ENTRY-0158 — 2026-10-29 — Task 5.7.6 & 5.7.7 — Verify tracking loop and counter loop
 
@@ -5102,11 +5139,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
+Current milestone: Milestone 5.8 (Menu item state updates).
 
-Current task: Task 5.7.6 — Verify order updates live on tracking screen.
+Current task: Task 5.8.3 — Add the guest-side ping when an item's state changes.
 
-Current status: Task 5.7.5 complete. Added 5-second visibility-guarded polling script to order tracking screen (/order/[id]/track). When document.visibilityState is visible, triggers window.location.reload() every 5000ms to fetch updated server state without manual client fetches or battery drain when backgrounded. Baselines verified: tsc 0, production build passes with exit code 0 on Next.js 16.4.0 Turbopack (29 routes + 1 proxy). Ready for Task 5.7.6.
+Current status: Tasks 5.8.1 and 5.8.2 complete. Implemented POST /api/admin/menu/items/[id]/state with admin role verification and MenuRepository.setItemState. Added menu item availability toggle UI on admin dashboard (/admin) with native DOM fetch and form fallback. Added 5-second visibility-guarded polling on guest menu (/menu). All four baselines pass: tsc exit 0, build 30 routes + 1 proxy on Next.js 16.4.0 Turbopack, unit 186/27, integration 162/29 (79.13s). Ready for Task 5.8.3.
 
 ## 8. How the File Evolves
 
