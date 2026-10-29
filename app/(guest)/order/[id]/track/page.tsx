@@ -457,6 +457,20 @@ export default async function TrackOrderPage({
 `,
         }}
       />
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+(function() {
+  setInterval(function() {
+    if (document.visibilityState === 'visible') {
+      window.location.reload();
+    }
+  }, 5000);
+})();
+`,
+        }}
+      />
     </div>
   );
 }
