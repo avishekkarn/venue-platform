@@ -1000,13 +1000,52 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0151 | 2026-10-29 | Task 5.7.1 — Add the order confirmation screen | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0152 | 2026-10-29 | Task 5.7.2 — Add order tracking screen and OrderStatusTimeline | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0153 | 2026-10-29 | Task 5.7.3 — Verify "Add more items" second order flow and add copy | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0154
+| ENTRY-0154 | 2026-10-29 | Task 5.7.0A — Extend ServiceRequest storage and domain for table/counter calls | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0155
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.0B — Add the call-waiter and request-bill tracking UI actions.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0154 — 2026-10-29 — Task 5.7.0A — Extend ServiceRequest storage and domain for table/counter calls
+
+**Status:** PASS
+
+**Task:** Task 5.7.0A — Extending the ServiceRequest storage and domain so "call waiter" / "request bill" can be recorded against a table, a room, or a counter
+
+**Summary:**
+1. Schema & Migration (additive only per BUILD.md §10 and prompt non-negotiable rule):
+   - In `prisma/schema.prisma`: extended `enum HotelService` with `CALL_WAITER` and `REQUEST_BILL`; extended `model ServiceRequest` with nullable `placeType PlaceType?` (reusing existing enum), `tableId String?`, `counterId String?`, and relation fields to `Table` and `Counter` with `onDelete: SetNull`; added back-relations `requests ServiceRequest[]` on `Table` and `Counter`; added composite indexes `@@index([venueId, tableId])` and `@@index([venueId, counterId])`. Nullable `roomId` left completely intact.
+   - Generated migration `20261029131308_add_place_and_call_types_to_service_requests`: contains only `ALTER TYPE "HotelService" ADD VALUE`, `ALTER TABLE "service_requests" ADD COLUMN`, `CREATE INDEX`, and `ALTER TABLE "service_requests" ADD CONSTRAINT FOREIGN KEY`. Confirmed zero columns dropped, renamed, or narrowed, and applied via `prisma migrate deploy`.
+2. Domain Types & Orchestrator:
+   - In `src/domain/requests/request.repository.ts`: added `PlaceType` domain enum (`TABLE`, `ROOM`, `COUNTER`), added `CALL_WAITER` and `REQUEST_BILL` to domain `HotelService` enum, added nullable `placeType`, `tableId`, `counterId` to `ServiceRequest` interface and `CreateServiceRequestInput`, and added `listForTable` and `listForCounter` methods to `ServiceRequestRepository` port.
+   - Implemented `src/domain/requests/create-request.ts` (pure domain orchestrator, 0 `@prisma/client` imports): enforces place validation that exactly one place is specified (`roomId`, `tableId`, or `counterId`); infers `placeType` when omitted (retaining 100% backwards compatibility for existing room callers); validates placeType consistency when explicitly provided; rejects empty or multi-place inputs with `VALIDATION_FAILED`.
+3. Infrastructure Adapter:
+   - In `src/infrastructure/db/repositories/request.repo.ts`: added bidirectional mapping dictionaries for `PlaceType` and the extended `HotelService` members; persisted `placeType`, `tableId`, and `counterId` in transaction `create`; deserialized them in `mapServiceRequest`; implemented `listForTable` and `listForCounter` with venue isolation. Existing room methods (`listForRoom`, `findById`, `advanceState`, `cancel`, `decline`, `updateDetails`) behave identically.
+4. Test Verification:
+   - Updated `tests/integration/repositories/request.test.ts`: Cases 1–13 (the existing room-based integration tests) continue passing unchanged; added Case 14 (Table `CALL_WAITER` creation, DB verification, read back via `findById` and `listForTable`), Case 15 (Counter `REQUEST_BILL` creation, DB verification, read back via `findById` and `listForCounter`), and Case 16 (`createRequest` orchestrator verification of table, counter, and backwards-compatible room creation, plus validation negatives). Suite passes 16/16.
+
+**Awaiting Human Verification:** NO — this is storage and domain with full automated test coverage; the guest-facing buttons and the tracking UI are 5.7.0B and 5.7.4.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| prisma/schema.prisma | Edit | Added CALL_WAITER/REQUEST_BILL to HotelService, nullable placeType/tableId/counterId to ServiceRequest, back-relations on Table and Counter, indexes on (venueId, tableId/counterId) |
+| prisma/migrations/20261029131308_add_place_and_call_types_to_service_requests/migration.sql | New | Additive SQL migration adding enum values, nullable columns, indexes, and FK constraints |
+| src/domain/requests/request.repository.ts | Edit | Added PlaceType enum, CALL_WAITER/REQUEST_BILL to HotelService, nullable place fields to ServiceRequest and CreateServiceRequestInput, listForTable/listForCounter to port |
+| src/domain/requests/create-request.ts | New | Pure domain function for creating service requests with place validation and placeType inference |
+| src/infrastructure/db/repositories/request.repo.ts | Edit | Persist and map placeType, tableId, counterId, map new HotelService values, implement listForTable and listForCounter |
+| tests/integration/repositories/request.test.ts | Edit | Added Cases 14, 15, and 16 verifying table and counter requests and createRequest orchestrator (16/16 passed) |
+| docs/ROADMAP.md | Edit | Inserted Task 5.7.0A as complete, updated Task 5.7.4 dependencies |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0154, updated §5.2 ledger, bumped next entry to 0155, advanced §7 snapshot to Task 5.7.0B next |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (26 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (156 passed across 28 test files in 71.48s, with request.test.ts 16/16 passed)
 
 ### ENTRY-0153 — 2026-10-29 — Task 5.7.3 — Verify "Add more items" second order flow and add copy
 
@@ -4933,9 +4972,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
+Current task: Task 5.7.0B — Add the call-waiter and request-bill tracking UI actions.
 
-Current status: Task 5.7.3 complete. "Add more items" flow verified across confirmation and tracking screens: navigates to /menu with an empty cart to start a second order per PRODUCT.md §5.9 and D-4.6. Clarifying guest copy ("This will start a new order.") added to both screens. All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 153/28. Ready for Task 5.7.4.
+Current status: Task 5.7.0A complete. ServiceRequest storage and domain extended additively to support table and counter calls with placeType (TABLE / ROOM / COUNTER), tableId, counterId, and HotelService enum members CALL_WAITER and REQUEST_BILL. Pure domain orchestrator createRequest enforces place validation (exactly one place, consistent placeType inference/validation). Prisma adapter persists and reads all fields, adding listForTable and listForCounter. Migration 20261029131308_add_place_and_call_types_to_service_requests is strictly additive. All existing room-based tests pass unchanged; new table and counter tests verify the extension (16/16 in request.test.ts). All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 156/28. Ready for Task 5.7.0B, then 5.7.4.
 
 ## 8. How the File Evolves
 

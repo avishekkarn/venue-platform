@@ -449,8 +449,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 5.7.1 | Add the order confirmation screen                                                                                                           | ✅ Complete | 5.6.4      |
 | 5.7.2 | Add the order tracking screen with the timeline                                                                                             | ✅ Complete | 5.7.1      |
-| 5.7.3 | Add the "add more items" action                                                                                                             | ✅ Complete | 5.7.2      |
-| 5.7.4 | Add the "call a waiter" and "request the bill" actions                                                                                      | ⬜     | 5.7.2      |
+| 5.7.3  | Add the "add more items" action                                                                                                             | ✅ Complete | 5.7.2      |
+| 5.7.0A | Extend service-request storage for table/counter calls                                                                                      | ✅ Complete | 5.7.3      |
+| 5.7.4  | Add the "call a waiter" and "request the bill" actions                                                                                      | ⬜     | 5.7.0A, 5.7.0B |
 | 5.7.5 | Add the polling on the tracking screen                                                                                                      | ⬜     | 5.7.2      |
 | 5.7.6 | Verify: an order placed from a phone appears on the tracking screen with the correct state; the state updates when it changes on the server | ⬜     | 5.7.5      |
 | 5.7.7 | Verify the counter loop: guest scans the counter QR, orders with a pickup name, staff marks ready for pickup, staff marks picked up         | ⬜     | 5.7.6      |
