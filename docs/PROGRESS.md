@@ -993,13 +993,115 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0144 | 2026-10-29 | Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0145 | 2026-10-29 | Task 5.5.1 — Add the price and tax computation (computePrice, computeTax, and the shared decimal-money helper) | PASS | Milestone 5.5 | §5.3 |
 | ENTRY-0146 | 2026-10-29 | Task 5.5.2 — Add the createOrder domain function | PASS | Milestone 5.5 | §5.3 |
-Next entry number: 0147
+| ENTRY-0147 | 2026-10-29 | Task 5.5.3 — Verify createOrder against the real database | PASS | Milestone 5.5 | §5.3 |
+Next entry number: 0148
 
-### 5.3 Current Milestone —  Milestone 5.5 (The Order Domain). Current task: Task 5.5.3 — Verify createOrder against the real database.
+### 5.3 Current Milestone —  Milestone 5.6 (The Order Routes). Current task: Task 5.6.1 — Add POST /api/guest/orders.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0147 — 2026-10-29 — Task 5.5.3 — Verify createOrder against the real database
+
+**Status:** PASS
+
+**Task:** Task 5.5.3 — Verify: `createOrder` writes an order with frozen prices and tax and the initial `PLACED` state change in one transaction; a retry with the same idempotency key returns the existing order; the transaction rolls back on error
+
+**Summary:**
+Implemented integration test suite in `tests/integration/orders/create-order.test.ts` driving the pure domain orchestrator `createOrder` against the real PostgreSQL test database and real repository adapters (`createPrismaOrderRepository`, `createPrismaMenuRepository`, `createPrismaVenueRepository`) inside the `withTransaction` rollback harness. Proved: (1) Happy path writes an order with frozen item names, prices, modifiers, and line totals from the menu repository, and authoritative venue tax rate, subtotal, tax amount, and total from the venue repository; (2) The initial `PLACED` state change is written atomically in the same transaction; (3) The idempotency contract: retrying `createOrder` with the same `idempotencyKey` returns the existing order and creates no second row (Order count remains 1); (4) Non-orderable items (`UNAVAILABLE`) are rejected with `VALIDATION_FAILED` (400) and no row is written; (5) Nonexistent items are rejected with `NOT_FOUND` (404) and no row is written; (6) Transactional rollback on database error: forcing a database constraint failure via an invalid `menuItemId` foreign key causes `orderRepo.create` to fail with `INTERNAL` (500) and leaves 0 orphan orders, 0 items, and 0 state changes; (7) Cross-venue isolation: an order created for venue A cannot be read with venue B's ID, returning `NOT_FOUND` (never `FORBIDDEN` or leaking data). Milestone 5.5 is closed; former tasks 5.5.4 (initial state change), 5.5.5 (transaction wrapper), and 5.5.6 (verification) were consolidated into this task 5.5.3 because the transactional write and idempotency constraint are already implemented in `order.repo.ts`. All four baselines pass: tsc 0, build 22 routes + 1 proxy, unit 186/27, integration 140/28 (74.42s). Milestone 5.6 is unblocked; W-0001 remains OPEN, satisfied by Task 5.6.1.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| tests/integration/orders/create-order.test.ts | Create | 7 integration tests verifying `createOrder` against real PostgreSQL database and adapters |
+| docs/ROADMAP.md | Edit | Marked Task 5.5.3 complete; added Milestone 5.5 closure note |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0147, updated §5.2 ledger row, bumped next entry number to 0148, advanced §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  186 passed (186)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  28 passed (28)
+#      Tests  140 passed (140)
+#   Duration  74.42s
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | The new integration suite drives real `createOrder` against real repositories and database inside `withTransaction` | PASS | Implemented in `tests/integration/orders/create-order.test.ts` using `createPrismaOrderRepository`, `createPrismaMenuRepository`, `createPrismaVenueRepository` |
+| 2 | Proves frozen prices and tax (read back from database) | PASS | Verified in happy path: stored subtotal ($47.00), tax ($4.70), total ($51.70), item prices, modifier prices ($2.50), line totals ($42.00, $5.00), and modifiersJson match authoritative database values |
+| 3 | Proves single PLACED state change written in same transaction | PASS | Verified in dedicated test and happy path: exactly 1 state change with state = `PLACED`, staffMemberId = null |
+| 4 | Proves idempotency retry (same id, no second row) | PASS | Verified: calling `createOrder` twice with same `idempotencyKey` returns identical order; venue order count remains 1, item count remains 1, state change count remains 1 |
+| 5 | Proves non-orderable item rejection | PASS | Verified: item with state = `UNAVAILABLE` returns `VALIDATION_FAILED` (400), 0 orders written |
+| 6 | Proves nonexistent item rejection | PASS | Verified: nonexistent item ID returns `NOT_FOUND` (404), 0 orders written |
+| 7 | Proves transaction rolls back on error (no partial row) | PASS | Verified: foreign key constraint violation on `order_items_menuItemId_fkey` fails atomically; venue order count = 0, item count = 0, state change count = 0 |
+| 8 | Proves cross-venue isolation | PASS | Verified: order created for venue A read with venue B's ID returns `NOT_FOUND` (never `FORBIDDEN`); cites repository test case 12 |
+| 9 | No production code is changed | PASS | Zero files under `src/` or `app/` touched |
+| 10 | Four baselines pass: tsc 0; build 22 routes + 1 proxy (Next.js 16.4.0 Turbopack); unit 186/27; integration 140/28 at 74.42s | PASS | All four commands executed with exit code 0 and exact expected outputs |
+| 11 | ROADMAP.md marks 5.5.3 complete and carries Milestone 5.5 closure note; PROGRESS.md records ENTRY-0147 with ledger row on own line, next 0148, snapshot at 5.6.1 next, and states consolidation | PASS | Verified via git diff |
+| 12 | Awaiting Human Verification: NO | PASS | Real-database proof established by integration test suite |
+
+**Deviations:**
+None. `vitest.integration.config.ts` already included "tests/integration/**/*.test.ts", so no config widening was required.
+
+**Limitations:**
+None. Integration verification against real PostgreSQL database complete.
+
+**Next:**
+Milestone 5.6 — The Order Routes, starting at Task 5.6.1: Add `POST /api/guest/orders` (and wire PLACE-ORDER SEAM W-0001).
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0146 — 2026-10-29 — Task 5.5.2 — Add the createOrder domain function
 
@@ -4421,11 +4523,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.5 (The Order Domain) — in progress.
+Current milestone: Milestone 5.5 closed; Milestone 5.6 (The Order Routes) unblocked.
 
-Current task: Task 5.5.3 — Verify createOrder against the real database.
+Current task: Task 5.6.1 — Add POST /api/guest/orders.
 
-Current status: Task 5.5.2 complete — createOrder domain orchestrator (src/domain/orders/create-order.ts) implemented with full input validation (UUID idempotency key, place matching, items), idempotency pre-check, authoritative price/tax freezing from MenuRepository and VenueRepository, and persistence via OrderRepository; verified with 13 in-memory fake unit tests in tests/unit/orders/create-order.test.ts (186 passed across 27 files). All four baselines green: tsc 0, build 22 routes + 1 proxy, unit 186/27, integration 133/27 (77.69s). Ready for Task 5.5.3.
+Current status: Milestone 5.5 closed — createOrder domain orchestrator verified against real PostgreSQL database and order adapter inside withTransaction rollback harness in tests/integration/orders/create-order.test.ts (7 new tests, 140 passed across 28 files, 74.42s). Proves frozen prices and tax, single PLACED state change, idempotency retry (same id, no second row), non-orderable rejection, nonexistent rejection, transactional rollback on error (foreign key constraint, 0 orphan rows), and cross-venue isolation. Former 5.5.4/5.5.5/5.5.6 consolidated into 5.5.3. All four baselines green: tsc 0, build 22 routes + 1 proxy, unit 186/27, integration 140/28. W-0001 remains OPEN, satisfied by Task 5.6.1. Ready for Task 5.6.1.
 
 ## 8. How the File Evolves
 
