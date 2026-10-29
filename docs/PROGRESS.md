@@ -995,13 +995,149 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0146 | 2026-10-29 | Task 5.5.2 — Add the createOrder domain function | PASS | Milestone 5.5 | §5.3 |
 | ENTRY-0147 | 2026-10-29 | Task 5.5.3 — Verify createOrder against the real database | PASS | Milestone 5.5 | §5.3 |
 | ENTRY-0148 | 2026-10-29 | Task 5.6.1 — Add POST /api/guest/orders and wire cart Place order seam | PASS | Milestone 5.6 | §5.3 |
-Next entry number: 0149
+| ENTRY-0149 | 2026-10-29 | Task 5.6.2 & 5.6.3 — Add GET /api/guest/orders/[id] and GET /api/guest/orders | PASS | Milestone 5.6 | §5.3 |
+Next entry number: 0150
 
-### 5.3 Current Milestone —  Milestone 5.6 (The Order Routes). Current task: Task 5.6.2 — Add GET /api/guest/orders/[id].
+### 5.3 Current Milestone —  Milestone 5.6 (The Order Routes). Current task: Task 5.6.4 — Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0149 — 2026-10-29 — Task 5.6.2 & 5.6.3 — Add GET /api/guest/orders/[id] and GET /api/guest/orders
+
+**Status:** PASS
+
+**Task:** Task 5.6.2 — Add `GET /api/guest/orders/[id]` and Task 5.6.3 — Add `GET /api/guest/orders`
+
+**Rationale for Combined Execution:**
+Tasks 5.6.2 and 5.6.3 were executed together in a single session because both are guest-facing read endpoints that query the completed order repository adapter (`findById` and `listForGuestSession`), share identical guest session cookie resolution (`getGuestCookie`, `getGuestSession`), enforce the same privacy and tenancy invariants (D-2.1, D-2.5, D-10.2, SYSTEM.md §15.4), share the same integration test harness in `tests/integration/api/guest-orders.test.ts`, and introduce zero mutation or cross-domain risk.
+
+**Summary:**
+1. `app/api/guest/orders/[id]/route.ts` (Task 5.6.2):
+   - Created dynamic GET route handler reading guest session from `venue_guest` cookie.
+   - Returns 401 UNAUTHORIZED if session cookie is absent, invalid, or expired.
+   - Validates `[id]` parameter format as UUID regex; returns 400 VALIDATION_FAILED if malformed.
+   - Queries `orderRepo.findById(session.venueId, id)`. If not found or belongs to another venue, returns 404 NOT_FOUND.
+   - Enforces strict session privacy: checks `order.guestSessionId === session.id`. If mismatched, returns 404 NOT_FOUND with the exact same generic error message as a missing order, completely preventing existence leakage (SYSTEM.md §15.4, D-10.2).
+   - On match, returns HTTP 200 with `{ data: order }`.
+   - Exports `setTestDbClient` for transactional test isolation.
+2. `app/api/guest/orders/route.ts` (Task 5.6.3):
+   - Appended `GET` route handler to existing file alongside untouched `POST` handler.
+   - Validates guest session from cookie (401 on failure).
+   - Calls `orderRepo.listForGuestSession(session.venueId, session.id)`.
+   - Returns HTTP 200 with `{ data: orders }` containing strictly orders belonging to the active session.
+   - Reuses existing `setTestDbClient` and error envelope helpers without duplication.
+3. `tests/integration/api/guest-orders.test.ts`:
+   - Extended test suite with 6 new integration tests (12 tests total in file) inside `withTransaction`:
+     - 5.6.2 happy path: reads session order, returns 200 `{ data: order }`, verifies frozen money.
+     - 5.6.2 nonexistent ID: returns 404 NOT_FOUND with generic error message.
+     - 5.6.2 privacy negative: reading another guest session's order at the same venue returns 404 NOT_FOUND and leaks no data.
+     - 5.6.2 no session: returns 401 UNAUTHORIZED.
+     - 5.6.3 happy path: lists only the active session's orders (asserts 2 orders for Session A are returned and Session B's order is excluded).
+     - 5.6.3 no session: returns 401 UNAUTHORIZED.
+4. Baseline results: tsc 0, build 24 routes + 1 proxy (exit 0), unit 186/27, integration 152/28 (75.35s).
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/guest/orders/[id]/route.ts | Create | GET handler reading single order with session verification and privacy scoping |
+| app/api/guest/orders/route.ts | Edit | Added GET handler listing all orders for guest session; POST handler untouched |
+| tests/integration/api/guest-orders.test.ts | Edit | Extended suite with 6 integration tests covering both read routes and privacy negative |
+| docs/ROADMAP.md | Edit | Marked Task 5.6.2 and Task 5.6.3 as complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0149, updated §5.2 ledger row, bumped next entry number to 0150, advanced §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /api/guest/orders
+# ├ ƒ /api/guest/orders/[id]
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  186 passed (186)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  28 passed (28)
+#      Tests  152 passed (152)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (24 routes + 1 proxy middleware; +1 route for /api/guest/orders/[id]; exit 0)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (152 passed across 28 test files in 75.35s)
+
+**Acceptance Criteria Results:**
+- [x] Automated: `GET /api/guest/orders/[id]` reads session, calls `findById`, verifies `order.guestSessionId === session.id`, returns 404 NOT_FOUND on wrong-session or nonexistent read (no leak), returns 200 `{ data: order }` on owner read.
+- [x] Automated: `GET /api/guest/orders` calls `listForGuestSession(session.venueId, session.id)` and returns 200 `{ data: orders }`; `POST` handler untouched.
+- [x] Automated: Both routes return 401 UNAUTHORIZED without a valid session cookie.
+- [x] Automated: Integration tests in `tests/integration/api/guest-orders.test.ts` extended with 6 new tests covering happy paths, nonexistent 404, wrong-session 404, no-session 401, and session-only orders.
+- [x] Automated: All four baselines pass: tsc 0, build 24 routes + 1 proxy, unit 186/27, integration 152/28.
+- [x] Automated: ROADMAP.md marks 5.6.2 and 5.6.3 complete; PROGRESS.md records ENTRY-0149.
+- [ ] Awaiting Human Verification: On a real phone via LAN: the order placed in 5.6.1 can be read back by GET /api/guest/orders/{id} and appears in the list from GET /api/guest/orders; a second guest session cannot read the first guest's order.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements (§5 guest order flow) | No change |
+| DECISIONS.md | No | Adheres to D-2.1, D-2.3, D-2.5, D-4.6, D-10.2 | No change |
+| SYSTEM.md | No | Adheres to §5, §6.2, §11.3, §12.1, §12.2, §12.7, §15.4 | No change |
+| BUILD.md | No | Adheres to §5, §6, §7.2, §8.8 | No change |
+| WIRING.md | No | No new wiring obligations created or discharged | No change |
+| ROADMAP.md | Yes | Marked Task 5.6.2 and Task 5.6.3 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0149, bumped ledger, updated snapshot | Updated |
+| DESIGN.md | No | Adheres to design specifications | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.6.4 — Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0148 — 2026-10-29 — Task 5.6.1 — Add POST /api/guest/orders and wire cart Place order seam
 
@@ -4667,9 +4803,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.6 (The Order Routes).
 
-Current task: Task 5.6.2 — Add GET /api/guest/orders/[id].
+Current task: Task 5.6.4 — Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12.
 
-Current status: Task 5.6.1 complete — POST /api/guest/orders route handler implemented and W-0001 (cart Place order submission seam) discharged. Authoritative session place and venue context enforced; client pricing strictly ignored; idempotency key validated; 6 integration tests passing in tests/integration/api/guest-orders.test.ts (146 passed across 28 files in 70.45s). All four baselines green: tsc 0, build 23 routes + 1 proxy, unit 186/27, integration 146/28. Ready for Task 5.6.2.
+Current status: Tasks 5.6.2 and 5.6.3 complete in one session — GET /api/guest/orders/[id] and GET /api/guest/orders implemented with strict session isolation and privacy (cross-session and cross-venue reads return 404 NOT_FOUND without leaking existence). 6 new integration tests added to tests/integration/api/guest-orders.test.ts (12 tests passing in file; 152 passed across 28 files in 75.35s). All four baselines green: tsc 0, build 24 routes + 1 proxy, unit 186/27, integration 152/28. Ready for Task 5.6.4.
 
 ## 8. How the File Evolves
 
