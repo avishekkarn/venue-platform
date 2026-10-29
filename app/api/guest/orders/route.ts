@@ -254,3 +254,53 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ data: result.value }, { status: 201 });
 }
 
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const db = testDbClient ?? prisma;
+
+  // 1. Session check: token from guest session cookie
+  const cookie = await getGuestCookie();
+  if (!cookie) {
+    return NextResponse.json(
+      {
+        error: {
+          code: DomainErrorCode.UNAUTHORIZED,
+          message: "No active guest session",
+        },
+      },
+      { status: 401 }
+    );
+  }
+
+  const guestRepo = createPrismaGuestSessionRepository(db);
+  const sessionResult = await getGuestSession({ repo: guestRepo }, cookie);
+  if (!sessionResult.ok) {
+    return NextResponse.json(
+      {
+        error: {
+          code: DomainErrorCode.UNAUTHORIZED,
+          message: sessionResult.error.message,
+        },
+      },
+      { status: 401 }
+    );
+  }
+  const session = sessionResult.value;
+
+  // 2. Fetch all orders for this guest session
+  const orderRepo = createPrismaOrderRepository(db);
+  const result = await orderRepo.listForGuestSession(
+    session.venueId,
+    session.id
+  );
+
+  if (!result.ok) {
+    const status = domainErrorToStatus(result.error.code);
+    return NextResponse.json(
+      { error: { code: result.error.code, message: result.error.message } },
+      { status }
+    );
+  }
+
+  return NextResponse.json({ data: result.value }, { status: 200 });
+}
+

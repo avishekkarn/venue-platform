@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
-import { POST, setTestDbClient } from "@/../app/api/guest/orders/route";
+import {
+  POST,
+  GET as listOrders,
+  setTestDbClient as setTestDbClientForOrdersRoute,
+} from "@/../app/api/guest/orders/route";
+import {
+  GET as getOrderById,
+  setTestDbClient as setTestDbClientForIdRoute,
+} from "@/../app/api/guest/orders/[id]/route";
 import { withTransaction } from "../setup";
 import { PlaceType } from "@/domain/orders/order.repository";
 import { MenuItemState, ModifierChoiceType } from "@/domain/menu/menu.repository";
@@ -14,6 +22,11 @@ vi.mock("@/infrastructure/guest/cookies", () => ({
 }));
 
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
+
+function setTestDbClient(client: Parameters<typeof setTestDbClientForOrdersRoute>[0]): void {
+  setTestDbClientForOrdersRoute(client);
+  setTestDbClientForIdRoute(client);
+}
 
 describe("POST /api/guest/orders Integration Tests", () => {
   beforeEach(() => {
@@ -481,6 +494,415 @@ describe("POST /api/guest/orders Integration Tests", () => {
       expect(json.data.placeType).toBe("COUNTER");
       expect(json.data.counterId).toBe(counter.id);
       expect(json.data.pickupName).toBe("Ramesh");
+    });
+  });
+});
+
+describe("GET /api/guest/orders/[id] Integration Tests (Task 5.6.2)", () => {
+  it("5.6.2 Happy path: reads order for session and verifies frozen money (200)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      const venue = await tx.venue.create({
+        data: {
+          name: "Read Order Venue",
+          slug: `read-order-venue-${Date.now()}`,
+          taxRate: "0.1000",
+        },
+      });
+
+      const table = await tx.table.create({
+        data: { venueId: venue.id, number: "T-50" },
+      });
+
+      const category = await tx.menuCategory.create({
+        data: { venueId: venue.id, name: "Pizzas", sortOrder: 1 },
+      });
+
+      const item = await tx.menuItem.create({
+        data: {
+          venueId: venue.id,
+          categoryId: category.id,
+          name: "Special Pizza",
+          price: "15.00",
+          state: MenuItemState.AVAILABLE,
+          sortOrder: 1,
+        },
+      });
+
+      const modGroup = await tx.modifierGroup.create({
+        data: {
+          menuItemId: item.id,
+          name: "Crust",
+          choiceType: ModifierChoiceType.SINGLE,
+          isRequired: false,
+          sortOrder: 1,
+        },
+      });
+
+      const modOption = await tx.modifierOption.create({
+        data: {
+          modifierGroupId: modGroup.id,
+          name: "Stuffed Crust",
+          additionalPrice: "2.50",
+          sortOrder: 1,
+        },
+      });
+
+      const sessionResult = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResult.ok).toBe(true);
+      if (!sessionResult.ok) return;
+      const guestSession = sessionResult.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+
+      // Create an order via POST
+      const postReq = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "12345678-1234-4234-8234-1234567890ab",
+          items: [
+            {
+              menuItemId: item.id,
+              quantity: 1,
+              selectedModifierIds: [modOption.id],
+            },
+          ],
+        }),
+      });
+
+      const postRes = await POST(postReq);
+      expect(postRes.status).toBe(201);
+      const postJson = await postRes.json();
+      const createdOrderId = postJson.data.id;
+
+      // Read back with GET /api/guest/orders/[id]
+      const getReq = new NextRequest(
+        `http://localhost/api/guest/orders/${createdOrderId}`,
+        { method: "GET" }
+      );
+      const getRes = await getOrderById(getReq, {
+        params: Promise.resolve({ id: createdOrderId }),
+      });
+
+      expect(getRes.status).toBe(200);
+      const getJson = await getRes.json();
+      expect(getJson).toHaveProperty("data");
+      const readOrder = getJson.data;
+
+      expect(readOrder.id).toBe(createdOrderId);
+      expect(readOrder.guestSessionId).toBe(guestSession.id);
+      expect(readOrder.subtotal).toBe("17.50");
+      expect(readOrder.taxRate).toBe("0.1000");
+      expect(readOrder.taxAmount).toBe("1.75");
+      expect(readOrder.total).toBe("19.25");
+      expect(readOrder.items).toHaveLength(1);
+      expect(readOrder.items[0].itemName).toBe("Special Pizza");
+      expect(readOrder.items[0].itemPrice).toBe("15.00");
+      expect(readOrder.items[0].modifierPrice).toBe("2.50");
+      expect(readOrder.items[0].lineTotal).toBe("17.50");
+    });
+  });
+
+  it("5.6.2 NOT_FOUND for a nonexistent id (404)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      const venue = await tx.venue.create({
+        data: {
+          name: "Nonexistent Order Venue",
+          slug: `nonexistent-venue-${Date.now()}`,
+          taxRate: "0.0825",
+        },
+      });
+
+      const table = await tx.table.create({
+        data: { venueId: venue.id, number: "T-10" },
+      });
+
+      const sessionResult = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResult.ok).toBe(true);
+      if (!sessionResult.ok) return;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionResult.value.token);
+
+      const nonexistentId = "99999999-0000-4000-8000-000000000000";
+      const getReq = new NextRequest(
+        `http://localhost/api/guest/orders/${nonexistentId}`,
+        { method: "GET" }
+      );
+      const getRes = await getOrderById(getReq, {
+        params: Promise.resolve({ id: nonexistentId }),
+      });
+
+      expect(getRes.status).toBe(404);
+      const json = await getRes.json();
+      expect(json.error.code).toBe(DomainErrorCode.NOT_FOUND);
+      expect(json.error.message).toContain("not found");
+      expect(json).not.toHaveProperty("data");
+    });
+  });
+
+  it("5.6.2 Privacy negative (mandatory): reading another guest session's order returns 404 NOT_FOUND (no leak)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      const venue = await tx.venue.create({
+        data: {
+          name: "Privacy Venue",
+          slug: `privacy-venue-${Date.now()}`,
+          taxRate: "0.1000",
+        },
+      });
+
+      const table = await tx.table.create({
+        data: { venueId: venue.id, number: "T-99" },
+      });
+
+      const category = await tx.menuCategory.create({
+        data: { venueId: venue.id, name: "Salads", sortOrder: 1 },
+      });
+
+      const item = await tx.menuItem.create({
+        data: {
+          venueId: venue.id,
+          categoryId: category.id,
+          name: "Caesar Salad",
+          price: "10.00",
+          state: MenuItemState.AVAILABLE,
+          sortOrder: 1,
+        },
+      });
+
+      // 1. Guest Session A places an order
+      const sessionResultA = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResultA.ok).toBe(true);
+      if (!sessionResultA.ok) return;
+      const sessionA = sessionResultA.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+
+      const postReq = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+          items: [{ menuItemId: item.id, quantity: 1 }],
+        }),
+      });
+      const postRes = await POST(postReq);
+      expect(postRes.status).toBe(201);
+      const postJson = await postRes.json();
+      const orderAId = postJson.data.id;
+
+      // 2. Guest Session B (second session at the same table/venue) attempts to read Order A
+      const sessionResultB = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResultB.ok).toBe(true);
+      if (!sessionResultB.ok) return;
+      const sessionB = sessionResultB.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionB.token);
+
+      const getReq = new NextRequest(
+        `http://localhost/api/guest/orders/${orderAId}`,
+        { method: "GET" }
+      );
+      const getRes = await getOrderById(getReq, {
+        params: Promise.resolve({ id: orderAId }),
+      });
+
+      // Assert 404 NOT_FOUND (never 403 or 200), generic message, no data returned
+      expect(getRes.status).toBe(404);
+      const json = await getRes.json();
+      expect(json.error.code).toBe(DomainErrorCode.NOT_FOUND);
+      expect(json.error.message).toContain("not found");
+      expect(json).not.toHaveProperty("data");
+    });
+  });
+
+  it("5.6.2 No session returns 401 UNAUTHORIZED", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      vi.mocked(getGuestCookie).mockResolvedValue(null);
+
+      const validId = "11111111-2222-4333-8444-555555555555";
+      const getReq = new NextRequest(
+        `http://localhost/api/guest/orders/${validId}`,
+        { method: "GET" }
+      );
+      const getRes = await getOrderById(getReq, {
+        params: Promise.resolve({ id: validId }),
+      });
+
+      expect(getRes.status).toBe(401);
+      const json = await getRes.json();
+      expect(json.error.code).toBe(DomainErrorCode.UNAUTHORIZED);
+      expect(json.error.message).toBe("No active guest session");
+    });
+  });
+});
+
+describe("GET /api/guest/orders Integration Tests (Task 5.6.3)", () => {
+  it("5.6.3 Happy path: lists only the session's own orders (200)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      const venue = await tx.venue.create({
+        data: {
+          name: "List Orders Venue",
+          slug: `list-orders-venue-${Date.now()}`,
+          taxRate: "0.1000",
+        },
+      });
+
+      const table = await tx.table.create({
+        data: { venueId: venue.id, number: "T-22" },
+      });
+
+      const category = await tx.menuCategory.create({
+        data: { venueId: venue.id, name: "Snacks", sortOrder: 1 },
+      });
+
+      const snack = await tx.menuItem.create({
+        data: {
+          venueId: venue.id,
+          categoryId: category.id,
+          name: "Truffle Fries",
+          price: "8.00",
+          state: MenuItemState.AVAILABLE,
+          sortOrder: 1,
+        },
+      });
+
+      // 1. Session A creates 2 orders
+      const sessionResultA = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResultA.ok).toBe(true);
+      if (!sessionResultA.ok) return;
+      const sessionA = sessionResultA.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+
+      const postReqA1 = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "11111111-aaaa-4aaa-8aaa-111111111111",
+          items: [{ menuItemId: snack.id, quantity: 1 }],
+        }),
+      });
+      const postResA1 = await POST(postReqA1);
+      expect(postResA1.status).toBe(201);
+      const postJsonA1 = await postResA1.json();
+      const orderA1Id = postJsonA1.data.id;
+
+      const postReqA2 = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "22222222-aaaa-4aaa-8aaa-222222222222",
+          items: [{ menuItemId: snack.id, quantity: 2 }],
+        }),
+      });
+      const postResA2 = await POST(postReqA2);
+      expect(postResA2.status).toBe(201);
+      const postJsonA2 = await postResA2.json();
+      const orderA2Id = postJsonA2.data.id;
+
+      // 2. Session B creates 1 order in the same venue
+      const sessionResultB = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResultB.ok).toBe(true);
+      if (!sessionResultB.ok) return;
+      const sessionB = sessionResultB.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionB.token);
+
+      const postReqB = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "33333333-bbbb-4bbb-8bbb-333333333333",
+          items: [{ menuItemId: snack.id, quantity: 3 }],
+        }),
+      });
+      const postResB = await POST(postReqB);
+      expect(postResB.status).toBe(201);
+      const postJsonB = await postResB.json();
+      const orderBId = postJsonB.data.id;
+
+      // 3. Switch back to Session A and list orders
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+
+      const listReq = new NextRequest("http://localhost/api/guest/orders", {
+        method: "GET",
+      });
+      const listRes = await listOrders(listReq);
+
+      expect(listRes.status).toBe(200);
+      const listJson = await listRes.json();
+      expect(listJson).toHaveProperty("data");
+      const orders = listJson.data;
+
+      // Assert exactly Session A's orders are returned
+      expect(orders).toHaveLength(2);
+      const orderIds = orders.map((o: { id: string }) => o.id);
+      expect(orderIds).toContain(orderA1Id);
+      expect(orderIds).toContain(orderA2Id);
+      expect(orderIds).not.toContain(orderBId);
+
+      // Assert every returned order belongs strictly to Session A
+      expect(
+        orders.every(
+          (o: { guestSessionId: string }) => o.guestSessionId === sessionA.id
+        )
+      ).toBe(true);
+    });
+  });
+
+  it("5.6.3 No session returns 401 UNAUTHORIZED", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      vi.mocked(getGuestCookie).mockResolvedValue(null);
+
+      const listReq = new NextRequest("http://localhost/api/guest/orders", {
+        method: "GET",
+      });
+      const listRes = await listOrders(listReq);
+
+      expect(listRes.status).toBe(401);
+      const json = await listRes.json();
+      expect(json.error.code).toBe(DomainErrorCode.UNAUTHORIZED);
+      expect(json.error.message).toBe("No active guest session");
     });
   });
 });
