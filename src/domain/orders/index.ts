@@ -6,4 +6,9 @@
 
 export { computeLineTotal, computeSubtotal } from "./compute-price";
 export { computeTax, computeTotal } from "./compute-tax";
-
+export {
+  createOrder,
+  type CreateOrderDeps,
+  type CreateOrderRequest,
+  type CreateOrderItemRequest,
+} from "./create-order";
