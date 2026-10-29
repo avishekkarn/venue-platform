@@ -414,7 +414,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.4.5 | Add the "Place order" action                                                                                   | ✅ Complete | 5.4.4      |
 | 5.4.6 | Add the empty cart state                                                                                       | ✅ Complete | 5.4.1      |
 | 5.4.7 | Add the pickup-name field for the counter flow                                                                 | ✅ Complete | 5.4.5      |
-| 5.4.8 | Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | ⬜     | 5.4.7      |
+| 5.4.8 | Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | ✅ Complete | 5.4.7      |
+
+*(Milestone 5.4 (The Cart) is closed — all eight tasks are complete; the cart shell, quantity/remove, order notes, summary preview, Place order initiator, empty state, and pickup-name field are verified on a real phone via LAN; the cart summary is a client-side display preview and the authoritative charged amount is deferred to Tasks 5.5.2/5.5.3 and verified at the Phase 5 acceptance test after 5.5.x; W-0001 (the Place order submission seam) remains OPEN and is satisfied by Task 5.6.1. Milestone 5.5 is unblocked.)*
 
 ### Milestone 5.5 — The order domain
 

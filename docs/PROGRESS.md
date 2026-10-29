@@ -990,13 +990,93 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0141 | 2026-10-29 | Task 5.4.5 — Add the "Place order" action | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0142 | 2026-10-29 | Task 5.4.6 — Add the empty cart state | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0143 | 2026-10-29 | Task 5.4.7 — Add the pickup-name field for the counter flow | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0144
+| ENTRY-0144 | 2026-10-29 | Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | PASS | Milestone 5.4 | §5.3 |
+Next entry number: 0145
 
-### 5.3 Current Milestone —  Milestone 5.4 (The Cart). Current task: Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured.
+### 5.3 Current Milestone —  Milestone 5.5 (The Order Domain). Current task: Task 5.5.1 — Add the createOrder domain function.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0144 — 2026-10-29 — Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured
+
+**Status:** PASS
+
+**Task:** Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured
+
+**Summary:**
+The human performed the manual mobile verification on a real phone via LAN and confirmed, across the cart flow: an item added from the menu appears in the cart with its modifiers and line total; the quantity stepper increments/decrements correctly and the line total updates; the remove action deletes the line and removing the last line shows the empty state with the "Back to menu" link; the order-notes field accepts text without blurring and persists across a refresh and across line mutations; the summary block shows subtotal, tax, and total as a client-side display preview matching a hand computation for a stated cart (subtotal = sum of line totals; tax = subtotal × venue rate; total = subtotal + tax); the Place order button is shown, full-width, disabled, with the accessible reason "Ordering opens soon.", and creates no order; the pickup-name field appears only when the venue has the counter module enabled and the cart is non-empty, accepts a name without blurring, persists across refresh and line mutations, and is not transmitted. All observed as expected.
+
+The cart summary verified here is a client-side display preview. The authoritative price and tax are recomputed and frozen server-side at order placement (Tasks 5.5.2 and 5.5.3, DECISIONS D-4.1 and D-4.4), and are verified at the Phase 5 acceptance test (PHASE_TESTS.md §7, step 11) after Milestone 5.5 — not by this milestone close.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Mark Task 5.4.8 complete and record Milestone 5.4 closure note |
+| docs/PROGRESS.md | Edit | Record ENTRY-0144, append §5.2 ledger row, bump next entry number to 0145, advance §7 snapshot to Milestone 5.5 / Task 5.5.1 |
+
+**Commands Run:**
+
+```powershell
+git log --oneline -1
+# Output: 235abab STRUCTURAL — Record ENTRY-0143 (Task 5.4.7 complete, D-17.5 locked)
+```
+
+```powershell
+git status --short --untracked-files=all
+# Output: (clean, empty output)
+```
+
+```powershell
+git status --short --untracked-files=all
+# Output:
+#  M docs/PROGRESS.md
+#  M docs/ROADMAP.md
+```
+
+No baselines were run because no code changed; the last real baselines are the Task 5.4.7 re-run (tsc `pnpm exec tsc --noEmit` exit 0; `pnpm build` exit 0, 22 routes + 1 proxy, Next.js 16.4.0 Turbopack; `pnpm test:unit` 137 passed / 23 files; `pnpm test:integration` 133 passed / 27 files, 64.35s) — as the current green state. Do not fabricate new test output.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Item added from menu appears with modifiers and line total | PASS | Human-verified on a real phone via LAN |
+| 2 | Quantity stepper increments/decrements and line total updates | PASS | Human-verified on a real phone via LAN |
+| 3 | Remove action deletes line; removing last line displays empty state with "Back to menu" link | PASS | Human-verified on a real phone via LAN |
+| 4 | Order notes textarea accepts input without blur and survives refresh and line mutations | PASS | Human-verified on a real phone via LAN |
+| 5 | Summary block shows subtotal, tax, and total matching hand-computation preview | PASS | Human-verified on a real phone via LAN (hand check: Line 1 Truffle Burger $18.50 + Bacon $2.00 = $20.50 × 2 = $41.00; Line 2 Garlic Fries $6.00 × 1 = $6.00; Subtotal = $47.00; Venue tax rate = 8.25%; Tax = $47.00 × 0.0825 = $3.88; Total = $47.00 + $3.88 = $50.88; all 3 preview amounts matched display exactly) |
+| 6 | Place order button is disabled with accessible text "Ordering opens soon." and creates no order | PASS | Human-verified on a real phone via LAN |
+| 7 | Pickup-name field shows only when counter module enabled and cart non-empty; persists without blur | PASS | Human-verified on a real phone via LAN |
+| 8 | Pickup name is not transmitted | PASS | Human-verified on a real phone via LAN (local state only; no network submission) |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No change | No change |
+| DECISIONS.md | No | Adheres to D-2.2, D-4.1, D-4.4, D-17.5 | No change |
+| SYSTEM.md | No | Adheres to §4, §11 | No change |
+| BUILD.md | No | Adheres to build rules | No change |
+| ROADMAP.md | Yes | Marked Task 5.4.8 complete, recorded Milestone 5.4 closure note | Updated |
+| WIRING.md | No | W-0001 remains OPEN, satisfied by Task 5.6.1 | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0144, added §5.2 ledger row, bumped next entry number to 0145, updated §7 snapshot | Updated |
+
+**Contradiction Check:**
+None found. The milestone close records client-side preview verification only and does not claim authoritative charged amount verification, which is deferred to Tasks 5.5.2/5.5.3, D-4.1, and D-4.4.
+
+**Next:**
+Task 5.5.1 — Add the createOrder domain function (the first task of Milestone 5.5, The Order Domain).
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0143 — 2026-10-29 — Task 5.4.7 — Add the pickup-name field for the counter flow
 
@@ -4135,11 +4215,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.4 (The Cart).
+Current milestone: Milestone 5.5 (The Order Domain).
 
-Current task: Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured.
+Current task: Task 5.5.1 — Add the createOrder domain function.
 
-Current status: Milestone 5.4 is in progress. Task 5.4.7 is complete. The pickup-name field (#cart-pickup-name) is added to the cart, conditionally rendered when the venue has the counter module enabled (hasCounterModule) and the cart is non-empty. The field is saved locally under pickupName in localStorage.guest_cart via native DOM without re-render, and is preserved by all line mutations. D-17.5 records the place-identifier-plus-pickup-name double-confirmation rule; W-0001 is updated to obligate 5.6.1 to send both. All 4 baselines pass clean. Ready for Task 5.4.8 (Milestone 5.4 verification).
+Current status: Milestone 5.4 is closed — all eight tasks complete; the cart flow is verified on a real phone via LAN; the cart summary is a client-side display preview and the authoritative charged amount is deferred to 5.5.2/5.5.3 and verified at the Phase 5 acceptance test after 5.5.x; W-0001 remains OPEN, satisfied by Task 5.6.1. The last real baselines (Task 5.4.7 re-run) are green: tsc 0, build 22 routes + 1 proxy, unit 137/23, integration 133/27. Ready to begin Milestone 5.5.
 
 ## 8. How the File Evolves
 
