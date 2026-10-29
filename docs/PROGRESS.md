@@ -998,13 +998,49 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0149 | 2026-10-29 | Task 5.6.2 & 5.6.3 — Add GET /api/guest/orders/[id] and GET /api/guest/orders | PASS | Milestone 5.6 | §5.3 |
 | ENTRY-0150 | 2026-10-29 | Task 5.6.4 — Verify guest order placement, read, list flow and close Milestone 5.6 | PASS | Milestone 5.6 | §5.3 |
 | ENTRY-0151 | 2026-10-29 | Task 5.7.1 — Add the order confirmation screen | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0152
+| ENTRY-0152 | 2026-10-29 | Task 5.7.2 — Add order tracking screen and OrderStatusTimeline | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0153
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.2 — Add the order tracking screen with the timeline.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.3 — Add the "add more items" action.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0152 — 2026-10-29 — Task 5.7.2 — Add order tracking screen and OrderStatusTimeline
+
+**Status:** PASS
+
+**Task:** Task 5.7.2 — Add the order tracking screen at `/order/[id]/track` with the status timeline
+
+**Summary:**
+1. Implemented `src/components/guest/order-status-timeline.tsx` (found as an empty 0-byte stub) to DESIGN.md §4.6.17.4 and §4.13.2:
+   - Vertical step progression: Placed -> Approved -> Preparing -> Ready -> Delivered -> Completed.
+   - Visual state indicators: Completed steps render filled brand dot with checkmark icon and solid brand connector line; current step renders filled brand dot with pulse animation (`animation: currentDotPulse 600ms ease-out 1 forwards`); future steps render subtle outline dots; cancelled orders render red dot with cross icon and cancelled label.
+   - Copy: Microcopy matches DESIGN.md §4.13.2 ("We have your order.", "The kitchen has accepted it.", "The kitchen is on it.", "Ready for your table.", "Delivered.", "Enjoy.").
+   - Timestamps: Populates transition times from `order.stateChanges` via `formatTime(change.occurredAt, locale)`.
+   - Motion: Honours `prefers-reduced-motion: reduce` by disabling pulse animations.
+2. Created `app/(guest)/order/[id]/track/page.tsx` as a Server Component implementing the tracking screen per DESIGN.md §4.8.5:
+   - Session check: Reads guest cookie via `getGuestCookie` and validates session via `getGuestSession`; redirects to `/` if missing or invalid.
+   - Order lookup & privacy: Calls `orderRepo.findById(session.venueId, id.trim())` and verifies `order.guestSessionId === session.id`; renders friendly `OrderNotFoundView` on mismatch or missing order without leaking existence.
+   - Sticky header: Renders back link to `/menu` (per DESIGN.md §4.8.5/§4.8.6) and order number in mono.
+   - Content hierarchy: Renders `OrderStatusTimeline` at the top as primary information, collapsible items list (`<details open>`) with item breakdown and frozen money totals via `formatMoney`, secondary "Add more items" link to `/menu` (full flow deferred to 5.7.3), and disabled ghost "Call a waiter" placeholder button (full action deferred to 5.7.4).
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: tapping "Track your order" on the confirmation opens the tracking screen and shows the order's current state in the timeline; a second guest session cannot open the URL.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| src/components/guest/order-status-timeline.tsx | New | Domain component for guest order status timeline per DESIGN.md §4.6.17.4 |
+| app/(guest)/order/[id]/track/page.tsx | New | Server Component for order tracking screen per DESIGN.md §4.8.5 |
+| docs/ROADMAP.md | Edit | Marked Task 5.7.2 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0152, updated §5.2 ledger row, bumped next entry number to 0153, advanced §7 snapshot to Task 5.7.3 |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (26 routes + 1 proxy middleware; includes `/order/[id]/track`)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (153 passed across 28 test files in 78.63s)
 
 ### ENTRY-0151 — 2026-10-29 — Task 5.7.1 — Add the order confirmation screen
 
@@ -4867,9 +4903,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.2 — Add the order tracking screen with the timeline.
+Current task: Task 5.7.3 — Add the "add more items" action.
 
-Current status: Task 5.7.1 complete. Order confirmation screen implemented at /order/[id] per DESIGN.md §4.8.4 as a Server Component reading guest session, enforcing privacy scoping against orderRepo.findById, rendering drawn checkmark (reduced-motion safe), order number in mono, read-only item summary, frozen money totals via formatMoney, "Track your order" link, and "Add more items" link. Cart Place order action navigates to /order/[id] on success. All four baselines green: tsc 0, build 25 routes + 1 proxy, unit 186/27, integration 153/28. Ready for Task 5.7.2.
+Current status: Task 5.7.2 complete. Order tracking screen implemented at /order/[id]/track per DESIGN.md §4.8.5 with OrderStatusTimeline (DESIGN.md §4.6.17.4), collapsible order items list, frozen money via formatMoney, "Add more items" link, and "Call a waiter" ghost placeholder. All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 153/28. Ready for Task 5.7.3.
 
 ## 8. How the File Evolves
 
