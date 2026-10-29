@@ -230,7 +230,14 @@ export default async function MenuPage(): Promise<JSX.Element> {
           __html: `
 (function() {
   var STORAGE_KEY = 'guest_menu_states';
-  var currentStates = ${JSON.stringify(currentItemStates)};
+  var initialStates = ${JSON.stringify(currentItemStates)};
+
+  // Seed sessionStorage on initial load if empty
+  try {
+    if (!sessionStorage.getItem(STORAGE_KEY)) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(initialStates));
+    }
+  } catch (e) {}
 
   function playPing() {
     try {
@@ -259,47 +266,99 @@ export default async function MenuPage(): Promise<JSX.Element> {
     }
   }
 
-  try {
-    var rawStored = sessionStorage.getItem(STORAGE_KEY);
-    if (rawStored) {
-      var prevStates = JSON.parse(rawStored);
-      var hasChanged = false;
+  function updateItemDOM(itemId, newState) {
+    var cards = document.querySelectorAll('[data-item-id="' + itemId + '"]');
+    cards.forEach(function(card) {
+      var img = card.querySelector('img');
+      var h3 = card.querySelector('h3');
 
-      var currentIds = Object.keys(currentStates);
-      for (var i = 0; i < currentIds.length; i++) {
-        var id = currentIds[i];
-        if (prevStates[id] !== undefined && prevStates[id] !== currentStates[id]) {
-          hasChanged = true;
-          break;
+      if (newState === 'UNAVAILABLE') {
+        card.classList.add('opacity-60');
+        card.classList.remove('cursor-pointer');
+        card.setAttribute('data-orderable', 'false');
+        if (img) img.classList.add('grayscale');
+        if (h3) {
+          h3.classList.remove('text-guest-text-primary');
+          h3.classList.add('text-guest-text-muted');
         }
-      }
 
-      if (!hasChanged) {
-        var prevIds = Object.keys(prevStates);
-        for (var j = 0; j < prevIds.length; j++) {
-          var pid = prevIds[j];
-          if (currentStates[pid] !== undefined && currentStates[pid] !== prevStates[pid]) {
-            hasChanged = true;
-            break;
+        var existingBadge = card.querySelector('[data-status="cancelled"], [data-unavailable-badge]');
+        if (!existingBadge) {
+          var badge = document.createElement('span');
+          badge.setAttribute('data-unavailable-badge', 'true');
+          badge.setAttribute('data-status', 'cancelled');
+          badge.className = 'inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[12px] font-medium leading-[16px] whitespace-nowrap select-none bg-status-cancelled-bg text-status-cancelled';
+          badge.textContent = 'Unavailable';
+          var titleContainer = h3 ? h3.parentElement : card;
+          if (titleContainer) {
+            titleContainer.appendChild(badge);
           }
         }
-      }
+      } else if (newState === 'AVAILABLE') {
+        card.classList.remove('opacity-60');
+        card.classList.add('cursor-pointer');
+        card.setAttribute('data-orderable', 'true');
+        card.style.display = '';
+        if (img) img.classList.remove('grayscale');
+        if (h3) {
+          h3.classList.add('text-guest-text-primary');
+          h3.classList.remove('text-guest-text-muted');
+        }
 
-      if (hasChanged) {
-        playPing();
+        var badges = card.querySelectorAll('[data-status="cancelled"], [data-unavailable-badge]');
+        badges.forEach(function(b) {
+          b.remove();
+        });
+      } else if (newState === 'HIDDEN') {
+        card.style.display = 'none';
       }
-    }
-
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentStates));
-  } catch (e) {
-    // SessionStorage unavailable fallback
+    });
   }
 
-  setInterval(function() {
-    if (document.visibilityState === 'visible') {
-      window.location.reload();
-    }
-  }, 5000);
+  function checkStates() {
+    if (document.visibilityState !== 'visible') return;
+
+    fetch('/api/guest/menu/states')
+      .then(function(res) {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then(function(json) {
+        if (!json || !Array.isArray(json.data)) return;
+
+        var newItems = json.data;
+        var storedRaw = null;
+        try {
+          storedRaw = sessionStorage.getItem(STORAGE_KEY);
+        } catch (e) {}
+
+        var prevStates = storedRaw ? JSON.parse(storedRaw) : initialStates;
+        var newStatesMap = {};
+        var anyChanged = false;
+
+        for (var i = 0; i < newItems.length; i++) {
+          var item = newItems[i];
+          newStatesMap[item.id] = item.state;
+          if (prevStates[item.id] && prevStates[item.id] !== item.state) {
+            anyChanged = true;
+            updateItemDOM(item.id, item.state);
+          }
+        }
+
+        if (anyChanged) {
+          playPing();
+        }
+
+        try {
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStatesMap));
+        } catch (e) {}
+      })
+      .catch(function() {
+        // Network error during poll, retry next tick
+      });
+  }
+
+  setInterval(checkStates, 5000);
 })();
 `,
         }}
