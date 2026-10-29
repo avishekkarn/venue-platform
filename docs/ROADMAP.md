@@ -447,7 +447,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                                                        | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 5.7.1 | Add the order confirmation screen                                                                                                           | ⬜     | 5.6.4      |
+| 5.7.1 | Add the order confirmation screen                                                                                                           | ✅ Complete | 5.6.4      |
 | 5.7.2 | Add the order tracking screen with the timeline                                                                                             | ⬜     | 5.7.1      |
 | 5.7.3 | Add the "add more items" action                                                                                                             | ⬜     | 5.7.2      |
 | 5.7.4 | Add the "call a waiter" and "request the bill" actions                                                                                      | ⬜     | 5.7.2      |

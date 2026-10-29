@@ -997,13 +997,47 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0148 | 2026-10-29 | Task 5.6.1 — Add POST /api/guest/orders and wire cart Place order seam | PASS | Milestone 5.6 | §5.3 |
 | ENTRY-0149 | 2026-10-29 | Task 5.6.2 & 5.6.3 — Add GET /api/guest/orders/[id] and GET /api/guest/orders | PASS | Milestone 5.6 | §5.3 |
 | ENTRY-0150 | 2026-10-29 | Task 5.6.4 — Verify guest order placement, read, list flow and close Milestone 5.6 | PASS | Milestone 5.6 | §5.3 |
-Next entry number: 0151
+| ENTRY-0151 | 2026-10-29 | Task 5.7.1 — Add the order confirmation screen | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0152
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.1 — Add the order confirmation screen.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.2 — Add the order tracking screen with the timeline.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0151 — 2026-10-29 — Task 5.7.1 — Add the order confirmation screen
+
+**Status:** PASS
+
+**Task:** Task 5.7.1 — Add the order confirmation screen
+
+**Summary:**
+1. Created `app/(guest)/order/[id]/page.tsx` as a Server Component implementing the order confirmation screen per DESIGN.md §4.8.4:
+   - Session resolution: Reads guest session from `venue_guest` cookie via `getGuestCookie` and validates through `getGuestSession`; redirects to `/` if missing or invalid.
+   - Order retrieval: Calls `orderRepo.findById(session.venueId, id)` directly in the Server Component (avoiding internal HTTP round-trips).
+   - Privacy scoping: Verifies `order.guestSessionId === session.id`; renders friendly `OrderNotFoundView` ("We couldn't find that order." with a "Back to menu" link) on non-existent order or session mismatch, avoiding 404 leakage per SYSTEM.md §15.4.
+   - Design anatomy: Large check mark drawn in `--guest-brand` animated once over 600ms via SVG path stroke-dashoffset (reduced-motion safe with immediate display fallback), headline "Your order is on its way." in `--guest-text-h1` (Fraunces), order number in mono ("Order #<first-8-chars>"), read-only summary list of items with quantities, modifier names, item notes, and frozen `lineTotal` formatted via `formatMoney`, subtotal, tax amount, and total formatted via `formatMoney`.
+   - Actions: Primary "Track your order" button linking to `/order/[id]/track` (honest path deferring screen build to Task 5.7.2) and secondary "Add more items" link to `/menu`.
+2. Updated `app/(guest)/cart/page.tsx` in `handlePlaceOrder`:
+   - On successful order submission (`response.ok && json.data && json.data.id`), clears `localStorage.guest_cart`, resets idempotency key, and navigates via `window.location.href = '/order/' + encodeURIComponent(json.data.id)`.
+   - Replaced inline confirmation block; error and failure handling remains intact.
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: placing an order navigates to the confirmation screen at `/order/[id]`, which shows the order number, items, and total; a second guest session cannot open the first guest's confirmation URL.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/(guest)/order/[id]/page.tsx | New | Server Component for order confirmation screen per DESIGN.md §4.8.4 |
+| app/(guest)/cart/page.tsx | Edit | Updated handlePlaceOrder success block to navigate to `/order/[id]` |
+| docs/ROADMAP.md | Edit | Marked Task 5.7.1 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0151, updated §5.2 ledger row, bumped next entry number to 0152, advanced §7 snapshot to Task 5.7.2 |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (25 routes + 1 proxy middleware; includes `/order/[id]`)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (153 passed across 28 test files in 76.66s)
 
 ### ENTRY-0150 — 2026-10-29 — Task 5.6.4 — Verify guest order placement, read, list flow and close Milestone 5.6
 
@@ -4833,9 +4867,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.1 — Add the order confirmation screen.
+Current task: Task 5.7.2 — Add the order tracking screen with the timeline.
 
-Current status: Milestone 5.6 (The Order Routes) is closed. All four tasks (5.6.1, 5.6.2, 5.6.3, 5.6.4) are complete and verified against real PostgreSQL. End-to-end order placement, read, and list flow verified with SYSTEM.md §12 envelope conformance ({ data } on success, { error } on failure). 13 tests passing in tests/integration/api/guest-orders.test.ts. All four baselines green: tsc 0, build 24 routes + 1 proxy, unit 186/27, integration 153/28. W-0001 is discharged. Milestone 5.7 unblocked.
+Current status: Task 5.7.1 complete. Order confirmation screen implemented at /order/[id] per DESIGN.md §4.8.4 as a Server Component reading guest session, enforcing privacy scoping against orderRepo.findById, rendering drawn checkmark (reduced-motion safe), order number in mono, read-only item summary, frozen money totals via formatMoney, "Track your order" link, and "Add more items" link. Cart Place order action navigates to /order/[id] on success. All four baselines green: tsc 0, build 25 routes + 1 proxy, unit 186/27, integration 153/28. Ready for Task 5.7.2.
 
 ## 8. How the File Evolves
 
