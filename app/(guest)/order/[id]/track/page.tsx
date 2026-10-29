@@ -326,7 +326,7 @@ export default async function TrackOrderPage({
           </div>
         </section>
 
-        {/* Actions (DESIGN.md §4.8.5) */}
+        {/* Actions (DESIGN.md §4.8.5, §4.6.17.18, §4.13.2) */}
         <div className="pt-2 space-y-3">
           <div className="space-y-1.5">
             <Link
@@ -340,16 +340,123 @@ export default async function TrackOrderPage({
             </p>
           </div>
 
-          <button
-            type="button"
-            disabled
-            className="w-full h-10 rounded-md bg-transparent text-guest-text-muted font-medium text-sm inline-flex items-center justify-center cursor-not-allowed opacity-50 select-none outline-none"
-            title="Waiter call will be enabled in Task 5.7.4"
-          >
-            Call a waiter
-          </button>
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <button
+              id="btn-call-waiter"
+              type="button"
+              className="w-full h-10 rounded-md border border-guest-border-strong bg-transparent text-guest-text-primary font-medium text-sm inline-flex items-center justify-center hover:bg-guest-surface-sunken transition-all select-none outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Call a waiter
+            </button>
+            <button
+              id="btn-request-bill"
+              type="button"
+              className="w-full h-10 rounded-md border border-guest-border-strong bg-transparent text-guest-text-primary font-medium text-sm inline-flex items-center justify-center hover:bg-guest-surface-sunken transition-all select-none outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Request the bill
+            </button>
+          </div>
+
+          <div
+            id="call-status-message"
+            className="hidden text-center text-sm font-medium py-2 px-3 rounded-md transition-all"
+            role="status"
+            aria-live="polite"
+          />
         </div>
       </main>
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+(function() {
+  var callWaiterBtn = document.getElementById('btn-call-waiter');
+  var requestBillBtn = document.getElementById('btn-request-bill');
+  var statusMsg = document.getElementById('call-status-message');
+  var orderId = ${JSON.stringify(urlOrder.id)};
+  var inFlight = false;
+
+  function showStatus(text, isError) {
+    if (!statusMsg) return;
+    statusMsg.textContent = text;
+    statusMsg.className = isError
+      ? 'text-center text-sm font-medium py-2 px-3 rounded-md bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-200 dark:border-red-900 transition-all block'
+      : 'text-center text-sm font-medium py-2 px-3 rounded-md bg-guest-surface-sunken text-guest-text-primary border border-guest-border-subtle transition-all block';
+  }
+
+  function sendCall(type) {
+    if (inFlight) return;
+    inFlight = true;
+
+    if (callWaiterBtn) callWaiterBtn.disabled = true;
+    if (requestBillBtn) requestBillBtn.disabled = true;
+
+    showStatus('Sending request...', false);
+
+    fetch('/api/guest/call', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: type,
+        orderId: orderId,
+      }),
+    })
+    .then(function(res) {
+      return res.json().then(function(data) {
+        return { ok: res.ok, status: res.status, data: data };
+      });
+    })
+    .then(function(result) {
+      inFlight = false;
+      if (!result.ok) {
+        var err = (result.data && result.data.error && result.data.error.message) || 'Failed to submit request';
+        showStatus(err, true);
+        if (callWaiterBtn) callWaiterBtn.disabled = false;
+        if (requestBillBtn) requestBillBtn.disabled = false;
+        return;
+      }
+
+      if (type === 'WAITER') {
+        showStatus('A waiter is on the way.', false);
+        if (callWaiterBtn) {
+          callWaiterBtn.disabled = true;
+          callWaiterBtn.textContent = 'Waiter called';
+        }
+        if (requestBillBtn) requestBillBtn.disabled = false;
+      } else {
+        showStatus('The bill is on its way.', false);
+        if (requestBillBtn) {
+          requestBillBtn.disabled = true;
+          requestBillBtn.textContent = 'Bill requested';
+        }
+        if (callWaiterBtn) callWaiterBtn.disabled = false;
+      }
+    })
+    .catch(function() {
+      inFlight = false;
+      showStatus('Network error. Please try again.', true);
+      if (callWaiterBtn) callWaiterBtn.disabled = false;
+      if (requestBillBtn) requestBillBtn.disabled = false;
+    });
+  }
+
+  if (callWaiterBtn) {
+    callWaiterBtn.addEventListener('click', function() {
+      sendCall('WAITER');
+    });
+  }
+
+  if (requestBillBtn) {
+    requestBillBtn.addEventListener('click', function() {
+      sendCall('BILL');
+    });
+  }
+})();
+`,
+        }}
+      />
     </div>
   );
 }

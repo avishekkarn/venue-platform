@@ -1002,13 +1002,53 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0153 | 2026-10-29 | Task 5.7.3 — Verify "Add more items" second order flow and add copy | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0154 | 2026-10-29 | Task 5.7.0A — Extend ServiceRequest storage and domain for table/counter calls | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0155 | 2026-10-29 | Task 5.7.0B — Show all session orders and combined bill on tracking screen | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0156
+| ENTRY-0156 | 2026-10-29 | Task 5.7.4 — Add real "Call a waiter" and "Request the bill" actions | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0157
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.5 — Add the polling on the tracking screen.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0156 — 2026-10-29 — Task 5.7.4 — Add real "Call a waiter" and "Request the bill" actions
+
+**Status:** PASS
+
+**Task:** Task 5.7.4 — Add the "call a waiter" and "request the bill" actions on the tracking screen and add POST /api/guest/call
+
+**Summary:**
+1. Route Handler (`app/api/guest/call/route.ts`):
+   - Implemented `POST /api/guest/call` with `setTestDbClient` test client injection pattern.
+   - Validates active guest session via `getGuestCookie` and `getGuestSession`, returning 401 `UNAUTHORIZED` on missing or invalid cookie/session.
+   - Validates call type in request body strictly as `"WAITER" | "BILL"`, returning 400 `VALIDATION_FAILED` on malformed JSON or unsupported types.
+   - Resolves venue and place exclusively from the guest session (`session.venueId`, `session.placeType`, `session.placeId` mapping to `tableId` / `roomId` / `counterId`). Any client-supplied venue or place in the body is strictly ignored per D-2.1 and hard prohibitions.
+   - Supports optional `orderId` in request body, validating that the order exists and belongs to the active guest session before persisting in `details: { orderId }`.
+   - Calls domain orchestrator `createRequest({ requestRepo }, input)` to persist a `ServiceRequest` with `HotelService.CALL_WAITER` or `HotelService.REQUEST_BILL` in state `SUBMITTED`, returning 201 with `{ data: request }` envelope.
+2. Tracking Page Integration (`app/(guest)/order/[id]/track/page.tsx`):
+   - Replaced disabled placeholder button with two real interactive buttons: "Call a waiter" (`#btn-call-waiter`) and "Request the bill" (`#btn-request-bill`).
+   - Injected self-contained native DOM script: attaches click event listeners, prevents duplicate submissions using an `inFlight` boolean guard, disables buttons during transmission, displays sending state, and handles API response.
+   - On success: displays exact DESIGN.md §4.13.2 guest-voice confirmation copy in an accessible inline status container (`role="status" aria-live="polite"`): *"A waiter is on the way."* for waiter calls and *"The bill is on its way."* for bill requests; marks the submitted button disabled with confirmation label while keeping the other action available.
+   - Confirmed all-orders list, timelines, and combined bill block remain completely intact.
+3. Test Verification (`tests/integration/api/guest-call.test.ts`):
+   - Created dedicated integration suite covering 6 test cases: Case 1 (Happy path: table waiter call creates CALL_WAITER ServiceRequest, verified via DB read back), Case 2 (Happy path: room bill request creates REQUEST_BILL with verified orderId context), Case 3 (401 on missing session cookie), Case 4 (400 on invalid or missing type), Case 5 (Session-scoped storage: ignores client-supplied tampered venueId/tableId/placeType), Case 6 (Rejects cross-session orderId with 400). All 6 cases pass.
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: tapping "Call a waiter" or "Request the bill" on the tracking screen records the request, shows the confirmation copy, and does not duplicate on repeated clicks; the request is stored against the guest's own place.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/api/guest/call/route.ts | New | Route handler for POST /api/guest/call recording CALL_WAITER/REQUEST_BILL requests |
+| app/(guest)/order/[id]/track/page.tsx | Edit | Wired real Call waiter and Request bill buttons with native DOM script, status copy, and repeat-click guard |
+| tests/integration/api/guest-call.test.ts | New | Integration test suite covering 6 cases for POST /api/guest/call |
+| docs/ROADMAP.md | Edit | Marked Task 5.7.4 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0156, updated §5.2 ledger, bumped next entry to 0157, advanced §7 snapshot to Task 5.7.5 next |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (27 routes + 1 proxy middleware, including `ƒ /api/guest/call`)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (162 passed across 29 test files in 75.07s)
 
 ### ENTRY-0155 — 2026-10-29 — Task 5.7.0B — Show all session orders and combined bill on tracking screen
 
@@ -5006,9 +5046,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
+Current task: Task 5.7.5 — Add the polling on the tracking screen.
 
-Current status: Task 5.7.0B complete. The tracking screen (/order/[id]/track) now displays all orders belonging to the guest session on a single page via direct orderRepo.listForGuestSession call, with the URL order placed first followed by other session orders newest-first. Each order renders in an identifiable card with Order #<first-8>, its own OrderStatusTimeline, and collapsible items list. At the bottom, a "Total for all orders" block displays the sum of frozen order totals with formatMoney and the line "Your orders will be combined into one bill." (D-4.5). URL-order privacy scoping is strictly preserved. All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 156/28. Ready for Task 5.7.4.
+Current status: Task 5.7.4 complete. Real "Call a waiter" and "Request the bill" actions delivered on tracking screen with native DOM script, in-flight submission guard, and DESIGN.md §4.13.2 confirmation copy ("A waiter is on the way." / "The bill is on its way."). Route POST /api/guest/call records CALL_WAITER and REQUEST_BILL service requests scoped strictly to session venue and place, with tampered-place protection verified. Dedicated integration suite tests/integration/api/guest-call.test.ts covers happy paths, 401, 400, and session scoping (6/6 passed). All four baselines green: tsc 0, build 27 routes + 1 proxy (including /api/guest/call), unit 186/27, integration 162/29. Ready for Task 5.7.5.
 
 ## 8. How the File Evolves
 

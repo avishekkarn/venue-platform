@@ -59,45 +59,57 @@ const DOMAIN_TO_PRISMA_REQUEST_STATE: Record<RequestState, PrismaRequestState> =
   [RequestState.DECLINED]: PrismaRequestState.DECLINED,
 };
 
-const PRISMA_TO_DOMAIN_PLACE_TYPE: Record<PrismaPlaceType, PlaceType> = {
-  [PrismaPlaceType.TABLE]: PlaceType.TABLE,
-  [PrismaPlaceType.ROOM]: PlaceType.ROOM,
-  [PrismaPlaceType.COUNTER]: PlaceType.COUNTER,
-};
+function toPrismaHotelService(service: HotelService): PrismaHotelService {
+  switch (service) {
+    case HotelService.ROOM_SERVICE_FOOD: return PrismaHotelService.ROOM_SERVICE_FOOD;
+    case HotelService.HOUSEKEEPING: return PrismaHotelService.HOUSEKEEPING;
+    case HotelService.MAINTENANCE: return PrismaHotelService.MAINTENANCE;
+    case HotelService.CONCIERGE: return PrismaHotelService.CONCIERGE;
+    case HotelService.LAUNDRY: return PrismaHotelService.LAUNDRY;
+    case HotelService.SPA: return PrismaHotelService.SPA;
+    case HotelService.LATE_CHECKOUT: return PrismaHotelService.LATE_CHECKOUT;
+    case HotelService.WAKE_UP_CALL: return PrismaHotelService.WAKE_UP_CALL;
+    case HotelService.DO_NOT_DISTURB: return PrismaHotelService.DO_NOT_DISTURB;
+    case HotelService.CALL_WAITER: return PrismaHotelService.CALL_WAITER;
+    case HotelService.REQUEST_BILL: return PrismaHotelService.REQUEST_BILL;
+    default: throw new Error(`Unmapped service type: ${service}`);
+  }
+}
 
-const DOMAIN_TO_PRISMA_PLACE_TYPE: Record<PlaceType, PrismaPlaceType> = {
-  [PlaceType.TABLE]: PrismaPlaceType.TABLE,
-  [PlaceType.ROOM]: PrismaPlaceType.ROOM,
-  [PlaceType.COUNTER]: PrismaPlaceType.COUNTER,
-};
+function fromPrismaHotelService(service: PrismaHotelService): HotelService {
+  switch (service) {
+    case PrismaHotelService.ROOM_SERVICE_FOOD: return HotelService.ROOM_SERVICE_FOOD;
+    case PrismaHotelService.HOUSEKEEPING: return HotelService.HOUSEKEEPING;
+    case PrismaHotelService.MAINTENANCE: return HotelService.MAINTENANCE;
+    case PrismaHotelService.CONCIERGE: return HotelService.CONCIERGE;
+    case PrismaHotelService.LAUNDRY: return HotelService.LAUNDRY;
+    case PrismaHotelService.SPA: return HotelService.SPA;
+    case PrismaHotelService.LATE_CHECKOUT: return HotelService.LATE_CHECKOUT;
+    case PrismaHotelService.WAKE_UP_CALL: return HotelService.WAKE_UP_CALL;
+    case PrismaHotelService.DO_NOT_DISTURB: return HotelService.DO_NOT_DISTURB;
+    case PrismaHotelService.CALL_WAITER: return HotelService.CALL_WAITER;
+    case PrismaHotelService.REQUEST_BILL: return HotelService.REQUEST_BILL;
+    default: throw new Error(`Unmapped Prisma service type: ${service}`);
+  }
+}
 
-const PRISMA_TO_DOMAIN_HOTEL_SERVICE: Record<PrismaHotelService, HotelService> = {
-  [PrismaHotelService.ROOM_SERVICE_FOOD]: HotelService.ROOM_SERVICE_FOOD,
-  [PrismaHotelService.HOUSEKEEPING]: HotelService.HOUSEKEEPING,
-  [PrismaHotelService.MAINTENANCE]: HotelService.MAINTENANCE,
-  [PrismaHotelService.CONCIERGE]: HotelService.CONCIERGE,
-  [PrismaHotelService.LAUNDRY]: HotelService.LAUNDRY,
-  [PrismaHotelService.SPA]: HotelService.SPA,
-  [PrismaHotelService.LATE_CHECKOUT]: HotelService.LATE_CHECKOUT,
-  [PrismaHotelService.WAKE_UP_CALL]: HotelService.WAKE_UP_CALL,
-  [PrismaHotelService.DO_NOT_DISTURB]: HotelService.DO_NOT_DISTURB,
-  [PrismaHotelService.CALL_WAITER]: HotelService.CALL_WAITER,
-  [PrismaHotelService.REQUEST_BILL]: HotelService.REQUEST_BILL,
-};
+function toPrismaPlaceType(place: PlaceType): PrismaPlaceType {
+  switch (place) {
+    case PlaceType.TABLE: return PrismaPlaceType.TABLE;
+    case PlaceType.ROOM: return PrismaPlaceType.ROOM;
+    case PlaceType.COUNTER: return PrismaPlaceType.COUNTER;
+    default: throw new Error(`Unmapped place type: ${place}`);
+  }
+}
 
-const DOMAIN_TO_PRISMA_HOTEL_SERVICE: Record<HotelService, PrismaHotelService> = {
-  [HotelService.ROOM_SERVICE_FOOD]: PrismaHotelService.ROOM_SERVICE_FOOD,
-  [HotelService.HOUSEKEEPING]: PrismaHotelService.HOUSEKEEPING,
-  [HotelService.MAINTENANCE]: PrismaHotelService.MAINTENANCE,
-  [HotelService.CONCIERGE]: PrismaHotelService.CONCIERGE,
-  [HotelService.LAUNDRY]: PrismaHotelService.LAUNDRY,
-  [HotelService.SPA]: PrismaHotelService.SPA,
-  [HotelService.LATE_CHECKOUT]: PrismaHotelService.LATE_CHECKOUT,
-  [HotelService.WAKE_UP_CALL]: PrismaHotelService.WAKE_UP_CALL,
-  [HotelService.DO_NOT_DISTURB]: PrismaHotelService.DO_NOT_DISTURB,
-  [HotelService.CALL_WAITER]: PrismaHotelService.CALL_WAITER,
-  [HotelService.REQUEST_BILL]: PrismaHotelService.REQUEST_BILL,
-};
+function fromPrismaPlaceType(place: PrismaPlaceType): PlaceType {
+  switch (place) {
+    case PrismaPlaceType.TABLE: return PlaceType.TABLE;
+    case PrismaPlaceType.ROOM: return PlaceType.ROOM;
+    case PrismaPlaceType.COUNTER: return PlaceType.COUNTER;
+    default: throw new Error(`Unmapped Prisma place type: ${place}`);
+  }
+}
 
 type RawServiceRequestWithRelations = PrismaServiceRequest & {
   stateChanges: PrismaRequestStateChange[];
@@ -133,11 +145,11 @@ function mapServiceRequest(raw: RawServiceRequestWithRelations): ServiceRequest 
   return {
     id: raw.id,
     venueId: raw.venueId,
-    placeType: raw.placeType ? PRISMA_TO_DOMAIN_PLACE_TYPE[raw.placeType] : null,
+    placeType: raw.placeType ? fromPrismaPlaceType(raw.placeType) : null,
     roomId: raw.roomId,
     tableId: raw.tableId,
     counterId: raw.counterId,
-    serviceType: PRISMA_TO_DOMAIN_HOTEL_SERVICE[raw.serviceType],
+    serviceType: fromPrismaHotelService(raw.serviceType),
     state: PRISMA_TO_DOMAIN_REQUEST_STATE[raw.state],
     details,
     submittedAt: raw.submittedAt,
@@ -185,12 +197,12 @@ export function createPrismaServiceRequestRepository(
             data: {
               venueId: input.venueId,
               placeType: input.placeType
-                ? DOMAIN_TO_PRISMA_PLACE_TYPE[input.placeType]
+                ? toPrismaPlaceType(input.placeType)
                 : null,
               roomId: input.roomId ?? null,
               tableId: input.tableId ?? null,
               counterId: input.counterId ?? null,
-              serviceType: DOMAIN_TO_PRISMA_HOTEL_SERVICE[input.serviceType],
+              serviceType: toPrismaHotelService(input.serviceType),
               state: PrismaRequestState.SUBMITTED,
               detailsJson: (input.details ?? {}) as Prisma.InputJsonValue,
               stateChanges: {
@@ -238,7 +250,7 @@ export function createPrismaServiceRequestRepository(
             ...(filter?.serviceType
               ? {
                   serviceType:
-                    DOMAIN_TO_PRISMA_HOTEL_SERVICE[filter.serviceType],
+                    toPrismaHotelService(filter.serviceType),
                 }
               : {}),
             ...(filter?.state
