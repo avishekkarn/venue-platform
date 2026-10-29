@@ -906,3 +906,188 @@ describe("GET /api/guest/orders Integration Tests (Task 5.6.3)", () => {
     });
   });
 });
+
+describe("Milestone 5.6 Verification — Complete Guest Order Flow and Envelope Conformance (Task 5.6.4)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    setTestDbClient(null);
+  });
+
+  it("5.6.4 Full guest order flow: place order -> read back by id -> list session orders with SYSTEM.md §12 envelope conformance", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      // 1. Fixture: venue with 10% tax rate
+      const venue = await tx.venue.create({
+        data: {
+          name: "Flow Verification Bistro",
+          slug: `flow-verify-${Date.now()}`,
+          taxRate: "0.1000",
+        },
+      });
+
+      // 2. Fixture: table
+      const table = await tx.table.create({
+        data: {
+          venueId: venue.id,
+          number: "T-VERIFY",
+        },
+      });
+
+      // 3. Fixture: menu category & item ($10.00)
+      const category = await tx.menuCategory.create({
+        data: {
+          venueId: venue.id,
+          name: "Mains",
+          sortOrder: 1,
+        },
+      });
+
+      const burger = await tx.menuItem.create({
+        data: {
+          venueId: venue.id,
+          categoryId: category.id,
+          name: "Verification Burger",
+          description: "Burger for verification",
+          price: "10.00",
+          state: MenuItemState.AVAILABLE,
+          sortOrder: 1,
+        },
+      });
+
+      // 4. Fixture: modifier group & option (+$2.00)
+      const modGroup = await tx.modifierGroup.create({
+        data: {
+          menuItemId: burger.id,
+          name: "Add-ons",
+          choiceType: ModifierChoiceType.SINGLE,
+          isRequired: false,
+          sortOrder: 1,
+        },
+      });
+
+      const cheese = await tx.modifierOption.create({
+        data: {
+          modifierGroupId: modGroup.id,
+          name: "Extra Cheddar",
+          additionalPrice: "2.00",
+          sortOrder: 1,
+        },
+      });
+
+      // 5. Fixture: active guest session for table
+      const sessionResult = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResult.ok).toBe(true);
+      if (!sessionResult.ok) throw new Error("Failed to create guest session fixture");
+      const guestSession = sessionResult.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+
+      // --- STEP A: POST /api/guest/orders (Place Order) ---
+      const postReq = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "44444444-cccc-4ccc-8ccc-444444444444",
+          items: [
+            {
+              menuItemId: burger.id,
+              quantity: 2,
+              selectedModifierIds: [cheese.id],
+            },
+          ],
+        }),
+      });
+
+      const postRes = await POST(postReq);
+      expect(postRes.status).toBe(201);
+      const postJson = await postRes.json();
+
+      // Envelope check: success envelope has data, no error (SYSTEM.md §12.1)
+      expect(postJson).toHaveProperty("data");
+      expect(postJson).not.toHaveProperty("error");
+      const createdOrder = postJson.data;
+
+      // Assert created order properties & frozen database money
+      // unit price = 10.00, modifier = 2.00 => line total = (10+2)*2 = 24.00
+      // subtotal = 24.00, taxRate = 0.1000, taxAmount = 2.40, total = 26.40
+      expect(createdOrder.venueId).toBe(venue.id);
+      expect(createdOrder.guestSessionId).toBe(guestSession.id);
+      expect(createdOrder.placeType).toBe(PlaceType.TABLE);
+      expect(createdOrder.tableId).toBe(table.id);
+      expect(createdOrder.subtotal).toBe("24.00");
+      expect(createdOrder.taxRate).toBe("0.1000");
+      expect(createdOrder.taxAmount).toBe("2.40");
+      expect(createdOrder.total).toBe("26.40");
+      expect(createdOrder.items).toHaveLength(1);
+      expect(createdOrder.items[0].quantity).toBe(2);
+      expect(createdOrder.items[0].lineTotal).toBe("24.00");
+
+      // --- STEP B: GET /api/guest/orders/[id] (Read Back Order) ---
+      const getReq = new NextRequest(
+        `http://localhost/api/guest/orders/${createdOrder.id}`,
+        { method: "GET" }
+      );
+      const getRes = await getOrderById(getReq, {
+        params: Promise.resolve({ id: createdOrder.id }),
+      });
+      expect(getRes.status).toBe(200);
+      const getJson = await getRes.json();
+
+      // Envelope check: success envelope has data, no error (SYSTEM.md §12.1)
+      expect(getJson).toHaveProperty("data");
+      expect(getJson).not.toHaveProperty("error");
+      const fetchedOrder = getJson.data;
+
+      // Assert fetched order matches created order
+      expect(fetchedOrder.id).toBe(createdOrder.id);
+      expect(fetchedOrder.subtotal).toBe("24.00");
+      expect(fetchedOrder.taxRate).toBe("0.1000");
+      expect(fetchedOrder.taxAmount).toBe("2.40");
+      expect(fetchedOrder.total).toBe("26.40");
+      expect(fetchedOrder.guestSessionId).toBe(guestSession.id);
+
+      // --- STEP C: GET /api/guest/orders (List Orders) ---
+      const listReq = new NextRequest("http://localhost/api/guest/orders", {
+        method: "GET",
+      });
+      const listRes = await listOrders(listReq);
+      expect(listRes.status).toBe(200);
+      const listJson = await listRes.json();
+
+      // Envelope check: success envelope has data, no error (SYSTEM.md §12.1)
+      expect(listJson).toHaveProperty("data");
+      expect(listJson).not.toHaveProperty("error");
+      const listData = listJson.data;
+
+      expect(Array.isArray(listData)).toBe(true);
+      expect(listData.some((o: { id: string }) => o.id === createdOrder.id)).toBe(true);
+
+      // --- STEP D: Negative Case Envelope Check (404 Not Found) ---
+      const nonExistentId = "00000000-0000-0000-0000-000000000000";
+      const notFoundReq = new NextRequest(
+        `http://localhost/api/guest/orders/${nonExistentId}`,
+        { method: "GET" }
+      );
+      const notFoundRes = await getOrderById(notFoundReq, {
+        params: Promise.resolve({ id: nonExistentId }),
+      });
+      expect(notFoundRes.status).toBe(404);
+      const notFoundJson = await notFoundRes.json();
+
+      // Envelope check: error envelope has error, no data (SYSTEM.md §12.1)
+      expect(notFoundJson).toHaveProperty("error");
+      expect(notFoundJson).not.toHaveProperty("data");
+      expect(notFoundJson.error.code).toBe(DomainErrorCode.NOT_FOUND);
+      expect(typeof notFoundJson.error.message).toBe("string");
+    });
+  });
+});
