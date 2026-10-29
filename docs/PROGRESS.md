@@ -991,13 +991,118 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0142 | 2026-10-29 | Task 5.4.6 — Add the empty cart state | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0143 | 2026-10-29 | Task 5.4.7 — Add the pickup-name field for the counter flow | PASS | Milestone 5.4 | §5.3 |
 | ENTRY-0144 | 2026-10-29 | Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured | PASS | Milestone 5.4 | §5.3 |
-Next entry number: 0145
+| ENTRY-0145 | 2026-10-29 | Task 5.5.1 — Add the price and tax computation (computePrice, computeTax, and the shared decimal-money helper) | PASS | Milestone 5.5 | §5.3 |
+Next entry number: 0146
 
-### 5.3 Current Milestone —  Milestone 5.5 (The Order Domain). Current task: Task 5.5.1 — Add the createOrder domain function.
+### 5.3 Current Milestone —  Milestone 5.5 (The Order Domain). Current task: Task 5.5.2 — Add the createOrder domain function.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0145 — 2026-10-29 — Task 5.5.1 — Add the price and tax computation (computePrice, computeTax, and the shared decimal-money helper)
+
+**Status:** PASS
+
+**Task:** Task 5.5.1 — Add the price and tax computation (`computePrice`, `computeTax`, and the shared decimal-money helper)
+
+**Summary:**
+Implemented the shared domain decimal-money arithmetic helper (`src/domain/shared/money.ts` providing `parseDecimal`, `roundToTwoDecimals`, `addDecimal`, and `multiplyDecimal`), the pure price computation module (`src/domain/orders/compute-price.ts` providing `computeLineTotal` and `computeSubtotal`), and the pure tax and total computation module (`src/domain/orders/compute-tax.ts` providing `computeTax` and `computeTotal`), exporting them through `src/domain/orders/index.ts`. All functions operate strictly on decimal strings across domain boundaries (BUILD.md §5.7, §7.1), validate inputs returning `Result<T>` with `DomainErrorCode.VALIDATION_FAILED` on malformed inputs (SYSTEM.md §5), and use exponential-scaled standard half-up rounding to two decimal places to prevent floating-point representation drift. Milestone 5.5 was restructured in ROADMAP.md: former 5.5.2 (price/tax computation) moved to 5.5.1 because `createOrder` depends on these computations, former 5.5.1 (`createOrder`) moved to 5.5.2, and former 5.5.4/5.5.5/5.5.6 consolidated into 5.5.3 (verification against the real database) because the transactional multi-row write and unique idempotency constraint are already implemented in `order.repo.ts`. Widened `vitest.config.ts` to include `tests/unit/orders/**/*.test.ts`, adding 36 unit tests across 2 new test suites (`tests/unit/orders/compute-price.test.ts` and `compute-tax.test.ts`), bringing the unit baseline to 173 passed across 26 files. All four baselines pass cleanly.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| src/domain/shared/money.ts | Create | Shared domain decimal-money helper (`parseDecimal`, `roundToTwoDecimals`, `addDecimal`, `multiplyDecimal`) |
+| src/domain/orders/compute-price.ts | Create | Pure price computation (`computeLineTotal`, `computeSubtotal`) |
+| src/domain/orders/compute-tax.ts | Create | Pure tax and total computation (`computeTax`, `computeTotal`) |
+| src/domain/orders/index.ts | Create | Barrel exports for orders domain functions |
+| tests/unit/orders/compute-price.test.ts | Create | 20 unit assertions for price arithmetic and money helpers |
+| tests/unit/orders/compute-tax.test.ts | Create | 16 unit assertions for tax and total arithmetic |
+| vitest.config.ts | Edit | Widened unit test include pattern to include `tests/unit/orders/**/*.test.ts` |
+| docs/ROADMAP.md | Edit | Marked Task 5.5.1 complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0145, updated §5.2 ledger row, bumped next entry number to 0146, advanced §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  26 passed (26)
+#      Tests  173 passed (173)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  133 passed (133)
+#   Duration  74.14s
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `money.ts`, `compute-price.ts`, `compute-tax.ts` are no longer 0 bytes and contain helper and functions | PASS | Full files written and verified in codebase |
+| 2 | Public functions take and return decimal strings; malformed input returns `VALIDATION_FAILED`; no float artefacts | PASS | Verified by 36 unit tests covering empty, malformed, negative, float addition (0.1+0.2), and scaling |
+| 3 | `computeLineTotal` = (itemPrice + sum(mods)) * qty; `computeSubtotal` = sum(lineTotals); `computeTax` = subtotal * rate (half-up); `computeTotal` = subtotal + tax | PASS | Unit tests assert exact arithmetic for single/multi modifiers, quantities, fractional tax rates, zero rates, and totals |
+| 4 | `src/domain/orders/index.ts` exports `computeLineTotal`, `computeSubtotal`, `computeTax`, `computeTotal` | PASS | Barrel populated and verified |
+| 5 | Both unit test files exist with specified coverage and `pnpm test:unit` passes with new totals | PASS | `tests/unit/orders/compute-price.test.ts` (20 tests), `compute-tax.test.ts` (16 tests); unit total: 173 passed (26 files) |
+| 6 | Four baselines pass: tsc 0; build 22 routes + 1 proxy (Next.js 16.4.0 Turbopack); unit 173/26; integration 133/27 (74.14s) | PASS | All four commands executed with exit code 0 and exact expected outputs |
+| 7 | No out-of-scope file is touched; `src/lib/money.ts` and `tests/unit/lib/money.test.ts` unchanged | PASS | Verified via git status |
+| 8 | ROADMAP.md marks 5.5.1 complete; PROGRESS.md records ENTRY-0145 with ledger row on own line, next 0146, snapshot at 5.5.2 next, states restructure | PASS | Document updates verified |
+| 9 | Awaiting Human Verification: NO | PASS | Pure domain arithmetic with complete unit test verification |
+
+**Deviations:**
+`vitest.config.ts` was edited to add `"tests/unit/orders/**/*.test.ts"` to the `include` array. This was required because Vitest's explicitly scoped pattern excluded the `tests/unit/orders/` directory by default, following the exact precedent established in ENTRY-0109 when `tests/unit/menu/**/*.test.ts` was added.
+
+**Limitations:**
+None. Pure domain arithmetic with full unit coverage.
+
+**Next:**
+Task 5.5.2 — Add the `createOrder` domain function (validate, freeze item prices and modifiers, enforce the idempotency key, call the order repository).
+
+**Awaiting Human Verification:** NO
+
 
 ### ENTRY-0144 — 2026-10-29 — Task 5.4.8 — Verify: items can be added, adjusted, and removed; the totals are correct; the counter pickup name is captured
 
@@ -4215,11 +4320,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.5 (The Order Domain).
+Current milestone: Milestone 5.5 (The Order Domain) — in progress.
 
-Current task: Task 5.5.1 — Add the createOrder domain function.
+Current task: Task 5.5.2 — Add the createOrder domain function.
 
-Current status: Milestone 5.4 is closed — all eight tasks complete; the cart flow is verified on a real phone via LAN; the cart summary is a client-side display preview and the authoritative charged amount is deferred to 5.5.2/5.5.3 and verified at the Phase 5 acceptance test after 5.5.x; W-0001 remains OPEN, satisfied by Task 5.6.1. The last real baselines (Task 5.4.7 re-run) are green: tsc 0, build 22 routes + 1 proxy, unit 137/23, integration 133/27. Ready to begin Milestone 5.5.
+Current status: Task 5.5.1 complete — pure decimal money helper (src/domain/shared/money.ts), price arithmetic (computePrice.ts), tax and total arithmetic (computeTax.ts), and domain barrel exports verified with 36 new unit tests (173 passed across 26 files); Milestone 5.5 restructured (5.5.1 price/tax arithmetic, 5.5.2 createOrder, 5.5.3 verification). All four baselines green: tsc 0, build 22 routes + 1 proxy, unit 173/26, integration 133/27 (74.14s). Ready for Task 5.5.2.
 
 ## 8. How the File Evolves
 

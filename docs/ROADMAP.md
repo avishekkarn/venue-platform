@@ -422,7 +422,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                                                              | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 5.5.1 | Add the price and tax computation (`computePrice`, `computeTax`, and the shared decimal-money helper)                                             | ⬜     | 5.4.8      |
+| 5.5.1 | Add the price and tax computation (`computePrice`, `computeTax`, and the shared decimal-money helper)                                             | ✅ Complete | 5.4.8      |
 | 5.5.2 | Add the `createOrder` domain function (validate, freeze item prices and modifiers, enforce the idempotency key, call the order repository)          | ⬜     | 5.5.1      |
 | 5.5.3 | Verify: `createOrder` writes an order with frozen prices and tax and the initial `PLACED` state change in one transaction; a retry with the same idempotency key returns the existing order; the transaction rolls back on error. *(The transactional write and the idempotency constraint are already implemented in `src/infrastructure/db/repositories/order.repo.ts`; this task proves them against the real database.)* | ⬜     | 5.5.2      |
 
