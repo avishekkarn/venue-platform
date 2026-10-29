@@ -454,8 +454,10 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.7.0B | Show all session orders and combined bill on tracking screen                                                                                | ✅ Complete | 5.7.0A     |
 | 5.7.4  | Add the "call a waiter" and "request the bill" actions                                                                                      | ✅ Complete | 5.7.0A, 5.7.0B |
 | 5.7.5 | Add the polling on the tracking screen                                                                                                      | ✅ Complete | 5.7.2      |
-| 5.7.6 | Verify: an order placed from a phone appears on the tracking screen with the correct state; the state updates when it changes on the server | ⬜     | 5.7.5      |
-| 5.7.7 | Verify the counter loop: guest scans the counter QR, orders with a pickup name, staff marks ready for pickup, staff marks picked up         | ⬜     | 5.7.6      |
+| 5.7.6 | Verify: an order placed from a phone appears on the tracking screen with the correct state; the state updates when it changes on the server | ✅ Complete     | 5.7.5      |
+| 5.7.7 | Verify the counter loop: guest scans the counter QR, orders with a pickup name, staff marks ready for pickup, staff marks picked up         | ✅ Complete     | 5.7.6      |
+
+*(Milestone 5.7 (The Order Confirmation and Tracking) is closed — all seven tasks are complete. The guest can place an order, view the confirmation, track all their session orders on a single page with a combined bill, call a waiter/request the bill, and watch the timeline update live via polling. Verified manually on a mobile device via LAN. Phase 6 (The Kitchen) is unblocked.)*
 
 ### Milestone 5.8 — Menu item state updates
 

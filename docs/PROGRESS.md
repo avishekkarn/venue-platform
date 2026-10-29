@@ -1004,13 +1004,44 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0155 | 2026-10-29 | Task 5.7.0B — Show all session orders and combined bill on tracking screen | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0156 | 2026-10-29 | Task 5.7.4 — Add real "Call a waiter" and "Request the bill" actions | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0157 | 2026-10-29 | Task 5.7.5 — Add 5-second polling on the tracking screen | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0158
+| ENTRY-0158| 2026-10-29 | Task 5.7.6 and 6 — Verification | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0159
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.6 — Verify order updates live on tracking screen.
+### 5.3 Current Milestone — Milestone 5.8 (The Order Confirmation and Tracking). Current task: 5.8.1 | Add the admin action to change a menu item's state
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0158 — 2026-10-29 — Task 5.7.6 & 5.7.7 — Verify tracking loop and counter loop
+
+**Status:** PASS
+
+**Task:** Tasks 5.7.6 and 5.7.7 — Verify the table tracking loop and the counter loop.
+
+**Summary:**
+The human manually verified both loops on a physical phone via LAN. 
+1. **Table Loop (5.7.6):** An order was placed from a table QR. Using Prisma Studio, the order's state was manually advanced from PLACED to APPROVED, PREPARING, READY, and COMPLETED. The tracking screen successfully polled every 5 seconds, updating the timeline dynamically and showing the correct active/completed states without requiring a manual refresh. 
+2. **Counter Loop (5.7.7):** A counter QR was scanned, an item was ordered with a pickup name, and the order was placed. The tracking screen correctly displayed "Ready for pickup" and "Order picked up" copy for the COUNTER place type. State changes were successfully reflected on the phone via polling. 
+Milestone 5.7 (The Order Confirmation and Tracking) is now closed.
+
+**Note on AI Verification:**
+The coding AI (Gemini) did not run these tests. The human performed the verification manually using the actual mobile device and Prisma Studio.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| docs/ROADMAP.md | Edit | Marked Task 5.7.6 and 5.7.7 complete, recorded Milestone 5.7 closure |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0158, updated ledger, advanced snapshot |
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | Marked tasks 5.7.6 and 5.7.7 complete, closed Milestone 5.7 | Updated |
+| PROGRESS.md | Yes | Recorded ENTRY-0158 | Updated |
+| (all others) | No | Adheres to decisions | No change |
+
+**Next:** Phase 6 — The Kitchen. Task 6.1.1 — Add the order approval action.
 
 ### ENTRY-0157 — 2026-10-29 — Task 5.7.5 — Add 5-second polling on the tracking screen
 
