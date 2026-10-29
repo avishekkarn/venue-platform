@@ -1006,13 +1006,40 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0157 | 2026-10-29 | Task 5.7.5 — Add 5-second polling on the tracking screen | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0158 | 2026-10-29 | Task 5.7.6 & 5.7.7 — Verify tracking loop and counter loop | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Task 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
-Next entry number: 0160
+| ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
+Next entry number: 0161
 
-### 5.3 Current Milestone — Milestone 5.8 (Menu item state updates). Current task: Task 5.8.3 — Add the guest-side ping when an item's state changes.
+### 5.3 Current Milestone — Milestone 5.8 (Menu item state updates). Current task: Task 5.8.4 — Verify item marked unavailable greys out on guest screen within 5 seconds.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0160 — 2026-10-29 — Task 5.8.3 — Add guest-side audible ping on item state change
+
+**Status:** PASS
+
+**Task:** Task 5.8.3 — Add the guest-side ping when an item's state changes
+
+**Summary:**
+1. Guest Menu Audible Cue (`app/(guest)/menu/page.tsx`):
+   - Extracted server-rendered flat map of item states `currentItemStates: Record<string, string>` and serialized it into the injected client script.
+   - Script reads `guest_menu_states` from `sessionStorage` on page mount; on first visit, it seeds `sessionStorage` without pinging.
+   - When the page reloads via 5-second polling, the script compares prior states against the current server-rendered states.
+   - If any item's state changed (e.g. from AVAILABLE to UNAVAILABLE or HIDDEN), synthesizes an audible ping tone using the Web Audio API (sine wave at 880 Hz for 150ms with exponential gain ramp to prevent clicks, without loading external sound assets).
+   - Updates `sessionStorage` with the new states and maintains the 5-second visibility-guarded polling loop.
+2. Verification Results:
+   - `pnpm exec tsc --noEmit`: 0 errors (exit 0).
+   - `pnpm build`: 30 routes + 1 proxy middleware on Next.js 16.4.0 (Turbopack) (exit 0).
+
+**Awaiting Human Verification:** YES — on LAN mobile: keep `/menu` open on phone. From `/admin` on desktop, toggle a menu item to UNAVAILABLE. Within 5 seconds, the phone reloads, the item greys out, and the phone plays a short audible ping.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/(guest)/menu/page.tsx | Edit | Added item state extraction, sessionStorage state diffing, and Web Audio API ping synthesis |
+| docs/ROADMAP.md | Edit | Marked Task 5.8.3 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0160, updated §5.2 ledger, bumped next entry to 0161, advanced §7 snapshot to Task 5.8.4 next |
 
 ### ENTRY-0159 — 2026-10-29 — Tasks 5.8.1 & 5.8.2 — Admin item state action and guest menu refresh
 
@@ -5141,9 +5168,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.8 (Menu item state updates).
 
-Current task: Task 5.8.3 — Add the guest-side ping when an item's state changes.
+Current task: Task 5.8.4 — Verify item marked unavailable greys out on guest screen within 5 seconds.
 
-Current status: Tasks 5.8.1 and 5.8.2 complete. Implemented POST /api/admin/menu/items/[id]/state with admin role verification and MenuRepository.setItemState. Added menu item availability toggle UI on admin dashboard (/admin) with native DOM fetch and form fallback. Added 5-second visibility-guarded polling on guest menu (/menu). All four baselines pass: tsc exit 0, build 30 routes + 1 proxy on Next.js 16.4.0 Turbopack, unit 186/27, integration 162/29 (79.13s). Ready for Task 5.8.3.
+Current status: Task 5.8.3 complete. Added client-side state diffing via sessionStorage and Web Audio API sine ping (880 Hz, 150ms) to /menu. Verified tsc (0 errors) and pnpm build (30 routes + 1 proxy on Next.js 16.4.0 Turbopack). Ready for Task 5.8.4 verification.
 
 ## 8. How the File Evolves
 

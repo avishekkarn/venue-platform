@@ -386,7 +386,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.2.3 | Add the search bar                                                                                                      | ✅ Complete | 5.2.2      |
 | 5.2.4 | Add the unavailable-item state (greyed out, with a label)                                                               | ✅ Complete | 5.2.3      |
 | 5.2.5 | Add the floating cart bar                                                                                               | ✅ Complete | 5.2.4      |
-| 5.2.6 | Verify: the menu renders on a real phone; the categories work; the search filters; an unavailable item is not orderable | ⬜     | 5.2.5      |
+| 5.2.6 | Verify: the menu renders on a real phone; the categories work; the search filters; an unavailable item is not orderable | ✅ Complete | 5.2.5      |
 
 ### Milestone 5.3 — The modifier sheet
 
@@ -465,7 +465,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ----- | -------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 5.8.1 | Add the admin action to change a menu item's state                                                 | ✅ Complete | 5.7.7      |
 | 5.8.2 | Add the guest-side refresh when the state changes                                                  | ✅ Complete | 5.8.1      |
-| 5.8.3 | Add the guest-side ping when an item's state changes                                               | ⬜     | 5.8.2      |
+| 5.8.3 | Add the guest-side ping when an item's state changes                                               | ✅ Complete | 5.8.2      |
 | 5.8.4 | Verify: an item marked unavailable by the manager greys out on the guest's screen within 5 seconds | ⬜     | 5.8.3      |
 
 **Acceptance for Phase 5:** A guest can scan a QR, browse the menu, customize an item, add it to the cart, place the order, and see the order's confirmation and tracking. The order's prices and tax are frozen. The order appears in the manager's order list. Changing an item's state from the admin panel updates the guest's screen.
