@@ -8,7 +8,10 @@ import { getGuestSession } from "@/domain/guest/guest-session.service";
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
+import { OrderState } from "@/domain/orders/order.repository";
+import { addDecimal } from "@/domain/shared/money";
 import { formatMoney } from "@/lib/money";
+import { formatTime } from "@/lib/date";
 import { OrderStatusTimeline } from "@/components/guest/order-status-timeline";
 
 export const metadata: Metadata = {
@@ -70,27 +73,57 @@ export default async function TrackOrderPage({
     return <OrderNotFoundView />;
   }
 
-  // 3. Read order directly through order repository
+  // 3. Read URL order directly through order repository
   const orderRepo = createPrismaOrderRepository(prisma);
   const orderResult = await orderRepo.findById(session.venueId, id.trim());
   if (!orderResult.ok) {
     return <OrderNotFoundView />;
   }
 
-  const order = orderResult.value;
+  const urlOrder = orderResult.value;
 
   // 4. Privacy & session scoping: verify order belongs to active guestSessionId
-  if (order.guestSessionId !== session.id) {
+  if (urlOrder.guestSessionId !== session.id) {
     return <OrderNotFoundView />;
   }
 
-  // 5. Read venue for currency and locale
+  // 5. Read all orders for this guest session
+  const listResult = await orderRepo.listForGuestSession(
+    session.venueId,
+    session.id
+  );
+  const allOrders = listResult.ok ? listResult.value : [urlOrder];
+
+  // 6. Order list: place URL order first, followed by others newest-first
+  const otherOrders = allOrders
+    .filter((o) => o.id !== urlOrder.id)
+    .sort(
+      (a, b) =>
+        new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()
+    );
+  const orderedList = [urlOrder, ...otherOrders];
+
+  // 7. Read venue for currency and locale
   const venueRepo = createPrismaVenueRepository(prisma);
   const venueResult = await venueRepo.findById(session.venueId);
   const currency = venueResult.ok ? venueResult.value.currency : "USD";
   const locale = venueResult.ok ? venueResult.value.language : "en-US";
 
-  const orderNumberShort = order.id.slice(0, 8);
+  // 8. Compute display sum of frozen order totals for all billable orders (active + completed)
+  const billOrders = allOrders.filter(
+    (o) => o.state !== OrderState.CANCELLED
+  );
+  const combinedTotalDecimal = billOrders.reduce(
+    (sum, o) => addDecimal(sum, o.total),
+    "0.00"
+  );
+  const combinedTotalFormatted = formatMoney(
+    combinedTotalDecimal,
+    currency,
+    locale
+  );
+
+  const urlOrderNumberShort = urlOrder.id.slice(0, 8);
 
   return (
     <div className="min-h-dvh flex flex-col">
@@ -117,127 +150,184 @@ export default async function TrackOrderPage({
         </Link>
 
         <span className="font-mono text-sm font-medium text-guest-text-primary">
-          Order #{orderNumberShort}
+          {orderedList.length === 1
+            ? `Order #${urlOrderNumberShort}`
+            : "Your Orders"}
         </span>
 
         <div className="w-14" aria-hidden="true" />
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-[480px] mx-auto px-4 py-6">
-        {/* Order Status Timeline Card */}
-        <section
-          aria-labelledby="timeline-heading"
-          className="rounded-lg bg-guest-surface-raised border border-guest-border-subtle p-5 shadow-sm"
-        >
-          <h2
-            id="timeline-heading"
-            className="text-xs font-semibold uppercase tracking-wider text-guest-text-muted mb-4"
-          >
-            Order Progress
-          </h2>
-          <OrderStatusTimeline
-            currentState={order.state}
-            stateChanges={order.stateChanges}
-            placeType={order.placeType}
-            locale={locale}
-          />
-        </section>
+      <main className="flex-1 w-full max-w-[480px] mx-auto px-4 py-6 space-y-6">
+        {/* Order Cards List */}
+        {orderedList.map((order, index) => {
+          const orderNumShort = order.id.slice(0, 8);
+          const isUrlOrder = order.id === urlOrder.id;
+          const placedTime = formatTime(new Date(order.placedAt), locale);
 
-        {/* Collapsible Items List (DESIGN.md §4.8.5) */}
-        <details
-          open
-          className="group mt-6 rounded-lg bg-guest-surface-raised border border-guest-border-subtle shadow-sm overflow-hidden"
-        >
-          <summary className="flex items-center justify-between p-4 cursor-pointer select-none font-medium text-sm text-guest-text-primary hover:bg-guest-surface-sunken transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <span>
-              Order Items ({order.items.length}{" "}
-              {order.items.length === 1 ? "item" : "items"})
-            </span>
-            <svg
-              className="size-4 text-guest-text-secondary transition-transform duration-guest-base group-open:rotate-180"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+          return (
+            <article
+              key={order.id}
+              aria-labelledby={`order-heading-${order.id}`}
+              className="rounded-lg bg-guest-surface-raised border border-guest-border-subtle p-5 shadow-sm space-y-5"
             >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </summary>
+              {/* Order Card Header */}
+              <div className="flex items-center justify-between border-b border-guest-border-subtle pb-3">
+                <div className="flex items-center gap-2">
+                  <h2
+                    id={`order-heading-${order.id}`}
+                    className="font-mono text-sm font-bold text-guest-text-primary"
+                  >
+                    Order #{orderNumShort}
+                  </h2>
+                  {orderedList.length > 1 && isUrlOrder && (
+                    <span className="text-[11px] font-medium bg-guest-surface-sunken text-guest-text-secondary px-1.5 py-0.5 rounded">
+                      This order
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-guest-text-secondary">
+                  {placedTime}
+                </span>
+              </div>
 
-          <div className="px-4 pb-4 border-t border-guest-border-subtle pt-3">
-            <ul className="divide-y divide-guest-border-subtle" role="list">
-              {order.items.map((item) => {
-                const modifiers = Array.isArray(item.modifiersJson)
-                  ? (item.modifiersJson as Array<{ name?: string }>)
-                      .map((m) => m?.name)
-                      .filter(
-                        (name): name is string =>
-                          typeof name === "string" && name.length > 0
-                      )
-                  : [];
+              {/* Order Status Timeline */}
+              <OrderStatusTimeline
+                currentState={order.state}
+                stateChanges={order.stateChanges}
+                placeType={order.placeType}
+                locale={locale}
+              />
 
-                return (
-                  <li key={item.id} className="py-2.5 first:pt-0 last:pb-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-mono text-sm font-medium text-guest-text-secondary">
-                            {item.quantity}×
-                          </span>
-                          <span className="text-sm font-medium text-guest-text-primary">
-                            {item.itemName}
-                          </span>
-                        </div>
-                        {modifiers.length > 0 && (
-                          <p className="mt-0.5 text-xs text-guest-text-secondary pl-6">
-                            {modifiers.join(", ")}
-                          </p>
-                        )}
-                        {item.notes && (
-                          <p className="mt-0.5 text-xs italic text-guest-text-muted pl-6">
-                            &ldquo;{item.notes}&rdquo;
-                          </p>
-                        )}
-                      </div>
-                      <span className="font-mono text-sm font-medium text-guest-text-primary shrink-0">
-                        {formatMoney(item.lineTotal, currency, locale)}
+              {/* Collapsible Items List */}
+              <details
+                open={index === 0}
+                className="group rounded-md bg-guest-surface border border-guest-border-subtle overflow-hidden"
+              >
+                <summary className="flex items-center justify-between p-3 cursor-pointer select-none font-medium text-xs text-guest-text-primary hover:bg-guest-surface-sunken transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <span>
+                    {order.items.length}{" "}
+                    {order.items.length === 1 ? "item" : "items"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs text-guest-text-secondary">
+                      {formatMoney(order.total, currency, locale)}
+                    </span>
+                    <svg
+                      className="size-3.5 text-guest-text-secondary transition-transform duration-guest-base group-open:rotate-180"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </div>
+                </summary>
+
+                <div className="px-3 pb-3 border-t border-guest-border-subtle pt-2.5">
+                  <ul
+                    className="divide-y divide-guest-border-subtle"
+                    role="list"
+                  >
+                    {order.items.map((item) => {
+                      const modifiers = Array.isArray(item.modifiersJson)
+                        ? (item.modifiersJson as Array<{ name?: string }>)
+                            .map((m) => m?.name)
+                            .filter(
+                              (name): name is string =>
+                                typeof name === "string" && name.length > 0
+                            )
+                        : [];
+
+                      return (
+                        <li key={item.id} className="py-2 first:pt-0 last:pb-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-2">
+                                <span className="font-mono text-xs font-medium text-guest-text-secondary">
+                                  {item.quantity}×
+                                </span>
+                                <span className="text-xs font-medium text-guest-text-primary">
+                                  {item.itemName}
+                                </span>
+                              </div>
+                              {modifiers.length > 0 && (
+                                <p className="mt-0.5 text-[11px] text-guest-text-secondary pl-5">
+                                  {modifiers.join(", ")}
+                                </p>
+                              )}
+                              {item.notes && (
+                                <p className="mt-0.5 text-[11px] italic text-guest-text-muted pl-5">
+                                  &ldquo;{item.notes}&rdquo;
+                                </p>
+                              )}
+                            </div>
+                            <span className="font-mono text-xs font-medium text-guest-text-primary shrink-0">
+                              {formatMoney(item.lineTotal, currency, locale)}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Order Financial Breakdown */}
+                  <div className="mt-2.5 pt-2.5 border-t border-guest-border-subtle space-y-1 text-xs">
+                    <div className="flex justify-between text-guest-text-secondary">
+                      <span>Subtotal</span>
+                      <span className="font-mono">
+                        {formatMoney(order.subtotal, currency, locale)}
                       </span>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    <div className="flex justify-between text-guest-text-secondary">
+                      <span>Tax</span>
+                      <span className="font-mono">
+                        {formatMoney(order.taxAmount, currency, locale)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1.5 border-t border-guest-border-subtle font-medium text-guest-text-primary">
+                      <span>Order total</span>
+                      <span className="font-mono">
+                        {formatMoney(order.total, currency, locale)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </article>
+          );
+        })}
 
-            {/* Financial Summary */}
-            <div className="mt-3 pt-3 border-t border-guest-border-subtle space-y-1.5 text-sm">
-              <div className="flex justify-between text-guest-text-secondary">
-                <span>Subtotal</span>
-                <span className="font-mono">
-                  {formatMoney(order.subtotal, currency, locale)}
-                </span>
-              </div>
-              <div className="flex justify-between text-guest-text-secondary">
-                <span>Tax</span>
-                <span className="font-mono">
-                  {formatMoney(order.taxAmount, currency, locale)}
-                </span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-guest-border-subtle text-base font-medium text-guest-text-primary">
-                <span>Total</span>
-                <span className="font-mono">
-                  {formatMoney(order.total, currency, locale)}
-                </span>
-              </div>
+        {/* Combined Bill Total Block (D-4.5) */}
+        <section
+          aria-labelledby="combined-bill-heading"
+          className="rounded-lg bg-guest-surface-raised border border-guest-border-subtle p-5 shadow-sm"
+        >
+          <div className="flex items-baseline justify-between gap-4">
+            <div>
+              <h2
+                id="combined-bill-heading"
+                className="text-base font-semibold text-guest-text-primary"
+              >
+                Total for all orders
+              </h2>
+              <p className="mt-1 text-xs text-guest-text-secondary">
+                Your orders will be combined into one bill.
+              </p>
             </div>
+            <span className="font-mono text-xl font-bold text-guest-text-primary shrink-0">
+              {combinedTotalFormatted}
+            </span>
           </div>
-        </details>
+        </section>
 
         {/* Actions (DESIGN.md §4.8.5) */}
-        <div className="mt-6 space-y-3">
+        <div className="pt-2 space-y-3">
           <div className="space-y-1.5">
             <Link
               href="/menu"
@@ -263,4 +353,3 @@ export default async function TrackOrderPage({
     </div>
   );
 }
-
