@@ -238,12 +238,17 @@ export default async function TrackOrderPage({
 
         {/* Actions (DESIGN.md §4.8.5) */}
         <div className="mt-6 space-y-3">
-          <Link
-            href="/menu"
-            className="w-full h-11 rounded-md border border-guest-border-strong bg-transparent text-guest-text-primary font-medium text-sm inline-flex items-center justify-center hover:bg-guest-surface-sunken transition-all select-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Add more items
-          </Link>
+          <div className="space-y-1.5">
+            <Link
+              href="/menu"
+              className="w-full h-11 rounded-md border border-guest-border-strong bg-transparent text-guest-text-primary font-medium text-sm inline-flex items-center justify-center hover:bg-guest-surface-sunken transition-all select-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Add more items
+            </Link>
+            <p className="text-center text-xs text-guest-text-secondary">
+              This will start a new order.
+            </p>
+          </div>
 
           <button
             type="button"
