@@ -1001,13 +1001,47 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0152 | 2026-10-29 | Task 5.7.2 — Add order tracking screen and OrderStatusTimeline | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0153 | 2026-10-29 | Task 5.7.3 — Verify "Add more items" second order flow and add copy | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0154 | 2026-10-29 | Task 5.7.0A — Extend ServiceRequest storage and domain for table/counter calls | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0155
+| ENTRY-0155 | 2026-10-29 | Task 5.7.0B — Show all session orders and combined bill on tracking screen | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0156
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.0B — Add the call-waiter and request-bill tracking UI actions.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0155 — 2026-10-29 — Task 5.7.0B — Show all session orders and combined bill on tracking screen
+
+**Status:** PASS
+
+**Task:** Task 5.7.0B — Making the tracking screen show all of the guest session's orders on one page, each with its own timeline and order number, plus a combined-bill total
+
+**Summary:**
+1. Multi-Order Session Tracking & Privacy Scoping:
+   - In `app/(guest)/order/[id]/track/page.tsx`: maintains strict privacy checks by verifying the URL parameter `[id]` against `orderRepo.findById(session.venueId, id)` and ensuring `urlOrder.guestSessionId === session.id`. If nonexistent or belonging to another session, renders friendly `OrderNotFoundView` without leaking data.
+   - Calls `orderRepo.listForGuestSession(session.venueId, session.id)` directly via the server component to retrieve all active and historical orders belonging to the session.
+   - Displays all session orders on one page, placing the focal URL order first, followed by all other session orders sorted newest-first. Each order renders in its own distinct card identifiable by `Order #<first-8>`, placedAt timestamp, that order's own `OrderStatusTimeline` (reflecting its specific state and transition history), and that order's collapsible itemized breakdown with frozen subtotal, tax, and order total.
+2. Combined-Bill Total (D-4.5, D-4.1, D-4.4, PRODUCT.md §5.9):
+   - Implemented "Total for all orders" block at the bottom of the order list. Sums the frozen `total` values across all billable orders (active + completed; cancelled excluded as they carry no charge) using `addDecimal` from `@/domain/shared/money` and formats with `formatMoney(combinedTotalDecimal, currency, locale)`.
+   - Renders honest guest-voice copy adhering to DESIGN.md §4.13: *"Your orders will be combined into one bill."*
+3. Confirmation Link & Layout Continuity:
+   - Confirmed `app/(guest)/order/[id]/page.tsx` link to `/order/[id]/track` requires zero changes; navigating to track an order displays that order prominently alongside all previously placed session orders.
+   - Preserves "Add more items" navigation with "This will start a new order." microcopy and disabled "Call a waiter" placeholder button (awaiting Task 5.7.4).
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: with two orders in the session, the tracking page shows both, each with its own timeline and order number; the combined total equals the sum of the two order totals; a second guest session cannot see the first guest's orders.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/(guest)/order/[id]/track/page.tsx | Edit | Rewrote tracking page to render all session orders with individual timelines, cards, and combined bill total |
+| docs/ROADMAP.md | Edit | Inserted Task 5.7.0B as complete (`✅ Complete`), adjusted Task 5.7.4 dependencies |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0155, updated §5.2 ledger, bumped next entry to 0156, advanced §7 snapshot to Task 5.7.4 next |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (26 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (156 passed across 28 test files in 75.41s)
 
 ### ENTRY-0154 — 2026-10-29 — Task 5.7.0A — Extend ServiceRequest storage and domain for table/counter calls
 
@@ -4972,9 +5006,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.0B — Add the call-waiter and request-bill tracking UI actions.
+Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
 
-Current status: Task 5.7.0A complete. ServiceRequest storage and domain extended additively to support table and counter calls with placeType (TABLE / ROOM / COUNTER), tableId, counterId, and HotelService enum members CALL_WAITER and REQUEST_BILL. Pure domain orchestrator createRequest enforces place validation (exactly one place, consistent placeType inference/validation). Prisma adapter persists and reads all fields, adding listForTable and listForCounter. Migration 20261029131308_add_place_and_call_types_to_service_requests is strictly additive. All existing room-based tests pass unchanged; new table and counter tests verify the extension (16/16 in request.test.ts). All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 156/28. Ready for Task 5.7.0B, then 5.7.4.
+Current status: Task 5.7.0B complete. The tracking screen (/order/[id]/track) now displays all orders belonging to the guest session on a single page via direct orderRepo.listForGuestSession call, with the URL order placed first followed by other session orders newest-first. Each order renders in an identifiable card with Order #<first-8>, its own OrderStatusTimeline, and collapsible items list. At the bottom, a "Total for all orders" block displays the sum of frozen order totals with formatMoney and the line "Your orders will be combined into one bill." (D-4.5). URL-order privacy scoping is strictly preserved. All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 156/28. Ready for Task 5.7.4.
 
 ## 8. How the File Evolves
 
