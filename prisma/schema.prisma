@@ -43,6 +43,8 @@ enum HotelService {
   LATE_CHECKOUT
   WAKE_UP_CALL
   DO_NOT_DISTURB
+  CALL_WAITER
+  REQUEST_BILL
 }
 
 enum TableState {
@@ -200,6 +202,7 @@ model Table {
   venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
   qrTokens QrToken[]
   orders   Order[]
+  requests ServiceRequest[]
 
   @@unique([venueId, number])
   @@index([venueId])
@@ -236,6 +239,7 @@ model Counter {
   venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
   qrTokens QrToken[]
   orders   Order[]
+  requests ServiceRequest[]
 
   @@map("counters")
 }
@@ -489,7 +493,10 @@ model OrderStateChange {
 model ServiceRequest {
   id          String       @id @default(uuid())
   venueId     String
+  placeType   PlaceType?
   roomId      String?
+  tableId     String?
+  counterId   String?
   serviceType HotelService
   state       RequestState @default(SUBMITTED)
   detailsJson Json         @default("{}")
@@ -498,11 +505,15 @@ model ServiceRequest {
 
   venue        Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade)
   room         Room?                @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  table        Table?               @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  counter      Counter?             @relation(fields: [counterId], references: [id], onDelete: SetNull)
   stateChanges RequestStateChange[]
 
   @@index([venueId, state])
   @@index([venueId, serviceType])
   @@index([venueId, submittedAt])
+  @@index([venueId, tableId])
+  @@index([venueId, counterId])
   @@map("service_requests")
 }
 

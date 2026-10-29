@@ -35,6 +35,14 @@ export enum HotelService {
   LATE_CHECKOUT = "LATE_CHECKOUT",
   WAKE_UP_CALL = "WAKE_UP_CALL",
   DO_NOT_DISTURB = "DO_NOT_DISTURB",
+  CALL_WAITER = "CALL_WAITER",
+  REQUEST_BILL = "REQUEST_BILL",
+}
+
+export enum PlaceType {
+  TABLE = "TABLE",
+  ROOM = "ROOM",
+  COUNTER = "COUNTER",
 }
 
 export type ServiceRequestDetails = Record<
@@ -54,7 +62,10 @@ export interface RequestStateChange {
 export interface ServiceRequest {
   readonly id: string;
   readonly venueId: string;
+  readonly placeType?: PlaceType | null;
   readonly roomId: string | null;
+  readonly tableId?: string | null;
+  readonly counterId?: string | null;
   readonly serviceType: HotelService;
   readonly state: RequestState;
   readonly details: ServiceRequestDetails;
@@ -65,7 +76,10 @@ export interface ServiceRequest {
 
 export interface CreateServiceRequestInput {
   readonly venueId: string;
+  readonly placeType?: PlaceType | null;
   readonly roomId?: string | null;
+  readonly tableId?: string | null;
+  readonly counterId?: string | null;
   readonly serviceType: HotelService;
   readonly details?: ServiceRequestDetails;
 }
@@ -106,6 +120,14 @@ export interface ServiceRequestRepository {
   listForRoom(
     venueId: string,
     roomId: string
+  ): Promise<Result<ServiceRequest[]>>;
+  listForTable(
+    venueId: string,
+    tableId: string
+  ): Promise<Result<ServiceRequest[]>>;
+  listForCounter(
+    venueId: string,
+    counterId: string
   ): Promise<Result<ServiceRequest[]>>;
   advanceState(input: AdvanceRequestInput): Promise<Result<ServiceRequest>>;
   cancel(input: CancelRequestInput): Promise<Result<ServiceRequest>>;

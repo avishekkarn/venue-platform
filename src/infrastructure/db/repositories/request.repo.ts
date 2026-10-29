@@ -19,6 +19,7 @@ import {
   type Prisma,
   RequestState as PrismaRequestState,
   HotelService as PrismaHotelService,
+  PlaceType as PrismaPlaceType,
   type ServiceRequest as PrismaServiceRequest,
   type RequestStateChange as PrismaRequestStateChange,
 } from "@prisma/client";
@@ -34,6 +35,7 @@ import {
   type RequestFilter,
   RequestState,
   HotelService,
+  PlaceType,
 } from "@/domain/requests/request.repository";
 import { ok, fail, DomainErrorCode, type Result } from "@/domain/shared/result";
 
@@ -57,6 +59,18 @@ const DOMAIN_TO_PRISMA_REQUEST_STATE: Record<RequestState, PrismaRequestState> =
   [RequestState.DECLINED]: PrismaRequestState.DECLINED,
 };
 
+const PRISMA_TO_DOMAIN_PLACE_TYPE: Record<PrismaPlaceType, PlaceType> = {
+  [PrismaPlaceType.TABLE]: PlaceType.TABLE,
+  [PrismaPlaceType.ROOM]: PlaceType.ROOM,
+  [PrismaPlaceType.COUNTER]: PlaceType.COUNTER,
+};
+
+const DOMAIN_TO_PRISMA_PLACE_TYPE: Record<PlaceType, PrismaPlaceType> = {
+  [PlaceType.TABLE]: PrismaPlaceType.TABLE,
+  [PlaceType.ROOM]: PrismaPlaceType.ROOM,
+  [PlaceType.COUNTER]: PrismaPlaceType.COUNTER,
+};
+
 const PRISMA_TO_DOMAIN_HOTEL_SERVICE: Record<PrismaHotelService, HotelService> = {
   [PrismaHotelService.ROOM_SERVICE_FOOD]: HotelService.ROOM_SERVICE_FOOD,
   [PrismaHotelService.HOUSEKEEPING]: HotelService.HOUSEKEEPING,
@@ -67,6 +81,8 @@ const PRISMA_TO_DOMAIN_HOTEL_SERVICE: Record<PrismaHotelService, HotelService> =
   [PrismaHotelService.LATE_CHECKOUT]: HotelService.LATE_CHECKOUT,
   [PrismaHotelService.WAKE_UP_CALL]: HotelService.WAKE_UP_CALL,
   [PrismaHotelService.DO_NOT_DISTURB]: HotelService.DO_NOT_DISTURB,
+  [PrismaHotelService.CALL_WAITER]: HotelService.CALL_WAITER,
+  [PrismaHotelService.REQUEST_BILL]: HotelService.REQUEST_BILL,
 };
 
 const DOMAIN_TO_PRISMA_HOTEL_SERVICE: Record<HotelService, PrismaHotelService> = {
@@ -79,6 +95,8 @@ const DOMAIN_TO_PRISMA_HOTEL_SERVICE: Record<HotelService, PrismaHotelService> =
   [HotelService.LATE_CHECKOUT]: PrismaHotelService.LATE_CHECKOUT,
   [HotelService.WAKE_UP_CALL]: PrismaHotelService.WAKE_UP_CALL,
   [HotelService.DO_NOT_DISTURB]: PrismaHotelService.DO_NOT_DISTURB,
+  [HotelService.CALL_WAITER]: PrismaHotelService.CALL_WAITER,
+  [HotelService.REQUEST_BILL]: PrismaHotelService.REQUEST_BILL,
 };
 
 type RawServiceRequestWithRelations = PrismaServiceRequest & {
@@ -115,7 +133,10 @@ function mapServiceRequest(raw: RawServiceRequestWithRelations): ServiceRequest 
   return {
     id: raw.id,
     venueId: raw.venueId,
+    placeType: raw.placeType ? PRISMA_TO_DOMAIN_PLACE_TYPE[raw.placeType] : null,
     roomId: raw.roomId,
+    tableId: raw.tableId,
+    counterId: raw.counterId,
     serviceType: PRISMA_TO_DOMAIN_HOTEL_SERVICE[raw.serviceType],
     state: PRISMA_TO_DOMAIN_REQUEST_STATE[raw.state],
     details,
@@ -163,7 +184,12 @@ export function createPrismaServiceRequestRepository(
           const raw = await tx.serviceRequest.create({
             data: {
               venueId: input.venueId,
+              placeType: input.placeType
+                ? DOMAIN_TO_PRISMA_PLACE_TYPE[input.placeType]
+                : null,
               roomId: input.roomId ?? null,
+              tableId: input.tableId ?? null,
+              counterId: input.counterId ?? null,
               serviceType: DOMAIN_TO_PRISMA_HOTEL_SERVICE[input.serviceType],
               state: PrismaRequestState.SUBMITTED,
               detailsJson: (input.details ?? {}) as Prisma.InputJsonValue,
@@ -257,6 +283,56 @@ export function createPrismaServiceRequestRepository(
           error instanceof Error
             ? error.message
             : "Failed to list service requests for room"
+        );
+      }
+    },
+
+    listForTable: async (
+      venueId: string,
+      tableId: string
+    ): Promise<Result<ServiceRequest[]>> => {
+      try {
+        const rawList = await client.serviceRequest.findMany({
+          where: {
+            venueId,
+            tableId,
+          },
+          include: REQUEST_INCLUDE,
+          orderBy: { submittedAt: "desc" },
+        });
+
+        return ok(rawList.map(mapServiceRequest));
+      } catch (error) {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          error instanceof Error
+            ? error.message
+            : "Failed to list service requests for table"
+        );
+      }
+    },
+
+    listForCounter: async (
+      venueId: string,
+      counterId: string
+    ): Promise<Result<ServiceRequest[]>> => {
+      try {
+        const rawList = await client.serviceRequest.findMany({
+          where: {
+            venueId,
+            counterId,
+          },
+          include: REQUEST_INCLUDE,
+          orderBy: { submittedAt: "desc" },
+        });
+
+        return ok(rawList.map(mapServiceRequest));
+      } catch (error) {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          error instanceof Error
+            ? error.message
+            : "Failed to list service requests for counter"
         );
       }
     },

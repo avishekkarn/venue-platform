@@ -2,12 +2,15 @@ import { describe, it, expect } from "vitest";
 import { withTransaction } from "../setup";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
+import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
 import {
   RequestState,
   HotelService,
+  PlaceType,
   type CreateServiceRequestInput,
 } from "@/domain/requests/request.repository";
+import { createRequest } from "@/domain/requests/create-request";
 import { DomainErrorCode } from "@/domain/shared/result";
 
 describe("ServiceRequestRepository Integration Tests", () => {
@@ -575,6 +578,262 @@ describe("ServiceRequestRepository Integration Tests", () => {
       expect(crossUpdate.ok).toBe(false);
       if (!crossUpdate.ok) {
         expect(crossUpdate.error.code).toBe(DomainErrorCode.NOT_FOUND);
+      }
+    });
+  });
+
+  it("Case 14: create a request for a Table with CALL_WAITER and read it back via findById and listForTable", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const tableRepo = createPrismaTableRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+
+      const venueResult = await venueRepo.create({
+        name: "Table Request Venue",
+        slug: `table-req-venue-${Date.now()}`,
+        taxRate: "0.1000",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const tableResult = await tableRepo.create(venueId, {
+        number: "T-14",
+      });
+      expect(tableResult.ok).toBe(true);
+      if (!tableResult.ok) return;
+      const tableId = tableResult.value.id;
+
+      const created = await requestRepo.create({
+        venueId,
+        placeType: PlaceType.TABLE,
+        tableId,
+        serviceType: HotelService.CALL_WAITER,
+        details: { reason: "Need water" },
+      });
+      expect(created.ok).toBe(true);
+      if (!created.ok) return;
+
+      const req = created.value;
+      expect(req.venueId).toBe(venueId);
+      expect(req.placeType).toBe(PlaceType.TABLE);
+      expect(req.tableId).toBe(tableId);
+      expect(req.roomId).toBeNull();
+      expect(req.counterId).toBeNull();
+      expect(req.serviceType).toBe(HotelService.CALL_WAITER);
+      expect(req.state).toBe(RequestState.SUBMITTED);
+      expect(req.details).toEqual({ reason: "Need water" });
+
+      // Read back via findById
+      const found = await requestRepo.findById(venueId, req.id);
+      expect(found.ok).toBe(true);
+      if (found.ok) {
+        expect(found.value.placeType).toBe(PlaceType.TABLE);
+        expect(found.value.tableId).toBe(tableId);
+        expect(found.value.serviceType).toBe(HotelService.CALL_WAITER);
+      }
+
+      // Read back via listForTable
+      const list = await requestRepo.listForTable(venueId, tableId);
+      expect(list.ok).toBe(true);
+      if (list.ok) {
+        expect(list.value).toHaveLength(1);
+        expect(list.value[0]?.id).toBe(req.id);
+        expect(list.value[0]?.tableId).toBe(tableId);
+        expect(list.value[0]?.serviceType).toBe(HotelService.CALL_WAITER);
+      }
+
+      // Verify database row
+      const dbRow = await tx.serviceRequest.findUnique({
+        where: { id: req.id },
+      });
+      expect(dbRow).not.toBeNull();
+      expect(dbRow?.placeType).toBe("TABLE");
+      expect(dbRow?.tableId).toBe(tableId);
+      expect(dbRow?.roomId).toBeNull();
+      expect(dbRow?.counterId).toBeNull();
+      expect(dbRow?.serviceType).toBe("CALL_WAITER");
+    });
+  });
+
+  it("Case 15: create a request for a Counter with REQUEST_BILL and read it back via findById and listForCounter", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+
+      const venueResult = await venueRepo.create({
+        name: "Counter Request Venue",
+        slug: `counter-req-venue-${Date.now()}`,
+        taxRate: "0.1000",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const counter = await tx.counter.create({
+        data: {
+          venueId,
+          name: "Main Counter",
+        },
+      });
+      const counterId = counter.id;
+
+      const created = await requestRepo.create({
+        venueId,
+        placeType: PlaceType.COUNTER,
+        counterId,
+        serviceType: HotelService.REQUEST_BILL,
+        details: { paymentMethod: "CASH" },
+      });
+      expect(created.ok).toBe(true);
+      if (!created.ok) return;
+
+      const req = created.value;
+      expect(req.venueId).toBe(venueId);
+      expect(req.placeType).toBe(PlaceType.COUNTER);
+      expect(req.counterId).toBe(counterId);
+      expect(req.tableId).toBeNull();
+      expect(req.roomId).toBeNull();
+      expect(req.serviceType).toBe(HotelService.REQUEST_BILL);
+      expect(req.state).toBe(RequestState.SUBMITTED);
+      expect(req.details).toEqual({ paymentMethod: "CASH" });
+
+      // Read back via findById
+      const found = await requestRepo.findById(venueId, req.id);
+      expect(found.ok).toBe(true);
+      if (found.ok) {
+        expect(found.value.placeType).toBe(PlaceType.COUNTER);
+        expect(found.value.counterId).toBe(counterId);
+        expect(found.value.serviceType).toBe(HotelService.REQUEST_BILL);
+      }
+
+      // Read back via listForCounter
+      const list = await requestRepo.listForCounter(venueId, counterId);
+      expect(list.ok).toBe(true);
+      if (list.ok) {
+        expect(list.value).toHaveLength(1);
+        expect(list.value[0]?.id).toBe(req.id);
+        expect(list.value[0]?.counterId).toBe(counterId);
+        expect(list.value[0]?.serviceType).toBe(HotelService.REQUEST_BILL);
+      }
+
+      // Verify database row
+      const dbRow = await tx.serviceRequest.findUnique({
+        where: { id: req.id },
+      });
+      expect(dbRow).not.toBeNull();
+      expect(dbRow?.placeType).toBe("COUNTER");
+      expect(dbRow?.counterId).toBe(counterId);
+      expect(dbRow?.tableId).toBeNull();
+      expect(dbRow?.roomId).toBeNull();
+      expect(dbRow?.serviceType).toBe("REQUEST_BILL");
+    });
+  });
+
+  it("Case 16: createRequest domain function creates requests and enforces place validation", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const roomRepo = createPrismaRoomRepository(tx);
+      const tableRepo = createPrismaTableRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+
+      const venueResult = await venueRepo.create({
+        name: "Domain Request Venue",
+        slug: `domain-req-venue-${Date.now()}`,
+        taxRate: "0.1000",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const roomResult = await roomRepo.create(venueId, {
+        number: "R-101",
+      });
+      expect(roomResult.ok).toBe(true);
+      if (!roomResult.ok) return;
+      const roomId = roomResult.value.id;
+
+      const tableResult = await tableRepo.create(venueId, {
+        number: "T-202",
+      });
+      expect(tableResult.ok).toBe(true);
+      if (!tableResult.ok) return;
+      const tableId = tableResult.value.id;
+
+      // 1. Backwards-compatible room-only call (placeType omitted)
+      const roomReq = await createRequest(
+        { requestRepo },
+        {
+          venueId,
+          roomId,
+          serviceType: HotelService.ROOM_SERVICE_FOOD,
+        }
+      );
+      expect(roomReq.ok).toBe(true);
+      if (roomReq.ok) {
+        expect(roomReq.value.placeType).toBe(PlaceType.ROOM);
+        expect(roomReq.value.roomId).toBe(roomId);
+        expect(roomReq.value.tableId).toBeNull();
+      }
+
+      // 2. Table call with placeType
+      const tableReq = await createRequest(
+        { requestRepo },
+        {
+          venueId,
+          placeType: PlaceType.TABLE,
+          tableId,
+          serviceType: HotelService.CALL_WAITER,
+        }
+      );
+      expect(tableReq.ok).toBe(true);
+      if (tableReq.ok) {
+        expect(tableReq.value.placeType).toBe(PlaceType.TABLE);
+        expect(tableReq.value.tableId).toBe(tableId);
+        expect(tableReq.value.serviceType).toBe(HotelService.CALL_WAITER);
+      }
+
+      // 3. Validation failure: no place provided
+      const noPlace = await createRequest(
+        { requestRepo },
+        {
+          venueId,
+          serviceType: HotelService.CALL_WAITER,
+        }
+      );
+      expect(noPlace.ok).toBe(false);
+      if (!noPlace.ok) {
+        expect(noPlace.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
+      }
+
+      // 4. Validation failure: multiple places provided
+      const multiPlace = await createRequest(
+        { requestRepo },
+        {
+          venueId,
+          roomId,
+          tableId,
+          serviceType: HotelService.CALL_WAITER,
+        }
+      );
+      expect(multiPlace.ok).toBe(false);
+      if (!multiPlace.ok) {
+        expect(multiPlace.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
+      }
+
+      // 5. Validation failure: mismatched placeType
+      const mismatch = await createRequest(
+        { requestRepo },
+        {
+          venueId,
+          placeType: PlaceType.TABLE,
+          roomId,
+          serviceType: HotelService.CALL_WAITER,
+        }
+      );
+      expect(mismatch.ok).toBe(false);
+      if (!mismatch.ok) {
+        expect(mismatch.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
       }
     });
   });
