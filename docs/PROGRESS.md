@@ -999,13 +999,43 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0150 | 2026-10-29 | Task 5.6.4 — Verify guest order placement, read, list flow and close Milestone 5.6 | PASS | Milestone 5.6 | §5.3 |
 | ENTRY-0151 | 2026-10-29 | Task 5.7.1 — Add the order confirmation screen | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0152 | 2026-10-29 | Task 5.7.2 — Add order tracking screen and OrderStatusTimeline | PASS | Milestone 5.7 | §5.3 |
-Next entry number: 0153
+| ENTRY-0153 | 2026-10-29 | Task 5.7.3 — Verify "Add more items" second order flow and add copy | PASS | Milestone 5.7 | §5.3 |
+Next entry number: 0154
 
-### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.3 — Add the "add more items" action.
+### 5.3 Current Milestone — Milestone 5.7 (The Order Confirmation and Tracking). Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0153 — 2026-10-29 — Task 5.7.3 — Verify "Add more items" second order flow and add copy
+
+**Status:** PASS
+
+**Task:** Task 5.7.3 — Add the "add more items" action from the tracking and confirmation screens
+
+**Summary:**
+1. Gap Analysis (PRODUCT.md §5.9, DESIGN.md §4.8.6, DECISIONS.md D-4.6):
+   - Requirement: Once an order is placed, it cannot be modified; guests who want more items navigate to `/menu` with an empty cart and check out a second time. The venue receives a second order for the same table.
+   - Existing behavior: `handlePlaceOrder` in `app/(guest)/cart/page.tsx` clears `localStorage.guest_cart` upon order submission. Tapping "Add more items" on `/order/[id]` or `/order/[id]/track` links to `/menu`, where the cart initializes empty. Adding items and placing again generates a new UUID idempotency key and posts a second distinct order for the session. Both orders are persisted and retrievable via `GET /api/guest/orders`.
+   - Gap identified & resolved: Added honest, succinct microcopy (`This will start a new order.`, 6 words adhering to DESIGN.md §4.13.2 guest voice) directly beneath the "Add more items" action on both `app/(guest)/order/[id]/page.tsx` and `app/(guest)/order/[id]/track/page.tsx` to ensure guests understand they are starting a second order rather than modifying the first order that is already with the kitchen.
+   - Integration test evaluation: Confirmed that multi-order placement for the same guest session with distinct idempotency keys is already verified against real PostgreSQL in `tests/integration/api/guest-orders.test.ts` (Task 5.6.3) and `tests/integration/repositories/order.repo.test.ts` (Case 3); no redundant API tests were added.
+
+**Awaiting Human Verification:** YES — on a real phone via LAN: from the confirmation and the tracking screen, tapping "Add more items" opens the menu with an empty cart; adding items and placing again creates a second order (a new confirmation with a different order number) while the first order remains viewable.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| app/(guest)/order/[id]/page.tsx | Edit | Added "This will start a new order." microcopy under "Add more items" link |
+| app/(guest)/order/[id]/track/page.tsx | Edit | Added "This will start a new order." microcopy under "Add more items" link |
+| docs/ROADMAP.md | Edit | Marked Task 5.7.3 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0153, updated §5.2 ledger row, bumped next entry number to 0154, advanced §7 snapshot to Task 5.7.4 |
+
+**Verification Results:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (26 routes + 1 proxy middleware)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (153 passed across 28 test files in 78.59s)
 
 ### ENTRY-0152 — 2026-10-29 — Task 5.7.2 — Add order tracking screen and OrderStatusTimeline
 
@@ -4903,9 +4933,9 @@ Current phase: Phase 5.
 
 Current milestone: Milestone 5.7 (The Order Confirmation and Tracking).
 
-Current task: Task 5.7.3 — Add the "add more items" action.
+Current task: Task 5.7.4 — Add the "call a waiter" and "request the bill" actions.
 
-Current status: Task 5.7.2 complete. Order tracking screen implemented at /order/[id]/track per DESIGN.md §4.8.5 with OrderStatusTimeline (DESIGN.md §4.6.17.4), collapsible order items list, frozen money via formatMoney, "Add more items" link, and "Call a waiter" ghost placeholder. All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 153/28. Ready for Task 5.7.3.
+Current status: Task 5.7.3 complete. "Add more items" flow verified across confirmation and tracking screens: navigates to /menu with an empty cart to start a second order per PRODUCT.md §5.9 and D-4.6. Clarifying guest copy ("This will start a new order.") added to both screens. All four baselines green: tsc 0, build 26 routes + 1 proxy, unit 186/27, integration 153/28. Ready for Task 5.7.4.
 
 ## 8. How the File Evolves
 
