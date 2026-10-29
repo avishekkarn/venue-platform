@@ -466,7 +466,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 5.8.1 | Add the admin action to change a menu item's state                                                 | ✅ Complete | 5.7.7      |
 | 5.8.2 | Add the guest-side refresh when the state changes                                                  | ✅ Complete | 5.8.1      |
 | 5.8.3 | Add the guest-side ping when an item's state changes                                               | ✅ Complete | 5.8.2      |
-| 5.8.4 | Verify: an item marked unavailable by the manager greys out on the guest's screen within 5 seconds | ⬜     | 5.8.3      |
+| 5.8.4 | Verify: an item marked unavailable by the manager greys out on the guest's screen within 5 seconds | ✅ Complete | 5.8.3      |
+
+*(Milestone 5.8 and Phase 5 are closed — the complete guest order flow, from scanning a QR and ordering, to tracking the order, requesting the bill, and seeing menu changes live on their device, is complete and verified. Phase 6 is unblocked.)*
 
 **Acceptance for Phase 5:** A guest can scan a QR, browse the menu, customize an item, add it to the cart, place the order, and see the order's confirmation and tracking. The order's prices and tax are frozen. The order appears in the manager's order list. Changing an item's state from the admin panel updates the guest's screen.
 

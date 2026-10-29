@@ -1007,13 +1007,36 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0158 | 2026-10-29 | Task 5.7.6 & 5.7.7 — Verify tracking loop and counter loop | PASS | Milestone 5.7 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Task 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
-Next entry number: 0161
+| ENTRY-0161 | 2026-10-29 | Task 5.8.4 — Verify menu item state update (Milestone 5.8 and Phase 5 close) | PASS | Milestone 5.8 | §5.3 |
+Next entry number: 0162
 
-### 5.3 Current Milestone — Milestone 5.8 (Menu item state updates). Current task: Task 5.8.4 — Verify item marked unavailable greys out on guest screen within 5 seconds.
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0161 — 2026-10-29 — Task 5.8.4 — Verify menu item state update (Milestone 5.8 and Phase 5 close)
+
+**Status:** PASS
+
+**Task:** Task 5.8.4 — Verify: an item marked unavailable by the manager greys out on the guest's screen within 5 seconds (Milestone 5.8 and Phase 5 close).
+
+**Summary:**
+The human manually verified the live item state update and audible cue on a real phone via LAN.
+1. With the guest menu open at `/menu` on the phone, the admin toggled an item to `UNAVAILABLE` from the admin panel (`/admin`) on desktop.
+2. Within 5 seconds, the guest menu polled and reloaded, the item greyed out with the unavailable state, and the synthesized Web Audio ping played audibly on the phone.
+3. Milestone 5.8 and Phase 5 (The Customer Experience) are complete and closed.
+
+**Awaiting Human Verification:** NO
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| docs/ROADMAP.md | Edit | Marked Task 5.8.4 complete, recorded Milestone 5.8 and Phase 5 closure |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0161, updated §5.2 ledger, bumped next entry to 0162, advanced §7 snapshot to Phase 6 / Milestone 6.1 / Task 6.1.1 next |
+
+**Next:** Phase 6 — The Kitchen. Milestone 6.1 (The Kitchen Domain). Task 6.1.1 — Add the order approval action.
 
 ### ENTRY-0160 — 2026-10-29 — Task 5.8.3 — Add guest-side audible ping on item state change
 
@@ -5164,13 +5187,13 @@ Task 5.1.2 — Add the getMenuItem domain function.
 
 Updated at the end of every session.
 
-Current phase: Phase 5.
+Current phase: Phase 6.
 
-Current milestone: Milestone 5.8 (Menu item state updates).
+Current milestone: Milestone 6.1 (The Kitchen Domain).
 
-Current task: Task 5.8.4 — Verify item marked unavailable greys out on guest screen within 5 seconds.
+Current task: Task 6.1.1 — Add the order approval action.
 
-Current status: Task 5.8.3 complete. Added client-side state diffing via sessionStorage and Web Audio API sine ping (880 Hz, 150ms) to /menu. Verified tsc (0 errors) and pnpm build (30 routes + 1 proxy on Next.js 16.4.0 Turbopack). Ready for Task 5.8.4 verification.
+Current status: Phase 5 is closed, verified manually end-to-end on real devices via LAN (QR scanning, browsing, cart, order placement, tracking, waiter calls, combined billing, admin item state updates, and audible cues). The kitchen phase (Phase 6) is unblocked.
 
 ## 8. How the File Evolves
 
