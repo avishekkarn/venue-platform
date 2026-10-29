@@ -532,41 +532,15 @@ export default async function CartPage(): Promise<JSX.Element> {
 
         var json = await response.json();
 
-        if (response.ok && json.data) {
+        if (response.ok && json.data && json.data.id) {
           try {
             localStorage.removeItem('guest_cart');
           } catch (e) {}
           currentIdempotencyKey = null;
           isSubmittingOrder = false;
 
-          var orderIdShort = String(json.data.id).slice(0, 8);
-          orderPlacedMessage = 'Order placed! Order #' + orderIdShort;
-
-          if (placeBtn) {
-            placeBtn.textContent = 'Order placed';
-            placeBtn.setAttribute('disabled', 'true');
-            placeBtn.setAttribute('aria-disabled', 'true');
-            placeBtn.className = 'w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center opacity-50 cursor-default select-none outline-none';
-          }
-          if (placeStatus) {
-            placeStatus.textContent = orderPlacedMessage;
-            placeStatus.className = 'text-[14px] leading-[20px] font-medium text-guest-brand text-center';
-          }
-
-          var linesContainer = document.getElementById('cart-lines');
-          var notesContainer = document.getElementById('cart-notes-container');
-          var pickupContainer = document.getElementById('cart-pickup-container');
-          var summaryContainer = document.getElementById('cart-summary');
-          if (linesContainer) linesContainer.style.display = 'none';
-          if (notesContainer) notesContainer.style.display = 'none';
-          if (pickupContainer) pickupContainer.style.display = 'none';
-          if (summaryContainer) summaryContainer.style.display = 'none';
-
-          var emptyContainer = document.getElementById('cart-empty');
-          if (emptyContainer) {
-            emptyContainer.style.display = 'block';
-            emptyContainer.innerHTML = '<p class="font-display text-[20px] leading-[26px] text-guest-text-primary">Order placed successfully!</p><p class="mt-1 text-[14px] leading-[20px] text-guest-text-secondary">Your order #' + escapeHtml(orderIdShort) + ' has been sent to the team.</p><a href="/menu" class="mt-4 inline-flex items-center justify-center rounded-md bg-guest-brand px-4 py-2 text-[14px] font-medium text-guest-brand-contrast hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Back to menu</a>';
-          }
+          window.location.href = '/order/' + encodeURIComponent(json.data.id);
+          return;
         } else {
           isSubmittingOrder = false;
           var errorMsg = (json && json.error && json.error.message) ? json.error.message : 'Unable to place order. Please try again.';
