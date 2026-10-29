@@ -185,6 +185,9 @@ export default async function CartPage(): Promise<JSX.Element> {
     var locale = ${JSON.stringify(safeLocale)};
     var taxRate = ${JSON.stringify(taxRate)};
     var hasCounterModule = ${JSON.stringify(hasCounterModule)};
+    var currentIdempotencyKey = null;
+    var isSubmittingOrder = false;
+    var orderPlacedMessage = null;
 
     function formatMoney(amount) {
       var num = parseFloat(String(amount)) || 0;
@@ -326,9 +329,24 @@ export default async function CartPage(): Promise<JSX.Element> {
       if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal.toFixed(2));
       if (taxEl) taxEl.textContent = formatMoney(tax.toFixed(2));
       if (totalEl) totalEl.textContent = formatMoney(total.toFixed(2));
+
+      var placeBtn = document.getElementById('place-order-btn');
+      var placeStatus = document.getElementById('place-order-status');
+      if (placeBtn && !isSubmittingOrder && !orderPlacedMessage) {
+        placeBtn.removeAttribute('disabled');
+        placeBtn.removeAttribute('aria-disabled');
+        placeBtn.className = 'w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-ring';
+      }
+      if (placeStatus && !isSubmittingOrder && !orderPlacedMessage) {
+        placeStatus.textContent = '';
+      }
     }
 
     document.addEventListener('click', function(e) {
+      if (e.target && (e.target.id === 'place-order-btn' || e.target.closest('#place-order-btn'))) {
+        handlePlaceOrder();
+        return;
+      }
       var actionBtn = e.target.closest('[data-action]');
       if (!actionBtn) return;
       var action = actionBtn.getAttribute('data-action');
@@ -411,13 +429,172 @@ export default async function CartPage(): Promise<JSX.Element> {
       renderCart();
     });
 
-    // PLACE-ORDER SEAM (W-0001): the real submission is built in Task 5.6.1.
-    // On click, generate the client idempotency key (D-4.12, SYSTEM.md §9.7),
-    // POST { items, orderNotes, placeContext } to /api/guest/orders (5.6.1),
-    // which calls createOrder (5.5.1) — whose compute-price (5.5.2) and
-    // compute-tax snapshot (5.5.3) freeze the totals (D-4.1, D-4.4) — and on
-    // success navigate to the order confirmation (5.7.1). Until then, no order
-    // is created and the button is disabled.
+    // PLACE-ORDER SEAM (W-0001) DISCHARGED (Task 5.6.1, PROGRESS ENTRY-0148).
+    // On click, generates or reuses the client idempotency key (D-4.12, SYSTEM.md §9.7),
+    // POSTs { idempotencyKey, items, notes, pickupName } to /api/guest/orders (5.6.1),
+    // which resolves venue/place from session and calls createOrder (5.5.2) with frozen
+    // totals (5.5.1, D-4.1, D-4.4). On success, clears localStorage and shows confirmation;
+    // on failure, preserves cart and idempotency key for retry.
+    function generateUUID() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        try {
+          return crypto.randomUUID();
+        } catch (e) {}
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (Math.random() * 16) | 0;
+        var v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+
+    async function handlePlaceOrder() {
+      if (isSubmittingOrder) return;
+
+      var cartData = { items: [], itemCount: 0, total: '0.00', orderNotes: '', pickupName: '' };
+      try {
+        var raw = localStorage.getItem('guest_cart');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') cartData = parsed;
+        }
+      } catch (e) {}
+
+      var items = Array.isArray(cartData.items) ? cartData.items : [];
+      if (items.length === 0) return;
+
+      var placeBtn = document.getElementById('place-order-btn');
+      var placeStatus = document.getElementById('place-order-status');
+
+      if (hasCounterModule) {
+        var pickupInput = document.getElementById('cart-pickup-name');
+        var val = (pickupInput && pickupInput.value) ? pickupInput.value.trim() : (cartData.pickupName || '').trim();
+        if (!val) {
+          if (pickupInput) {
+            pickupInput.focus();
+          }
+          if (placeStatus) {
+            placeStatus.textContent = 'Please enter a pickup name.';
+            placeStatus.className = 'text-[13px] leading-[18px] text-red-600 text-center';
+          }
+          return;
+        }
+      }
+
+      if (!currentIdempotencyKey) {
+        currentIdempotencyKey = generateUUID();
+      }
+
+      isSubmittingOrder = true;
+      if (placeBtn) {
+        placeBtn.setAttribute('disabled', 'true');
+        placeBtn.setAttribute('aria-disabled', 'true');
+        placeBtn.className = 'w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center opacity-70 cursor-wait select-none outline-none';
+        placeBtn.textContent = 'Sending\u2026';
+      }
+      if (placeStatus) {
+        placeStatus.textContent = 'Submitting order\u2026';
+        placeStatus.className = 'text-[13px] leading-[18px] text-guest-text-secondary text-center';
+      }
+
+      var payloadItems = items.map(function(item) {
+        var selectedModifierIds = [];
+        if (Array.isArray(item.modifiers)) {
+          item.modifiers.forEach(function(mod) {
+            if (mod && (mod.id || mod.optionId)) {
+              selectedModifierIds.push(mod.id || mod.optionId);
+            }
+          });
+        }
+        return {
+          menuItemId: item.itemId || item.menuItemId,
+          quantity: parseInt(item.quantity, 10) || 1,
+          selectedModifierIds: selectedModifierIds,
+          notes: item.notes || null,
+        };
+      });
+
+      var payload = {
+        idempotencyKey: currentIdempotencyKey,
+        items: payloadItems,
+        notes: cartData.orderNotes || null,
+        pickupName: cartData.pickupName || null,
+      };
+
+      try {
+        var response = await fetch('/api/guest/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        var json = await response.json();
+
+        if (response.ok && json.data) {
+          try {
+            localStorage.removeItem('guest_cart');
+          } catch (e) {}
+          currentIdempotencyKey = null;
+          isSubmittingOrder = false;
+
+          var orderIdShort = String(json.data.id).slice(0, 8);
+          orderPlacedMessage = 'Order placed! Order #' + orderIdShort;
+
+          if (placeBtn) {
+            placeBtn.textContent = 'Order placed';
+            placeBtn.setAttribute('disabled', 'true');
+            placeBtn.setAttribute('aria-disabled', 'true');
+            placeBtn.className = 'w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center opacity-50 cursor-default select-none outline-none';
+          }
+          if (placeStatus) {
+            placeStatus.textContent = orderPlacedMessage;
+            placeStatus.className = 'text-[14px] leading-[20px] font-medium text-guest-brand text-center';
+          }
+
+          var linesContainer = document.getElementById('cart-lines');
+          var notesContainer = document.getElementById('cart-notes-container');
+          var pickupContainer = document.getElementById('cart-pickup-container');
+          var summaryContainer = document.getElementById('cart-summary');
+          if (linesContainer) linesContainer.style.display = 'none';
+          if (notesContainer) notesContainer.style.display = 'none';
+          if (pickupContainer) pickupContainer.style.display = 'none';
+          if (summaryContainer) summaryContainer.style.display = 'none';
+
+          var emptyContainer = document.getElementById('cart-empty');
+          if (emptyContainer) {
+            emptyContainer.style.display = 'block';
+            emptyContainer.innerHTML = '<p class="font-display text-[20px] leading-[26px] text-guest-text-primary">Order placed successfully!</p><p class="mt-1 text-[14px] leading-[20px] text-guest-text-secondary">Your order #' + escapeHtml(orderIdShort) + ' has been sent to the team.</p><a href="/menu" class="mt-4 inline-flex items-center justify-center rounded-md bg-guest-brand px-4 py-2 text-[14px] font-medium text-guest-brand-contrast hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Back to menu</a>';
+          }
+        } else {
+          isSubmittingOrder = false;
+          var errorMsg = (json && json.error && json.error.message) ? json.error.message : 'Unable to place order. Please try again.';
+          if (placeBtn) {
+            placeBtn.removeAttribute('disabled');
+            placeBtn.removeAttribute('aria-disabled');
+            placeBtn.className = 'w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-ring';
+            placeBtn.textContent = 'Place order';
+          }
+          if (placeStatus) {
+            placeStatus.textContent = errorMsg;
+            placeStatus.className = 'text-[13px] leading-[18px] text-red-600 text-center';
+          }
+        }
+      } catch (err) {
+        isSubmittingOrder = false;
+        if (placeBtn) {
+          placeBtn.removeAttribute('disabled');
+          placeBtn.removeAttribute('aria-disabled');
+          placeBtn.className = 'w-full h-[52px] px-5 rounded-md bg-guest-brand text-guest-brand-contrast font-medium text-base inline-flex items-center justify-center hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-ring';
+          placeBtn.textContent = 'Place order';
+        }
+        if (placeStatus) {
+          placeStatus.textContent = 'Network error. Please try again.';
+          placeStatus.className = 'text-[13px] leading-[18px] text-red-600 text-center';
+        }
+      }
+    }
 
     function handleNotesInput(e) {
       var target = e.target;
