@@ -434,7 +434,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                       | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------------------ | ------ | ---------- |
-| 5.6.1 | Add `POST /api/guest/orders`                                                               | ⬜     | 5.5.3      |
+| 5.6.1 | Add `POST /api/guest/orders`                                                               | ✅     | 5.5.3      |
 | 5.6.2 | Add `GET /api/guest/orders/[id]`                                                           | ⬜     | 5.6.1      |
 | 5.6.3 | Add `GET /api/guest/orders`                                                                | ⬜     | 5.6.1      |
 | 5.6.4 | Verify: an order can be placed, read, and listed; the response shape matches SYSTEM.md §12 | ⬜     | 5.6.3      |

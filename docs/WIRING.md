@@ -31,7 +31,15 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
-### W-0001 — OPEN — Cart "Place order" submission seam
+*(None currently active.)*
+
+---
+
+## 3. The Discharged Obligations
+
+*(Newest first. Each entry was moved here from §2 with the PROGRESS entry that proved it satisfied, per Rule 1.)*
+
+### W-0001 — DISCHARGED — Cart "Place order" submission seam
 
 - **Originated:** Task 5.4.5 (PROGRESS ENTRY-0141).
 - **Obligation:** Replace the disabled placeholder in `app/(guest)/cart/page.tsx` with the real submission. The submission (5.6.1) must send both the place identifier and the pickup name (when present) so that Phase 7's staff screen can render "Table 12 — Ramesh".
@@ -40,15 +48,8 @@
 - **Depends on:** D-4.12, SYSTEM.md §9.7, BUILD.md §6, ROADMAP.md Task 5.6.1.
 - **Related decision:** D-17.5.
 - **Verification:** The PROGRESS entry at the close of 5.6, and the Phase 5/6 boundary per PHASE_TESTS.md §7.
-- **Status:** OPEN
-
----
-
-## 3. The Discharged Obligations
-
-*(Newest first. Each entry was moved here from §2 with the PROGRESS entry that proved it satisfied, per Rule 1.)*
-
-*None yet.*
+- **Status:** DISCHARGED
+- **Discharged by:** PROGRESS ENTRY-0148 (Task 5.6.1).
 
 ---
 

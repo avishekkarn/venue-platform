@@ -994,13 +994,155 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0145 | 2026-10-29 | Task 5.5.1 — Add the price and tax computation (computePrice, computeTax, and the shared decimal-money helper) | PASS | Milestone 5.5 | §5.3 |
 | ENTRY-0146 | 2026-10-29 | Task 5.5.2 — Add the createOrder domain function | PASS | Milestone 5.5 | §5.3 |
 | ENTRY-0147 | 2026-10-29 | Task 5.5.3 — Verify createOrder against the real database | PASS | Milestone 5.5 | §5.3 |
-Next entry number: 0148
+| ENTRY-0148 | 2026-10-29 | Task 5.6.1 — Add POST /api/guest/orders and wire cart Place order seam | PASS | Milestone 5.6 | §5.3 |
+Next entry number: 0149
 
-### 5.3 Current Milestone —  Milestone 5.6 (The Order Routes). Current task: Task 5.6.1 — Add POST /api/guest/orders.
+### 5.3 Current Milestone —  Milestone 5.6 (The Order Routes). Current task: Task 5.6.2 — Add GET /api/guest/orders/[id].
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0148 — 2026-10-29 — Task 5.6.1 — Add POST /api/guest/orders and wire cart Place order seam
+
+**Status:** PASS
+
+**Task:** Task 5.6.1 — Add `POST /api/guest/orders` and wire the `PLACE-ORDER SEAM` (W-0001) in `app/(guest)/cart/page.tsx`
+
+**Summary:**
+Implemented `POST /api/guest/orders` route handler in `app/api/guest/orders/route.ts` and satisfied cross-task wiring obligation W-0001 by connecting the cart's "Place order" action in `app/(guest)/cart/page.tsx`:
+1. `app/api/guest/orders/route.ts`:
+   - Validates active guest session cookie via `getGuestCookie()` and `getGuestSession(...)` (returns 401 UNAUTHORIZED if missing/invalid/expired).
+   - Validates client `idempotencyKey` as well-formed UUID before domain execution (returns 400 VALIDATION_FAILED if absent or malformed).
+   - Enforces authoritative session context: resolves `venueId`, `placeType`, and place IDs (`tableId`, `roomId`, `counterId`) strictly from the guest session, ignoring client-supplied place or venue identifiers (D-2.1, BUILD.md §6 rule 5).
+   - Strictly ignores client-supplied prices, subtotals, tax rates, tax amounts, and totals; maps client items to `CreateOrderItemRequest[]` (`menuItemId`, `quantity`, `selectedModifierIds`, `notes`).
+   - Invokes domain orchestrator `createOrder({ orderRepo, menuRepo, venueRepo }, createRequest)`, which enforces authoritative database pricing, venue tax rate, frozen modifier names/prices, single atomic transaction, and idempotency key duplicate handling.
+   - Translates domain errors via `domainErrorToStatus` into canonical HTTP status codes (400, 401, 403, 404, 409, 429, 500) and returns HTTP 201 `{ data: order }` on success.
+   - Exports `setTestDbClient(client)` for transactional integration test harness.
+2. `app/(guest)/cart/page.tsx` (W-0001 Discharged):
+   - Replaced disabled placeholder seam with live submission handler `handlePlaceOrder()`.
+   - Generates or reuses client `currentIdempotencyKey` per checkout intent (UUID regex compliant; preserved on error for safe retry per D-4.12 and SYSTEM.md §9.7).
+   - Dynamically enables `#place-order-btn` when cart has items, validates required pickup name when counter flow is active, sets visual loading state ("Sending…", `cursor-wait`), and issues `POST /api/guest/orders`.
+   - On success: clears `localStorage.removeItem('guest_cart')`, resets idempotency key, renders inline success state ("Order placed! Order #<id>"), and disables button.
+   - On failure or network error: preserves cart in `localStorage`, keeps idempotency key for retry, restores button state ("Place order"), and renders safe inline error message in `#place-order-status`.
+3. `tests/integration/api/guest-orders.test.ts`:
+   - 6 integration tests against real PostgreSQL database and adapters inside `withTransaction`:
+     - Test 1 (Happy path): creates order with frozen database money, initial PLACED state change, and table place context (201).
+     - Test 2 (Negative): rejects missing or malformed `idempotencyKey` with 400 `VALIDATION_FAILED` without creating DB rows.
+     - Test 3 (Negative): rejects unauthenticated requests (missing cookie or unknown token) with 401 `UNAUTHORIZED`.
+     - Test 4 (Authoritative boundary): ignores client-supplied spoofed venue, table, price ($0.01), tax, and total; freezes database values.
+     - Test 5 (Idempotency): replay with identical `idempotencyKey` returns existing order without creating duplicate rows (order count = 1).
+     - Test 6 (Counter flow): captures `pickupName` alongside place context for counter orders.
+4. Cross-task documentation:
+   - `docs/WIRING.md`: W-0001 moved from §2 (Active) to §3 (Discharged by ENTRY-0148).
+   - `docs/ROADMAP.md`: Marked 5.6.1 complete (✅).
+   - All four baselines pass: tsc 0, build 23 routes + 1 proxy (exit 0), unit 186/27, integration 146/28 (70.45s).
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| app/api/guest/orders/route.ts | Create | Guest order submission route handler with session auth, UUID idempotency validation, and createOrder orchestration |
+| app/(guest)/cart/page.tsx | Edit | Discharged W-0001: enabled Place order button, wired idempotency key and POST submission with retry preservation and success feedback |
+| tests/integration/api/guest-orders.test.ts | Create | 6 integration tests for POST /api/guest/orders covering happy path, negative cases, boundary security, idempotency, and counter flow |
+| docs/WIRING.md | Edit | Moved W-0001 from §2 Active to §3 Discharged with ENTRY-0148 proof |
+| docs/ROADMAP.md | Edit | Marked Task 5.6.1 complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0148, updated §5.2 ledger row, bumped next entry number to 0149, advanced §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+pnpm exec tsc --noEmit
+# Exit code: 0
+```
+
+```powershell
+pnpm build
+# Exit code: 0
+# Route (app)
+# ┌ ○ /
+# ├ ○ /_not-found
+# ├ ƒ /admin
+# ├ ƒ /admin/login
+# ├ ƒ /admin/qr
+# ├ ƒ /admin/qr/print/[id]
+# ├ ƒ /api/admin/qr/[id]/image
+# ├ ƒ /api/admin/qr/[id]/revoke
+# ├ ƒ /api/admin/qr/generate
+# ├ ƒ /api/auth/login
+# ├ ƒ /api/auth/logout
+# ├ ƒ /api/auth/session
+# ├ ƒ /api/dev/qr
+# ├ ƒ /api/guest/orders
+# ├ ƒ /cart
+# ├ ƒ /dev/qr
+# ├ ○ /forbidden
+# ├ ƒ /kitchen
+# ├ ƒ /kitchen/login
+# ├ ƒ /menu
+# ├ ƒ /qr/[token]
+# ├ ○ /qr/inactive
+# ├ ƒ /services
+# ├ ƒ /staff
+# └ ƒ /staff/login
+# ƒ Proxy (Middleware)
+# ○  (Static)   prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+```
+
+```powershell
+pnpm test:unit
+# Exit code: 0
+# Test Files  27 passed (27)
+#      Tests  186 passed (186)
+```
+
+```powershell
+pnpm test:integration
+# Exit code: 0
+# Test Files  28 passed (28)
+#      Tests  146 passed (146)
+```
+
+**Baseline Verification:**
+- `pnpm exec tsc --noEmit`: PASS (0 errors)
+- `pnpm build`: PASS (23 routes + 1 proxy middleware; +1 route for /api/guest/orders; exit 0)
+- `pnpm test:unit`: PASS (186 passed across 27 test files)
+- `pnpm test:integration`: PASS (146 passed across 28 test files in 70.45s)
+
+**Acceptance Criteria Results:**
+- [x] Automated: `POST /api/guest/orders` route handler created and exported.
+- [x] Automated: Route checks guest cookie and validates guest session; returns 401 UNAUTHORIZED on missing or invalid session.
+- [x] Automated: Idempotency key validated as valid UUID; returns 400 VALIDATION_FAILED when missing or malformed.
+- [x] Automated: Venue and place resolved authoritatively from guest session, never from client body (BUILD.md §6 rule 5, D-2.1).
+- [x] Automated: Client-supplied prices and totals are strictly ignored; prices and taxes recomputed and frozen via createOrder (D-4.1, D-4.4).
+- [x] Automated: Success response envelope returns HTTP 201 `{ data: order }`.
+- [x] Automated: Cart Place order action wired (W-0001 discharged); button enabled when cart non-empty; generates/reuses idempotency key; submits to `/api/guest/orders`.
+- [x] Automated: On submission error, cart items and idempotency key are preserved for retry.
+- [x] Automated: On submission success, localStorage cart is cleared and confirmation feedback displayed.
+- [x] Automated: 6 integration tests in `tests/integration/api/guest-orders.test.ts` pass against real PostgreSQL database.
+- [x] Automated: Cross-task wiring ledger W-0001 moved to §3 Discharged Obligations.
+- [ ] Awaiting Human Verification: On a real phone via LAN: items in cart enable "Place order" button; clicking submits real order, shows loading/success, and clears localStorage; order appears in database.
+
+**Impact:**
+| Document | Touched? | Reason | Result |
+|----------|----------|--------|--------|
+| PRODUCT.md | No | Scope matches product requirements (§5 guest order flow) | No change |
+| DECISIONS.md | No | Adheres to D-2.1, D-4.1, D-4.4, D-4.12, D-17.5 | No change |
+| SYSTEM.md | No | Adheres to §5, §6.2, §9.7, §12.7, §15.2 | No change |
+| BUILD.md | No | Adheres to §5, §6, §7.1, §8.8 | No change |
+| WIRING.md | Yes | Discharged W-0001 (moved to §3) | Updated |
+| ROADMAP.md | Yes | Marked Task 5.6.1 as complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0148, bumped ledger, updated snapshot | Updated |
+| DESIGN.md | No | Adheres to design specifications | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Task 5.6.2 — Add `GET /api/guest/orders/[id]`.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0147 — 2026-10-29 — Task 5.5.3 — Verify createOrder against the real database
 
@@ -4523,11 +4665,11 @@ Updated at the end of every session.
 
 Current phase: Phase 5.
 
-Current milestone: Milestone 5.5 closed; Milestone 5.6 (The Order Routes) unblocked.
+Current milestone: Milestone 5.6 (The Order Routes).
 
-Current task: Task 5.6.1 — Add POST /api/guest/orders.
+Current task: Task 5.6.2 — Add GET /api/guest/orders/[id].
 
-Current status: Milestone 5.5 closed — createOrder domain orchestrator verified against real PostgreSQL database and order adapter inside withTransaction rollback harness in tests/integration/orders/create-order.test.ts (7 new tests, 140 passed across 28 files, 74.42s). Proves frozen prices and tax, single PLACED state change, idempotency retry (same id, no second row), non-orderable rejection, nonexistent rejection, transactional rollback on error (foreign key constraint, 0 orphan rows), and cross-venue isolation. Former 5.5.4/5.5.5/5.5.6 consolidated into 5.5.3. All four baselines green: tsc 0, build 22 routes + 1 proxy, unit 186/27, integration 140/28. W-0001 remains OPEN, satisfied by Task 5.6.1. Ready for Task 5.6.1.
+Current status: Task 5.6.1 complete — POST /api/guest/orders route handler implemented and W-0001 (cart Place order submission seam) discharged. Authoritative session place and venue context enforced; client pricing strictly ignored; idempotency key validated; 6 integration tests passing in tests/integration/api/guest-orders.test.ts (146 passed across 28 files in 70.45s). All four baselines green: tsc 0, build 23 routes + 1 proxy, unit 186/27, integration 146/28. Ready for Task 5.6.2.
 
 ## 8. How the File Evolves
 
