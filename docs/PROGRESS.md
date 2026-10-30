@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0165 | 2026-10-30 | Task 6.1.0.B — Add the exhaustive transition table unit test | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0164 | 2026-10-30 | Task 6.1.0.A — Author the transition table and its validator | PASS | Milestone 6.1 | §5.3 |
@@ -135,9 +136,9 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0162
+Next entry number: 0168
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action (PLACED → APPROVED).
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -272,6 +273,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0165 | 2026-10-30 | Task 6.1.0.B — Add the exhaustive transition table unit test | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0163 | 2026-10-30 | Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report | STRUCTURAL | Phase 6 planning | §5.3 |
@@ -280,13 +282,99 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0167
+Next entry number: 0168
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action (PLACED → APPROVED).
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0167 — 2026-10-30 — Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready)
+
+**Status:** PASS
+
+**Task:** Tasks 6.1.1, 6.1.2, 6.1.3 — Add the order approval action (PLACED → APPROVED), kitchen start action (APPROVED → PREPARING), and kitchen ready action (PREPARING → READY)
+
+**Summary:**
+Authored `src/domain/orders/actions.ts` implementing `approveOrder`, `startPreparingOrder`, and `markOrderReady` as pure domain functions delegating directly to `advanceOrder` with their respective target `OrderState`s (`APPROVED`, `PREPARING`, `READY`), preserving audit trails via `staffMemberId`. Exported all three functions and `AdvanceActionRequest` from `src/domain/orders/index.ts`, and verified valid and forbidden state transitions with 6 unit tests in `tests/unit/orders/actions.test.ts`.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| src/domain/orders/actions.ts | Create | Pure domain actions `approveOrder`, `startPreparingOrder`, `markOrderReady` delegating to `advanceOrder` |
+| src/domain/orders/index.ts | Edit | Exported `approveOrder`, `startPreparingOrder`, `markOrderReady`, and `AdvanceActionRequest` |
+| tests/unit/orders/actions.test.ts | Create | 6 unit tests verifying allowed/forbidden transitions and repository spy interactions |
+| docs/ROADMAP.md | Edit | Marked Tasks 6.1.1, 6.1.2, and 6.1.3 as `✅ Complete` |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0167, updated §5.2 ledger, bumped next entry to 0168, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 30 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 162 passed (162)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | approveOrder advances PLACED → APPROVED and calls advanceState once | PASS | Verified in tests/unit/orders/actions.test.ts |
+| 2 | approveOrder returns INVALID_STATE on forbidden transition and does not call advanceState | PASS | Verified in tests/unit/orders/actions.test.ts |
+| 3 | startPreparingOrder advances APPROVED → PREPARING and calls advanceState once | PASS | Verified in tests/unit/orders/actions.test.ts |
+| 4 | startPreparingOrder returns INVALID_STATE on forbidden transition and does not call advanceState | PASS | Verified in tests/unit/orders/actions.test.ts |
+| 5 | markOrderReady advances PREPARING → READY and calls advanceState once | PASS | Verified in tests/unit/orders/actions.test.ts |
+| 6 | markOrderReady returns INVALID_STATE on forbidden transition and does not call advanceState | PASS | Verified in tests/unit/orders/actions.test.ts |
+| 7 | Zero dependencies on Prisma, React, HTTP, or Next.js in actions.ts | PASS | Pure domain ports-and-adapters layering strictly preserved |
+| 8 | Barrel exports approveOrder, startPreparingOrder, markOrderReady, AdvanceActionRequest | PASS | Verified in src/domain/orders/index.ts |
+| 9 | tsc 0 | PASS | pnpm exec tsc --noEmit exit 0, 0 errors |
+| 10 | build 30 + 1 on Next.js 16.4.0 (Turbopack) | PASS | ▲ Next.js 16.4.0 (Turbopack), 30 app routes + 1 proxy (Middleware) |
+| 11 | unit tests strictly > 201 | PASS | 29 files / 207 passed (increased by 6 from 201) |
+| 12 | integration unchanged at 162 | PASS | 29 files / 162 passed |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Task 6.1.6 is the verification task that closes Milestone 6.1.
+- Milestone 6.2 will create the kitchen API routes calling these domain action functions.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-4.8, D-4.9 | No change |
+| SYSTEM.md | No | Adheres to §9.1, §9.2, §9.3 | No change |
+| BUILD.md | No | Adheres to §5, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Tasks 6.1.1, 6.1.2, 6.1.3 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0167, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.1. Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0166 — 2026-10-30 — Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts)
 
@@ -690,9 +778,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.1 (The Kitchen Domain).
 
-Current task: Task 6.1.1 — Add the order approval action.
+Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
 
-Current status: The state-transition validation helper advanceOrder is implemented and verified (ENTRY-0166), enforcing allowed transitions and calling the order repository adapter. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 201/28, integration 162/29. Ready for Task 6.1.1 to implement the order approval action.
+Current status: The kitchen action functions (approveOrder, startPreparingOrder, markOrderReady) are implemented and verified (ENTRY-0167), enforcing allowed transitions via advanceOrder and updating order state. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 207/29, integration 162/29. Ready for Task 6.1.6 to verify the transitions and state changes.
 
 ## 8. How the File Evolves
 
@@ -777,9 +865,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.1 (The Kitchen Domain).
 
-Current task: Task 6.1.1 — Add the order approval action (PLACED → APPROVED)
+Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
 
-Current status: The state-transition validation helper advanceOrder is implemented and verified (ENTRY-0166), enforcing allowed transitions and calling the order repository adapter. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 201/28, integration 162/29. Ready for Task 6.1.1 to implement the order approval action.
+Current status: The kitchen action functions (approveOrder, startPreparingOrder, markOrderReady) are implemented and verified (ENTRY-0167), enforcing allowed transitions via advanceOrder and updating order state. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 207/29, integration 162/29. Ready for Task 6.1.6 to verify the transitions and state changes.
 
 ## 8. How the File Evolves
 

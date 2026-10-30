@@ -18,5 +18,11 @@ export {
   type AdvanceOrderDeps,
   type AdvanceOrderRequest,
 } from "./advance-order";
+export {
+  approveOrder,
+  startPreparingOrder,
+  markOrderReady,
+  type AdvanceActionRequest,
+} from "./actions";
 
 

@@ -1,0 +1,72 @@
+/**
+ * Domain functions: approveOrder, startPreparingOrder, markOrderReady
+ *
+ * Rules:
+ * - Pure domain functions: zero dependencies on Prisma, React, HTTP, or Next.js.
+ * - Receives AdvanceOrderDeps containing the OrderRepository port and never imports adapters.
+ * - Delegates directly to advanceOrder with the fixed target OrderState for each action.
+ * - Enforces the OrderState transition table from SYSTEM.md §9.2 via advanceOrder -> isTransitionAllowed.
+ * - Carries acting staffMemberId through to the adapter for audit trail recording.
+ *
+ * Reference: SYSTEM.md §2 (ports and adapters), SYSTEM.md §9.1, §9.2, §9.3,
+ * DECISIONS.md D-4.8, D-4.9, BUILD.md §5.
+ */
+
+import { type Order, OrderState } from "./order.repository";
+import { advanceOrder, type AdvanceOrderDeps } from "./advance-order";
+import { type Result } from "@/domain/shared/result";
+
+export interface AdvanceActionRequest {
+  readonly venueId: string;
+  readonly orderId: string;
+  readonly staffMemberId?: string | null;
+}
+
+/**
+ * Advances an order from PLACED to APPROVED.
+ * Used by staff/manager to approve a newly placed guest order.
+ */
+export async function approveOrder(
+  deps: AdvanceOrderDeps,
+  input: AdvanceActionRequest
+): Promise<Result<Order>> {
+  return advanceOrder(deps, {
+    venueId: input.venueId,
+    orderId: input.orderId,
+    toState: OrderState.APPROVED,
+    staffMemberId: input.staffMemberId,
+  });
+}
+
+/**
+ * Advances an order from APPROVED to PREPARING.
+ * Used by kitchen staff to indicate that preparation of the order has begun.
+ */
+export async function startPreparingOrder(
+  deps: AdvanceOrderDeps,
+  input: AdvanceActionRequest
+): Promise<Result<Order>> {
+  return advanceOrder(deps, {
+    venueId: input.venueId,
+    orderId: input.orderId,
+    toState: OrderState.PREPARING,
+    staffMemberId: input.staffMemberId,
+  });
+}
+
+/**
+ * Advances an order from PREPARING to READY.
+ * Used by kitchen staff to indicate that the order is ready for pickup or delivery.
+ */
+export async function markOrderReady(
+  deps: AdvanceOrderDeps,
+  input: AdvanceActionRequest
+): Promise<Result<Order>> {
+  return advanceOrder(deps, {
+    venueId: input.venueId,
+    orderId: input.orderId,
+    toState: OrderState.READY,
+    staffMemberId: input.staffMemberId,
+  });
+}
+
