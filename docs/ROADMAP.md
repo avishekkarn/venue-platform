@@ -484,21 +484,24 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                                  | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 6.1.1 | Add the order approval action                                                                                         | ⬜     | 5.8.4      |
-| 6.1.2 | Add the kitchen start action                                                                                          | ⬜     | 6.1.1      |
-| 6.1.3 | Add the kitchen ready action                                                                                          | ⬜     | 6.1.2      |
-| 6.1.4 | Add the state-transition validation                                                                                   | ⬜     | 6.1.3      |
-| 6.1.5 | Add the state-change records                                                                                          | ⬜     | 6.1.4      |
-| 6.1.6 | Verify: the transitions are correct; invalid transitions return `INVALID_STATE`; the state-change records are written | ⬜     | 6.1.5      |
+| 6.1.0 | Add the transition table unit test (fill the `tests/unit/orders/transitions.test.ts` stub with the full `OrderState` transition table from SYSTEM.md §9.2, every allowed and every forbidden pair) | ⬜     | 5.8.4      |
+| 6.1.4 | Add the state-transition validation (the domain helper that reads the table from 6.1.0, returns `INVALID_STATE` on a forbidden transition, and carries the acting `staffMemberId` so the state-change record is guaranteed) | ⬜     | 6.1.0      |
+| 6.1.1 | Add the order approval action (`PLACED → APPROVED`) using the helper from 6.1.4 | ⬜     | 6.1.4      |
+| 6.1.2 | Add the kitchen start action (`APPROVED → PREPARING`) using the same helper | ⬜     | 6.1.1      |
+| 6.1.3 | Add the kitchen ready action (`PREPARING → READY`) using the same helper | ⬜     | 6.1.2      |
+| 6.1.6 | Verify: the transitions are correct; invalid transitions return `INVALID_STATE`; the state-change records are written (the unit tests of 6.1.4 and the integration test of `advanceState` together prove it) | ⬜     | 6.1.3      |
+
+*(Task 6.1.5 is folded into 6.1.4 — the record is already written by `advanceState`; 6.1.4's helper guarantees the acting staff member is carried, and 6.1.6 verifies the record. No work is removed.)*
 
 ### Milestone 6.2 — The kitchen routes
 
 | ID    | Task                                                                                        | Status | Depends on |
 | ----- | ------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 6.2.1 | Add `GET /api/kitchen/orders`                                                               | ⬜     | 6.1.6      |
-| 6.2.2 | Add `POST /api/kitchen/orders/[id]/start`                                                   | ⬜     | 6.2.1      |
-| 6.2.3 | Add `POST /api/kitchen/orders/[id]/ready`                                                   | ⬜     | 6.2.2      |
-| 6.2.4 | Verify: the kitchen can read its orders and advance them; the responses match SYSTEM.md §12 | ⬜     | 6.2.3      |
+| 6.2.2 | Add `POST /api/kitchen/orders/[id]/start` and `POST /api/kitchen/orders/[id]/ready` (both call the 6.1.2/6.1.3 domain functions; same shape, one session) | ⬜     | 6.2.1      |
+| 6.2.4 | Verify: the kitchen can read its orders and advance them; the responses match SYSTEM.md §12 | ⬜     | 6.2.2      |
+
+*(Task 6.2.3 is folded into 6.2.2 — the two routes are the same adapter shape calling two already-tested domain functions. No work is removed.)*
 
 ### Milestone 6.3 — The kitchen screen
 
@@ -507,18 +510,20 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 6.3.1 | Add the ticket grid layout                                                                                                              | ⬜     | 6.2.4      |
 | 6.3.2 | Add the ticket card (order number, place, items, modifiers, notes)                                                                      | ⬜     | 6.3.1      |
 | 6.3.3 | Add the elapsed time display                                                                                                            | ⬜     | 6.3.2      |
-| 6.3.4 | Add the "Start" action                                                                                                                  | ⬜     | 6.3.3      |
-| 6.3.5 | Add the "Ready" action                                                                                                                  | ⬜     | 6.3.4      |
-| 6.3.6 | Add the dark mode default                                                                                                               | ⬜     | 6.3.5      |
-| 6.3.7 | Add the connection state indicator                                                                                                      | ⬜     | 6.3.5      |
-| 6.3.8 | Verify: a ticket appears within 5 seconds of approval; the actions advance the ticket; the guest's tracking screen reflects the changes | ⬜     | 6.3.7      |
+| 6.3.4 | Add the "Start" and "Ready" actions (native DOM, in-place update, no page reload — the same discipline as the guest menu polling)       | ⬜     | 6.3.3      |
+| 6.3.6 | Add the dark mode default                                                                                                               | ⬜     | 6.3.4      |
+| 6.3.7 | Add the connection state indicator                                                                                                      | ⬜     | 6.3.4      |
+| 6.3.8 | Verify: a ticket appears within 5 seconds of approval; the actions advance the ticket; the guest's tracking screen reflects the changes | ⬜     | 6.3.6, 6.3.7 |
+
+*(Task 6.3.5 is folded into 6.3.4 — two buttons on one card wired to two routes is one concern. No work is removed.)*
 
 ### Milestone 6.4 — The kitchen ping
 
-| ID    | Task                                             | Status | Depends on |
-| ----- | ------------------------------------------------ | ------ | ---------- |
-| 6.4.1 | Add the audible ping on new tickets              | ⬜     | 6.3.8      |
-| 6.4.2 | Verify: the ping plays when a new ticket arrives | ⬜     | 6.4.1      |
+| ID    | Task                                                                  | Status | Depends on |
+| ----- | --------------------------------------------------------------------- | ------ | ---------- |
+| 6.4.1 | Add the audible ping on new tickets and verify it plays (Web Audio, single 880 Hz tone, no mute, native script — same discipline as the guest menu ping) | ⬜     | 6.3.8      |
+
+*(Task 6.4.2 is folded into 6.4.1 — the ping is a small native script and its verification is the same session's manual audio check. No work is removed.)*
 
 **Acceptance for Phase 6:** An order placed by a guest, approved by staff, and prepared by the kitchen appears on the kitchen screen, advances through Preparing and Ready, and the guest's tracking screen reflects each change.
 
@@ -534,7 +539,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                      | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.1.1 | Add the delivery action                                                                                   | ⬜     | 6.4.2      |
+| 7.1.1 | Add the delivery action                                                                                   | ⬜     | 6.4.1      |
 | 7.1.2 | Add the completion action                                                                                 | ⬜     | 7.1.1      |
 | 7.1.3 | Add the cancellation action with a reason                                                                 | ⬜     | 7.1.1      |
 | 7.1.4 | Add the table-close action                                                                                | ⬜     | 7.1.3      |
