@@ -134,6 +134,50 @@ export default async function KitchenPage(): Promise<JSX.Element> {
           <time className="font-mono text-sm text-staff-text-muted">
             {currentTime}
           </time>
+          <button
+            type="button"
+            id="theme-toggle"
+            aria-label="Switch to light mode"
+            className="inline-flex items-center justify-center size-8 rounded-full text-staff-text-muted hover:bg-staff-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-staff-brand focus-visible:ring-offset-2 focus-visible:ring-offset-staff-surface transition-colors duration-staff-fast ease-staff-out"
+          >
+            <svg
+              data-theme-icon="sun"
+              className="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+              style={{ display: "none" }}
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" />
+              <path d="M12 20v2" />
+              <path d="m4.93 4.93 1.41 1.41" />
+              <path d="m17.66 17.66 1.41 1.41" />
+              <path d="M2 12h2" />
+              <path d="M20 12h2" />
+              <path d="m6.34 17.66-1.41 1.41" />
+              <path d="m19.07 4.93-1.41 1.41" />
+            </svg>
+            <svg
+              data-theme-icon="moon"
+              className="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -182,6 +226,67 @@ export default async function KitchenPage(): Promise<JSX.Element> {
         dangerouslySetInnerHTML={{
           __html: `
 (function() {
+  var THEME_KEY = 'kitchen_theme';
+  var THEME_ELEMENT_SELECTOR = '[data-world="staff"]';
+
+  function getThemeElement() {
+    return document.querySelector(THEME_ELEMENT_SELECTOR);
+  }
+
+  function readStoredTheme() {
+    try {
+      var v = window.localStorage.getItem(THEME_KEY);
+      return v === 'light' || v === 'dark' ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeStoredTheme(theme) {
+    try {
+      window.localStorage.setItem(THEME_KEY, theme);
+    } catch (e) {}
+  }
+
+  function applyTheme(theme) {
+    var el = getThemeElement();
+    if (!el) return;
+    el.setAttribute('data-theme', theme);
+    var sun = document.querySelector('[data-theme-icon="sun"]');
+    var moon = document.querySelector('[data-theme-icon="moon"]');
+    var btn = document.getElementById('theme-toggle');
+    if (sun) sun.style.display = theme === 'dark' ? 'none' : 'inline-block';
+    if (moon) moon.style.display = theme === 'dark' ? 'inline-block' : 'none';
+    if (btn) btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  function currentTheme() {
+    var el = getThemeElement();
+    var v = el ? el.getAttribute('data-theme') : null;
+    return v === 'light' || v === 'dark' ? v : 'dark';
+  }
+
+  function flipTheme() {
+    var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    writeStoredTheme(next);
+  }
+
+  var stored = readStoredTheme();
+  applyTheme(stored || 'dark');
+
+  document.addEventListener('click', function(event) {
+    var el = event.target;
+    for (var i = 0; i < 4 && el; i++) {
+      if (el.id === 'theme-toggle') {
+        event.preventDefault();
+        flipTheme();
+        return;
+      }
+      el = el.parentElement;
+    }
+  });
+
   var toastTimer = null;
   function showToast(msg) {
     var toast = document.getElementById('kitchen-toast');

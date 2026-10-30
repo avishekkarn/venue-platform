@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0180 | 2026-10-30 | Task 6.3.6 — Add the dark mode default and toggle | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0179 | 2026-10-30 | HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive | STRUCTURAL | Milestone 6.3 | §5.3 |
 | ENTRY-0178 | 2026-10-30 | Task 6.3.4 — Add the Start and Ready actions | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0177 | 2026-10-30 | Task 6.3.3 — Add the live elapsed timer | PASS | Milestone 6.3 | §5.3 |
@@ -149,13 +150,80 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0180
+Next entry number: 0181
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.6 — Add the dark mode default.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.7 — Add the connection state indicator.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0180 — 2026-10-30 — Task 6.3.6 — Add the dark mode default and toggle
+
+**Status:** PASS
+
+**Task:** Task 6.3.6 — Add the dark mode default and toggle
+
+**Summary:**
+Added a 32×32px sun/moon theme toggle button to the kitchen header status strip in `app/kitchen/page.tsx`, backed by native DOM theme flipping inside the existing `next/script` block. The script reads and writes `localStorage.kitchen_theme`, applies `data-theme` on the staff wrapper, and updates the glyph display and aria-label; server-rendered default remains dark via `app/kitchen/layout.tsx` with zero initial light flash.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Added theme toggle button to header and extended native script with localStorage persistence |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.6 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0180, updated §5.2 ledger, bumped next entry to 0181, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.11s)
+- `pnpm test:integration` — 29 files / 175 tests passed
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | Pre-condition HEAD is ff91b00 and tree is clean | PASS | Confirmed via `git log` and `git status` |
+| 2 | The files listed under "FILES TO READ BEFORE WRITING ANY CODE" are read | PASS | All 7 authoritative context files read in full before modification |
+| 3 | Only files in the scope table are modified | PASS | Only `app/kitchen/page.tsx`, `docs/ROADMAP.md`, and `docs/PROGRESS.md` modified |
+| 4 | A #theme-toggle button exists in status strip after <time> with SVG glyphs | PASS | 32×32px button added with `data-theme-icon="sun"` and `moon` SVGs and aria-label |
+| 5 | Existing <Script id="kitchen-actions"> is extended, not duplicated | PASS | Exactly one `<Script>` block in `app/kitchen/page.tsx` |
+| 6 | Script reads/writes localStorage, flips data-theme, updates SVGs and aria-label | PASS | Implemented in IIFE with error-tolerant localStorage access |
+| 7 | No window.location.reload(), router.refresh(), or history.* added | PASS | Zero forbidden navigation or reload calls |
+| 8 | app/kitchen/layout.tsx is unmodified | PASS | `git diff -- app/kitchen/layout.tsx` is empty |
+| 9 | app/globals.css is unmodified | PASS | `git diff -- app/globals.css` is empty |
+| 10 | tsc --noEmit | PASS | Exit code 0, 0 errors |
+| 11 | pnpm build | PASS | 33 app routes + 1 proxy on ▲ Next.js 16.4.0 (Turbopack) |
+| 12 | pnpm test:unit | PASS | 29 files, 207 tests passed |
+| 13 | pnpm test:integration | PASS | 29 files, 175 tests passed |
+| 14 | Manual desktop check | PENDING | Documented 6-step verification checklist |
+| 15 | docs/ROADMAP.md Task 6.3.6 row is ✅ Complete | PASS | Updated in Milestone 6.3 table |
+| 16 | docs/PROGRESS.md §5.2 row, Next entry 0181, §5.3 ENTRY-0180, §7 snapshot | PASS | Added and verified |
+| 17 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 6.3.7 (connection state indicator), Task 6.3.8 (milestone verification), Task 6.4.1 (audible ping). The title="Connection status" dot in the header is still a static placeholder owned by Task 6.3.7.
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| ROADMAP.md | Yes | Marked Task 6.3.6 complete |
+| PROGRESS.md | Yes | Recorded ENTRY-0180, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to D-9.4, D-9.5, DESIGN.md §4.11.6, §4.2.6, §4.15.4, BUILD.md §3 (Native DOM, Pattern B).
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3. Task 6.3.7 — Add the connection state indicator.
+
+**Awaiting Human Verification:** YES
+
+---
+
 
 ### ENTRY-0179 — 2026-10-30 — HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive
 
@@ -1573,11 +1641,11 @@ Updated at the end of every session.
 
 Current phase: Phase 6 (The Kitchen).
 
-Current milestone: Milestone 6.2 (The Kitchen Routes) — CLOSED.
+Current milestone: Milestone 6.3 (The Kitchen Screen) — IN PROGRESS.
 
-Current task: Task 6.3.6 — Add the dark mode default.
+Current task: Task 6.3.7 — Add the connection state indicator.
 
-Current status: The kitchen action script has been migrated to `next/script` with `strategy="afterInteractive"` (ENTRY-0179), ensuring click event handlers bind reliably after client hydration. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.6.
+Current status: The kitchen screen has a dark-mode default (owned by `app/kitchen/layout.tsx`'s `data-theme="dark"`), a sun/moon toggle in the status strip, and a preference persisted in `localStorage.kitchen_theme` and reapplied on load by the existing `next/script` `afterInteractive` block (ENTRY-0180). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.7.
 
 ## 8. How the File Evolves
 
