@@ -500,7 +500,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ----- | ------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 6.2.1 | Add `GET /api/kitchen/orders`                                                               | ✅ Complete | 6.1.6      |
 | 6.2.2 | Add `POST /api/kitchen/orders/[id]/start` and `POST /api/kitchen/orders/[id]/ready` (both call the 6.1.2/6.1.3 domain functions; same shape, one session) | ✅ Complete | 6.2.1      |
-| 6.2.4 | Verify: the kitchen can read its orders and advance them; the responses match SYSTEM.md §12 | ⬜     | 6.2.2      |
+| 6.2.4 | Verify: the kitchen can read its orders and advance them; the responses match SYSTEM.md §12 | ✅ Complete | 6.2.2      |
 
 *(Task 6.2.3 is folded into 6.2.2 — the two routes are the same adapter shape calling two already-tested domain functions. No work is removed.)*
 

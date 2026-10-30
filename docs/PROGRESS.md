@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0172 | 2026-10-30 | Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0171 | 2026-10-30 | Tasks 6.2.2 + 6.2.3 — Add POST /api/kitchen/orders/[id]/start and /ready | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0170 | 2026-10-30 | Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0169 | 2026-10-30 | Task 6.2.1 — Add GET /api/kitchen/orders | PASS | Milestone 6.2 | §5.3 |
@@ -140,9 +141,9 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0172
+Next entry number: 0173
 
-### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.4 — Verify the kitchen routes as a group.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.1 — Add the ticket grid layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -277,6 +278,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0172 | 2026-10-30 | Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0171 | 2026-10-30 | Tasks 6.2.2 + 6.2.3 — Add POST /api/kitchen/orders/[id]/start and /ready | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0170 | 2026-10-30 | Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0169 | 2026-10-30 | Task 6.2.1 — Add GET /api/kitchen/orders | PASS | Milestone 6.2 | §5.3 |
@@ -290,13 +292,111 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0172
+Next entry number: 0173
 
-### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.4 — Verify the kitchen routes as a group.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.1 — Add the ticket grid layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0172 — 2026-10-30 — Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close
+
+**Status:** PASS
+
+**Task:** Task 6.2.4 — Verify the kitchen routes as a group
+
+**Summary:**
+Verified the three kitchen routes (GET /api/kitchen/orders, POST /api/kitchen/orders/[id]/start, POST /api/kitchen/orders/[id]/ready) against all eight milestone acceptance criteria with 13 comprehensive integration tests. Milestone 6.2 is closed and Milestone 6.3 (The Kitchen Screen) is unblocked with all four baselines green.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| docs/ROADMAP.md | Edit | Marked Task 6.2.4 complete (✅ Complete) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0172, updated §5.2 ledger, bumped next entry to 0173, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+git log --oneline -1
+# f255f2b feat(kitchen): Tasks 6.2.2+6.2.3 — POST /api/kitchen/orders/[id]/start and /ready with 200/404/409/401/403/cross-venue tests (ENTRY-0171)
+
+git status --short --untracked-files=all
+# Exit code: 0 (clean)
+
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 33 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 175 passed (175)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Claim 1: Read orders (200 filtered list) | PASS | tests/integration/api/kitchen-orders.test.ts > "returns 200 with the kitchen-visible orders for a chef" |
+| 2 | Claim 2: Advance to PREPARING (200) | PASS | tests/integration/api/kitchen-orders.test.ts > "start returns 200 and advances an APPROVED order to PREPARING" |
+| 3 | Claim 3: Advance to READY (200) | PASS | tests/integration/api/kitchen-orders.test.ts > "ready returns 200 and advances a PREPARING order to READY" |
+| 4 | Claim 4: Unauthenticated rejected (401) | PASS | tests/integration/api/kitchen-orders.test.ts > "returns 401 when there is no session cookie", "returns 401 when the session cookie is invalid", "start returns 401 when there is no session cookie" |
+| 5 | Claim 5: Wrong role rejected (403) | PASS | tests/integration/api/kitchen-orders.test.ts > "returns 403 when the staff member does not have the kitchen role", "start returns 403 when the staff member does not have the kitchen role" |
+| 6 | Claim 6: Forbidden transitions rejected (409) | PASS | tests/integration/api/kitchen-orders.test.ts > "start returns 409 INVALID_STATE when called on a PLACED order", "ready returns 409 INVALID_STATE when called on an APPROVED order" |
+| 7 | Claim 7: Non-existent order rejected (404) | PASS | tests/integration/api/kitchen-orders.test.ts > "start returns 404 when the order does not exist" |
+| 8 | Claim 8: Cross-venue orders return 404, never 403 | PASS | tests/integration/api/kitchen-orders.test.ts > "start returns 404 when the order belongs to a different venue (cross-venue isolation)" per SYSTEM.md §15.4 |
+| 9 | TypeScript compilation passes (0 errors) | PASS | pnpm exec tsc --noEmit exited with code 0 |
+| 10 | Production build passes (33 routes + 1 proxy) | PASS | pnpm build exited with code 0 on Next.js 16.4.0 (Turbopack) |
+| 11 | Unit test suite passes unchanged | PASS | pnpm test:unit passed: 29 files, 207 tests |
+| 12 | Integration test suite passes | PASS | pnpm test:integration passed: 29 files, 175 tests (kitchen-orders.test.ts 13 tests) |
+| 13 | Only documentation files modified | PASS | git status --short --untracked-files=all shows only docs/ROADMAP.md and docs/PROGRESS.md |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Milestone 6.3 (The Kitchen Screen) will build:
+  - Ticket grid layout replacing placeholder app/kitchen/page.tsx (Task 6.3.1)
+  - Ticket cards with order number, place, items, modifiers, and notes (Task 6.3.2)
+  - Elapsed time display (Task 6.3.3)
+  - Start and Ready action handlers using native DOM scripts with in-place updates (Task 6.3.4)
+  - 5-second polling of GET /api/kitchen/orders
+  - Audible ping on new tickets
+  - Dark mode default (Task 6.3.6)
+  - Connection indicator (Task 6.3.7)
+  - Milestone verification (Task 6.3.8)
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-4.8, D-4.9, D-6.1 | No change |
+| SYSTEM.md | No | Adheres to §6, §7, §9, §12, §15.4 | No change |
+| BUILD.md | No | Adheres to §8.1, §8.8, §13, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 6.2.4 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0172, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3 — The Kitchen Screen. Task 6.3.1 — Add the ticket grid layout.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0171 — 2026-10-30 — Tasks 6.2.2 + 6.2.3 — Add POST /api/kitchen/orders/[id]/start and /ready
 
@@ -1216,11 +1316,11 @@ Updated at the end of every session.
 
 Current phase: Phase 6 (The Kitchen).
 
-Current milestone: Milestone 6.2 (The Kitchen Routes).
+Current milestone: Milestone 6.3 (The Kitchen Screen).
 
-Current task: Task 6.2.4 — Verify the kitchen routes as a group.
+Current task: Task 6.3.1 — Add the ticket grid layout.
 
-Current status: Implemented and tested POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready (ENTRY-0171). All four baselines remain green: tsc 0, build 33 routes + 1 proxy on Next.js 16.4.0 (Turbopack), unit 207/29, integration 175/29. Ready for Task 6.2.4 to verify the three kitchen routes as a group.
+Current status: Milestone 6.2 is CLOSED (ENTRY-0172). All three kitchen routes (GET /api/kitchen/orders, POST /api/kitchen/orders/[id]/start, POST /api/kitchen/orders/[id]/ready) are verified as a group covering all eight acceptance claims (200 filtered read, 200 start advance, 200 ready advance, 401 unauthenticated, 403 unauthorized role, 409 INVALID_STATE on forbidden transitions, 404 missing order, 404 cross-venue isolation per SYSTEM.md §15.4) across 13 integration tests. All four baselines remain green: tsc 0, build 33 routes + 1 proxy on Next.js 16.4.0 (Turbopack), unit 207/29, integration 175/29. Ready for Milestone 6.3 (The Kitchen Screen).
 
 ## 8. How the File Evolves
 
