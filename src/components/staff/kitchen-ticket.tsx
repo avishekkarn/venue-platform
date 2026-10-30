@@ -52,6 +52,15 @@ export function KitchenTicket({
   );
   const isStale = elapsedMinutes >= 15;
 
+  let action: string | undefined;
+  if (order.state === OrderState.APPROVED || order.state === OrderState.PLACED) {
+    action = "start";
+  } else if (order.state === OrderState.PREPARING) {
+    action = "ready";
+  }
+
+  const isReady = order.state === OrderState.READY;
+
   return (
     <article
       className={`bg-staff-surface-raised rounded-lg p-5 flex flex-col justify-between gap-4 ${
@@ -126,12 +135,16 @@ export function KitchenTicket({
         )}
       </div>
 
-      {/* Footer Action Button (Disabled Placeholder) */}
+      {/* Footer Action Button */}
       <div className="pt-2">
         <Button
+          type="button"
           variant="primary"
           size="lg"
-          disabled
+          disabled={isReady}
+          data-order-id={order.id}
+          data-action={action}
+          data-current-state={order.state}
           className="w-full"
         >
           {getActionButtonLabel(order.state)}

@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import Script from "next/script";
 import { redirect } from "next/navigation";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
@@ -165,6 +166,118 @@ export default async function KitchenPage(): Promise<JSX.Element> {
       <aside className="fixed bottom-4 right-4 z-20">
         <LogoutButton />
       </aside>
+
+      {/* Toast notification */}
+      <div
+        id="kitchen-toast"
+        role="status"
+        aria-live="polite"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm shadow-lg pointer-events-none"
+        style={{ display: "none" }}
+      />
+
+      <Script
+        id="kitchen-actions"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+(function() {
+  var toastTimer = null;
+  function showToast(msg) {
+    var toast = document.getElementById('kitchen-toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+    }
+    toastTimer = setTimeout(function() {
+      toast.style.display = 'none';
+      toastTimer = null;
+    }, 4000);
+  }
+
+  document.addEventListener('click', function(event) {
+    var el = event.target;
+    var btn = null;
+    for (var i = 0; i < 4 && el; i++) {
+      if (el.hasAttribute && el.hasAttribute('data-order-id')) {
+        btn = el;
+        break;
+      }
+      el = el.parentElement;
+    }
+    if (!btn) return;
+
+    var action = btn.getAttribute('data-action');
+    if (!action) return;
+
+    var orderId = btn.getAttribute('data-order-id');
+    var previousState = btn.getAttribute('data-current-state');
+    var originalText = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    fetch('/api/kitchen/orders/' + encodeURIComponent(orderId) + '/' + action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(res) {
+      if (res.ok) {
+        return res.json().then(function(body) {
+          var newState = body && body.data && body.data.state;
+          btn.setAttribute('data-current-state', newState || '');
+          if (newState === 'PREPARING') {
+            btn.textContent = 'Ready';
+            btn.setAttribute('data-action', 'ready');
+            btn.disabled = false;
+          } else if (newState === 'READY') {
+            btn.textContent = 'Done';
+            btn.removeAttribute('data-action');
+            btn.disabled = true;
+          } else {
+            if (previousState === 'APPROVED' || previousState === 'PLACED') {
+              btn.textContent = 'Ready';
+              btn.setAttribute('data-action', 'ready');
+              btn.disabled = false;
+            } else {
+              btn.textContent = 'Done';
+              btn.removeAttribute('data-action');
+              btn.disabled = true;
+            }
+          }
+        });
+      }
+
+      btn.disabled = false;
+      btn.textContent = originalText;
+
+      if (res.status === 409) {
+        showToast('This ticket was already advanced. Refresh the screen.');
+      } else if (res.status === 401 || res.status === 403) {
+        return res.json().then(function(body) {
+          var msg = (body && body.error && body.error.message) || 'Not authorized';
+          showToast(msg);
+        }).catch(function() {
+          showToast('Not authorized');
+        });
+      } else if (res.status === 404) {
+        showToast('Order not found.');
+      } else {
+        showToast('Could not update ticket. Please try again.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      showToast('Network error. Please try again.');
+    });
+  });
+})();
+`,
+        }}
+      />
     </main>
   );
 }

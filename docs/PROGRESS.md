@@ -127,6 +127,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0179 | 2026-10-30 | HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive | STRUCTURAL | Milestone 6.3 | §5.3 |
+| ENTRY-0178 | 2026-10-30 | Task 6.3.4 — Add the Start and Ready actions | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0177 | 2026-10-30 | Task 6.3.3 — Add the live elapsed timer | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0176 | 2026-10-30 | Task 6.3.2 — Add the ticket card (extract KitchenTicket component) | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0175 | 2026-10-30 | Task 6.3.1 — Add the ticket grid layout | PASS | Milestone 6.3 | §5.3 |
@@ -147,13 +149,123 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0178
+Next entry number: 0180
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.4 — Add the Start and Ready actions.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.6 — Add the dark mode default.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0179 — 2026-10-30 — HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive
+
+**Status:** STRUCTURAL
+
+**Task:** HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive
+
+**Summary:**
+Replaced the raw `<script dangerouslySetInnerHTML>` tag in `app/kitchen/page.tsx` with Next.js's `<Script id="kitchen-actions" strategy="afterInteractive">`. This resolves the React hydration omission where scripts injected inside components are ignored, allowing the native DOM click delegation to properly bind after client hydration.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Replaced raw `<script>` tag with `<Script strategy="afterInteractive" id="kitchen-actions">` |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0179, updated §5.2 ledger, bumped next entry to 0180, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (972ms)
+- `pnpm test:integration` — 29 files / 175 tests passed
+
+**Acceptance Criteria Results:**
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| 1. app/kitchen/page.tsx imports and uses next/script with strategy="afterInteractive" | PASS | `<Script id="kitchen-actions" strategy="afterInteractive" ...>` renders outside React tree |
+| 2. Script logic unchanged | PASS | Exact same event delegation and fetch endpoints preserved |
+| 3. tsc 0 | PASS | `pnpm exec tsc --noEmit` exited 0 |
+| 4. build 33+1 on Next.js 16.4.0 Turbopack | PASS | All 33 routes and 1 proxy verified against expected list |
+| 5. unit 207 | PASS | 29 files, 207 tests passed |
+| 6. integration 175 | PASS | 29 files, 175 tests passed |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+The four other native DOM script files (guest menu, cart, admin toggle, login forms) do not exhibit this issue because they reside in pages without a client component boundary around the script tag. If client leaves are added to those pages in the future, the same `next/script` pattern with `strategy="afterInteractive"` applies.
+
+**Document Impact:**
+Only PROGRESS.md modified for documentation.
+
+**Contradiction Check:**
+None found. Traces to BUILD.md §3.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3. Task 6.3.6 — Add the dark mode default.
+
+**Awaiting Human Verification:** YES
+
+---
+
+
+### ENTRY-0178 — 2026-10-30 — Task 6.3.4 — Add the Start and Ready actions
+
+**Status:** PASS
+
+**Task:** Task 6.3.4 — Add the Start and Ready actions
+
+**Summary:**
+Added native DOM click event delegation in `app/kitchen/page.tsx` and data attributes (`data-order-id`, `data-action`, `data-current-state`) to `KitchenTicket` action buttons in `src/components/staff/kitchen-ticket.tsx`. Clicking Start or Ready calls POST `/api/kitchen/orders/[id]/start` or `/ready`, updating button labels and states in place without page reload, and rendering inline error toasts on failure.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Injected native DOM script and toast notification element |
+| src/components/staff/kitchen-ticket.tsx | Edit | Added action button data attributes (`data-order-id`, `data-action`, `data-current-state`) |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.4 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0178, updated §5.2 ledger, bumped next entry to 0179, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.07s)
+- `pnpm test:integration` — 29 files / 175 tests passed
+
+**Acceptance Criteria Results:**
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| 1. Button carries data-order-id, data-action, data-current-state | PASS | `KitchenTicket` passes data attributes to `<Button>` |
+| 2. page.tsx injects script via dangerouslySetInnerHTML | PASS | `app/kitchen/page.tsx` renders native DOM script |
+| 3. Script uses fetch to /api/kitchen/orders/[id]/start or /ready | PASS | Event listener executes POST fetch to route endpoints |
+| 4. On 200 button label and data attributes update in place | PASS | Updates text to "Ready"/"Done", updates state and action attributes |
+| 5. On 409 toast appears | PASS | Shows "This ticket was already advanced. Refresh the screen." |
+| 6. On 401/403/404/network error toast appears | PASS | Renders server error message or designated fallback toast for 4 seconds |
+| 7. No window.location.reload() or router.refresh() | PASS | Verified zero page reload/refresh calls |
+| 8. tsc 0 | PASS | `pnpm exec tsc --noEmit` exited 0 |
+| 9. build 33+1 on Next.js 16.4.0 Turbopack | PASS | All 33 routes and 1 proxy verified against expected list |
+| 10. unit 207 | PASS | 29 files, 207 tests passed |
+| 11. integration 175 | PASS | 29 files, 175 tests passed |
+| 12. Manual desktop check | PENDING | Awaiting human verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 6.3.6 adds dark mode default, Task 6.3.7 adds connection indicator and 5-second polling, Task 6.4.1 adds audible ping, and Task 6.3.8 performs milestone verification. Note that after 6.3.4, the guest tracking screen (which already polls every 5 seconds from Phase 5) will reflect state updates when the kitchen advances an order.
+
+**Document Impact:**
+Only ROADMAP.md and PROGRESS.md modified.
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3. Task 6.3.6 — Add the dark mode default.
+
+**Awaiting Human Verification:** YES
+
+---
+
 
 ### ENTRY-0177 — 2026-10-30 — Task 6.3.3 — Add the live elapsed timer
 
@@ -1463,9 +1575,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.2 (The Kitchen Routes) — CLOSED.
 
-Current task: Task 6.3.4 — Add the Start and Ready actions.
+Current task: Task 6.3.6 — Add the dark mode default.
 
-Current status: The live elapsed timer is in place via `ElapsedTimer` (ENTRY-0177), updating ticket elapsed time every 60 seconds without page reload. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.4.
+Current status: The kitchen action script has been migrated to `next/script` with `strategy="afterInteractive"` (ENTRY-0179), ensuring click event handlers bind reliably after client hydration. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.6.
 
 ## 8. How the File Evolves
 
