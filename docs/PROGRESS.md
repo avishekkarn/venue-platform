@@ -128,6 +128,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0186 | 2026-10-30 | HOTFIX — Migrate kitchen login to Native DOM (LAN access fix) | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0185 | 2026-10-30 | HOTFIX — AudioContext unlocking pattern and dual-oscillator kitchen ping | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0184 | 2026-10-30 | Task 6.4.1 — Add auto-refresh for new tickets and the audible ping — Phase 6 close | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0183 | 2026-10-30 | Task 6.3.8 — Verify the kitchen screen as a whole — Milestone 6.3 close | PASS | Milestone 6.3 | §5.3 |
@@ -156,13 +157,63 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0186
+Next entry number: 0187
 
 ### 5.3 Current Milestone — Milestone 7.1 (The Table Service Queue). Current task: Task 7.1.1 — Add the table service queue layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0186 — 2026-10-30 — HOTFIX — Migrate kitchen login to Native DOM (LAN access fix)
+
+**Status:** PASS
+
+**Task:** HOTFIX — Migrate kitchen login to Native DOM (LAN access fix)
+
+**Summary:**
+Migrated `app/kitchen/login/_form.tsx` from React client state (`useState`, `useRouter`, `onChange`, `onSubmit`) to Native DOM Pattern A (Server Component, pure HTML `<form id="kitchen-login-form">`, inline `<script dangerouslySetInnerHTML>`, hard navigation via `window.location.href`). Matches `app/admin/login/_form.tsx` and `app/staff/login/_form.tsx` (ENTRY-0170), resolving hydration failure and login inability on mobile devices accessing the dev server via local area network IP (`192.168.x.x:3000`).
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/login/_form.tsx | Edit | Converted to Server Component; removed React state and router; added native DOM form handling with hard reload navigation |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0186, updated §5.2 ledger, bumped next entry to 0187, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.07s)
+- `pnpm test:integration` — 29 files / 175 tests passed (89.54s)
+
+**Verification Results:**
+| Step | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Server Component architecture | PASS | No `"use client"`, zero React state hooks in `_form.tsx` |
+| 2 | Pure DOM `<form>` with IDs | PASS | `<form id="kitchen-login-form">`, `#username`, `#password`, `#login-error`, `#login-submit` |
+| 3 | Hard navigation | PASS | `window.location.href = target;` executes on successful login response |
+| 4 | Area redirection map | PASS | Inlined `map` mapping `kitchen` to `/kitchen`, `admin` to `/admin`, etc. |
+| 5 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 6 | `pnpm build` succeeds with 33 routes + 1 proxy | PASS | Exit code 0 on ▲ Next.js 16.4.0 (Turbopack) |
+| 7 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed |
+| 8 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed |
+| 9 | `docs/PROGRESS.md` §5.2 row, Next entry 0187, §5.3 ENTRY-0186, §7 snapshot | PASS | Added and verified |
+| 10 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Next Milestone / Task:**
+Phase 7 (The Service Staff Queues).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| PROGRESS.md | Yes | Recorded ENTRY-0186, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Aligns with Native DOM Pattern A established in Task 6.1.HOTFIX (ENTRY-0170).
 
 ### ENTRY-0185 — 2026-10-30 — HOTFIX — AudioContext unlocking pattern and dual-oscillator kitchen ping
 
@@ -749,7 +800,7 @@ Current milestone: Milestone 7.1 (The Table Service Queue) — NOT STARTED.
 
 Current task: Task 7.1.1 — Add the table service queue layout.
 
-Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). The kitchen screen renders dynamic tickets with auto-refresh diffing, dual-oscillator audible ping (880Hz + 440Hz, peak 0.7, 300ms) with AudioContext unlocking pattern, dark mode toggle, and connection health indicator (ENTRY-0185). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Phase 7.
+Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Kitchen login migrated to Native DOM Pattern A for LAN mobile access (ENTRY-0186). The kitchen screen renders dynamic tickets with auto-refresh diffing, dual-oscillator audible ping (880Hz + 440Hz, peak 0.7, 300ms) with AudioContext unlocking pattern, dark mode toggle, and connection health indicator (ENTRY-0185). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Phase 7.
 
 ## 8. How the File Evolves
 
