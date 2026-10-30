@@ -490,7 +490,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 6.1.1 | Add the order approval action (`PLACED → APPROVED`) using the helper from 6.1.4 | ✅ Complete | 6.1.4      |
 | 6.1.2 | Add the kitchen start action (`APPROVED → PREPARING`) using the same helper | ✅ Complete | 6.1.1      |
 | 6.1.3 | Add the kitchen ready action (`PREPARING → READY`) using the same helper | ✅ Complete | 6.1.2      |
-| 6.1.6 | Verify: the transitions are correct; invalid transitions return `INVALID_STATE`; the state-change records are written (the unit tests of 6.1.0.B, 6.1.4, and the integration test of `advanceState` together prove it) | ⬜     | 6.1.3      |
+| 6.1.6 | Verify: the transitions are correct; invalid transitions return `INVALID_STATE`; the state-change records are written (the unit tests of 6.1.0.B, 6.1.4, and the integration test of `advanceState` together prove it) | ✅ Complete | 6.1.3      |
 
 *(Task 6.1.5 is folded into 6.1.4 — the record is already written by `advanceState`; 6.1.4's helper guarantees the acting staff member is carried, and 6.1.6 verifies the record. Task 6.1.0 is split into 6.1.0.A (author the table) and 6.1.0.B (prove the table) because the empty `transitions.ts` placeholder required a new task boundary. No work is removed. Task 6.1.4 is now a CREATE of the empty `advance-order.ts`, not an edit.)*
 

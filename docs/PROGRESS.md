@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0168 | 2026-10-30 | Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0165 | 2026-10-30 | Task 6.1.0.B — Add the exhaustive transition table unit test | PASS | Milestone 6.1 | §5.3 |
@@ -136,9 +137,9 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0168
+Next entry number: 0169
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
+### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.1 — Add GET /api/kitchen/orders.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -273,6 +274,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0168 | 2026-10-30 | Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0165 | 2026-10-30 | Task 6.1.0.B — Add the exhaustive transition table unit test | PASS | Milestone 6.1 | §5.3 |
@@ -282,13 +284,99 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0168
+Next entry number: 0169
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
+### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.1 — Add GET /api/kitchen/orders.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0168 — 2026-10-30 — Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close
+
+**Status:** PASS
+
+**Task:** Task 6.1.6 — Verify Milestone 6.1
+
+**Summary:**
+Verified Milestone 6.1 domain capabilities against canonical transition rules and repository audit logging, proving all 9 allowed transitions, 40 forbidden transitions, action-level and advanceOrder-level INVALID_STATE returns, and database write of OrderStateChange records. Milestone 6.1 is closed, the kitchen domain layer is complete and verified, and Milestone 6.2 (The Kitchen Routes) is unblocked.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| docs/ROADMAP.md | Edit | Marked Task 6.1.6 as `✅ Complete` |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0168, updated §5.2 ledger, bumped next entry to 0169, updated §7 snapshot to Milestone 6.2 |
+
+**Commands Run:**
+```bash
+git log --oneline -1
+# 78ac6bf chore: enforce LF line endings via .gitattributes and renormalize working tree (resolves F-0002 in WIRING.md)
+
+git status --short --untracked-files=all
+# Exit code: 0 (clean working tree)
+
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 30 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 162 passed (162)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Claim A (transitions are correct) | PASS | Proven by `tests/unit/orders/transitions.test.ts` (10 tests) and `tests/unit/orders/actions.test.ts` (6 tests) |
+| 2 | Claim B (invalid transitions return INVALID_STATE) | PASS | Proven by `transitions.test.ts` (forbidden matrix & terminals), `actions.test.ts` (forbidden targets), and `advance-order.test.ts` (INVALID_STATE rejection) |
+| 3 | Claim C (state-change records are written) | PASS | Proven by `tests/integration/repositories/order.repo.test.ts` Case 9 and `tests/unit/orders/advance-order.test.ts` Case 1 `advanceState` delegation |
+| 4 | tsc 0 | PASS | pnpm exec tsc --noEmit exit 0, 0 errors |
+| 5 | build 30 + 1 proxy on Next.js 16.4.0 Turbopack | PASS | ▲ Next.js 16.4.0 (Turbopack), 30 app routes + 1 proxy (Middleware) |
+| 6 | unit 29 files / 207 tests | PASS | 29 files / 207 passed |
+| 7 | integration 29 files / 162 tests | PASS | 29 files / 162 passed |
+| 8 | No file outside docs/ROADMAP.md and docs/PROGRESS.md was modified | PASS | Verified via git status after docs edits |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Milestone 6.2 (The kitchen routes) will implement the four routes: `GET /api/kitchen/orders`, `POST /api/kitchen/orders/[id]/start`, `POST /api/kitchen/orders/[id]/ready`, and the staff approval route that Task 6.1.1's `approveOrder` will serve.
+- Session and role verification will follow the pattern established in `app/api/admin/menu/items/[id]/state/route.ts`.
+- `tests/integration/api/kitchen-orders.test.ts` (currently 0 tests) will be filled with comprehensive route integration tests in Milestone 6.2.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-4.8, D-4.9, D-6.1 | No change |
+| SYSTEM.md | No | Adheres to §9.1, §9.2, §9.3 | No change |
+| BUILD.md | No | Adheres to §8.1, §8.8, §13, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 6.1.6 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0168, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.2 — The kitchen routes. Task 6.2.1 — Add GET /api/kitchen/orders.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0167 — 2026-10-30 — Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready)
 
