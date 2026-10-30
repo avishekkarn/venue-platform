@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0169 | 2026-10-30 | Task 6.2.1 — Add GET /api/kitchen/orders | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0168 | 2026-10-30 | Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
@@ -137,9 +138,9 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0169
+Next entry number: 0170
 
-### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.1 — Add GET /api/kitchen/orders.
+### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -274,6 +275,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0169 | 2026-10-30 | Task 6.2.1 — Add GET /api/kitchen/orders | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0168 | 2026-10-30 | Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
@@ -284,13 +286,100 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0169
+Next entry number: 0170
 
-### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.1 — Add GET /api/kitchen/orders.
+### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0169 — 2026-10-30 — Task 6.2.1 — Add GET /api/kitchen/orders
+
+**Status:** PASS
+
+**Task:** Task 6.2.1 — Add GET /api/kitchen/orders
+
+**Summary:**
+Implemented the HTTP route `GET /api/kitchen/orders` enforcing staff authentication, active account verification, and kitchen role authorization via `canAccess(roles, "kitchen")`, returning orders filtered to the three kitchen-visible states (`APPROVED`, `PREPARING`, `READY`). Created comprehensive integration tests in `tests/integration/api/kitchen-orders.test.ts` covering happy path filtered lists, unauthenticated (401), invalid session (401), unauthorized role (403), and deactivated staff (401) scenarios.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/api/kitchen/orders/route.ts | Create | Route handler for kitchen orders list with session, role, and state filtering |
+| tests/integration/api/kitchen-orders.test.ts | Edit | Implemented 5 integration tests replacing 0-test placeholder |
+| docs/ROADMAP.md | Edit | Marked Task 6.2.1 as `✅ Complete` |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0169, updated §5.2 ledger, bumped next entry to 0170, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+git log --oneline -1
+# 92db04c STRUCTURAL — Task 6.1.6 verified, Milestone 6.1 closed (ENTRY-0168)
+
+git status --short --untracked-files=all
+# Exit code: 0 (clean)
+
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 31 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 167 passed (167)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Route exists and returns 200 with standard envelope for CHEF | PASS | Verified in `tests/integration/api/kitchen-orders.test.ts` test 1 |
+| 2 | Orders list filtered strictly to APPROVED, PREPARING, and READY (no PLACED or COMPLETED) | PASS | Verified in `tests/integration/api/kitchen-orders.test.ts` test 1 |
+| 3 | Returns 401 UNAUTHORIZED when no session cookie present | PASS | Verified in `tests/integration/api/kitchen-orders.test.ts` test 2 |
+| 4 | Returns 401 UNAUTHORIZED when session token is invalid | PASS | Verified in `tests/integration/api/kitchen-orders.test.ts` test 3 |
+| 5 | Returns 403 FORBIDDEN when staff role lacks kitchen permission (HOUSEKEEPING) | PASS | Verified in `tests/integration/api/kitchen-orders.test.ts` test 4 |
+| 6 | tsc 0 | PASS | `pnpm exec tsc --noEmit` exit 0, 0 errors |
+| 7 | build 31 + 1 on Next.js 16.4.0 (Turbopack) | PASS | ▲ Next.js 16.4.0 (Turbopack), 31 app routes + 1 proxy (Middleware) |
+| 8 | unit unchanged at 207 | PASS | 29 files / 207 passed |
+| 9 | integration strictly > 162 | PASS | 29 files / 167 passed (`kitchen-orders.test.ts` 5 tests passed) |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Task 6.2.2 will implement `POST /api/kitchen/orders/[id]/start` and `POST /api/kitchen/orders/[id]/ready` reusing `startPreparingOrder` and `markOrderReady` from `src/domain/orders/actions.ts`.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-4.8, D-4.9, D-6.1 | No change |
+| SYSTEM.md | No | Adheres to §6.3-§6.5, §7.1, §9, §12.1, §12.4 | No change |
+| BUILD.md | No | Adheres to §6, §8.8, §13, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 6.2.1 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0169, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.2. Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0168 — 2026-10-30 — Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close
 
