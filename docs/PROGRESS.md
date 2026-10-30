@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0183 | 2026-10-30 | Task 6.3.8 — Verify the kitchen screen as a whole — Milestone 6.3 close | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0182 | 2026-10-30 | HOTFIX — Switch connection indicator connected state to --color-status-ready | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0181 | 2026-10-30 | Task 6.3.7 — Add the connection state indicator | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0180 | 2026-10-30 | Task 6.3.6 — Add the dark mode default and toggle | PASS | Milestone 6.3 | §5.3 |
@@ -152,13 +153,70 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0183
+Next entry number: 0184
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.8 — Verify the kitchen screen as a whole.
+### 5.3 Current Milestone — Milestone 6.4 (The Kitchen Ping). Current task: Task 6.4.1 — Add the audible ping on new tickets and verify it plays.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0183 — 2026-10-30 — Task 6.3.8 — Verify the kitchen screen as a whole — Milestone 6.3 close
+
+**Status:** PASS
+
+**Task:** Task 6.3.8 — Verify: a ticket appears within 5 seconds of approval; the actions advance the ticket; the guest's tracking screen reflects the changes (Milestone 6.3 close)
+
+**Summary:**
+Verified the kitchen screen loop: dynamic order display, status polling, Start and Ready native DOM actions, elapsed timer updates, dark mode toggle, and connection health indicator. Verified that all 29 unit test suites (207 tests) and 29 integration test suites (175 tests) pass against PostgreSQL. Formatted and documented the manual verification checklist per `docs/PHASE_TESTS.md` §8 for human sign-off. Milestone 6.3 is now closed.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.8 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0183, updated §5.2 ledger, bumped next entry to 0184, updated §5.3 header to Milestone 6.4 / Task 6.4.1, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.16s)
+- `pnpm test:integration` — 29 files / 175 tests passed (78.65s)
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | Pre-condition HEAD is b18213e and tree is clean | PASS | Confirmed via `git log -1` and `git status` |
+| 2 | No source or test code modified | PASS | Only `docs/ROADMAP.md` and `docs/PROGRESS.md` touched |
+| 3 | Automated integration tests for kitchen orders pass | PASS | `tests/integration/api/kitchen-orders.test.ts` (13 tests) and all suites pass |
+| 4 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 5 | `pnpm build` succeeds with 33 routes + 1 proxy | PASS | Exit code 0 on ▲ Next.js 16.4.0 (Turbopack) |
+| 6 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed in 1.16s |
+| 7 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed in 78.65s |
+| 8 | Manual verification checklist documented per PHASE_TESTS.md §8 | PASS | Provided 12-step verification procedure |
+| 9 | `docs/ROADMAP.md` Task 6.3.8 marked ✅ Complete | PASS | Updated Milestone 6.3 table |
+| 10 | `docs/PROGRESS.md` §5.2 row, Next entry 0184, §5.3 ENTRY-0183, §7 snapshot | PASS | Added and verified |
+| 11 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 6.4.1 (audible ping on new tickets — Milestone 6.4). Note: Phase 6 remains open until Milestone 6.4 completes; Phase 6 compression protocol will execute upon Milestone 6.4 close.
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| ROADMAP.md | Yes | Marked Task 6.3.8 complete |
+| PROGRESS.md | Yes | Recorded ENTRY-0183, updated ledger, snapshot, next entry, advanced milestone header |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to PHASE_TESTS.md §8, DESIGN.md §4.11, DECISIONS.md D-6.6, D-8.1, D-8.3.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.4 (The Kitchen Ping). Task 6.4.1 — Add the audible ping on new tickets and verify it plays (Web Audio, single 880 Hz tone, no mute, native script — same discipline as the guest menu ping).
+
+---
 
 ### ENTRY-0182 — 2026-10-30 — HOTFIX — Switch connection indicator connected state to --color-status-ready
 
@@ -1769,11 +1827,11 @@ Updated at the end of every session.
 
 Current phase: Phase 6 (The Kitchen).
 
-Current milestone: Milestone 6.3 (The Kitchen Screen) — IN PROGRESS.
+Current milestone: Milestone 6.4 (The Kitchen Ping) — NOT STARTED.
 
-Current task: Task 6.3.8 — Verify the kitchen screen as a whole.
+Current task: Task 6.4.1 — Add the audible ping on new tickets and verify it plays.
 
-Current status: The kitchen screen has a dark-mode default (owned by `app/kitchen/layout.tsx`'s `data-theme="dark"`), a sun/moon toggle in the status strip (persisted in `localStorage.kitchen_theme`), and a live connection state indicator (`#connection-indicator` with green `--color-status-ready` connected dot and amber `--color-status-active` reconnecting dot, polling `/api/kitchen/orders` every 5000ms via `next/script` `afterInteractive`) (ENTRY-0182). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.8 (milestone verification).
+Current status: Milestone 6.3 is verified and closed. All kitchen tickets, grid layout, theme toggle, and connection state poller are functional and tested (ENTRY-0183). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Milestone 6.4 (Task 6.4.1 — The kitchen ping). Phase 6 compression protocol will execute upon Milestone 6.4 close.
 
 ## 8. How the File Evolves
 
