@@ -1,12 +1,13 @@
 import type { JSX } from "react";
 import { redirect } from "next/navigation";
+import { getLandingRouteForRoles } from "@/lib/auth/landing-route";
 import { getAuthenticatedStaff } from "@/lib/auth/validate-session";
 import { LoginForm } from "./_form";
 
 export default async function KitchenLoginPage(): Promise<JSX.Element> {
   const staff = await getAuthenticatedStaff();
   if (staff !== null) {
-    redirect("/kitchen");
+    redirect(getLandingRouteForRoles(staff.roles));
   }
   return (
     <main className="flex items-center justify-center px-4 min-h-dvh">

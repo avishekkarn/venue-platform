@@ -1,6 +1,5 @@
 import type { JSX } from "react";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { BackButton } from "./_back-button";
 
 export default function ForbiddenPage(): JSX.Element {
   return (
@@ -18,12 +17,7 @@ export default function ForbiddenPage(): JSX.Element {
           </p>
         </header>
         <div>
-          <Link
-            href="/staff/login"
-            className={buttonVariants({ variant: "secondary", size: "md" })}
-          >
-            Back to Sign In
-          </Link>
+          <BackButton />
         </div>
       </main>
     </div>

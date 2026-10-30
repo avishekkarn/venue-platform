@@ -127,6 +127,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0174 | 2026-10-30 | HOTFIX — Fix login redirect loop by routing based on staff role | STRUCTURAL | Phase 6 planning | §5.3 |
+| ENTRY-0173 | 2026-10-30 | HOTFIX — fix app/forbidden/page.tsx "Back" button to use router.back() | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0172 | 2026-10-30 | Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0171 | 2026-10-30 | Tasks 6.2.2 + 6.2.3 — Add POST /api/kitchen/orders/[id]/start and /ready | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0170 | 2026-10-30 | Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR | PASS | Milestone 6.2 | §5.3 |
@@ -141,7 +143,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0173
+Next entry number: 0175
 
 ### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.1 — Add the ticket grid layout.
 
@@ -278,6 +280,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0174 | 2026-10-30 | HOTFIX — Fix login redirect loop by routing based on staff role | STRUCTURAL | Phase 6 planning | §5.3 |
+| ENTRY-0173 | 2026-10-30 | HOTFIX — fix app/forbidden/page.tsx "Back" button to use router.back() | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0172 | 2026-10-30 | Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0171 | 2026-10-30 | Tasks 6.2.2 + 6.2.3 — Add POST /api/kitchen/orders/[id]/start and /ready | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0170 | 2026-10-30 | Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR | PASS | Milestone 6.2 | §5.3 |
@@ -292,13 +296,180 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0173
+Next entry number: 0175
 
 ### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.1 — Add the ticket grid layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0174 — 2026-10-30 — HOTFIX — Fix login redirect loop by routing based on staff role
+
+**Status:** STRUCTURAL
+
+**Task:** None (hotfix)
+
+**Summary:**
+Created `getLandingRouteForRoles` in `src/lib/auth/landing-route.ts` to route already-authenticated staff to their appropriate surface based on role priority (OWNER/MANAGER to `/admin`, CHEF to `/kitchen`, others to `/staff`). Updated `app/staff/login/page.tsx`, `app/admin/login/page.tsx`, and `app/kitchen/login/page.tsx` to use this helper, eliminating redirect loops where authenticated managers visiting login pages were bounced to `/staff` and then 403 forbidden.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| src/lib/auth/landing-route.ts | Create | Added `getLandingRouteForRoles(roles: readonly StaffRole[])` helper |
+| app/staff/login/page.tsx | Edit | Redirect authenticated staff using `getLandingRouteForRoles(staff.roles)` |
+| app/admin/login/page.tsx | Edit | Redirect authenticated staff using `getLandingRouteForRoles(staff.roles)` |
+| app/kitchen/login/page.tsx | Edit | Redirect authenticated staff using `getLandingRouteForRoles(staff.roles)` |
+| docs/PROGRESS.md | Edit | Record ENTRY-0174, update §5.2 ledger, bump next entry to 0175, update §7 snapshot |
+
+**Commands Run:**
+```bash
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 33 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 175 passed (175)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | src/lib/auth/landing-route.ts created | PASS | getLandingRouteForRoles implemented with OWNER/MANAGER->/admin, CHEF->/kitchen, default /staff |
+| 2 | app/staff/login/page.tsx updated | PASS | Replaced hardcoded /staff redirect with getLandingRouteForRoles(staff.roles) |
+| 3 | app/admin/login/page.tsx updated | PASS | Replaced hardcoded /admin redirect with getLandingRouteForRoles(staff.roles) |
+| 4 | app/kitchen/login/page.tsx updated | PASS | Replaced hardcoded /kitchen redirect with getLandingRouteForRoles(staff.roles) |
+| 5 | No other files modified | PASS | git status verified; middleware and login forms untouched |
+| 6 | TypeScript compilation passes (0 errors) | PASS | pnpm exec tsc --noEmit exited with code 0 |
+| 7 | Production build passes (33 routes + 1 proxy) | PASS | pnpm build exited with code 0 on Next.js 16.4.0 (Turbopack) |
+| 8 | Unit test suite passes unchanged | PASS | pnpm test:unit passed: 29 files, 207 tests |
+| 9 | Integration test suite passes unchanged | PASS | pnpm test:integration passed: 29 files, 175 tests |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- This fixes a bug where Managers were bounced to /staff and then to /forbidden if they visited a staff login page while already authenticated.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Preserves existing decisions | No change |
+| SYSTEM.md | No | Adheres to §6 session rules | No change |
+| BUILD.md | No | Adheres to §8.8, §13, §15 | No change |
+| ROADMAP.md | No | Hotfix does not alter roadmap structure | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0174, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found. Traced to Phase 3 auth routing.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3 — The Kitchen Screen. Task 6.3.1 — Add the ticket grid layout.
+
+**Awaiting Human Verification:** NO
+
+---
+
+### ENTRY-0173 — 2026-10-30 — HOTFIX — fix app/forbidden/page.tsx "Back" button to use router.back()
+
+**Status:** STRUCTURAL
+
+**Task:** None (hotfix)
+
+**Summary:**
+Replaced the hardcoded `/staff/login` link in `app/forbidden/page.tsx` with a client-side `<BackButton />` component invoking `router.back()` so that staff of any role bounced to the 403 page can return to their prior context rather than being routed to an arbitrary login screen. All four verification baselines remain green.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/forbidden/_back-button.tsx | Create | Client-side "use client" button invoking router.back() |
+| app/forbidden/page.tsx | Edit | Render <BackButton /> instead of hardcoded Link to /staff/login |
+| docs/PROGRESS.md | Edit | Record ENTRY-0173, update §5.2 ledger, bump next entry to 0174, update §7 snapshot |
+
+**Commands Run:**
+```bash
+git log --oneline -1
+# 7bd6552 STRUCTURAL — Task 6.2.4 verified, Milestone 6.2 closed (ENTRY-0172)
+
+git status --short --untracked-files=all
+# M app/forbidden/page.tsx
+# ?? app/forbidden/_back-button.tsx
+
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 33 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 175 passed (175)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | app/forbidden/_back-button.tsx created | PASS | "use client" component with useRouter().back() created |
+| 2 | app/forbidden/page.tsx uses BackButton | PASS | Replaced hardcoded Link to /staff/login with <BackButton /> |
+| 3 | No other file touched | PASS | Only app/forbidden/ and docs/PROGRESS.md modified |
+| 4 | TypeScript compilation passes (0 errors) | PASS | pnpm exec tsc --noEmit exited with code 0 |
+| 5 | Production build passes (33 routes + 1 proxy) | PASS | pnpm build exited with code 0 on Next.js 16.4.0 (Turbopack) |
+| 6 | Unit test suite passes unchanged | PASS | pnpm test:unit passed: 29 files, 207 tests |
+| 7 | Integration test suite passes unchanged | PASS | pnpm test:integration passed: 29 files, 175 tests |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- The forbidden page was created during Phase 3 with a hardcoded `/staff/login` link as a temporary placeholder. As more staff roles were added (kitchen in Phase 6, admin in Phase 3/4), this hardcoding trapped non-staff-role users. The page should be revisited when Phase 8 builds the full admin shell.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Preserves existing decisions | No change |
+| SYSTEM.md | No | Adheres to §6 session rules | No change |
+| BUILD.md | No | Adheres to §3, §8.8, §13, §15 | No change |
+| ROADMAP.md | No | Hotfix does not alter roadmap structure | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0173, updated ledger and snapshot | Updated |
+| DESIGN.md | No | Retains button styling | No change |
+| PHASE_TESTS.md | No | Acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3 — The Kitchen Screen. Task 6.3.1 — Add the ticket grid layout.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0172 — 2026-10-30 — Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close
 
@@ -1320,7 +1491,7 @@ Current milestone: Milestone 6.3 (The Kitchen Screen).
 
 Current task: Task 6.3.1 — Add the ticket grid layout.
 
-Current status: Milestone 6.2 is CLOSED (ENTRY-0172). All three kitchen routes (GET /api/kitchen/orders, POST /api/kitchen/orders/[id]/start, POST /api/kitchen/orders/[id]/ready) are verified as a group covering all eight acceptance claims (200 filtered read, 200 start advance, 200 ready advance, 401 unauthenticated, 403 unauthorized role, 409 INVALID_STATE on forbidden transitions, 404 missing order, 404 cross-venue isolation per SYSTEM.md §15.4) across 13 integration tests. All four baselines remain green: tsc 0, build 33 routes + 1 proxy on Next.js 16.4.0 (Turbopack), unit 207/29, integration 175/29. Ready for Milestone 6.3 (The Kitchen Screen).
+Current status: HOTFIX completed (ENTRY-0174) — resolved login redirect loop by routing authenticated staff based on highest priority role (OWNER/MANAGER -> /admin, CHEF -> /kitchen, other -> /staff) via getLandingRouteForRoles. All four baselines remain green: tsc 0, build 33 routes + 1 proxy on Next.js 16.4.0 (Turbopack), unit 207/29, integration 175/29. Ready for Task 6.3.1 (Add the ticket grid layout).
 
 ## 8. How the File Evolves
 
