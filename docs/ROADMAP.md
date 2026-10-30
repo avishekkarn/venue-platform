@@ -484,14 +484,15 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                                  | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 6.1.0 | Add the transition table unit test (fill the `tests/unit/orders/transitions.test.ts` stub with the full `OrderState` transition table from SYSTEM.md §9.2, every allowed and every forbidden pair) | ⬜     | 5.8.4      |
-| 6.1.4 | Add the state-transition validation (the domain helper that reads the table from 6.1.0, returns `INVALID_STATE` on a forbidden transition, and carries the acting `staffMemberId` so the state-change record is guaranteed) | ⬜     | 6.1.0      |
+| 6.1.0.A | Author the transition table (`src/domain/orders/transitions.ts`) — the `OrderState` transition table from SYSTEM.md §9.2 and an `isTransitionAllowed(from, to)` validator returning `Result<true>` / `fail(INVALID_STATE)`; add its unit test | ⬜     | 5.8.4      |
+| 6.1.0.B | Add the exhaustive transition table unit test (fill `tests/unit/orders/transitions.test.ts` with every allowed and every forbidden pair, coverage of all seven states, and the exact allowed-transition count) | ⬜     | 6.1.0.A    |
+| 6.1.4 | Add the state-transition validation helper (the domain function in `src/domain/orders/advance-order.ts` that calls `isTransitionAllowed` from 6.1.0.A, returns `INVALID_STATE` on a forbidden transition, and carries the acting `staffMemberId` so the state-change record is guaranteed) | ⬜     | 6.1.0.B    |
 | 6.1.1 | Add the order approval action (`PLACED → APPROVED`) using the helper from 6.1.4 | ⬜     | 6.1.4      |
 | 6.1.2 | Add the kitchen start action (`APPROVED → PREPARING`) using the same helper | ⬜     | 6.1.1      |
 | 6.1.3 | Add the kitchen ready action (`PREPARING → READY`) using the same helper | ⬜     | 6.1.2      |
-| 6.1.6 | Verify: the transitions are correct; invalid transitions return `INVALID_STATE`; the state-change records are written (the unit tests of 6.1.4 and the integration test of `advanceState` together prove it) | ⬜     | 6.1.3      |
+| 6.1.6 | Verify: the transitions are correct; invalid transitions return `INVALID_STATE`; the state-change records are written (the unit tests of 6.1.0.B, 6.1.4, and the integration test of `advanceState` together prove it) | ⬜     | 6.1.3      |
 
-*(Task 6.1.5 is folded into 6.1.4 — the record is already written by `advanceState`; 6.1.4's helper guarantees the acting staff member is carried, and 6.1.6 verifies the record. No work is removed.)*
+*(Task 6.1.5 is folded into 6.1.4 — the record is already written by `advanceState`; 6.1.4's helper guarantees the acting staff member is carried, and 6.1.6 verifies the record. Task 6.1.0 is split into 6.1.0.A (author the table) and 6.1.0.B (prove the table) because the empty `transitions.ts` placeholder required a new task boundary. No work is removed. Task 6.1.4 is now a CREATE of the empty `advance-order.ts`, not an edit.)*
 
 ### Milestone 6.2 — The kitchen routes
 

@@ -127,13 +127,14 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0163 | 2026-10-30 | Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0161 | 2026-10-29 | Task 5.8.4 — Verify menu item state update (Milestone 5.8 and Phase 5 close) | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
 Next entry number: 0162
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action.
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.0.A — Author the transition table and its validator.
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -268,18 +269,71 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0163 | 2026-10-30 | Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0161 | 2026-10-29 | Task 5.8.4 — Verify menu item state update (Milestone 5.8 and Phase 5 close) | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0163
+Next entry number: 0164
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action.
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.0.A — Author the transition table and its validator.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0163 — 2026-10-30 — Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report (empty transitions.ts placeholder)
+
+**Status:** STRUCTURAL
+
+**Task:** None (structural session — task scope correction, no code, no task opened or closed)
+
+**Summary:**
+Task 6.1.0 was reported BLOCKED because `src/domain/orders/transitions.ts` and `src/domain/orders/advance-order.ts` are both 0-byte placeholder files from commit `8e50b191`. The transition table was never authored. Split 6.1.0 into 6.1.0.A (author the table and its validator, with a smoke unit test) and 6.1.0.B (the exhaustive transition-table test). Task 6.1.4 is now a CREATE of `advance-order.ts`, not an edit. No code, test, or route was changed by this session; all four baselines remain green.
+
+**Files Changed:**
+| File | Change | Description |
+| --- | --- | --- |
+| docs/ROADMAP.md | Edit | Split 6.1.0 into 6.1.0.A and 6.1.0.B; corrected the 6.1.4 description to reflect that `advance-order.ts` is empty and 6.1.4 creates it |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0163, updated §5.2, bumped next entry to 0164, updated §7 |
+
+**Commands Run:**
+```bash
+# None. Documentation-only structural session.
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Every original 6.1 task's acceptance intent is preserved | PASS | 6.1.0.A + 6.1.0.B together cover what 6.1.0 intended; 6.1.4's scope is the same, now correctly framed as a create |
+| 2 | No task depends on a later task | PASS | 6.1.0.A → 6.1.0.B → 6.1.4 → 6.1.1 → 6.1.2 → 6.1.3 → 6.1.6 |
+| 3 | All four baselines unchanged by this session | PASS | No code was changed; the baseline output from Gemini's BLOCKED report stands (tsc 0, build 30+1 on Next.js 16.4.0 Turbopack, unit 27/186, integration 29/162) |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- `src/domain/orders/transitions.ts` is empty (fixed by 6.1.0.A).
+- `src/domain/orders/advance-order.ts` is empty (fixed by 6.1.4, now framed as a create).
+- A stray blank line had accumulated in `docs/ROADMAP.md` around line 591; cleared before this entry.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | Split 6.1.0; clarified 6.1.4 as a create | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| All others | No | Not affected | No change |
+
+**Contradiction Check:**
+None found. The split is consistent with BUILD.md §12.3 rule 1 (one concern per task) — authoring the table and proving it are two concerns — and with the failure protocol in BUILD.md §16 (a BLOCKED task is revised and re-issued, not retried with the same prompt).
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.1. Task 6.1.0.A — Author the transition table and its validator.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0162 — 2026-10-30 — Roadmap re-order — Phase 6 (The Kitchen), Milestone 6.1 through 6.4 restructured for strict dependency order
 
@@ -385,7 +439,7 @@ Current milestone: Milestone 6.1 (The Kitchen Domain).
 
 Current task: Task 6.1.1 — Add the order approval action.
 
-Current status: Phase 5 is closed and verified end-to-end. The guest can scan a QR, browse the menu, add items with modifiers to the cart, place an order, track its state live via polling, call a waiter/request the bill, and see menu availability changes update in place without losing their form state. The admin can toggle item availability. All baselines green: tsc 0, build 30 routes + 1 proxy, unit 186/27, integration 162/29. Ready for Phase 6 (The Kitchen).
+Current status: Phase 5 is closed and verified end-to-end. Phase 6 has been re-ordered for dependency correctness (ENTRY-0162) and Task 6.1.0 has been split into 6.1.0.A (author the transition table) and 6.1.0.B (prove it exhaustively) after the empty transitions.ts placeholder was found (ENTRY-0163). The transition table is now the first thing built. All baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 186/27, integration 162/29. Ready for Task 6.1.0.A.
 
 ## 8. How the File Evolves
 
@@ -470,9 +524,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.1 (The Kitchen Domain).
 
-Current task: Task 6.1.0 — Add the transition table unit test.
+Current task: Task 6.1.0.A — Author the transition table and its validator.
 
-Current status: Phase 5 is closed and verified end-to-end. Phase 6 has been re-ordered for dependency correctness (ENTRY-0162). The transition table is now proven first (6.1.0), then the transition validation helper (6.1.4), then the three actions (6.1.1–6.1.3), then the milestone verification (6.1.6). The kitchen routes, screen, and ping follow in that order. All baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 186/27, integration 162/29. Ready for Task 6.1.0.
+Current status: Phase 5 is closed and verified end-to-end. Phase 6 has been re-ordered for dependency correctness (ENTRY-0162) and Task 6.1.0 has been split into 6.1.0.A (author the transition table) and 6.1.0.B (prove it exhaustively) after the empty transitions.ts placeholder was found (ENTRY-0163). The transition table is now the first thing built. All baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 186/27, integration 162/29. Ready for Task 6.1.0.A.
 
 ## 8. How the File Evolves
 
