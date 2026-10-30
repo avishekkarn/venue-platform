@@ -485,7 +485,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | ID    | Task                                                                                                                  | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 6.1.0.A | Author the transition table (`src/domain/orders/transitions.ts`) — the `OrderState` transition table from SYSTEM.md §9.2 and an `isTransitionAllowed(from, to)` validator returning `Result<true>` / `fail(INVALID_STATE)`; add its unit test | ✅ Complete | 5.8.4      |
-| 6.1.0.B | Add the exhaustive transition table unit test (fill `tests/unit/orders/transitions.test.ts` with every allowed and every forbidden pair, coverage of all seven states, and the exact allowed-transition count) | ⬜     | 6.1.0.A    |
+| 6.1.0.B | Add the exhaustive transition table unit test (fill `tests/unit/orders/transitions.test.ts` with every allowed and every forbidden pair, coverage of all seven states, and the exact allowed-transition count) | ✅ Complete | 6.1.0.A    |
 | 6.1.4 | Add the state-transition validation helper (the domain function in `src/domain/orders/advance-order.ts` that calls `isTransitionAllowed` from 6.1.0.A, returns `INVALID_STATE` on a forbidden transition, and carries the acting `staffMemberId` so the state-change record is guaranteed) | ⬜     | 6.1.0.B    |
 | 6.1.1 | Add the order approval action (`PLACED → APPROVED`) using the helper from 6.1.4 | ⬜     | 6.1.4      |
 | 6.1.2 | Add the kitchen start action (`APPROVED → PREPARING`) using the same helper | ⬜     | 6.1.1      |
