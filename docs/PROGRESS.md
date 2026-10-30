@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0170 | 2026-10-30 | Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0169 | 2026-10-30 | Task 6.2.1 — Add GET /api/kitchen/orders | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0168 | 2026-10-30 | Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
@@ -138,7 +139,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0170
+Next entry number: 0171
 
 ### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
 
@@ -275,6 +276,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0170 | 2026-10-30 | Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0169 | 2026-10-30 | Task 6.2.1 — Add GET /api/kitchen/orders | PASS | Milestone 6.2 | §5.3 |
 | ENTRY-0168 | 2026-10-30 | Task 6.1.6 — Verify Milestone 6.1 (transitions, INVALID_STATE, state-change records) — milestone close | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0167 | 2026-10-30 | Tasks 6.1.1, 6.1.2, 6.1.3 — Add kitchen action functions (approve, start, ready) | PASS | Milestone 6.1 | §5.3 |
@@ -286,13 +288,92 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0170
+Next entry number: 0171
 
 ### 5.3 Current Milestone — Milestone 6.2 (The Kitchen Routes). Current task: Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0170 — 2026-10-30 — Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR
+
+**Status:** PASS
+
+**Task:** Task 6.1.HOTFIX — Migrate login forms to Native DOM and enable LAN HMR
+
+**Summary:**
+Converted /admin/login and /staff/login forms from React state and client-side event handlers to the Native DOM script pattern (<script dangerouslySetInnerHTML>) to eliminate hydration dependency on LAN IPs and ensure reliable form submission. Bound next dev to 0.0.0.0 in package.json to enable multi-device LAN testing.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| package.json | Edit | Updated dev script to next dev -H 0.0.0.0 |
+| app/admin/login/_form.tsx | Edit | Replaced React state/handlers with native DOM submit handler and window.location.href navigation |
+| app/staff/login/_form.tsx | Edit | Replaced React state/handlers with native DOM submit handler and window.location.href navigation |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0170, updated §5.2 ledger, bumped next entry to 0171, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 31 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 167 passed (167)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | next dev -H 0.0.0.0 in package.json | PASS | package.json dev script updated to "next dev -H 0.0.0.0" |
+| 2 | /admin/login uses Native DOM script pattern and hard navigation | PASS | app/admin/login/_form.tsx uses standard HTML form and <script dangerouslySetInnerHTML> calling window.location.href = targetRoute |
+| 3 | /staff/login uses Native DOM script pattern and hard navigation | PASS | app/staff/login/_form.tsx uses standard HTML form and <script dangerouslySetInnerHTML> calling window.location.href = targetRoute |
+| 4 | tsc exits 0 | PASS | pnpm exec tsc --noEmit exited with code 0 (0 errors) |
+| 5 | build succeeds with 31 routes + 1 proxy on Next.js 16.4.0 (Turbopack) | PASS | pnpm build exited with code 0, 31 app routes + 1 proxy |
+| 6 | unit tests pass (207 passed) | PASS | pnpm test:unit passed: 29 files, 207 tests |
+| 7 | integration tests pass (167 passed) | PASS | pnpm test:integration passed: 29 files, 167 tests |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- This is a regression fix from Phase 3 where login forms were built with React state and soft navigation before the Native DOM rule was established in Phase 5 (BUILD.md §3).
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-15.7 | No change |
+| SYSTEM.md | No | Adheres to §6 (Authentication and Sessions) | No change |
+| BUILD.md | No | Adheres to §3 (Native DOM rule), §13 | No change |
+| ROADMAP.md | No | Hotfix between tasks | No change |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0170, updated ledger and snapshot | Updated |
+| DESIGN.md | No | Preserved all visual design tokens and markup classes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.2. Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0169 — 2026-10-30 — Task 6.2.1 — Add GET /api/kitchen/orders
 
@@ -953,11 +1034,11 @@ Updated at the end of every session.
 
 Current phase: Phase 6 (The Kitchen).
 
-Current milestone: Milestone 6.1 (The Kitchen Domain).
+Current milestone: Milestone 6.2 (The Kitchen Routes).
 
-Current task: Task 6.1.6 — Verify: the transitions are correct; invalid transitions return INVALID_STATE; the state-change records are written.
+Current task: Task 6.2.2 — Add POST /api/kitchen/orders/[id]/start and POST /api/kitchen/orders/[id]/ready.
 
-Current status: The kitchen action functions (approveOrder, startPreparingOrder, markOrderReady) are implemented and verified (ENTRY-0167), enforcing allowed transitions via advanceOrder and updating order state. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 207/29, integration 162/29. Ready for Task 6.1.6 to verify the transitions and state changes.
+Current status: Task 6.1.HOTFIX completed (ENTRY-0170) — migrated /admin/login and /staff/login forms to Native DOM script pattern and bound next dev to 0.0.0.0 for LAN multi-device reliability. GET /api/kitchen/orders implemented and verified (ENTRY-0169). All four baselines remain green: tsc 0, build 31 routes + 1 proxy, unit 207/29, integration 167/29. Ready for Task 6.2.2.
 
 ## 8. How the File Evolves
 

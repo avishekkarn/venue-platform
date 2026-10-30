@@ -1,123 +1,101 @@
 "use client";
 
-import { useState, type JSX, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { areaToRoute, AREA_TO_ROUTE } from "../../staff/login/_redirect-map";
-import type { Area } from "@/domain/auth/can-access";
-
-const GENERIC_ERROR_MESSAGE = "Incorrect username or password.";
-
-function isArea(value: unknown): value is Area {
-  return typeof value === "string" && value in AREA_TO_ROUTE;
-}
 
 export function LoginForm(): JSX.Element {
-  const router = useRouter();
+  return (
+    <>
+      <form id="login-form" noValidate className="flex flex-col gap-6">
+        <Input
+          id="username"
+          name="username"
+          type="text"
+          autoComplete="username"
+          required
+          label="Username"
+        />
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          label="Password"
+        />
+        <p
+          id="login-error"
+          role="alert"
+          style={{ display: "none" }}
+          className="text-[13px] leading-[18px] text-status-cancelled"
+        />
+        <Button id="login-submit" type="submit" variant="primary" size="md">
+          Sign In
+        </Button>
+      </form>
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+(function() {
+  var form = document.getElementById('login-form');
+  var errEl = document.getElementById('login-error');
+  var btn = document.getElementById('login-submit');
+  if (!form || !btn) return;
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const body: unknown = await response.json();
-
-      if (
-        !response.ok ||
-        !body ||
-        typeof body !== "object" ||
-        !("data" in body)
-      ) {
-        setError(GENERIC_ERROR_MESSAGE);
-        setSubmitting(false);
-        return;
-      }
-
-      const dataObj = (body as { data: unknown }).data;
-      if (
-        !dataObj ||
-        typeof dataObj !== "object" ||
-        !("allowedAreas" in dataObj)
-      ) {
-        setError(GENERIC_ERROR_MESSAGE);
-        setSubmitting(false);
-        return;
-      }
-
-      const allowedAreas = (dataObj as { allowedAreas: unknown }).allowedAreas;
-      if (!Array.isArray(allowedAreas) || allowedAreas.length === 0) {
-        setError(GENERIC_ERROR_MESSAGE);
-        setSubmitting(false);
-        return;
-      }
-
-      const firstArea = allowedAreas[0];
-      if (!isArea(firstArea)) {
-        setError(GENERIC_ERROR_MESSAGE);
-        setSubmitting(false);
-        return;
-      }
-
-      const targetRoute = areaToRoute(firstArea);
-      router.push(targetRoute);
-    } catch {
-      setError(GENERIC_ERROR_MESSAGE);
-      setSubmitting(false);
-    }
+  function showError(msg) {
+    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+    btn.removeAttribute('disabled');
+    btn.textContent = 'Sign In';
   }
 
-  return (
-    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <Input
-        id="username"
-        name="username"
-        type="text"
-        autoComplete="username"
-        required
-        label="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        disabled={submitting}
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (errEl) errEl.style.display = 'none';
+    btn.setAttribute('disabled', 'true');
+    btn.textContent = 'Signing in...';
+
+    var username = (form.querySelector('input[name=username]') || {}).value || '';
+    var password = (form.querySelector('input[name=password]') || {}).value || '';
+
+    fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password }),
+    })
+    .then(function(res) { return res.json().then(function(b) { return { ok: res.ok, body: b }; }); })
+    .then(function(r) {
+      if (!r.ok || !r.body || !r.body.data || !Array.isArray(r.body.data.allowedAreas)) {
+        showError('Incorrect username or password.');
+        return;
+      }
+      var areas = r.body.data.allowedAreas;
+      var map = {
+        'admin': '/admin',
+        'kitchen': '/kitchen',
+        'table-service': '/staff/table',
+        'room-service': '/staff/room',
+        'housekeeping': '/staff/housekeeping',
+        'maintenance': '/staff/maintenance',
+        'concierge': '/staff/concierge',
+        'laundry': '/staff/laundry',
+        'spa': '/staff/spa',
+        'front-desk': '/staff/front-desk',
+      };
+      var first = areas[0];
+      var target = map[first];
+      if (!target) { showError('No area available for this account.'); return; }
+      
+      // Hard reload to ensure cookies are applied before middleware runs
+      window.location.href = target;
+    })
+    .catch(function() { showError('Network error. Please try again.'); });
+  });
+})();
+`,
+        }}
       />
-      <Input
-        id="password"
-        name="password"
-        type="password"
-        autoComplete="current-password"
-        required
-        label="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        disabled={submitting}
-      />
-      {error ? (
-        <p role="alert" className="text-[13px] leading-[18px] text-status-cancelled">
-          {error}
-        </p>
-      ) : null}
-      <Button
-        type="submit"
-        variant="primary"
-        size="md"
-        loading={submitting}
-      >
-        Sign In
-      </Button>
-    </form>
+    </>
   );
 }
