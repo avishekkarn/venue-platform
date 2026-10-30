@@ -87,31 +87,27 @@ export default async function KitchenPage(): Promise<JSX.Element> {
   const tableRepo = createPrismaTableRepository(prisma);
   const roomRepo = createPrismaRoomRepository(prisma);
 
-  const tableIds = Array.from(
-    new Set(orders.map((o) => o.tableId).filter((id): id is string => id !== null))
-  );
-  const roomIds = Array.from(
-    new Set(orders.map((o) => o.roomId).filter((id): id is string => id !== null))
-  );
-
-  const [tableLookups, roomLookups] = await Promise.all([
-    Promise.all(tableIds.map(async (id) => ({ id, res: await tableRepo.findById(venue.id, id) }))),
-    Promise.all(roomIds.map(async (id) => ({ id, res: await roomRepo.findById(venue.id, id) }))),
+  const [tablesRes, roomsRes] = await Promise.all([
+    tableRepo.listForVenue(venue.id),
+    roomRepo.listForVenue(venue.id),
   ]);
 
   const tableMap = new Map<string, string>();
-  for (const item of tableLookups) {
-    if (item.res.ok) {
-      tableMap.set(item.id, item.res.value.number);
+  if (tablesRes.ok) {
+    for (const item of tablesRes.value) {
+      tableMap.set(item.id, item.number);
     }
   }
 
   const roomMap = new Map<string, string>();
-  for (const item of roomLookups) {
-    if (item.res.ok) {
-      roomMap.set(item.id, item.res.value.number);
+  if (roomsRes.ok) {
+    for (const item of roomsRes.value) {
+      roomMap.set(item.id, item.number);
     }
   }
+
+  const tablesObj = Object.fromEntries(tableMap);
+  const roomsObj = Object.fromEntries(roomMap);
 
   const now = Date.now();
   const currentTime = formatTime(new Date(now), "en-US");
@@ -185,27 +181,32 @@ export default async function KitchenPage(): Promise<JSX.Element> {
 
       {/* Ticket Grid or Empty State */}
       <section className="flex-1 p-4">
-        {orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
-            <p className="text-[18px] text-staff-text-muted">
-              No active tickets.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {orders.map((order) => {
-              const place = getPlaceInfo(order, tableMap, roomMap);
-              return (
-                <KitchenTicket
-                  key={order.id}
-                  order={order}
-                  place={place}
-                  now={now}
-                />
-              );
-            })}
-          </div>
-        )}
+        <div
+          id="ticket-empty"
+          className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8"
+          style={{ display: orders.length === 0 ? "" : "none" }}
+        >
+          <p className="text-[18px] text-staff-text-muted">
+            No active tickets.
+          </p>
+        </div>
+        <div
+          id="ticket-grid"
+          className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4"
+          style={{ display: orders.length === 0 ? "none" : "" }}
+        >
+          {orders.map((order) => {
+            const place = getPlaceInfo(order, tableMap, roomMap);
+            return (
+              <KitchenTicket
+                key={order.id}
+                order={order}
+                place={place}
+                now={now}
+              />
+            );
+          })}
+        </div>
       </section>
 
       {/* Fixed bottom-right logout button */}
@@ -289,10 +290,209 @@ export default async function KitchenPage(): Promise<JSX.Element> {
     }
   });
 
+  var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  var audioCtx = null;
+  if (AudioContextClass) {
+    try {
+      audioCtx = new AudioContextClass();
+    } catch (e) {}
+  }
+
+  function unlockAudio() {
+    if (!audioCtx && AudioContextClass) {
+      try {
+        audioCtx = new AudioContextClass();
+      } catch (e) {}
+    }
+    if (!audioCtx) return;
+
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    try {
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      gain.gain.value = 0.001;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      var now = audioCtx.currentTime;
+      osc.start(now);
+      osc.stop(now + 0.001);
+    } catch (e) {}
+  }
+
+  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
+
   var CONNECTION_ID = 'connection-indicator';
   var CONNECTION_POLL_MS = 5000;
   var CONNECTED_CLASS = 'inline-block size-2 rounded-full bg-[var(--color-status-ready)]';
   var RECONNECTING_CLASS = 'inline-block size-2 rounded-full bg-[var(--color-status-active)]';
+
+  var TABLE_MAP = ${JSON.stringify(tablesObj)};
+  var ROOM_MAP = ${JSON.stringify(roomsObj)};
+
+  function playPing() {
+    try {
+      if (!audioCtx && AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+      if (!audioCtx) return;
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      var now = audioCtx.currentTime;
+
+      var osc1 = audioCtx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880, now);
+
+      var osc2 = audioCtx.createOscillator();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(440, now);
+
+      var gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.7, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.30);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.30);
+      osc2.stop(now + 0.30);
+    } catch (e) {}
+  }
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function parseModifiers(modifiersJson) {
+    if (!Array.isArray(modifiersJson)) return [];
+    var result = [];
+    for (var i = 0; i < modifiersJson.length; i++) {
+      var item = modifiersJson[i];
+      if (item && typeof item === 'object') {
+        if (typeof item.option === 'string') {
+          result.push(item.option);
+        } else if (typeof item.name === 'string') {
+          result.push(item.name);
+        }
+      }
+    }
+    return result;
+  }
+
+  function getPlaceInfo(order) {
+    if (order.placeType === 'TABLE') {
+      var tid = order.tableId;
+      var num = tid ? (TABLE_MAP[tid] || tid.slice(0, 4)) : '—';
+      return { number: num, type: 'TABLE' };
+    } else if (order.placeType === 'ROOM') {
+      var rid = order.roomId;
+      var num = rid ? (ROOM_MAP[rid] || rid.slice(0, 4)) : '—';
+      return { number: num, type: 'ROOM' };
+    } else if (order.placeType === 'COUNTER') {
+      var name = order.pickupName || 'Counter';
+      return { number: name, type: 'COUNTER' };
+    }
+    return { number: '—', type: 'PLACE' };
+  }
+
+  function renderTicketHtml(order, place, now) {
+    var elapsedMinutes = Math.max(0, Math.floor((now - new Date(order.placedAt).getTime()) / 60000));
+    var isStale = elapsedMinutes >= 15;
+    var borderClass = isStale ? 'border-2 border-[var(--color-status-active)]' : 'border border-staff-border-subtle';
+
+    var itemsHtml = '';
+    if (Array.isArray(order.items)) {
+      for (var i = 0; i < order.items.length; i++) {
+        var it = order.items[i];
+        var qtyHtml = it.quantity > 1 ? '<span class="font-mono text-[16px] font-medium text-staff-text-muted">' + it.quantity + '×</span>' : '';
+        var modArray = parseModifiers(it.modifiersJson);
+        var modHtml = modArray.length > 0 ? '<p class="text-[14px] text-staff-text-muted pl-3">' + escapeHtml(modArray.join(', ')) + '</p>' : '';
+        var itemNote = (it.notes && it.notes.trim()) ? '<p class="text-[14px] text-staff-text-primary pl-2 border-l-2 border-[var(--color-status-active)] italic">' + escapeHtml(it.notes) + '</p>' : '';
+        itemsHtml += '<li class="flex flex-col gap-1">' +
+          '<div class="flex items-baseline gap-2">' +
+          qtyHtml +
+          '<span class="text-[18px] font-medium text-staff-text-primary leading-snug">' + escapeHtml(it.itemName) + '</span>' +
+          '</div>' +
+          modHtml +
+          itemNote +
+          '</li>';
+      }
+    }
+
+    var orderNotesHtml = (order.notes && order.notes.trim()) ?
+      '<div class="pt-2 border-t border-staff-border-subtle">' +
+      '<p class="text-[14px] text-staff-text-primary pl-2 border-l-2 border-[var(--color-status-active)] italic">' +
+      '<span class="font-medium not-italic text-staff-text-muted mr-1">Note:</span>' +
+      escapeHtml(order.notes) +
+      '</p>' +
+      '</div>' : '';
+
+    var isReady = order.state === 'READY';
+    var action = (order.state === 'APPROVED' || order.state === 'PLACED') ? 'start' : (order.state === 'PREPARING' ? 'ready' : '');
+    var actionAttr = action ? ' data-action="' + action + '"' : '';
+    var disabledAttr = isReady ? ' disabled' : '';
+    var btnText = (order.state === 'APPROVED' || order.state === 'PLACED') ? 'Start' : (order.state === 'PREPARING' ? 'Ready' : (order.state === 'READY' ? 'Done' : 'View'));
+    var btnClass = "group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-transparent bg-clip-padding font-medium whitespace-nowrap select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=\'size-\'])]:size-4 bg-guest-brand text-guest-brand-contrast hover:brightness-95 [data-world=staff]_&:bg-staff-brand [data-world=staff]_&:text-staff-brand-contrast h-[52px] px-5 text-base w-full";
+
+    return '<article data-ticket-id="' + escapeHtml(order.id) + '" data-order-state="' + escapeHtml(order.state) + '" data-placed-at="' + escapeHtml(new Date(order.placedAt).toISOString()) + '" class="bg-staff-surface-raised rounded-lg p-5 flex flex-col justify-between gap-4 ' + borderClass + '">' +
+      '<div class="flex flex-col gap-4">' +
+        '<div class="flex items-baseline justify-between gap-2">' +
+          '<span class="font-mono text-[20px] font-semibold text-staff-text-primary tracking-tight">#' + escapeHtml(order.id.slice(0, 8).toUpperCase()) + '</span>' +
+          '<span data-elapsed-time="" class="font-mono text-[14px] text-staff-text-muted">' + elapsedMinutes + ' min</span>' +
+        '</div>' +
+        '<div class="flex flex-col">' +
+          '<span class="text-[40px] leading-[44px] font-semibold text-staff-text-primary tracking-tight">' + escapeHtml(place.number) + '</span>' +
+          '<span class="text-[12px] uppercase tracking-wider text-staff-text-muted font-medium">' + escapeHtml(place.type) + '</span>' +
+        '</div>' +
+        '<hr class="border-t border-staff-border-subtle" />' +
+        '<ul class="flex flex-col gap-3">' + itemsHtml + '</ul>' +
+        orderNotesHtml +
+      '</div>' +
+      '<div class="pt-2">' +
+        '<button type="button" data-slot="button"' + disabledAttr + ' data-order-id="' + escapeHtml(order.id) + '"' + actionAttr + ' data-current-state="' + escapeHtml(order.state) + '" class="' + btnClass + '">' +
+          btnText +
+        '</button>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function updateElapsedTimers() {
+    var grid = document.getElementById('ticket-grid');
+    if (!grid) return;
+    var articles = grid.querySelectorAll('[data-ticket-id]');
+    var now = Date.now();
+    for (var i = 0; i < articles.length; i++) {
+      var art = articles[i];
+      var placedAtStr = art.getAttribute('data-placed-at');
+      if (!placedAtStr) continue;
+      var elapsed = Math.max(0, Math.floor((now - new Date(placedAtStr).getTime()) / 60000));
+      var timeEl = art.querySelector('[data-elapsed-time]');
+      if (timeEl) {
+        timeEl.textContent = elapsed + ' min';
+      }
+      if (elapsed >= 15) {
+        art.classList.remove('border-staff-border-subtle');
+        art.classList.add('border-2', 'border-[var(--color-status-active)]');
+      }
+    }
+  }
 
   function setConnectionState(state) {
     var el = document.getElementById(CONNECTION_ID);
@@ -301,22 +501,111 @@ export default async function KitchenPage(): Promise<JSX.Element> {
     el.className = state === 'connected' ? CONNECTED_CLASS : RECONNECTING_CLASS;
   }
 
-  function pollConnection() {
+  function pollKitchen() {
     fetch('/api/kitchen/orders', {
       method: 'GET',
       cache: 'no-store',
       credentials: 'same-origin'
     })
       .then(function(res) {
-        setConnectionState(res.ok ? 'connected' : 'reconnecting');
+        if (!res.ok) {
+          setConnectionState('reconnecting');
+          return;
+        }
+        setConnectionState('connected');
+        return res.json().then(function(body) {
+          var orders = (body && body.data) || [];
+          orders.sort(function(a, b) {
+            return new Date(a.placedAt).getTime() - new Date(b.placedAt).getTime();
+          });
+
+          var grid = document.getElementById('ticket-grid');
+          var empty = document.getElementById('ticket-empty');
+          if (!grid) return;
+
+          if (orders.length === 0) {
+            if (empty) empty.style.display = '';
+            grid.style.display = 'none';
+            grid.innerHTML = '';
+            return;
+          }
+
+          if (empty) empty.style.display = 'none';
+          grid.style.display = '';
+
+          var existingArticles = grid.querySelectorAll('[data-ticket-id]');
+          var domTickets = {};
+          for (var i = 0; i < existingArticles.length; i++) {
+            var art = existingArticles[i];
+            domTickets[art.getAttribute('data-ticket-id')] = art;
+          }
+
+          var incomingIds = {};
+          var hasNewTicket = false;
+          var now = Date.now();
+
+          for (var j = 0; j < orders.length; j++) {
+            var order = orders[j];
+            incomingIds[order.id] = true;
+            var existingEl = domTickets[order.id];
+
+            if (!existingEl) {
+              hasNewTicket = true;
+              var place = getPlaceInfo(order);
+              var html = renderTicketHtml(order, place, now);
+              var temp = document.createElement('div');
+              temp.innerHTML = html.trim();
+              if (temp.firstElementChild) {
+                grid.appendChild(temp.firstElementChild);
+              }
+            } else {
+              var currentState = existingEl.getAttribute('data-order-state');
+              var btn = existingEl.querySelector('[data-order-id]');
+              var isSending = btn && btn.textContent === 'Sending…';
+
+              if (!isSending && currentState !== order.state) {
+                existingEl.setAttribute('data-order-state', order.state);
+                if (btn) {
+                  btn.setAttribute('data-current-state', order.state);
+                  if (order.state === 'PREPARING') {
+                    btn.textContent = 'Ready';
+                    btn.setAttribute('data-action', 'ready');
+                    btn.disabled = false;
+                  } else if (order.state === 'READY') {
+                    btn.textContent = 'Done';
+                    btn.removeAttribute('data-action');
+                    btn.disabled = true;
+                  }
+                }
+              }
+            }
+          }
+
+          for (var tid in domTickets) {
+            if (Object.prototype.hasOwnProperty.call(domTickets, tid)) {
+              if (!incomingIds[tid]) {
+                var toRemove = domTickets[tid];
+                if (toRemove && toRemove.parentNode) {
+                  toRemove.parentNode.removeChild(toRemove);
+                }
+              }
+            }
+          }
+
+          if (hasNewTicket) {
+            playPing();
+          }
+
+          updateElapsedTimers();
+        });
       })
       .catch(function() {
         setConnectionState('reconnecting');
       });
   }
 
-  pollConnection();
-  setInterval(pollConnection, CONNECTION_POLL_MS);
+  pollKitchen();
+  setInterval(pollKitchen, CONNECTION_POLL_MS);
 
   var toastTimer = null;
   function showToast(msg) {
@@ -364,6 +653,10 @@ export default async function KitchenPage(): Promise<JSX.Element> {
         return res.json().then(function(body) {
           var newState = body && body.data && body.data.state;
           btn.setAttribute('data-current-state', newState || '');
+          var art = btn.closest ? btn.closest('article') : null;
+          if (art && newState) {
+            art.setAttribute('data-order-state', newState);
+          }
           if (newState === 'PREPARING') {
             btn.textContent = 'Ready';
             btn.setAttribute('data-action', 'ready');

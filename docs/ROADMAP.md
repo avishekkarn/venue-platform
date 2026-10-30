@@ -522,7 +522,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                  | Status | Depends on |
 | ----- | --------------------------------------------------------------------- | ------ | ---------- |
-| 6.4.1 | Add the audible ping on new tickets and verify it plays (Web Audio, single 880 Hz tone, no mute, native script — same discipline as the guest menu ping) | ⬜     | 6.3.8      |
+| 6.4.1 | Add auto-refresh for new tickets and the audible ping (Web Audio, single 880 Hz tone, no mute, native DOM diffing — same discipline as the guest menu ping) | ✅ Complete | 6.3.8      |
 
 *(Task 6.4.2 is folded into 6.4.1 — the ping is a small native script and its verification is the same session's manual audio check. No work is removed.)*
 

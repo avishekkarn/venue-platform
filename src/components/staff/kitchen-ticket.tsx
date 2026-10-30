@@ -63,6 +63,9 @@ export function KitchenTicket({
 
   return (
     <article
+      data-ticket-id={order.id}
+      data-order-state={order.state}
+      data-placed-at={new Date(order.placedAt).toISOString()}
       className={`bg-staff-surface-raised rounded-lg p-5 flex flex-col justify-between gap-4 ${
         isStale
           ? "border-2 border-[var(--color-status-active)]"
