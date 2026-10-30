@@ -127,7 +127,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
           <span
             id="connection-indicator"
             data-connection="connected"
-            className="inline-block size-2 rounded-full bg-staff-text-muted"
+            className="inline-block size-2 rounded-full bg-[var(--color-status-ready)]"
             title="Connection status"
             aria-label="Connection indicator"
           />
@@ -291,7 +291,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
 
   var CONNECTION_ID = 'connection-indicator';
   var CONNECTION_POLL_MS = 5000;
-  var CONNECTED_CLASS = 'inline-block size-2 rounded-full bg-staff-text-muted';
+  var CONNECTED_CLASS = 'inline-block size-2 rounded-full bg-[var(--color-status-ready)]';
   var RECONNECTING_CLASS = 'inline-block size-2 rounded-full bg-[var(--color-status-active)]';
 
   function setConnectionState(state) {

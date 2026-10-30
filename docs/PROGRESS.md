@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0182 | 2026-10-30 | HOTFIX — Switch connection indicator connected state to --color-status-ready | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0181 | 2026-10-30 | Task 6.3.7 — Add the connection state indicator | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0180 | 2026-10-30 | Task 6.3.6 — Add the dark mode default and toggle | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0179 | 2026-10-30 | HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive | STRUCTURAL | Milestone 6.3 | §5.3 |
@@ -151,13 +152,69 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0182
+Next entry number: 0183
 
 ### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.8 — Verify the kitchen screen as a whole.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0182 — 2026-10-30 — HOTFIX — Switch connection indicator connected state to --color-status-ready
+
+**Status:** PASS
+
+**Task:** HOTFIX (Task 6.3.7 polish) — Switch connection indicator connected state to --color-status-ready
+
+**Summary:**
+Updated the kitchen screen's `#connection-indicator` "connected" state color from `bg-staff-text-muted` to `bg-[var(--color-status-ready)]` in both the server-rendered markup and the native DOM `<Script id="kitchen-actions">` block. The green status token provides high-contrast visibility against the dark `--staff-surface` background while preserving the amber `--color-status-active` token for the reconnecting state.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Swapped `bg-staff-text-muted` with `bg-[var(--color-status-ready)]` in SSR dot and `CONNECTED_CLASS` |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0182, updated §5.2 ledger, bumped next entry to 0183, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.10s)
+- `pnpm test:integration` — 29 files / 175 tests passed (85.30s)
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | Edit only `app/kitchen/page.tsx` | PASS | Confirmed via `git status` |
+| 2 | Do not touch `app/globals.css` | PASS | `git diff -- app/globals.css` is empty |
+| 3 | SSR connection dot uses `bg-[var(--color-status-ready)]` | PASS | Verified in `app/kitchen/page.tsx` line 130 |
+| 4 | Script `CONNECTED_CLASS` uses `bg-[var(--color-status-ready)]` | PASS | Verified in `app/kitchen/page.tsx` line 294 |
+| 5 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 6 | `pnpm build` succeeds with 33 routes + 1 proxy | PASS | Build verified on ▲ Next.js 16.4.0 (Turbopack) |
+| 7 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed in 1.10s |
+| 8 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed in 85.30s |
+| 9 | `docs/ROADMAP.md` is untouched | PASS | `git diff -- docs/ROADMAP.md` is empty |
+| 10 | `docs/PROGRESS.md` §5.2 row, Next entry 0183, §5.3 ENTRY-0182, §7 snapshot | PASS | Added and verified |
+| 11 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 6.3.8 (Milestone 6.3 verification as a whole).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| PROGRESS.md | Yes | Recorded ENTRY-0182, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to D-6.6, D-8.3, DESIGN.md §4.11.2 (dot: green = connected, amber = reconnecting), globals.css tokens.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3 (The Kitchen Screen). Task 6.3.8 — Verify: a ticket appears within 5 seconds of approval; the actions advance the ticket; the guest's tracking screen reflects the changes.
+
+---
 
 ### ENTRY-0181 — 2026-10-30 — Task 6.3.7 — Add the connection state indicator
 
@@ -1716,7 +1773,7 @@ Current milestone: Milestone 6.3 (The Kitchen Screen) — IN PROGRESS.
 
 Current task: Task 6.3.8 — Verify the kitchen screen as a whole.
 
-Current status: The kitchen screen has a dark-mode default (owned by `app/kitchen/layout.tsx`'s `data-theme="dark"`), a sun/moon toggle in the status strip (persisted in `localStorage.kitchen_theme`), and a live connection state indicator (`#connection-indicator` polling `/api/kitchen/orders` every 5000ms via `next/script` `afterInteractive`) (ENTRY-0181). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.8 (milestone verification).
+Current status: The kitchen screen has a dark-mode default (owned by `app/kitchen/layout.tsx`'s `data-theme="dark"`), a sun/moon toggle in the status strip (persisted in `localStorage.kitchen_theme`), and a live connection state indicator (`#connection-indicator` with green `--color-status-ready` connected dot and amber `--color-status-active` reconnecting dot, polling `/api/kitchen/orders` every 5000ms via `next/script` `afterInteractive`) (ENTRY-0182). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.8 (milestone verification).
 
 ## 8. How the File Evolves
 
