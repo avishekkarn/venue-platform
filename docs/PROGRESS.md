@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0165 | 2026-10-30 | Task 6.1.0.B — Add the exhaustive transition table unit test | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0164 | 2026-10-30 | Task 6.1.0.A — Author the transition table and its validator | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0163 | 2026-10-30 | Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report | STRUCTURAL | Phase 6 planning | §5.3 |
@@ -136,7 +137,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 Next entry number: 0162
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.4 — Add the state-transition validation helper.
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action (PLACED → APPROVED).
 
 New entries go immediately below the ▼ marker, newest first.
 
@@ -271,6 +272,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0166 | 2026-10-30 | Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts) | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0165 | 2026-10-30 | Task 6.1.0.B — Add the exhaustive transition table unit test | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0163 | 2026-10-30 | Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0161 | 2026-10-29 | Task 5.8.4 — Verify menu item state update (Milestone 5.8 and Phase 5 close) | PASS | Milestone 5.8 | §5.3 |
@@ -278,13 +280,97 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0166
+Next entry number: 0167
 
-### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.4 — Add the state-transition validation helper.
+### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.1 — Add the order approval action (PLACED → APPROVED).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0166 — 2026-10-30 — Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts)
+
+**Status:** PASS
+
+**Task:** Task 6.1.4 — Add the state-transition validation helper (create advance-order.ts)
+
+**Summary:**
+Created `src/domain/orders/advance-order.ts` exporting the pure domain `advanceOrder` orchestrator which validates order existence, enforces allowed state transitions via `isTransitionAllowed`, and forwards the target state and acting staff member identifier to `orderRepo.advanceState`. Exported the function and input types from `src/domain/orders/index.ts` and verified full functionality with 5 unit tests in `tests/unit/orders/advance-order.test.ts` against an in-memory repository double.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| src/domain/orders/advance-order.ts | Create | Authored `advanceOrder` domain function with transition validation and staffMemberId forwarding |
+| src/domain/orders/index.ts | Edit | Exported `advanceOrder`, `AdvanceOrderDeps`, and `AdvanceOrderRequest` from orders domain barrel |
+| tests/unit/orders/advance-order.test.ts | Create | Added 5 unit tests verifying allowed transitions, forbidden transition rejection, missing order handling, staffMemberId forwarding, and repo error propagation |
+| docs/ROADMAP.md | Edit | Marked Task 6.1.4 as complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0166, updated §5.2 ledger, bumped next entry to 0167, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 30 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 28 passed (28)
+# Tests 201 passed (201)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 162 passed (162)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | advanceOrder exists and returns Result<Order> | PASS | Verified in src/domain/orders/advance-order.ts and advance-order.test.ts |
+| 2 | Allowed transition returns ok(order) and calls advanceState once with correct input | PASS | tests/unit/orders/advance-order.test.ts Case 1 passes |
+| 3 | Forbidden transition returns INVALID_STATE with exact message and does NOT call advanceState | PASS | tests/unit/orders/advance-order.test.ts Case 2 passes |
+| 4 | Missing order returns NOT_FOUND and does NOT call advanceState | PASS | tests/unit/orders/advance-order.test.ts Case 3 passes |
+| 5 | staffMemberId is forwarded unchanged (including null/omitted) | PASS | tests/unit/orders/advance-order.test.ts Case 4 passes |
+| 6 | Barrel exports advanceOrder and its types | PASS | Verified in src/domain/orders/index.ts |
+| 7 | tsc 0 | PASS | pnpm exec tsc --noEmit exit 0, 0 errors |
+| 8 | build 30 + 1 on Next.js 16.4.0 (Turbopack) | PASS | ▲ Next.js 16.4.0 (Turbopack), 30 app routes + 1 proxy (Middleware) |
+| 9 | unit tests strictly > 196 | PASS | 28 files / 201 passed (increased by 5 from 196) |
+| 10 | integration unchanged at 162 | PASS | 29 files / 162 passed |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Tasks 6.1.1 (order approval), 6.1.2 (kitchen start), and 6.1.3 (kitchen ready) will build on `advanceOrder` by calling it with their respective target states.
+- The kitchen route handler (`POST /api/kitchen/orders/[id]/start` and `ready` in 6.2.2) will adapt HTTP calls to these domain functions.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-4.8, D-4.9 | No change |
+| SYSTEM.md | No | Adheres to §9.1, §9.2, §9.3 | No change |
+| BUILD.md | No | Adheres to §5, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 6.1.4 as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0166, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.1. Task 6.1.1 — Add the order approval action (PLACED → APPROVED).
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0165 — 2026-10-30 — Task 6.1.0.B — Add the exhaustive transition table unit test
 
@@ -606,7 +692,7 @@ Current milestone: Milestone 6.1 (The Kitchen Domain).
 
 Current task: Task 6.1.1 — Add the order approval action.
 
-Current status: The OrderState transition table is now proven exhaustively (all 9 allowed pairs + all 40 forbidden pairs + structural invariants), the smoke suite is green, and all four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 196/27, integration 162/29. Ready for Task 6.1.4 to create advance-order.ts on top of this proven foundation.
+Current status: The state-transition validation helper advanceOrder is implemented and verified (ENTRY-0166), enforcing allowed transitions and calling the order repository adapter. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 201/28, integration 162/29. Ready for Task 6.1.1 to implement the order approval action.
 
 ## 8. How the File Evolves
 
@@ -691,9 +777,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.1 (The Kitchen Domain).
 
-Current task: Task 6.1.4 — Add the state-transition validation helper.
+Current task: Task 6.1.1 — Add the order approval action (PLACED → APPROVED)
 
-Current status: The OrderState transition table is now proven exhaustively (all 9 allowed pairs + all 40 forbidden pairs + structural invariants), the smoke suite is green, and all four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 196/27, integration 162/29. Ready for Task 6.1.4 to create advance-order.ts on top of this proven foundation.
+Current status: The state-transition validation helper advanceOrder is implemented and verified (ENTRY-0166), enforcing allowed transitions and calling the order repository adapter. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 201/28, integration 162/29. Ready for Task 6.1.1 to implement the order approval action.
 
 ## 8. How the File Evolves
 

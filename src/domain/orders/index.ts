@@ -13,4 +13,10 @@ export {
   type CreateOrderItemRequest,
 } from "./create-order";
 export { isTransitionAllowed, ALLOWED_TRANSITIONS } from "./transitions";
+export {
+  advanceOrder,
+  type AdvanceOrderDeps,
+  type AdvanceOrderRequest,
+} from "./advance-order";
+
 
