@@ -125,6 +125,8 @@ export default async function KitchenPage(): Promise<JSX.Element> {
             {venue.name}
           </span>
           <span
+            id="connection-indicator"
+            data-connection="connected"
             className="inline-block size-2 rounded-full bg-staff-text-muted"
             title="Connection status"
             aria-label="Connection indicator"
@@ -286,6 +288,35 @@ export default async function KitchenPage(): Promise<JSX.Element> {
       el = el.parentElement;
     }
   });
+
+  var CONNECTION_ID = 'connection-indicator';
+  var CONNECTION_POLL_MS = 5000;
+  var CONNECTED_CLASS = 'inline-block size-2 rounded-full bg-staff-text-muted';
+  var RECONNECTING_CLASS = 'inline-block size-2 rounded-full bg-[var(--color-status-active)]';
+
+  function setConnectionState(state) {
+    var el = document.getElementById(CONNECTION_ID);
+    if (!el) return;
+    el.setAttribute('data-connection', state);
+    el.className = state === 'connected' ? CONNECTED_CLASS : RECONNECTING_CLASS;
+  }
+
+  function pollConnection() {
+    fetch('/api/kitchen/orders', {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'same-origin'
+    })
+      .then(function(res) {
+        setConnectionState(res.ok ? 'connected' : 'reconnecting');
+      })
+      .catch(function() {
+        setConnectionState('reconnecting');
+      });
+  }
+
+  pollConnection();
+  setInterval(pollConnection, CONNECTION_POLL_MS);
 
   var toastTimer = null;
   function showToast(msg) {

@@ -513,7 +513,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 6.3.3 | Add the elapsed time display                                                                                                            | ✅ Complete | 6.3.2      |
 | 6.3.4 | Add the "Start" and "Ready" actions (native DOM, in-place update, no page reload — the same discipline as the guest menu polling)       | ✅ Complete | 6.3.3      |
 | 6.3.6 | Add the dark mode default           | ✅ Complete | 6.3.4      |
-| 6.3.7 | Add the connection state indicator  | ⬜     | 6.3.4      |
+| 6.3.7 | Add the connection state indicator  | ✅ Complete | 6.3.4      |
 | 6.3.8 | Verify: a ticket appears within 5 seconds of approval; the actions advance the ticket; the guest's tracking screen reflects the changes | ⬜     | 6.3.6, 6.3.7 |
 
 *(Task 6.3.5 is folded into 6.3.4 — two buttons on one card wired to two routes is one concern. No work is removed.)*

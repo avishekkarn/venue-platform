@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0181 | 2026-10-30 | Task 6.3.7 — Add the connection state indicator | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0180 | 2026-10-30 | Task 6.3.6 — Add the dark mode default and toggle | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0179 | 2026-10-30 | HOTFIX — execute kitchen Start/Ready script via next/script afterInteractive | STRUCTURAL | Milestone 6.3 | §5.3 |
 | ENTRY-0178 | 2026-10-30 | Task 6.3.4 — Add the Start and Ready actions | PASS | Milestone 6.3 | §5.3 |
@@ -150,13 +151,83 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0181
+Next entry number: 0182
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.7 — Add the connection state indicator.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.8 — Verify the kitchen screen as a whole.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0181 — 2026-10-30 — Task 6.3.7 — Add the connection state indicator
+
+**Status:** PASS
+
+**Task:** Task 6.3.7 — Add the connection state indicator
+
+**Summary:**
+Added a dynamic connection health indicator to the kitchen display header status strip in `app/kitchen/page.tsx` (`id="connection-indicator"` with initial `data-connection="connected"`), driven by a 5000ms poller inside the existing single `<Script id="kitchen-actions" strategy="afterInteractive">` block. The poller performs a liveness probe (`GET /api/kitchen/orders`, `no-store`, `credentials: 'same-origin'`), toggling between connected (muted gray dot) and reconnecting (amber dot `--color-status-active`) without full JSON decoding, page reload, router navigation, or client React re-rendering.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Added `id="connection-indicator"` and `data-connection="connected"` to status dot; extended native DOM `<Script>` IIFE with 5000ms connection health poller |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.7 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0181, updated §5.2 ledger, bumped next entry to 0182, updated §5.3 header to 6.3.8, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.09s)
+- `pnpm test:integration` — 29 files / 175 tests passed (88.12s)
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | Pre-condition HEAD is 7f2c675 and tree is clean | PASS | Confirmed via `git log` and `git status` |
+| 2 | The files listed under "FILES TO READ BEFORE WRITING ANY CODE" are read | PASS | All 9 authoritative context files read in full before modification |
+| 3 | Only files in the scope table are modified | PASS | Only `app/kitchen/page.tsx`, `docs/ROADMAP.md`, and `docs/PROGRESS.md` modified |
+| 4 | #connection-indicator element with data-connection attribute in status strip | PASS | Added `id="connection-indicator" data-connection="connected"` to the dot `<span>` |
+| 5 | Existing `<Script id="kitchen-actions">` is extended, not duplicated | PASS | Exactly one `<Script>` block in `app/kitchen/page.tsx` |
+| 6 | Script polls `/api/kitchen/orders` every 5000ms with GET no-store same-origin | PASS | Implemented `pollConnection()` on startup and on 5000ms `setInterval` |
+| 7 | Script switches classes and data-connection between connected and reconnecting | PASS | Sets `data-connection` and swaps between `bg-staff-text-muted` and `bg-[var(--color-status-active)]` |
+| 8 | Zero page reload, router refresh, or history navigation calls | PASS | Grep confirms zero `window.location`, `router.refresh`, `history.*` |
+| 9 | Zero client React state introduced (Pattern B) | PASS | Indicator driven purely via native DOM inside `next/script` IIFE |
+| 10 | Untouched files remain clean (layout.tsx, globals.css, ticket/timer components, orders route) | PASS | `git diff` across all 5 untouched files is completely empty |
+| 11 | tsc --noEmit | PASS | Exit code 0, 0 errors |
+| 12 | pnpm build | PASS | 33 app routes + 1 proxy on ▲ Next.js 16.4.0 (Turbopack) |
+| 13 | pnpm test:unit | PASS | 29 files, 207 tests passed in 1.09s |
+| 14 | pnpm test:integration | PASS | 29 files, 175 tests passed in 88.12s |
+| 15 | Manual desktop check | PENDING | Documented verification checklist |
+| 16 | docs/ROADMAP.md Task 6.3.7 row is ✅ Complete | PASS | Updated in Milestone 6.3 table |
+| 17 | docs/PROGRESS.md §5.2 row, Next entry 0182, §5.3 ENTRY-0181, §7 snapshot | PASS | Added and verified |
+| 18 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Predecessor Record-Keeping Note:**
+Human manual verification for predecessor Task 6.3.6 (sun/moon theme toggle check) was not recorded in git prior to this invocation. It remains pending human verification (can be executed alongside Task 6.3.8 milestone verification).
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 6.3.8 (Milestone 6.3 verification as a whole), Task 6.4.1 (audible ping on new tickets).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| ROADMAP.md | Yes | Marked Task 6.3.7 complete |
+| PROGRESS.md | Yes | Recorded ENTRY-0181, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to D-6.6, D-8.1, D-8.3, DESIGN.md §4.11.2, §4.11.5, BUILD.md §3 (Native DOM, Pattern B).
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3 (The Kitchen Screen). Task 6.3.8 — Verify: a ticket appears within 5 seconds of approval; the actions advance the ticket; the guest's tracking screen reflects the changes.
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0180 — 2026-10-30 — Task 6.3.6 — Add the dark mode default and toggle
 
@@ -1643,9 +1714,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.3 (The Kitchen Screen) — IN PROGRESS.
 
-Current task: Task 6.3.7 — Add the connection state indicator.
+Current task: Task 6.3.8 — Verify the kitchen screen as a whole.
 
-Current status: The kitchen screen has a dark-mode default (owned by `app/kitchen/layout.tsx`'s `data-theme="dark"`), a sun/moon toggle in the status strip, and a preference persisted in `localStorage.kitchen_theme` and reapplied on load by the existing `next/script` `afterInteractive` block (ENTRY-0180). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.7.
+Current status: The kitchen screen has a dark-mode default (owned by `app/kitchen/layout.tsx`'s `data-theme="dark"`), a sun/moon toggle in the status strip (persisted in `localStorage.kitchen_theme`), and a live connection state indicator (`#connection-indicator` polling `/api/kitchen/orders` every 5000ms via `next/script` `afterInteractive`) (ENTRY-0181). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.8 (milestone verification).
 
 ## 8. How the File Evolves
 
