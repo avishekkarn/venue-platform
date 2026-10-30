@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0177 | 2026-10-30 | Task 6.3.3 — Add the live elapsed timer | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0176 | 2026-10-30 | Task 6.3.2 — Add the ticket card (extract KitchenTicket component) | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0175 | 2026-10-30 | Task 6.3.1 — Add the ticket grid layout | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0174 | 2026-10-30 | HOTFIX — Fix login redirect loop by routing based on staff role | STRUCTURAL | Phase 6 planning | §5.3 |
@@ -146,13 +147,70 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0177
+Next entry number: 0178
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.3 — Add the live elapsed timer.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.4 — Add the Start and Ready actions.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0177 — 2026-10-30 — Task 6.3.3 — Add the live elapsed timer
+
+**Status:** PASS
+
+**Task:** Task 6.3.3 — Add the live elapsed timer
+
+**Summary:**
+Created `ElapsedTimer` client component in `src/components/staff/elapsed-timer.tsx` that computes elapsed minutes from `placedAt` on initial render and updates every 60 seconds via `setInterval`. Wired `ElapsedTimer` into `KitchenTicket` at `src/components/staff/kitchen-ticket.tsx` to replace static elapsed text while preserving server-side `isStale` border evaluation.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| src/components/staff/elapsed-timer.tsx | Create | Client component updating elapsed time every 60s in place |
+| src/components/staff/kitchen-ticket.tsx | Edit | Replaced static elapsed display with `<ElapsedTimer>` component |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.3 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0177, updated §5.2 ledger, bumped next entry to 0178, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.04s)
+- `pnpm test:integration` — 29 files / 175 tests passed
+
+**Acceptance Criteria Results:**
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| 1. elapsed-timer.tsx exists and is a client component with setInterval(60000) | PASS | `src/components/staff/elapsed-timer.tsx` uses "use client" and `setInterval(..., 60000)` with cleanup |
+| 2. KitchenTicket uses it for the elapsed display | PASS | `KitchenTicket` renders `<ElapsedTimer placedAt={order.placedAt} />` in header row |
+| 3. Initial paint shows a real number (no layout shift) | PASS | `useState(() => computeElapsedMinutes(placedAt))` renders valid elapsed string on first paint |
+| 4. aria-live is not set | PASS | Rendered `<span>` omits aria-live attribute (default off) |
+| 5. isStale border logic still computed on server | PASS | `isStale` derived from server `now` prop in `KitchenTicket` |
+| 6. tsc 0 | PASS | `pnpm exec tsc --noEmit` exited 0 |
+| 7. build 33+1 on Next.js 16.4.0 Turbopack | PASS | All 33 routes and 1 proxy verified against expected list |
+| 8. unit 207 | PASS | 29 files, 207 tests passed |
+| 9. integration 175 | PASS | 29 files, 175 tests passed |
+| 10. Manual tick verification | PENDING | Awaiting human verification |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+Task 6.3.4 adds Start/Ready handlers via native DOM, Task 6.3.6 adds dark mode toggle, Task 6.3.7 adds connection indicator, Task 6.4.1 adds audible ping, and Task 6.3.8 performs milestone verification.
+
+**Document Impact:**
+Only ROADMAP.md and PROGRESS.md modified.
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3. Task 6.3.4 — Add the Start and Ready actions.
+
+**Awaiting Human Verification:** YES
+
+---
+
 
 ### ENTRY-0176 — 2026-10-30 — Task 6.3.2 — Add the ticket card (extract KitchenTicket component)
 
@@ -1405,9 +1463,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.2 (The Kitchen Routes) — CLOSED.
 
-Current task: Task 6.3.3 — Add the live elapsed timer.
+Current task: Task 6.3.4 — Add the Start and Ready actions.
 
-Current status: The ticket card markup has been extracted into `KitchenTicket` (ENTRY-0176), preserving identical rendering to Task 6.3.1. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.3.
+Current status: The live elapsed timer is in place via `ElapsedTimer` (ENTRY-0177), updating ticket elapsed time every 60 seconds without page reload. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.4.
 
 ## 8. How the File Evolves
 

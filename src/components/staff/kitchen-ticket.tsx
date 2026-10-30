@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import { OrderState, type Order } from "@/domain/orders/order.repository";
 import { Button } from "@/components/ui/button";
+import { ElapsedTimer } from "./elapsed-timer";
 
 export interface KitchenTicketProps {
   readonly order: Order;
@@ -65,9 +66,7 @@ export function KitchenTicket({
           <span className="font-mono text-[20px] font-semibold text-staff-text-primary tracking-tight">
             #{order.id.slice(0, 8).toUpperCase()}
           </span>
-          <span className="font-mono text-[14px] text-staff-text-muted">
-            {elapsedMinutes} min
-          </span>
+          <ElapsedTimer placedAt={order.placedAt} />
         </div>
 
         {/* Place Row: Table/Room number in 40px (The Place) */}
@@ -141,4 +140,3 @@ export function KitchenTicket({
     </article>
   );
 }
-
