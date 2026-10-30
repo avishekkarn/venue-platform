@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0164 | 2026-10-30 | Task 6.1.0.A — Author the transition table and its validator | PASS | Milestone 6.1 | §5.3 |
 | ENTRY-0163 | 2026-10-30 | Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0161 | 2026-10-29 | Task 5.8.4 — Verify menu item state update (Milestone 5.8 and Phase 5 close) | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
@@ -275,13 +276,97 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0162 | 2026-10-30 | Roadmap re-order — Phase 6 dependency order and task merges | STRUCTURAL | Phase 6 planning | §5.3 |
 
-Next entry number: 0164
+Next entry number: 0165
 
 ### 5.3 Current Milestone — Milestone 6.1 (The Kitchen Domain). Current task: Task 6.1.0.A — Author the transition table and its validator.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0164 — 2026-10-30 — Task 6.1.0.A — Author the transition table and its validator
+
+**Status:** PASS
+
+**Task:** Task 6.1.0.A — Author the transition table and its validator
+
+**Summary:**
+Replaced the empty `src/domain/orders/transitions.ts` placeholder with the canonical 9-pair `OrderState` transition table from SYSTEM.md §9.2 and the pure domain `isTransitionAllowed` validator returning `Result<true>` / `fail(INVALID_STATE)`. Added a smoke unit test suite in `tests/unit/orders/transitions.test.ts` verifying allowed, forbidden, and terminal transitions, and exported `isTransitionAllowed` and `ALLOWED_TRANSITIONS` from the domain barrel.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| src/domain/orders/transitions.ts | Create | Defined canonical 9 allowed transitions and `isTransitionAllowed(from, to): Result<true>` with explicit switch |
+| src/domain/orders/index.ts | Edit | Exported `isTransitionAllowed` and `ALLOWED_TRANSITIONS` from orders domain barrel |
+| tests/unit/orders/transitions.test.ts | Create | Added 4 smoke unit tests verifying allowed, forbidden, and terminal state transitions |
+| docs/ROADMAP.md | Edit | Marked Task 6.1.0.A as complete |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0164, updated §5.2 ledger, bumped next entry to 0165, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 30 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 27 passed (27)
+# Tests 190 passed (190)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 162 passed (162)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | transitions.ts exists and exports isTransitionAllowed | PASS | src/domain/orders/transitions.ts exports isTransitionAllowed and ALLOWED_TRANSITIONS |
+| 2 | isTransitionAllowed returns ok(true) for PLACED → APPROVED | PASS | tests/unit/orders/transitions.test.ts Case 1 passes |
+| 3 | isTransitionAllowed returns fail(INVALID_STATE) for PLACED → PREPARING | PASS | tests/unit/orders/transitions.test.ts Case 2 passes |
+| 4 | CANCELLED has no outgoing transitions | PASS | tests/unit/orders/transitions.test.ts Case 3 passes for all OrderState targets |
+| 5 | COMPLETED has no outgoing transitions | PASS | tests/unit/orders/transitions.test.ts Case 4 passes for all OrderState targets |
+| 6 | index.ts exports isTransitionAllowed | PASS | Verified in src/domain/orders/index.ts |
+| 7 | tsc 0 | PASS | pnpm exec tsc --noEmit exit 0, 0 errors |
+| 8 | build 30 + 1 on Next.js 16.4.0 (Turbopack) | PASS | ▲ Next.js 16.4.0 (Turbopack), 30 app routes + 1 proxy (Middleware) |
+| 9 | unit tests strictly > 186 | PASS | 27 files / 190 passed (increased by 4 from 186) |
+| 10 | integration unchanged at 162 | PASS | 29 files / 162 passed |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- `src/domain/orders/advance-order.ts` remains a 0-byte placeholder; Task 6.1.4 will create it.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Adheres to D-4.8, D-4.9 | No change |
+| SYSTEM.md | No | Adheres to §9.1, §9.2, §9.3 | No change |
+| BUILD.md | No | Adheres to §5, §8.8 | No change |
+| ROADMAP.md | Yes | Marked Task 6.1.0.A as ✅ Complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0164, updated ledger and snapshot | Updated |
+| DESIGN.md | No | No UI changes | No change |
+| PHASE_TESTS.md | No | Phase acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.1. Task 6.1.0.B — Add the exhaustive transition table unit test.
+
+**Awaiting Human Verification:** NO
+
+
+---
 
 ### ENTRY-0163 — 2026-10-30 — Split Task 6.1.0 into 6.1.0.A and 6.1.0.B after BLOCKED report (empty transitions.ts placeholder)
 
@@ -439,7 +524,7 @@ Current milestone: Milestone 6.1 (The Kitchen Domain).
 
 Current task: Task 6.1.1 — Add the order approval action.
 
-Current status: Phase 5 is closed and verified end-to-end. Phase 6 has been re-ordered for dependency correctness (ENTRY-0162) and Task 6.1.0 has been split into 6.1.0.A (author the transition table) and 6.1.0.B (prove it exhaustively) after the empty transitions.ts placeholder was found (ENTRY-0163). The transition table is now the first thing built. All baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 186/27, integration 162/29. Ready for Task 6.1.0.A.
+Current status: The OrderState transition table and isTransitionAllowed validator are implemented and proven with smoke tests (ENTRY-0164). The validator is exported from the domain barrel. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 190/27, integration 162/29. Ready for Task 6.1.0.B to prove all allowed and forbidden transitions exhaustively.
 
 ## 8. How the File Evolves
 
@@ -524,9 +609,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.1 (The Kitchen Domain).
 
-Current task: Task 6.1.0.A — Author the transition table and its validator.
+Current task: Task 6.1.0.B — Add the exhaustive transition table unit test.
 
-Current status: Phase 5 is closed and verified end-to-end. Phase 6 has been re-ordered for dependency correctness (ENTRY-0162) and Task 6.1.0 has been split into 6.1.0.A (author the transition table) and 6.1.0.B (prove it exhaustively) after the empty transitions.ts placeholder was found (ENTRY-0163). The transition table is now the first thing built. All baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 186/27, integration 162/29. Ready for Task 6.1.0.A.
+Current status: The OrderState transition table and isTransitionAllowed validator are implemented and proven with smoke tests (ENTRY-0164). The validator is exported from the domain barrel. All four baselines remain green: tsc 0, build 30 routes + 1 proxy, unit 190/27, integration 162/29. Ready for Task 6.1.0.B to prove all allowed and forbidden transitions exhaustively.
 
 ## 8. How the File Evolves
 

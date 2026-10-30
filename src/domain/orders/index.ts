@@ -12,3 +12,5 @@ export {
   type CreateOrderRequest,
   type CreateOrderItemRequest,
 } from "./create-order";
+export { isTransitionAllowed, ALLOWED_TRANSITIONS } from "./transitions";
+
