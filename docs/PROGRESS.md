@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0176 | 2026-10-30 | Task 6.3.2 — Add the ticket card (extract KitchenTicket component) | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0175 | 2026-10-30 | Task 6.3.1 — Add the ticket grid layout | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0174 | 2026-10-30 | HOTFIX — Fix login redirect loop by routing based on staff role | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0173 | 2026-10-30 | HOTFIX — fix app/forbidden/page.tsx "Back" button to use router.back() | STRUCTURAL | Phase 6 planning | §5.3 |
@@ -145,13 +146,60 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0176
+Next entry number: 0177
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.2 — Add the ticket card (extract the ticket markup into a reusable component).
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.3 — Add the live elapsed timer.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0176 — 2026-10-30 — Task 6.3.2 — Add the ticket card (extract KitchenTicket component)
+
+**Status:** PASS
+
+**Task:** Task 6.3.2 — Add the ticket card
+
+**Summary:**
+Extracted the inline ticket card markup from `app/kitchen/page.tsx` into a reusable Server Component `KitchenTicket` at `src/components/staff/kitchen-ticket.tsx`. The component receives typed `order`, `place`, and `now` props and renders the exact ticket markup including elapsed minutes, "The Place" 40px table/room number, items with parsed modifiers and notes, and the action button placeholder.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| src/components/staff/kitchen-ticket.tsx | Create | Extracted Server Component rendering the ticket card |
+| app/kitchen/page.tsx | Edit | Replaced inline `<article>` markup with `<KitchenTicket>` call and removed moved helpers |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.2 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0176, updated §5.2 ledger, bumped next entry to 0177, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.05s)
+- `pnpm test:integration` — 29 files / 175 tests passed (81.62s)
+
+**Acceptance Criteria Results:**
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| 1. Component exists and exports KitchenTicket | PASS | `src/components/staff/kitchen-ticket.tsx` exports named `KitchenTicket` |
+| 2. page.tsx uses it | PASS | `app/kitchen/page.tsx` renders `<KitchenTicket key={order.id} order={order} place={place} now={now} />` |
+| 3. No client-side interactivity | PASS | Pure Server Component, zero "use client", zero hooks |
+| 4. Visual check pending | PASS | Component renders identical markup to Task 6.3.1 |
+| 5. tsc 0 | PASS | `pnpm exec tsc --noEmit` exited 0 with 0 errors |
+| 6. build 33+1 on Next.js 16.4.0 Turbopack | PASS | All 33 routes and 1 proxy verified against expected list |
+| 7. unit 207 | PASS | 29 files, 207 tests passed |
+| 8. integration 175 | PASS | 29 files, 175 tests passed |
+| 9. Manual desktop check | PENDING | Awaiting human verification |
+
+**Noticed but Out of Scope:**
+Task 6.3.3 adds the live elapsed timer, Task 6.3.4 adds Start/Ready handlers via native DOM, Task 6.3.6 adds dark mode toggle, Task 6.3.7 adds connection indicator, Task 6.4.1 adds audible ping, and Task 6.3.8 performs milestone verification.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3. Task 6.3.3 — Add the live elapsed timer.
+
+**Awaiting Human Verification:** YES
+
+---
+
 
 ### ENTRY-0175 — 2026-10-30 — Task 6.3.1 — Add the ticket grid layout
 
@@ -1357,9 +1405,9 @@ Current phase: Phase 6 (The Kitchen).
 
 Current milestone: Milestone 6.2 (The Kitchen Routes) — CLOSED.
 
-Current task: Task 6.3.1 — Add the ticket grid layout.
+Current task: Task 6.3.3 — Add the live elapsed timer.
 
-Current status: The ticket grid layout is in place (ENTRY-0175), awaiting the human's manual desktop check. The next task extracts the ticket markup into a component before the interactivity tasks (6.3.4 onward) begin.
+Current status: The ticket card markup has been extracted into `KitchenTicket` (ENTRY-0176), preserving identical rendering to Task 6.3.1. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Task 6.3.3.
 
 ## 8. How the File Evolves
 
