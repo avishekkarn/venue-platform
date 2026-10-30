@@ -128,6 +128,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0187 | 2026-10-30 | HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0186 | 2026-10-30 | HOTFIX — Migrate kitchen login to Native DOM (LAN access fix) | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0185 | 2026-10-30 | HOTFIX — AudioContext unlocking pattern and dual-oscillator kitchen ping | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0184 | 2026-10-30 | Task 6.4.1 — Add auto-refresh for new tickets and the audible ping — Phase 6 close | PASS | Milestone 6.4 | §5.3 |
@@ -157,13 +158,63 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0187
+Next entry number: 0188
 
 ### 5.3 Current Milestone — Milestone 7.1 (The Table Service Queue). Current task: Task 7.1.1 — Add the table service queue layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0187 — 2026-10-30 — HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen
+
+**Status:** PASS
+
+**Task:** HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen
+
+**Summary:**
+Fixed mobile AudioContext unlocking by attaching a `touchstart` event listener alongside `click` and `keydown` in the `<Script id="kitchen-actions">` block. Eliminated DOM race condition in `pollKitchen()` by recording busy tickets (buttons in `disabled` or `Sending…` state) before and during poll resolution, skipping DOM mutation/removal for tickets currently in-flight, removing full grid rebuilds (`grid.innerHTML = ''`), and updating non-busy tickets with surgical attribute mutations.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Added `touchstart` to `unlockAudio` listeners; implemented busy-ticket guard and non-destructive diffing in `pollKitchen()` |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0187, updated §5.2 ledger, bumped next entry to 0188, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 33 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.08s)
+- `pnpm test:integration` — 29 files / 175 tests passed (85.43s)
+
+**Verification Results:**
+| Step | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Mobile audio unlock | PASS | `document.addEventListener('touchstart', unlockAudio, { once: true });` added |
+| 2 | In-flight ticket protection | PASS | Tickets with disabled or `Sending…` buttons are skipped during DOM updates and deletions |
+| 3 | No grid wipe | PASS | Removed `grid.innerHTML = ''`; only appends new tickets and removes deleted non-busy tickets |
+| 4 | In-place attribute updates | PASS | State changes update `data-order-state` and button attributes in-place without replacing innerHTML |
+| 5 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 6 | `pnpm build` succeeds with 33 routes + 1 proxy | PASS | Exit code 0 on ▲ Next.js 16.4.0 (Turbopack) |
+| 7 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed |
+| 8 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed |
+| 9 | `docs/PROGRESS.md` §5.2 row, Next entry 0188, §5.3 ENTRY-0187, §7 snapshot | PASS | Added and verified |
+| 10 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Next Milestone / Task:**
+Phase 7 (The Service Staff Queues).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| PROGRESS.md | Yes | Recorded ENTRY-0187, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to D-6.5 (audible ping), DESIGN.md §4.11.7.
 
 ### ENTRY-0186 — 2026-10-30 — HOTFIX — Migrate kitchen login to Native DOM (LAN access fix)
 
@@ -800,7 +851,7 @@ Current milestone: Milestone 7.1 (The Table Service Queue) — NOT STARTED.
 
 Current task: Task 7.1.1 — Add the table service queue layout.
 
-Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Kitchen login migrated to Native DOM Pattern A for LAN mobile access (ENTRY-0186). The kitchen screen renders dynamic tickets with auto-refresh diffing, dual-oscillator audible ping (880Hz + 440Hz, peak 0.7, 300ms) with AudioContext unlocking pattern, dark mode toggle, and connection health indicator (ENTRY-0185). All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Phase 7.
+Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Kitchen login migrated to Native DOM Pattern A (ENTRY-0186). Mobile audio unlock via touchstart and pollKitchen non-destructive ticket diffing added (ENTRY-0187). The kitchen screen renders dynamic tickets with auto-refresh diffing, dual-oscillator audible ping (880Hz + 440Hz, peak 0.7, 300ms) with AudioContext unlocking pattern, dark mode toggle, and connection health indicator. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Phase 7.
 
 ## 8. How the File Evolves
 

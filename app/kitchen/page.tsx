@@ -323,6 +323,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
   }
 
   document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('touchstart', unlockAudio, { once: true });
   document.addEventListener('keydown', unlockAudio, { once: true });
 
   var CONNECTION_ID = 'connection-indicator';
@@ -502,6 +503,29 @@ export default async function KitchenPage(): Promise<JSX.Element> {
   }
 
   function pollKitchen() {
+    var grid = document.getElementById('ticket-grid');
+    var empty = document.getElementById('ticket-empty');
+    if (!grid) return;
+
+    var busyTickets = {};
+    var currentArticles = grid.querySelectorAll('[data-ticket-id]');
+    for (var b = 0; b < currentArticles.length; b++) {
+      var cart = currentArticles[b];
+      var cbtn = cart.querySelector('[data-order-id]');
+      if (cbtn && cbtn.disabled && (cbtn.textContent === 'Sending…' || cbtn.getAttribute('data-action') !== null)) {
+        var ctid = cart.getAttribute('data-ticket-id');
+        if (ctid) busyTickets[ctid] = true;
+      }
+    }
+
+    function isTicketBusy(art, tid) {
+      if (tid && busyTickets[tid]) return true;
+      if (!art) return false;
+      var btn = art.querySelector('[data-order-id]');
+      if (!btn) return false;
+      return btn.disabled && (btn.textContent === 'Sending…' || btn.getAttribute('data-action') !== null);
+    }
+
     fetch('/api/kitchen/orders', {
       method: 'GET',
       cache: 'no-store',
@@ -518,20 +542,6 @@ export default async function KitchenPage(): Promise<JSX.Element> {
           orders.sort(function(a, b) {
             return new Date(a.placedAt).getTime() - new Date(b.placedAt).getTime();
           });
-
-          var grid = document.getElementById('ticket-grid');
-          var empty = document.getElementById('ticket-empty');
-          if (!grid) return;
-
-          if (orders.length === 0) {
-            if (empty) empty.style.display = '';
-            grid.style.display = 'none';
-            grid.innerHTML = '';
-            return;
-          }
-
-          if (empty) empty.style.display = 'none';
-          grid.style.display = '';
 
           var existingArticles = grid.querySelectorAll('[data-ticket-id]');
           var domTickets = {};
@@ -559,11 +569,14 @@ export default async function KitchenPage(): Promise<JSX.Element> {
                 grid.appendChild(temp.firstElementChild);
               }
             } else {
+              if (isTicketBusy(existingEl, order.id)) {
+                continue;
+              }
+
               var currentState = existingEl.getAttribute('data-order-state');
               var btn = existingEl.querySelector('[data-order-id]');
-              var isSending = btn && btn.textContent === 'Sending…';
 
-              if (!isSending && currentState !== order.state) {
+              if (currentState !== order.state) {
                 existingEl.setAttribute('data-order-state', order.state);
                 if (btn) {
                   btn.setAttribute('data-current-state', order.state);
@@ -585,11 +598,20 @@ export default async function KitchenPage(): Promise<JSX.Element> {
             if (Object.prototype.hasOwnProperty.call(domTickets, tid)) {
               if (!incomingIds[tid]) {
                 var toRemove = domTickets[tid];
-                if (toRemove && toRemove.parentNode) {
+                if (!isTicketBusy(toRemove, tid) && toRemove && toRemove.parentNode) {
                   toRemove.parentNode.removeChild(toRemove);
                 }
               }
             }
+          }
+
+          var remaining = grid.querySelectorAll('[data-ticket-id]');
+          if (remaining.length === 0) {
+            if (empty) empty.style.display = '';
+            grid.style.display = 'none';
+          } else {
+            if (empty) empty.style.display = 'none';
+            grid.style.display = '';
           }
 
           if (hasNewTicket) {
