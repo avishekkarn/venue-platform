@@ -508,7 +508,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                                                    | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 6.3.1 | Add the ticket grid layout                                                                                                              | ⬜     | 6.2.4      |
+| 6.3.1 | Add the ticket grid layout                                                                                                              | ✅ Complete | 6.2.4      |
 | 6.3.2 | Add the ticket card (order number, place, items, modifiers, notes)                                                                      | ⬜     | 6.3.1      |
 | 6.3.3 | Add the elapsed time display                                                                                                            | ⬜     | 6.3.2      |
 | 6.3.4 | Add the "Start" and "Ready" actions (native DOM, in-place update, no page reload — the same discipline as the guest menu polling)       | ⬜     | 6.3.3      |

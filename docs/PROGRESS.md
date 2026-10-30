@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0175 | 2026-10-30 | Task 6.3.1 — Add the ticket grid layout | PASS | Milestone 6.3 | §5.3 |
 | ENTRY-0174 | 2026-10-30 | HOTFIX — Fix login redirect loop by routing based on staff role | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0173 | 2026-10-30 | HOTFIX — fix app/forbidden/page.tsx "Back" button to use router.back() | STRUCTURAL | Phase 6 planning | §5.3 |
 | ENTRY-0172 | 2026-10-30 | Task 6.2.4 — Verify the kitchen routes as a group — Milestone 6.2 close | PASS | Milestone 6.2 | §5.3 |
@@ -144,13 +145,103 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0175
+Next entry number: 0176
 
-### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.1 — Add the ticket grid layout.
+### 5.3 Current Milestone — Milestone 6.3 (The Kitchen Screen). Current task: Task 6.3.2 — Add the ticket card (extract the ticket markup into a reusable component).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0175 — 2026-10-30 — Task 6.3.1 — Add the ticket grid layout
+
+**Status:** PASS
+
+**Task:** Task 6.3.1 — Add the ticket grid layout
+
+**Summary:**
+Replaced the placeholder in `app/kitchen/page.tsx` with a Server Component rendering a sticky top status strip and a responsive ticket grid of APPROVED, PREPARING, and READY orders using staff-world design tokens. Each ticket displays its order number, large 40px table/room place anchor, items, modifiers, notes, elapsed minutes, and a disabled action button, ready for visual desktop verification.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/kitchen/page.tsx | Edit | Replaced placeholder with Server Component ticket grid layout and status strip |
+| docs/ROADMAP.md | Edit | Marked Task 6.3.1 complete (`✅ Complete`) |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0175, updated §5.2 ledger, bumped next entry to 0176, updated §7 snapshot |
+
+**Commands Run:**
+```bash
+git log --oneline -1
+# 63ad214 STRUCTURAL — rebuild docs/PROGRESS.md from 03a03b4 plus 13 Phase 6 entries (fixes duplication introduced in 30cd478)
+
+git status --short --untracked-files=all
+# (clean, printed nothing)
+
+pnpm exec tsc --noEmit
+# Exit code: 0
+
+pnpm build
+# Exit code: 0
+# ▲ Next.js 16.4.0 (Turbopack)
+# 33 app routes + 1 proxy (Middleware)
+
+pnpm test:unit
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 207 passed (207)
+
+pnpm test:integration
+# Exit code: 0
+# Test Files 29 passed (29)
+# Tests 175 passed (175)
+```
+
+**Acceptance Criteria Results:**
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Server Component with zero client interactivity | PASS | app/kitchen/page.tsx is an async Server Component with no useState, useEffect, or onClick |
+| 2 | Grid renders APPROVED/PREPARING/READY orders | PASS | listForVenue queried for APPROVED, PREPARING, and READY states and ordered by placedAt ascending |
+| 3 | Ticket card displays order ID, place, items, modifiers, notes, elapsed time, disabled button | PASS | Rendered in ticket cards with 40px place number (The Place), elapsed minutes, and disabled Button |
+| 4 | Empty state renders when no active tickets | PASS | Centered "No active tickets." in text-[18px] text-staff-text-muted |
+| 5 | TypeScript compilation passes (0 errors) | PASS | pnpm exec tsc --noEmit exited with code 0 |
+| 6 | Production build passes (33 routes + 1 proxy) | PASS | pnpm build exited with code 0 on Next.js 16.4.0 (Turbopack) |
+| 7 | Unit test suite passes unchanged | PASS | pnpm test:unit passed: 29 files, 207 tests |
+| 8 | Integration test suite passes unchanged | PASS | pnpm test:integration passed: 29 files, 175 tests |
+| 9 | Manual desktop check (BUILD.md §8.8) | PENDING | Awaiting human visual verification at target viewport (1366x768 / 1920x1080) |
+
+**Deviations from Contract:**
+None.
+
+**Noticed but Out of Scope:**
+- Component extraction: Extracting ticket card markup into `src/components/staff/kitchen-ticket.tsx` will be done in Task 6.3.2.
+- Live ticking: Client-side dynamic elapsed timer ticking every second will be added in Task 6.3.3.
+- Interactive actions: Start and Ready action handlers using native DOM scripts with in-place DOM updates will arrive in Task 6.3.4.
+- Theme toggle & dark mode: Dark mode default toggle and theme preference storage arrive in Task 6.3.6.
+- Connection indicator & live ping: Connection state monitoring arrives in Task 6.3.7, and audible Web Audio ping arrives in Task 6.4.1.
+- Next.js build emitted a security upgrade recommendation advisory for Next.js; build completed successfully on continuation.
+
+**Document Impact:**
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | Adheres to product specification | No change |
+| DECISIONS.md | No | Preserves D-6.1, D-6.4, D-9.5 | No change |
+| SYSTEM.md | No | Adheres to §9, §11.1, §15.4 | No change |
+| BUILD.md | No | Adheres to §3, §4, §8.8, §13, §15 | No change |
+| ROADMAP.md | Yes | Marked Task 6.3.1 complete | Updated |
+| PROGRESS.md | Yes (this entry) | Recorded ENTRY-0175, updated ledger and snapshot | Updated |
+| DESIGN.md | No | Implements §4.11 and §4.12.5 | No change |
+| PHASE_TESTS.md | No | Acceptance tests untouched | No change |
+| WIRING.md | No | No cross-task seam created | No change |
+
+**Contradiction Check:**
+None found.
+
+**Next:**
+Phase 6 — The Kitchen. Milestone 6.3. Task 6.3.2 — Add the ticket card (extract the ticket markup into a reusable component).
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0174 — 2026-10-30 — HOTFIX — Fix login redirect loop by routing based on staff role
 
@@ -1268,7 +1359,7 @@ Current milestone: Milestone 6.2 (The Kitchen Routes) — CLOSED.
 
 Current task: Task 6.3.1 — Add the ticket grid layout.
 
-Current status: Milestone 6.1 (The Kitchen Domain) and Milestone 6.2 (The Kitchen Routes) are closed on evidence. Two hotfixes are committed: ENTRY-0170 (login forms migrated to Native DOM scripts; LAN HMR binding fixed) and ENTRY-0173 + ENTRY-0174 (forbidden page back button uses router.back(); login redirect loop resolved by routing on staff role). The kitchen routes (GET /api/kitchen/orders, POST /api/kitchen/orders/[id]/start, POST /api/kitchen/orders/[id]/ready) are proven by 13 integration tests. All four baselines are green: tsc 0, build 33 routes + 1 proxy on Next.js 16.4.0 (Turbopack), unit 207/29, integration 175/29. Ready for Task 6.3.1.
+Current status: The ticket grid layout is in place (ENTRY-0175), awaiting the human's manual desktop check. The next task extracts the ticket markup into a component before the interactivity tasks (6.3.4 onward) begin.
 
 ## 8. How the File Evolves
 
