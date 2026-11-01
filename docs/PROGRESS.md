@@ -132,14 +132,78 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0192 | 2026-11-01 | Phase 7 Staff Domain: Approve, Deliver, Complete, Close | Complete | Milestone 7.1 | §5.3 |
 | ENTRY-0193 | 2026-11-01 | Phase 7 Staff API Routes & Integration Tests | Complete | Milestone 7.2 | §5.3 |
 | ENTRY-0194 | 2026-11-01 | Phase 7 Staff Dashboard (Orders + Maps) | Complete | Milestone 7.3 | §5.3 |
+| ENTRY-0195 | 2026-11-01 | Fix Staff Dashboard visual bugs (table map resolution, button classes, no cascade) | Complete | Milestone 7.3 | §5.3 |
+| ENTRY-0196 | 2026-11-02 | Return activeTableIds and activeRoomIds from /api/staff/orders | Complete | Milestone 7.3 | §5.3 |
+| ENTRY-0197 | 2026-11-02 | Fix LAN/Mobile interactivity with allowedDevOrigins and synchronous delegation | Complete | Milestone 7.3 | §5.3 |
+| ENTRY-0198 | 2026-11-02 | Enable /dev/qr in Production (Localhost-Only) (ENTRY-0199) | Complete | Milestone 7.3 | §5.3 |
 
-Next entry number: 0195
+Next entry number: 0199
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (The Dashboard). Current task: Task 8.1.1 — Add the live metric cards.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0198 (ENTRY-0199) — 2026-11-02: Enable /dev/qr in Production (Localhost-Only)
+
+- **Task**: TASK 7.4.2 — Enable /dev/qr in Production (Localhost-Only).
+- **Milestone**: Milestone 7.3 (The Service Staff Screen).
+- **Scope**:
+  - `app/dev/qr/page.tsx`: Replaced hardcoded `notFound()` when `NODE_ENV === "production"` with `assertLocalhostInProduction()`. The guard checks the request's `Host` header and allows `localhost` and `127.0.0.1` while issuing `notFound()` to any non-localhost requests (e.g. LAN IP `192.168.x.x`). Preserves the D-17.4 security posture while unblocking production-mode LAN testing workflows.
+  - `docs/PROGRESS.md`: Recorded entry.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed.
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
+
+### ENTRY-0197 — 2026-11-02: Fix LAN/Mobile Interactivity with allowedDevOrigins and Synchronous Delegation
+
+- **Task**: TASK 7.4.0 — Fix LAN/Mobile Interactivity (Surgical, Non-Destructive).
+- **Milestone**: Milestone 7.3 (The Service Staff Screen).
+- **Scope**:
+  - `next.config.mjs`: Added dynamic `allowedDevOrigins` configuration parsed from `NEXT_ALLOWED_DEV_ORIGINS` environment variable, resolving Next.js 16 HMR WebSocket handshake rejections and connection storms on LAN IPs.
+  - `.env.local.example`: Documented `NEXT_ALLOWED_DEV_ORIGINS` variable for development mobile testing.
+  - `app/staff/page.tsx`: Inlined the two delegated event listeners (`#staff-tab-nav` and `document` click) synchronously at the top of the initialization sequence, executing prior to `poll()` and `setInterval(poll, 5000)`. This guarantees event listeners bind on the first synchronous tick regardless of network conditions or dev server HMR status.
+  - Not touched: every other page, every API route, every domain file.
+  - Non-degradation: Localhost flow is byte-for-byte identical; listeners were moved, not rewritten; polling logic and button handling logic unchanged.
+  - Manual verification PENDING: Human adds `NEXT_ALLOWED_DEV_ORIGINS` to `.env.local`, restarts `pnpm dev`, and verifies both localhost and mobile LAN URLs.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed.
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
+
+### ENTRY-0196 — 2026-11-02: Return activeTableIds and activeRoomIds from /api/staff/orders
+
+- **Task**: TASK 7.3.9 — Return activeTableIds and activeRoomIds from /api/staff/orders.
+- **Milestone**: Milestone 7.3 (The Service Staff Screen).
+- **Scope**:
+  - `app/api/staff/orders/route.ts`: Added `db.guestSession.findMany` query filtering for `endedAt: null` across the venue to extract active table and room IDs. Returned `activeTableIds` and `activeRoomIds` alongside `data` in the JSON response envelope.
+  - Root cause: The route previously returned only `{ data: combinedOrders }` and did not query `guestSession`, leaving the Staff Dashboard Table Map polling without place occupancy data.
+  - `docs/PROGRESS.md`: Recorded ENTRY-0196.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed.
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
+
+### ENTRY-0195 — 2026-11-01: Fix Staff Dashboard Visual Bugs (Table Map Resolution, Button Classes, No Cascade)
+
+- **Task**: TASK 7.3.1–7.3.8 (FINAL) — The Complete Staff Dashboard.
+- **Milestone**: Milestone 7.3 (The Service Staff Screen).
+- **Scope**:
+  - `app/staff/page.tsx`: Fixed three visual and DOM bugs in the Staff Dashboard:
+    1. Table number resolution: Built `tableMap` and `roomMap` dictionaries from repository queries before mapping orders, pre-enriching every order with `placeNumber` (e.g. `T1`, `T2`, `R401`) instead of rendering fallback "T1".
+    2. Button visibility: Replaced dynamic Tailwind class interpolation with static class strings via `buttonClassForState` and `buttonClass` helper functions (`bg-staff-brand text-staff-brand-contrast`, `bg-emerald-600 text-white`, `bg-blue-600 text-white`, `bg-staff-surface text-staff-text-muted`) to ensure full contrast and eliminate invisible action pills.
+    3. No cascading buttons: `renderTableMap()` and `renderRoomMap()` perform wholesale card replacement (`container.innerHTML = ''`) prior to inserting cards on poll cycles instead of appending.
+    4. Maintained zero `${...}` in script, zero `.finally()`, zero `data-pending`, and exactly two delegated event listeners.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed.
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
 
 ### ENTRY-0194 — 2026-11-01: Phase 7 Staff Dashboard (Orders + Maps)
 

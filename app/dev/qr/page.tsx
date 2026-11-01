@@ -1,14 +1,6 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import os from "os";
-
-if (
-  process.env.NODE_ENV === "production" &&
-  process.env.NEXT_PHASE !== "phase-production-build"
-) {
-  notFound();
-}
-
 import type { JSX } from "react";
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType, QrTokenState } from "@/domain/qr/qr-token.repository";
@@ -16,10 +8,25 @@ import { QrDisplay, type DevQrTokenItem } from "./_qr-display";
 
 export const dynamic = "force-dynamic";
 
-export default async function DevQrPage(): Promise<JSX.Element> {
-  if (process.env.NODE_ENV === "production") {
+// Dev-only access. In production, allow only when accessed from the developer's
+// own machine (localhost / 127.0.0.1). This preserves the D-17.4 security posture
+// while enabling production-mode LAN testing: the developer views the QR codes on
+// their laptop, then manually enters the token URL on a phone over LAN.
+async function assertLocalhostInProduction(): Promise<void> {
+  if (process.env.NODE_ENV !== "production") return;
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+
+  const headersList = await headers();
+  const hostHeader = headersList.get("host") || "";
+  const hostname = hostHeader.split(":")[0];
+
+  if (hostname !== "localhost" && hostname !== "127.0.0.1") {
     notFound();
   }
+}
+
+export default async function DevQrPage(): Promise<JSX.Element> {
+  await assertLocalhostInProduction();
 
   // Detect local network IP for mobile testing over Wi-Fi
   const networkInterfaces = os.networkInterfaces();
