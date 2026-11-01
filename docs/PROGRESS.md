@@ -130,14 +130,38 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 |-------|------|-------|--------|-----------|----------|
 | ENTRY-0191 | 2026-11-01 | Phase 7 initialization & roadmap setup | Complete | Milestone 7.1 | git log 1674008 |
 | ENTRY-0192 | 2026-11-01 | Phase 7 Staff Domain: Approve, Deliver, Complete, Close | Complete | Milestone 7.1 | §5.3 |
+| ENTRY-0193 | 2026-11-01 | Phase 7 Staff API Routes & Integration Tests | Complete | Milestone 7.2 | §5.3 |
 
-Next entry number: 0193
+Next entry number: 0194
 
-### 5.3 Current Milestone — Milestone 7.1 (The Staff Domain). Current task: Task 7.1.1 — Add the order approval action.
+### 5.3 Current Milestone — Milestone 7.3 (The Service Staff Screen). Current task: Task 7.3.1 — Add the staff layout with the tabs.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0193 — 2026-11-01: Phase 7 Staff API Routes & Integration Tests
+
+- **Task**: TASK 7.2.1 — Phase 7 Staff API Routes (covering tasks 7.1.7 and 7.2.1 through 7.2.9).
+- **Milestone**: Milestone 7.2 (The Staff Routes).
+- **Scope**:
+  - `src/domain/orders/actions.ts`: Added pure domain `cancelOrder` action enforcing state machine transitions to `CANCELLED` and validating reason string.
+  - `src/domain/orders/index.ts`: Exported `cancelOrder` and `CancelOrderActionRequest`.
+  - `tests/unit/orders/actions.test.ts`: Added unit tests for `cancelOrder` (happy path, empty reason validation, invalid state transition).
+  - `app/api/staff/orders/route.ts`: Created `GET` endpoint returning orders in `PLACED`, `READY`, and `DELIVERED` states for service staff.
+  - `app/api/staff/orders/[id]/approve/route.ts`: Created `POST` endpoint invoking `approveOrder` (`PLACED` → `APPROVED`).
+  - `app/api/staff/orders/[id]/deliver/route.ts`: Created `POST` endpoint invoking `deliverOrder` (`READY` → `DELIVERED`).
+  - `app/api/staff/orders/[id]/complete/route.ts`: Created `POST` endpoint invoking `completeOrder` (`DELIVERED` → `COMPLETED`).
+  - `app/api/staff/orders/[id]/cancel/route.ts`: Created `POST` endpoint invoking `cancelOrder` with reason.
+  - `app/api/staff/tables/[id]/close/route.ts`: Created `POST` endpoint invoking `closeTable` (invalidates table sessions, sets `FREE`).
+  - `app/api/staff/rooms/[id]/checkout/route.ts`: Created `POST` endpoint invoking `checkoutRoom` (invalidates room sessions, sets `VACANT`).
+  - `tests/integration/api/staff-orders.test.ts`: Wrote comprehensive integration test suite (14 test cases) verifying all 7 endpoints against PostgreSQL with role checks, invalid state handling, session invalidation, and venue isolation.
+  - `docs/ROADMAP.md`: Marked tasks 7.1.7 and 7.2.1 through 7.2.9 as Complete.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed (14 new integration tests).
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
 
 ### ENTRY-0192 — 2026-11-01: Phase 7 Staff Domain: Approve, Deliver, Complete, Close
 
@@ -180,11 +204,11 @@ Updated at the end of every session.
 
 Current phase: Phase 7 (The Service Staff Queues).
 
-Current milestone: Milestone 7.2 (The Staff Routes).
+Current milestone: Milestone 7.3 (The Service Staff Screen).
 
-Current task: Task 7.2.1 — Add `GET /api/staff/orders` (fetch active orders for the queue).
+Current task: Task 7.3.1 — Add the staff layout with the tabs (Orders, Requests, Maps).
 
-Current status: Milestone 7.1 domain layer complete. Order approval, delivery, completion, table close, and room checkout pure domain functions implemented and verified. All 4 baselines pass (`tsc` 0 errors, `pnpm test:unit` 223/223 passed, `pnpm build` 40 routes + 1 proxy, `pnpm test:integration` 175/175 passed). Ready for Task 7.2.1.
+Current status: Milestone 7.2 staff API routes and integration tests complete. All 7 staff API routes implemented and verified against PostgreSQL. All 4 baselines pass (`tsc` 0 errors, `pnpm test:unit` 226/226 passed, `pnpm test:integration` 189/189 passed, `pnpm build` 47 routes + 1 proxy). Ready for Task 7.3.1.
 
 ## 8. How the File Evolves
 

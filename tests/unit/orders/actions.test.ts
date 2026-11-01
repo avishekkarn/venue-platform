@@ -5,6 +5,7 @@ import {
   markOrderReady,
   deliverOrder,
   completeOrder,
+  cancelOrder,
 } from "@/domain/orders/actions";
 import { type AdvanceOrderDeps } from "@/domain/orders/advance-order";
 import {
@@ -367,6 +368,78 @@ describe("kitchen order actions (approveOrder, startPreparingOrder, markOrderRea
 
       expect(mockOrderRepo.findById).toHaveBeenCalledTimes(1);
       expect(mockOrderRepo.advanceState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cancelOrder", () => {
+    it("successfully cancels an order in PLACED state with a reason and calls orderRepo.cancel", async () => {
+      const placedOrder: Order = {
+        ...baseOrder,
+        state: OrderState.PLACED,
+      };
+      const cancelledOrder: Order = {
+        ...baseOrder,
+        state: OrderState.CANCELLED,
+      };
+
+      mockOrderRepo.findById.mockResolvedValueOnce(ok(placedOrder));
+      mockOrderRepo.cancel = vi.fn().mockResolvedValueOnce(ok(cancelledOrder));
+
+      const result = await cancelOrder(deps, {
+        venueId,
+        orderId,
+        reason: "Customer changed mind",
+        staffMemberId: "waiter-1",
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.state).toBe(OrderState.CANCELLED);
+
+      expect(mockOrderRepo.findById).toHaveBeenCalledWith(venueId, orderId);
+      expect(mockOrderRepo.cancel).toHaveBeenCalledWith({
+        venueId,
+        orderId,
+        reason: "Customer changed mind",
+        staffMemberId: "waiter-1",
+      });
+    });
+
+    it("returns VALIDATION_FAILED if reason is empty or whitespace", async () => {
+      const result = await cancelOrder(deps, {
+        venueId,
+        orderId,
+        reason: "   ",
+      });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
+      expect(mockOrderRepo.findById).not.toHaveBeenCalled();
+    });
+
+    it("returns INVALID_STATE and does NOT call cancel when order is in DELIVERED state", async () => {
+      const deliveredOrder: Order = {
+        ...baseOrder,
+        state: OrderState.DELIVERED,
+      };
+
+      mockOrderRepo.findById.mockResolvedValueOnce(ok(deliveredOrder));
+      mockOrderRepo.cancel = vi.fn();
+
+      const result = await cancelOrder(deps, {
+        venueId,
+        orderId,
+        reason: "Too late",
+      });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe(DomainErrorCode.INVALID_STATE);
+      expect(result.error.message).toBe(
+        "Transition from 'DELIVERED' to 'CANCELLED' is not allowed"
+      );
+      expect(mockOrderRepo.cancel).not.toHaveBeenCalled();
     });
   });
 });

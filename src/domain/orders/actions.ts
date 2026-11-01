@@ -14,11 +14,19 @@
 
 import { type Order, OrderState } from "./order.repository";
 import { advanceOrder, type AdvanceOrderDeps } from "./advance-order";
-import { type Result } from "@/domain/shared/result";
+import { isTransitionAllowed } from "./transitions";
+import { type Result, fail, DomainErrorCode } from "@/domain/shared/result";
 
 export interface AdvanceActionRequest {
   readonly venueId: string;
   readonly orderId: string;
+  readonly staffMemberId?: string | null;
+}
+
+export interface CancelOrderActionRequest {
+  readonly venueId: string;
+  readonly orderId: string;
+  readonly reason: string;
   readonly staffMemberId?: string | null;
 }
 
@@ -101,5 +109,49 @@ export async function completeOrder(
     staffMemberId: input.staffMemberId,
   });
 }
+
+/**
+ * Cancels an order with a reason after validating that the transition is allowed.
+ * Used by staff/manager to cancel an order.
+ */
+export async function cancelOrder(
+  deps: AdvanceOrderDeps,
+  input: CancelOrderActionRequest
+): Promise<Result<Order>> {
+  if (
+    !input.reason ||
+    typeof input.reason !== "string" ||
+    input.reason.trim() === ""
+  ) {
+    return fail(
+      DomainErrorCode.VALIDATION_FAILED,
+      "Cancellation reason is required"
+    );
+  }
+
+  const currentOrderResult = await deps.orderRepo.findById(
+    input.venueId,
+    input.orderId
+  );
+  if (!currentOrderResult.ok) {
+    return currentOrderResult;
+  }
+
+  const transitionResult = isTransitionAllowed(
+    currentOrderResult.value.state,
+    OrderState.CANCELLED
+  );
+  if (!transitionResult.ok) {
+    return transitionResult;
+  }
+
+  return deps.orderRepo.cancel({
+    venueId: input.venueId,
+    orderId: input.orderId,
+    reason: input.reason.trim(),
+    staffMemberId: input.staffMemberId ?? null,
+  });
+}
+
 
 

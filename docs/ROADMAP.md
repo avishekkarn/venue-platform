@@ -546,21 +546,21 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | ✅ Complete | 7.1.3      |
 | 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ✅ Complete | 7.1.4      |
 | 7.1.6 | Add the room-checkout action (invalidates sessions, sets room VACANT)                                     | ✅ Complete | 7.1.5      |
-| 7.1.7 | Verify: state machine enforced; guest session invalidated on close/checkout                               | ⬜     | 7.1.6      |
+| 7.1.7 | Verify: state machine enforced; guest session invalidated on close/checkout                               | ✅ Complete | 7.1.6      |
 
 ### Milestone 7.2 — The staff routes
 
 | ID     | Task                                                                                            | Status | Depends on |
 | ------ | ----------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.2.1  | Add `GET /api/staff/orders` (fetch active orders for the queue)                                 | ⬜     | 7.1.7      |
-| 7.2.2  | Add `POST /api/staff/orders/[id]/approve` (move PLACED → APPROVED)                              | ⬜     | 7.2.1      |
-| 7.2.3  | Add `POST /api/staff/orders/[id]/deliver` (move READY → DELIVERED)                              | ⬜     | 7.2.2      |
-| 7.2.4  | Add `POST /api/staff/orders/[id]/complete` (move DELIVERED → COMPLETED)                         | ⬜     | 7.2.3      |
-| 7.2.5  | Add `POST /api/staff/orders/[id]/cancel` (cancel with reason)                                   | ⬜     | 7.2.4      |
-| 7.2.6  | Add `POST /api/staff/tables/[id]/close` (close table and end session)                           | ⬜     | 7.2.5      |
-| 7.2.7  | Add `POST /api/staff/rooms/[id]/checkout` (checkout room and end session)                       | ⬜     | 7.2.6      |
-| 7.2.8  | Add `GET /api/staff/requests` and all request action routes (advance, cancel, decline)          | ⬜     | 7.2.7      |
-| 7.2.9  | Verify: every route returns the correct envelope and status; the state transitions are enforced | ⬜     | 7.2.8      |
+| 7.2.1  | Add `GET /api/staff/orders` (fetch active orders for the queue)                                 | ✅ Complete | 7.1.7      |
+| 7.2.2  | Add `POST /api/staff/orders/[id]/approve` (move PLACED → APPROVED)                              | ✅ Complete | 7.2.1      |
+| 7.2.3  | Add `POST /api/staff/orders/[id]/deliver` (move READY → DELIVERED)                              | ✅ Complete | 7.2.2      |
+| 7.2.4  | Add `POST /api/staff/orders/[id]/complete` (move DELIVERED → COMPLETED)                         | ✅ Complete | 7.2.3      |
+| 7.2.5  | Add `POST /api/staff/orders/[id]/cancel` (cancel with reason)                                   | ✅ Complete | 7.2.4      |
+| 7.2.6  | Add `POST /api/staff/tables/[id]/close` (close table and end session)                           | ✅ Complete | 7.2.5      |
+| 7.2.7  | Add `POST /api/staff/rooms/[id]/checkout` (checkout room and end session)                       | ✅ Complete | 7.2.6      |
+| 7.2.8  | Add `GET /api/staff/requests` and all request action routes (advance, cancel, decline)          | ✅ Complete | 7.2.7      |
+| 7.2.9  | Verify: every route returns the correct envelope and status; the state transitions are enforced | ✅ Complete | 7.2.8      |
 
 ### Milestone 7.3 — The service staff screen
 

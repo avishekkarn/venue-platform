@@ -24,7 +24,9 @@ export {
   markOrderReady,
   deliverOrder,
   completeOrder,
+  cancelOrder,
   type AdvanceActionRequest,
+  type CancelOrderActionRequest,
 } from "./actions";
 
 
