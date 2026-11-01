@@ -25,73 +25,137 @@ export default async function OccupiedPage({
   return (
     <main className="min-h-dvh flex items-center justify-center px-4 py-12 bg-guest-surface text-guest-text-primary">
       <div className="w-full max-w-[440px] rounded-xl bg-guest-surface-raised border border-guest-border-subtle p-6 sm:p-8 shadow-sm text-center">
-        <div className="mx-auto mb-4 size-12 rounded-full bg-guest-surface-sunken flex items-center justify-center text-guest-brand">
-          <svg
-            className="size-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
+        {/* Loading / Auto-recovery State */}
+        <div id="recovering-state" className="py-6 space-y-4">
+          <div className="mx-auto size-10 rounded-full bg-guest-surface-sunken flex items-center justify-center text-guest-brand animate-spin">
+            <svg
+              className="size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-guest-text-primary">
+            Checking host session…
+          </p>
         </div>
 
-        <h1 className="font-display text-[24px] leading-[32px] text-guest-text-primary">
-          This table is active on another device
-        </h1>
-        <p className="mt-2 text-sm text-guest-text-secondary leading-relaxed">
-          Someone has already started a session at this table. Enter your name
-          to request access from the host.
-        </p>
+        {/* Occupied Form Content */}
+        <div id="occupied-content" style={{ display: "none" }}>
+          <div className="mx-auto mb-4 size-12 rounded-full bg-guest-surface-sunken flex items-center justify-center text-guest-brand">
+            <svg
+              className="size-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
 
-        <form id="join-request-form" className="mt-6 flex flex-col gap-4 text-left">
-          <Input
-            id="guest-name"
-            name="name"
-            type="text"
-            required
-            label="Your Name"
-            placeholder="e.g. Alex"
-            autoComplete="name"
-            autoFocus
-          />
+          <h1 className="font-display text-[24px] leading-[32px] text-guest-text-primary">
+            This table is active on another device
+          </h1>
+          <p className="mt-2 text-sm text-guest-text-secondary leading-relaxed">
+            Someone has already started a session at this table. Enter your name
+            to request access from the host.
+          </p>
 
-          <p
-            id="join-error"
-            role="alert"
-            style={{ display: "none" }}
-            className="text-xs text-status-cancelled"
-          />
+          <form id="join-request-form" className="mt-6 flex flex-col gap-4 text-left">
+            <Input
+              id="guest-name"
+              name="name"
+              type="text"
+              required
+              label="Your Name"
+              placeholder="e.g. Alex"
+              autoComplete="name"
+              autoFocus
+            />
 
-          <Button
-            id="btn-join-submit"
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full mt-2"
-          >
-            Request Access
-          </Button>
-        </form>
+            <p
+              id="join-error"
+              role="alert"
+              style={{ display: "none" }}
+              className="text-xs text-status-cancelled"
+            />
+
+            <Button
+              id="btn-join-submit"
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full mt-2"
+            >
+              Request Access
+            </Button>
+          </form>
+        </div>
       </div>
 
       <script
         dangerouslySetInnerHTML={{
           __html: `
 (function() {
+  var content = document.getElementById('occupied-content');
+  var recoveringState = document.getElementById('recovering-state');
   var form = document.getElementById('join-request-form');
   var nameInput = document.getElementById('guest-name');
   var errorEl = document.getElementById('join-error');
   var submitBtn = document.getElementById('btn-join-submit');
   var token = ${JSON.stringify(token)};
   var sessionId = ${JSON.stringify(sessionId)};
+
+  function showForm() {
+    if (recoveringState) recoveringState.style.display = 'none';
+    if (content) content.style.display = 'block';
+  }
+
+  // Automatic Host Recovery via localStorage
+  var hostToken = null;
+  try {
+    hostToken = sessionId ? localStorage.getItem('host_token_' + sessionId) : null;
+  } catch (e) {}
+
+  if (hostToken && sessionId) {
+    fetch('/api/guest/join-requests/recover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessionId,
+        hostToken: hostToken
+      })
+    })
+    .then(function(res) {
+      if (res.ok) {
+        return res.json().then(function(b) {
+          if (b && b.data && b.data.sessionToken) {
+            document.cookie = 'venue_guest=' + encodeURIComponent(b.data.sessionToken) + '; path=/; max-age=' + (60 * 60 * 24 * 30) + '; SameSite=Lax';
+          }
+          window.location.href = '/menu';
+        });
+      }
+      showForm();
+    })
+    .catch(function() {
+      showForm();
+    });
+  } else {
+    showForm();
+  }
 
   if (!form || !submitBtn) return;
 
@@ -171,4 +235,3 @@ export default async function OccupiedPage({
     </main>
   );
 }
-

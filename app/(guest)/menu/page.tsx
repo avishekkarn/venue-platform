@@ -232,6 +232,16 @@ export default async function MenuPage(): Promise<JSX.Element> {
   var STORAGE_KEY = 'guest_menu_states';
   var initialStates = ${JSON.stringify(currentItemStates)};
 
+  // Store host_token in localStorage for session recovery
+  try {
+    var sId = ${JSON.stringify(session.value.id)};
+    var sTok = ${JSON.stringify(session.value.token)};
+    if (sId && sTok) {
+      localStorage.setItem('host_token_' + sId, sTok);
+      localStorage.setItem('host_token_' + sTok, 'claimed');
+    }
+  } catch (e) {}
+
   // Seed sessionStorage on initial load if empty
   try {
     if (!sessionStorage.getItem(STORAGE_KEY)) {

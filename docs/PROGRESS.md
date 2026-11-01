@@ -128,6 +128,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0189 | 2026-11-01 | HOTFIX — Secure Host Recovery via localStorage | PASS | Milestone 6.5 | §5.3 |
 | ENTRY-0188 | 2026-11-01 | Task 6.5.1 — Host Approval Flow (Guest Joining) & Failure Mode C Fix | PASS | Milestone 6.5 | §5.3 |
 | ENTRY-0187 | 2026-10-30 | HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0186 | 2026-10-30 | HOTFIX — Migrate kitchen login to Native DOM (LAN access fix) | PASS | Milestone 6.4 | §5.3 |
@@ -159,13 +160,65 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0189
+Next entry number: 0190
 
 ### 5.3 Current Milestone — Milestone 7.1 (The Table Service Queue). Current task: Task 7.1.1 — Add the table service queue layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0189 — 2026-11-01 — HOTFIX — Secure Host Recovery via localStorage
+
+**Status:** PASS
+
+**Task:** HOTFIX — Secure Host Recovery via localStorage
+
+**Summary:**
+Implemented secure host session recovery via device localStorage and dedicated recovery API endpoint. The Host device stores the secret session token under `host_token_<sessionId>` upon visiting `/menu` and `/order/[id]/track`. When visiting `/qr/occupied` (e.g. after browser restart or cleared cookies), the screen automatically attempts recovery via `POST /api/guest/join-requests/recover`, which validates the token against the active session in PostgreSQL and restores the `venue_guest` cookie. Strangers without the matching host token receive 403 Forbidden and fall back to the standard join access request form.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/api/guest/join-requests/recover/route.ts | Create | Secure endpoint validating hostToken against active session and re-issuing cookie |
+| app/(guest)/qr/occupied/page.tsx | Edit | Added automatic host recovery via localStorage on mount with fallback to request form |
+| app/(guest)/menu/page.tsx | Edit | Stores host token in localStorage upon load |
+| app/(guest)/order/[id]/track/page.tsx | Edit | Stores host token in localStorage upon load |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0189, updated §5.2 ledger, bumped next entry to 0190, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 40 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.15s)
+- `pnpm test:integration` — 29 files / 175 tests passed (77.86s)
+
+**Verification Results:**
+| Step | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Host token storage | PASS | `localStorage.setItem('host_token_' + session.id, session.token)` in `/menu` and `/order/[id]/track` |
+| 2 | Secure recovery endpoint | PASS | `POST /api/guest/join-requests/recover` validates `session.token === hostToken` (403 on mismatch) |
+| 3 | Automatic recovery on occupied screen | PASS | Checks `localStorage.getItem('host_token_' + sessionId)` and auto-recovers cookie |
+| 4 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 5 | `pnpm build` succeeds with 40 routes + 1 proxy | PASS | Exit code 0 on ▲ Next.js 16.4.0 (Turbopack) |
+| 6 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed |
+| 7 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed |
+| 8 | `docs/PROGRESS.md` §5.2 row, Next entry 0190, §5.3 ENTRY-0189, §7 snapshot | PASS | Added and verified |
+| 9 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Next Milestone / Task:**
+Phase 7 (The Service Staff Queues).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| PROGRESS.md | Yes | Recorded ENTRY-0189, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to D-2.5 and securely resolves edge case of host device cookie loss.
 
 ### ENTRY-0188 — 2026-11-01 — Task 6.5.1 — Host Approval Flow (Guest Joining) & Failure Mode C Fix
 
@@ -919,7 +972,7 @@ Current milestone: Milestone 7.1 (The Table Service Queue) — NOT STARTED.
 
 Current task: Task 7.1.1 — Add the table service queue layout.
 
-Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Task 6.5.1 complete (ENTRY-0188): Host Approval Flow implemented with database schema, join request endpoints, occupied and waiting screens, host approval banner on menu and order tracking, and Failure Mode C fixed in order tracking with in-place DOM updates. All baselines pass (tsc 0, build 39+1, unit 207, integration 175). Ready for Phase 7.
+Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Task 6.5.1 and HOTFIX complete (ENTRY-0188 + ENTRY-0189): Host Approval Flow implemented with secure host recovery via localStorage (`POST /api/guest/join-requests/recover`), join request endpoints, occupied and waiting screens, host approval banner on menu and order tracking, and Failure Mode C fixed in order tracking with in-place DOM updates. All baselines pass (tsc 0, build 40+1, unit 207, integration 175). Ready for Phase 7.
 
 ## 8. How the File Evolves
 

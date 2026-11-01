@@ -374,6 +374,16 @@ export default async function TrackOrderPage({
         dangerouslySetInnerHTML={{
           __html: `
 (function() {
+  // Store host_token in localStorage for session recovery
+  try {
+    var sId = ${JSON.stringify(session.id)};
+    var sTok = ${JSON.stringify(session.token)};
+    if (sId && sTok) {
+      localStorage.setItem('host_token_' + sId, sTok);
+      localStorage.setItem('host_token_' + sTok, 'claimed');
+    }
+  } catch (e) {}
+
   var callWaiterBtn = document.getElementById('btn-call-waiter');
   var requestBillBtn = document.getElementById('btn-request-bill');
   var statusMsg = document.getElementById('call-status-message');
