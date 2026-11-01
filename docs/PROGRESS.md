@@ -136,14 +136,28 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0196 | 2026-11-02 | Return activeTableIds and activeRoomIds from /api/staff/orders | Complete | Milestone 7.3 | §5.3 |
 | ENTRY-0197 | 2026-11-02 | Fix LAN/Mobile interactivity with allowedDevOrigins and synchronous delegation | Complete | Milestone 7.3 | §5.3 |
 | ENTRY-0198 | 2026-11-02 | Enable /dev/qr in Production (Localhost-Only) (ENTRY-0199) | Complete | Milestone 7.3 | §5.3 |
+| ENTRY-0200 | 2026-11-02 | Allow /api/dev/qr in production from localhost | Complete | Milestone 7.3 | §5.3 |
 
-Next entry number: 0199
+Next entry number: 0201
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (The Dashboard). Current task: Task 8.1.1 — Add the live metric cards.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0200 — 2026-11-02: Allow /api/dev/qr in Production from Localhost
+
+- **Task**: TASK 7.4.3 — Allow /api/dev/qr in Production from Localhost.
+- **Milestone**: Milestone 7.3 (The Service Staff Screen).
+- **Scope**:
+  - `app/api/dev/qr/route.ts`: Replaced unconditional `notFound()` in production with `isBlockedInProduction(request)` host-header guard. Now allows requests where host is `localhost` or `127.0.0.1` while returning HTTP 404 for non-localhost/LAN origins, mirroring `app/dev/qr/page.tsx` and enabling production-mode LAN testing.
+  - `docs/PROGRESS.md`: Recorded ENTRY-0200.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed.
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
 
 ### ENTRY-0198 (ENTRY-0199) — 2026-11-02: Enable /dev/qr in Production (Localhost-Only)
 
