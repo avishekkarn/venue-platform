@@ -128,6 +128,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0190 | 2026-11-01 | HOTFIX — Add "View Orders" Link to Guest Menu | PASS | Milestone 6.5 | §5.3 |
 | ENTRY-0189 | 2026-11-01 | HOTFIX — Secure Host Recovery via localStorage | PASS | Milestone 6.5 | §5.3 |
 | ENTRY-0188 | 2026-11-01 | Task 6.5.1 — Host Approval Flow (Guest Joining) & Failure Mode C Fix | PASS | Milestone 6.5 | §5.3 |
 | ENTRY-0187 | 2026-10-30 | HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen | PASS | Milestone 6.4 | §5.3 |
@@ -160,13 +161,61 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0190
+Next entry number: 0191
 
 ### 5.3 Current Milestone — Milestone 7.1 (The Table Service Queue). Current task: Task 7.1.1 — Add the table service queue layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0190 — 2026-11-01 — HOTFIX — Add "View Orders" Link to Guest Menu
+
+**Status:** PASS
+
+**Task:** HOTFIX — Add "View Orders" Link to Guest Menu
+
+**Summary:**
+Resolved the navigation gap on the guest menu page by querying the latest active order for the guest session and rendering a prominent "Track Order" button in the Hero section. When an active order exists (state is neither COMPLETED nor CANCELLED), a secondary button linking directly to `/order/${activeOrder.id}/track` is rendered directly below the "View Menu" button, allowing guests to track their food without manual URL entry.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| app/(guest)/menu/page.tsx | Edit | Fetches latest active order for guest session via `orderRepo.listForGuestSession` and renders "Track Order" button in Hero section |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0190, updated §5.2 ledger, bumped next entry to 0191, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 40 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.08s)
+- `pnpm test:integration` — 29 files / 175 tests passed (75.98s)
+
+**Verification Results:**
+| Step | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Active order resolution | PASS | Queries orders for session, excludes COMPLETED and CANCELLED, selects newest |
+| 2 | Hero section navigation link | PASS | Renders `<Link href={'/order/' + activeOrder.id + '/track'}>` with `<Button variant="secondary">Track Order</Button>` |
+| 3 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 4 | `pnpm build` succeeds with 40 routes + 1 proxy | PASS | Exit code 0 on ▲ Next.js 16.4.0 (Turbopack) |
+| 5 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed |
+| 6 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed |
+| 7 | `docs/PROGRESS.md` §5.2 row, Next entry 0191, §5.3 ENTRY-0190, §7 snapshot | PASS | Added and verified |
+| 8 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Next Milestone / Task:**
+Phase 7 (The Service Staff Queues).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| PROGRESS.md | Yes | Recorded ENTRY-0190, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to DESIGN.md §4.8.5 and guest navigation flow.
 
 ### ENTRY-0189 — 2026-11-01 — HOTFIX — Secure Host Recovery via localStorage
 
@@ -972,7 +1021,7 @@ Current milestone: Milestone 7.1 (The Table Service Queue) — NOT STARTED.
 
 Current task: Task 7.1.1 — Add the table service queue layout.
 
-Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Task 6.5.1 and HOTFIX complete (ENTRY-0188 + ENTRY-0189): Host Approval Flow implemented with secure host recovery via localStorage (`POST /api/guest/join-requests/recover`), join request endpoints, occupied and waiting screens, host approval banner on menu and order tracking, and Failure Mode C fixed in order tracking with in-place DOM updates. All baselines pass (tsc 0, build 40+1, unit 207, integration 175). Ready for Phase 7.
+Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Task 6.5.1 and HOTFIXes complete (ENTRY-0188 + ENTRY-0189 + ENTRY-0190): Host Approval Flow implemented with secure host recovery via localStorage (`POST /api/guest/join-requests/recover`), join request endpoints, occupied and waiting screens, host approval banner on menu and order tracking, Failure Mode C fixed in order tracking with in-place DOM updates, and active order tracking link added to the guest menu Hero section. All baselines pass (tsc 0, build 40+1, unit 207, integration 175). Ready for Phase 7.
 
 ## 8. How the File Evolves
 

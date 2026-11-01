@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
+import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
+import { OrderState } from "@/domain/orders/order.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
 import { getMenu } from "@/domain/menu/get-menu";
@@ -82,6 +85,24 @@ export default async function MenuPage(): Promise<JSX.Element> {
         .slice(0, 3)
     : [];
 
+  const orderRepo = createPrismaOrderRepository(prisma);
+  const ordersResult = await orderRepo.listForGuestSession(
+    venue.value.id,
+    session.value.id
+  );
+  const activeOrder = ordersResult.ok
+    ? ordersResult.value
+        .filter(
+          (o) =>
+            o.state !== OrderState.COMPLETED &&
+            o.state !== OrderState.CANCELLED
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()
+        )[0]
+    : undefined;
+
   const currentItemStates: Record<string, string> = {};
   if (itemsResult.ok) {
     for (const item of itemsResult.value) {
@@ -98,12 +119,19 @@ export default async function MenuPage(): Promise<JSX.Element> {
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
       <GuestHero venue={venue.value} placeContext={placeContext} />
-      <div className="mt-4 flex justify-center animate-in fade-in duration-700 delay-500 ease-guest-entrance">
+      <div className="mt-4 flex flex-col items-center justify-center gap-2.5 animate-in fade-in duration-700 delay-500 ease-guest-entrance">
         <a href="#menu-heading">
           <Button size="xl" variant="primary">
             View Menu
           </Button>
         </a>
+        {activeOrder ? (
+          <Link href={`/order/${activeOrder.id}/track`}>
+            <Button size="md" variant="secondary">
+              Track Order
+            </Button>
+          </Link>
+        ) : null}
       </div>
       <div className="mt-2 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
         <Button variant="ghost" size="sm">
