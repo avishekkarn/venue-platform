@@ -564,16 +564,18 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 7.3 — The service staff screen
 
-| ID    | Task                                                                                                | Status | Depends on |
-| ----- | --------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.3.1 | Add the staff layout with the tabs (Orders, Requests, Maps)                                         | ⬜     | 7.2.9      |
-| 7.3.2 | Add the order queue table (filtered by state: Placed, Ready, Delivered)                             | ⬜     | 7.3.1      |
-| 7.3.3 | Add the one-tap actions to the order queue (Approve, Deliver, Complete)                             | ⬜     | 7.3.2      |
-| 7.3.4 | Add the request queue table (Housekeeping, Maintenance, etc.)                                       | ⬜     | 7.3.1      |
-| 7.3.5 | Add the request actions (Acknowledge, In Progress, Complete, Cancel, Decline)                       | ⬜     | 7.3.4      |
-| 7.3.6 | Add the table map (grid of tables with status + "Close Table" button)                               | ⬜     | 7.3.1      |
-| 7.3.7 | Add the room map (grid of rooms with status + "Checkout Room" button)                               | ⬜     | 7.3.6      |
-| 7.3.8 | Verify: the queues render on a real tablet; actions advance items; maps close tables/rooms          | ⬜     | 7.3.7      |
+| ID    | Task                                                                                    | Status | Depends on |
+| ----- | --------------------------------------------------------------------------------------- | ------ | ---------- |
+| 7.3.1 | Add the staff layout with the tabs (Orders, Table Map, Room Map)                        | ✅ Complete | 7.2.7      |
+| 7.3.2 | Add the order queue table (filtered by state: Placed, Ready, Delivered)                 | ✅ Complete | 7.3.1      |
+| 7.3.3 | Add the one-tap actions to the order queue (Approve, Deliver, Complete)                 | ✅ Complete | 7.3.2      |
+| 7.3.6 | Add the table map (grid of tables with status + "Close Table" button)                   | ✅ Complete | 7.3.1      |
+| 7.3.7 | Add the room map (grid of rooms with status + "Checkout Room" button)                   | ✅ Complete | 7.3.6      |
+| 7.3.8 | Verify: the queues render on a real tablet; actions advance items; maps close tables/rooms | ✅ Complete | 7.3.7      |
+
+*(Tasks 7.3.4 and 7.3.5 — the Request Queue and its actions — are moved to Phase 9 (Hotel Services) as Tasks 9.5.8 and 9.5.9. The request lifecycle domain (advanceRequest, cancelRequest, declineRequest, request.transitions) is a Phase 9 deliverable; the Request Queue UI depends on it. Building the queue in Phase 7 would require inventing the domain functions out of scope. No work is removed; it is reordered.)*
+
+*(Task 7.2.8 — the requests routes — is likewise deferred to Phase 9 as Tasks 9.5.6 and 9.5.7. Same reason.)*
 
 ### Milestone 7.4 — The full loop verification
 

@@ -131,14 +131,38 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0191 | 2026-11-01 | Phase 7 initialization & roadmap setup | Complete | Milestone 7.1 | git log 1674008 |
 | ENTRY-0192 | 2026-11-01 | Phase 7 Staff Domain: Approve, Deliver, Complete, Close | Complete | Milestone 7.1 | §5.3 |
 | ENTRY-0193 | 2026-11-01 | Phase 7 Staff API Routes & Integration Tests | Complete | Milestone 7.2 | §5.3 |
+| ENTRY-0194 | 2026-11-01 | Phase 7 Staff Dashboard (Orders + Maps) | Complete | Milestone 7.3 | §5.3 |
 
-Next entry number: 0194
+Next entry number: 0195
 
-### 5.3 Current Milestone — Milestone 7.3 (The Service Staff Screen). Current task: Task 7.3.1 — Add the staff layout with the tabs.
+### 5.3 Current Milestone — Phase 8, Milestone 8.1 (The Dashboard). Current task: Task 8.1.1 — Add the live metric cards.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0194 — 2026-11-01: Phase 7 Staff Dashboard (Orders + Maps)
+
+- **Task**: TASK 7.3.1–7.3.8 — The Complete Staff Dashboard (Orders + Maps, covering tasks 7.3.1, 7.3.2, 7.3.3, 7.3.6, 7.3.7, 7.3.8).
+- **Milestone**: Milestone 7.3 (The Service Staff Screen).
+- **Scope**:
+  - `app/staff/page.tsx`: Rewrote Staff Dashboard from scratch with three operational views (Orders, Table Map, Room Map):
+    - Server Component queries `tableRepo`, `roomRepo`, `orderRepo`, and active guest sessions using `select: { tableId: true, roomId: true }` (never `placeId` or `placeType`).
+    - Enriches missing `tableId` on orders through active/past sessions and filters completed orders to last 4 hours.
+    - Event delegation: exactly 4 delegated listeners (`staff-tab-nav`, `order-queue`, `table-map`, `room-map`). Zero per-button listeners.
+    - Wholesale row node replacement on state changes via `insertAdjacentHTML` (zero in-place DOM patching).
+    - Client script using string concatenation `+` only (zero `${...}` template interpolations).
+    - `.then().then().catch()` error handling only (zero `.finally()`).
+    - 5-second polling for active orders and real-time map updates.
+    - Responsive mobile layout using `flex flex-col md:flex-row`.
+  - `docs/ROADMAP.md`: Marked tasks 7.3.1, 7.3.2, 7.3.3, 7.3.6, 7.3.7, 7.3.8 as Complete.
+  - **Deviations**: Tasks 7.3.4 and 7.3.5 (Request Queue) moved to Phase 9 as Tasks 9.5.8 and 9.5.9 because the request domain functions (advanceRequest, cancelRequest, declineRequest, request.transitions) are 0-byte stubs. This is a STRUCTURAL change to the roadmap.
+  - **Noticed but Out of Scope**: The six 0-byte domain request files (`advance-request.ts`, `cancel-request.ts`, `decline-request.ts`, `edit-request.ts`, `transitions.ts`, `index.ts`) are placeholders for Phase 9.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 226 tests passed.
+  - `pnpm test:integration`: 29 test files passed, 189 tests passed.
+  - `pnpm build`: 47 routes + 1 proxy, exit 0.
 
 ### ENTRY-0193 — 2026-11-01: Phase 7 Staff API Routes & Integration Tests
 
@@ -202,13 +226,13 @@ New entries go immediately below the ▼ marker, newest first.
 
 Updated at the end of every session.
 
-Current phase: Phase 7 (The Service Staff Queues).
+Current phase: Phase 8 (The Manager Panel).
 
-Current milestone: Milestone 7.3 (The Service Staff Screen).
+Current milestone: Milestone 8.1 (The Dashboard).
 
-Current task: Task 7.3.1 — Add the staff layout with the tabs (Orders, Requests, Maps).
+Current task: Task 8.1.1 — Add the live metric cards (waiting, in kitchen, ready, revenue today, orders today).
 
-Current status: Milestone 7.2 staff API routes and integration tests complete. All 7 staff API routes implemented and verified against PostgreSQL. All 4 baselines pass (`tsc` 0 errors, `pnpm test:unit` 226/226 passed, `pnpm test:integration` 189/189 passed, `pnpm build` 47 routes + 1 proxy). Ready for Task 7.3.1.
+Current status: Milestone 7.3 complete. The complete Staff Dashboard (Orders, Table Map, Room Map) implemented without anti-patterns. All 4 baselines pass (`tsc` 0 errors, `pnpm test:unit` 226/226 passed, `pnpm test:integration` 189/189 passed, `pnpm build` 47 routes + 1 proxy). Ready for Phase 8.
 
 ## 8. How the File Evolves
 
