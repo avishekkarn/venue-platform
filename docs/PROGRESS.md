@@ -128,6 +128,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0188 | 2026-11-01 | Task 6.5.1 — Host Approval Flow (Guest Joining) & Failure Mode C Fix | PASS | Milestone 6.5 | §5.3 |
 | ENTRY-0187 | 2026-10-30 | HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0186 | 2026-10-30 | HOTFIX — Migrate kitchen login to Native DOM (LAN access fix) | PASS | Milestone 6.4 | §5.3 |
 | ENTRY-0185 | 2026-10-30 | HOTFIX — AudioContext unlocking pattern and dual-oscillator kitchen ping | PASS | Milestone 6.4 | §5.3 |
@@ -158,13 +159,80 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0160 | 2026-10-29 | Task 5.8.3 — Add guest-side audible ping on item state change | PASS | Milestone 5.8 | §5.3 |
 | ENTRY-0159 | 2026-10-29 | Tasks 5.8.1 & 5.8.2 — Admin item state toggle and guest menu refresh | PASS | Milestone 5.8 | §5.3 |
 
-Next entry number: 0188
+Next entry number: 0189
 
 ### 5.3 Current Milestone — Milestone 7.1 (The Table Service Queue). Current task: Task 7.1.1 — Add the table service queue layout.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0188 — 2026-11-01 — Task 6.5.1 — Host Approval Flow (Guest Joining) & Failure Mode C Fix
+
+**Status:** PASS
+
+**Task:** TASK 6.5.1 — Host Approval Flow (Guest Joining) & Failure Mode C Fix
+
+**Summary:**
+Implemented the complete Host Approval flow for multi-device guest sessions and eliminated Failure Mode C in order tracking. Added the `GuestJoinRequest` schema, domain repository port, and Prisma adapter. Added API routes for requesting, listing, approving, and declining join requests, alongside device-specific status polling. Modified `/qr/[token]` to detect occupied tables and redirect second devices to `/qr/occupied` and `/qr/join/[token]`. Integrated floating Host Banner polling scripts into `/menu` and `/order/[id]/track`, and replaced the 5-second `window.location.reload()` with in-place DOM timeline updates in `/order/[id]/track`.
+
+**Files Changed:**
+| File | Action | Description |
+| --- | --- | --- |
+| prisma/schema.prisma | Edit | Added `GuestJoinRequest` model and relation on `GuestSession` |
+| prisma/migrations/20261101085016_add_guest_join_requests/migration.sql | Create | Applied database migration for `guest_join_requests` table |
+| src/domain/guest/join-request.repository.ts | Create | Domain port for `JoinRequest` and `JoinRequestRepository` |
+| src/infrastructure/db/repositories/join-request.repo.ts | Create | Prisma adapter implementing `JoinRequestRepository` |
+| app/api/guest/join-requests/route.ts | Create | Endpoint for submitting join requests (POST) and host listing (GET) |
+| app/api/guest/join-requests/[id]/approve/route.ts | Create | Endpoint for host approving a join request (POST) |
+| app/api/guest/join-requests/[id]/decline/route.ts | Create | Endpoint for host declining a join request (POST) |
+| app/api/guest/join-requests/status/route.ts | Create | Endpoint for joining device status polling (GET) |
+| app/(guest)/qr/[token]/route.ts | Edit | Added table lock detection; redirects secondary devices to `/qr/occupied` |
+| app/(guest)/qr/occupied/page.tsx | Create | UI for requesting table access with native DOM submission |
+| app/(guest)/qr/join/[token]/page.tsx | Create | Waiting screen for host approval with native DOM polling |
+| app/(guest)/menu/page.tsx | Edit | Added floating Host Banner with native DOM polling, approve, and decline |
+| app/(guest)/order/[id]/track/page.tsx | Edit | Fixed Failure Mode C with in-place timeline polling and added Host Banner |
+| docs/PROGRESS.md | Edit | Recorded ENTRY-0188, updated §5.2 ledger, bumped next entry to 0189, updated §7 snapshot |
+
+**Commands Run:**
+- `pnpm prisma migrate dev --name add_guest_join_requests` — applied migration
+- `pnpm prisma generate` — generated client
+- `pnpm exec tsc --noEmit` — exit 0
+- `pnpm build` — exit 0 (▲ Next.js 16.4.0 Turbopack, 39 app routes + 1 proxy verified)
+- `pnpm test:unit` — 29 files / 207 tests passed (1.04s)
+- `pnpm test:integration` — 29 files / 175 tests passed (77.32s)
+
+**Verification Results:**
+| Step | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Database schema and migration | PASS | `GuestJoinRequest` model added, migration applied, Prisma client generated |
+| 2 | Domain port and repository | PASS | `JoinRequestRepository` created and implemented via Prisma |
+| 3 | Join request endpoints | PASS | POST /api/guest/join-requests, GET list/status, POST approve/decline |
+| 4 | QR lock redirection | PASS | Secondary scans redirect to `/qr/occupied?token=...&sessionId=...` |
+| 5 | Occupied and waiting screens | PASS | Native DOM `/qr/occupied` form and `/qr/join/[token]` status poller |
+| 6 | Host Banner | PASS | Native DOM banner in `/menu` and `/order/[id]/track` with Approve/Decline |
+| 7 | Failure Mode C fix | PASS | Replaced `window.location.reload()` with in-place DOM timeline updater |
+| 8 | `tsc --noEmit` exits 0 | PASS | 0 errors |
+| 9 | `pnpm build` succeeds with 39 routes + 1 proxy | PASS | Exit code 0 on ▲ Next.js 16.4.0 (Turbopack) |
+| 10 | `pnpm test:unit` passes | PASS | 29 files, 207 tests passed |
+| 11 | `pnpm test:integration` passes | PASS | 29 files, 175 tests passed |
+| 12 | `docs/PROGRESS.md` §5.2 row, Next entry 0189, §5.3 ENTRY-0188, §7 snapshot | PASS | Added and verified |
+| 13 | Section headers ### 5.2, ### 5.3, ## 6, ## 7, ## 8 each appear once | PASS | Verified exactly 5 header lines |
+
+**Deviations from Contract:**
+None.
+
+**Next Milestone / Task:**
+Phase 7 (The Service Staff Queues).
+
+**Document Impact:**
+| Document | Modified | Notes |
+|---|---|---|
+| PROGRESS.md | Yes | Recorded ENTRY-0188, updated ledger, snapshot, next entry |
+| All others | No | Untouched |
+
+**Contradiction Check:**
+None found. Traces to D-2.5 (multi-guest session join) and fixes Failure Mode C.
 
 ### ENTRY-0187 — 2026-10-30 — HOTFIX — Fix mobile audio unlock and DOM race condition in kitchen
 
@@ -851,7 +919,7 @@ Current milestone: Milestone 7.1 (The Table Service Queue) — NOT STARTED.
 
 Current task: Task 7.1.1 — Add the table service queue layout.
 
-Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Kitchen login migrated to Native DOM Pattern A (ENTRY-0186). Mobile audio unlock via touchstart and pollKitchen non-destructive ticket diffing added (ENTRY-0187). The kitchen screen renders dynamic tickets with auto-refresh diffing, dual-oscillator audible ping (880Hz + 440Hz, peak 0.7, 300ms) with AudioContext unlocking pattern, dark mode toggle, and connection health indicator. All baselines pass (tsc 0, build 33+1, unit 207, integration 175). Ready for Phase 7.
+Current status: Phase 6 is complete and closed (Milestones 6.1 through 6.4 verified). Task 6.5.1 complete (ENTRY-0188): Host Approval Flow implemented with database schema, join request endpoints, occupied and waiting screens, host approval banner on menu and order tracking, and Failure Mode C fixed in order tracking with in-place DOM updates. All baselines pass (tsc 0, build 39+1, unit 207, integration 175). Ready for Phase 7.
 
 ## 8. How the File Evolves
 

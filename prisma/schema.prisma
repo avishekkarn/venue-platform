@@ -329,12 +329,32 @@ model GuestSession {
   createdAt DateTime  @default(now())
   endedAt   DateTime?
 
-  qrToken QrToken @relation(fields: [qrTokenId], references: [id], onDelete: Cascade)
-  orders  Order[]
+  qrToken      QrToken            @relation(fields: [qrTokenId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  joinRequests GuestJoinRequest[]
 
   @@index([token])
   @@index([qrTokenId])
   @@map("guest_sessions")
+}
+
+// ------------------------------------------------------------
+// Guest Join Requests — Host approval flow for joining active sessions
+// ------------------------------------------------------------
+
+model GuestJoinRequest {
+  id               String       @id @default(uuid())
+  sessionId        String
+  requestingDevice String
+  name             String
+  status           String       @default("PENDING")
+  createdAt        DateTime     @default(now())
+
+  session GuestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([requestingDevice])
+  @@map("guest_join_requests")
 }
 
 // ------------------------------------------------------------

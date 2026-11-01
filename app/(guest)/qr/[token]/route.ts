@@ -62,6 +62,41 @@ export async function GET(
       break;
   }
 
+  // Check if an active session already exists for this place (TABLE or ROOM)
+  if (
+    resolved.value.placeType === PlaceType.TABLE ||
+    resolved.value.placeType === PlaceType.ROOM
+  ) {
+    const activeSession = await prisma.guestSession.findFirst({
+      where: {
+        venueId: venue.value.id,
+        endedAt: null,
+        ...(resolved.value.placeType === PlaceType.TABLE
+          ? { tableId: placeId }
+          : {}),
+        ...(resolved.value.placeType === PlaceType.ROOM
+          ? { roomId: placeId }
+          : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (activeSession) {
+      const guestCookie = request.cookies.get("venue_guest")?.value;
+      if (guestCookie === activeSession.token) {
+        const destinationPath =
+          resolved.value.placeType === PlaceType.ROOM ? "/services" : "/menu";
+        return NextResponse.redirect(`${baseUrl}${destinationPath}`);
+      }
+
+      return NextResponse.redirect(
+        `${baseUrl}/qr/occupied?token=${encodeURIComponent(
+          token
+        )}&sessionId=${encodeURIComponent(activeSession.id)}`
+      );
+    }
+  }
+
   // e. Create guest session
   const guestRepo = createPrismaGuestSessionRepository(prisma);
   const session = await createGuestSession(
