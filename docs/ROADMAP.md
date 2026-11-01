@@ -534,62 +534,57 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ## 10. Phase 7 — The Service Staff Queues
 
-**Goal:** The service staff queues show orders and requests, allow one-tap advancement, and close the full order loop from placement to delivery.
+**Goal:** The service staff queues show orders and requests, allow one-tap advancement (Approve → Deliver → Complete), and close the full loop from placement to session termination for both tables and rooms.
 
 ### Milestone 7.1 — The staff domain
 
 | ID    | Task                                                                                                      | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.1.1 | Add the delivery action                                                                                   | ⬜     | 6.4.1      |
-| 7.1.2 | Add the completion action                                                                                 | ⬜     | 7.1.1      |
-| 7.1.3 | Add the cancellation action with a reason                                                                 | ⬜     | 7.1.1      |
-| 7.1.4 | Add the table-close action                                                                                | ⬜     | 7.1.3      |
-| 7.1.5 | Add the room-checkout action                                                                              | ⬜     | 7.1.3      |
-| 7.1.6 | Verify: every action is correct; the state machine is enforced; the guest session is invalidated on close | ⬜     | 7.1.5      |
+| 7.1.1 | Add the order approval action (`PLACED` → `APPROVED`) so orders reach the kitchen                        | ⬜     | 6.4.1      |
+| 7.1.2 | Add the delivery action (`READY` → `DELIVERED`)                                                           | ⬜     | 7.1.1      |
+| 7.1.3 | Add the completion action (`DELIVERED` → `COMPLETED`)                                                     | ⬜     | 7.1.2      |
+| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | ⬜     | 7.1.3      |
+| 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ⬜     | 7.1.4      |
+| 7.1.6 | Add the room-checkout action (invalidates sessions, sets room VACANT)                                     | ⬜     | 7.1.5      |
+| 7.1.7 | Verify: state machine enforced; guest session invalidated on close/checkout                               | ⬜     | 7.1.6      |
 
 ### Milestone 7.2 — The staff routes
 
 | ID     | Task                                                                                            | Status | Depends on |
 | ------ | ----------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.2.1  | Add `GET /api/staff/orders`                                                                     | ⬜     | 7.1.6      |
-| 7.2.2  | Add `POST /api/staff/orders/[id]/advance`                                                       | ⬜     | 7.2.1      |
-| 7.2.3  | Add `POST /api/staff/orders/[id]/cancel`                                                        | ⬜     | 7.2.2      |
-| 7.2.4  | Add `GET /api/staff/requests`                                                                   | ⬜     | 7.2.1      |
-| 7.2.5  | Add `POST /api/staff/requests/[id]/advance`                                                     | ⬜     | 7.2.4      |
-| 7.2.6  | Add `POST /api/staff/requests/[id]/cancel`                                                      | ⬜     | 7.2.5      |
-| 7.2.7  | Add `POST /api/staff/requests/[id]/decline`                                                     | ⬜     | 7.2.5      |
-| 7.2.8  | Add `POST /api/staff/tables/[id]/close`                                                         | ⬜     | 7.2.3      |
-| 7.2.9  | Add `POST /api/staff/rooms/[id]/checkout`                                                       | ⬜     | 7.2.8      |
-| 7.2.10 | Verify: every route returns the correct envelope and status; the state transitions are enforced | ⬜     | 7.2.9      |
+| 7.2.1  | Add `GET /api/staff/orders` (fetch active orders for the queue)                                 | ⬜     | 7.1.7      |
+| 7.2.2  | Add `POST /api/staff/orders/[id]/approve` (move PLACED → APPROVED)                              | ⬜     | 7.2.1      |
+| 7.2.3  | Add `POST /api/staff/orders/[id]/deliver` (move READY → DELIVERED)                              | ⬜     | 7.2.2      |
+| 7.2.4  | Add `POST /api/staff/orders/[id]/complete` (move DELIVERED → COMPLETED)                         | ⬜     | 7.2.3      |
+| 7.2.5  | Add `POST /api/staff/orders/[id]/cancel` (cancel with reason)                                   | ⬜     | 7.2.4      |
+| 7.2.6  | Add `POST /api/staff/tables/[id]/close` (close table and end session)                           | ⬜     | 7.2.5      |
+| 7.2.7  | Add `POST /api/staff/rooms/[id]/checkout` (checkout room and end session)                       | ⬜     | 7.2.6      |
+| 7.2.8  | Add `GET /api/staff/requests` and all request action routes (advance, cancel, decline)          | ⬜     | 7.2.7      |
+| 7.2.9  | Verify: every route returns the correct envelope and status; the state transitions are enforced | ⬜     | 7.2.8      |
 
 ### Milestone 7.3 — The service staff screen
 
 | ID    | Task                                                                                                | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.3.1 | Add the staff layout with the tabs (Orders, Requests, Tables or Rooms)                              | ⬜     | 7.2.10     |
-| 7.3.2 | Add the order queue table                                                                           | ⬜     | 7.3.1      |
-| 7.3.3 | Add the one-tap "Deliver" action                                                                    | ⬜     | 7.3.2      |
-| 7.3.4 | Add the one-tap "Complete" action                                                                   | ⬜     | 7.3.3      |
-| 7.3.5 | Add the request queue table                                                                         | ⬜     | 7.3.1      |
-| 7.3.6 | Add the request actions (Acknowledge, In Progress, Complete, Cancel, Decline)                       | ⬜     | 7.3.5      |
-| 7.3.7 | Add the table map (grid of tables with their states)                                                | ⬜     | 7.3.1      |
-| 7.3.8 | Add the room map                                                                                    | ⬜     | 7.3.7      |
-| 7.3.9 | Verify: the queues render on a real tablet; actions advance items; the maps show the current states | ⬜     | 7.3.8      |
+| 7.3.1 | Add the staff layout with the tabs (Orders, Requests, Maps)                                         | ⬜     | 7.2.9      |
+| 7.3.2 | Add the order queue table (filtered by state: Placed, Ready, Delivered)                             | ⬜     | 7.3.1      |
+| 7.3.3 | Add the one-tap actions to the order queue (Approve, Deliver, Complete)                             | ⬜     | 7.3.2      |
+| 7.3.4 | Add the request queue table (Housekeeping, Maintenance, etc.)                                       | ⬜     | 7.3.1      |
+| 7.3.5 | Add the request actions (Acknowledge, In Progress, Complete, Cancel, Decline)                       | ⬜     | 7.3.4      |
+| 7.3.6 | Add the table map (grid of tables with status + "Close Table" button)                               | ⬜     | 7.3.1      |
+| 7.3.7 | Add the room map (grid of rooms with status + "Checkout Room" button)                               | ⬜     | 7.3.6      |
+| 7.3.8 | Verify: the queues render on a real tablet; actions advance items; maps close tables/rooms          | ⬜     | 7.3.7      |
 
 ### Milestone 7.4 — The full loop verification
 
 | ID    | Task                                                                                                                              | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.4.1 | Verify the full table loop: guest places order, staff approves, kitchen starts, kitchen finishes, staff delivers, staff completes | ⬜     | 7.3.9      |
+| 7.4.1 | Verify the full table loop: guest places order → staff approves → kitchen starts → kitchen ready → staff delivers → staff completes → staff closes table | ⬜     | 7.3.8      |
 | 7.4.2 | Verify the full room service loop with the same shape                                                                             | ⬜     | 7.4.1      |
 | 7.4.3 | Verify the guest's tracking screen reflects every state change                                                                    | ⬜     | 7.4.2      |
-| 7.4.4 | Verify the table close and room checkout end the guest session                                                                    | ⬜     | 7.4.3      |
+| 7.4.4 | Verify the table close and room checkout end the guest session (and kick the guest out)                                           | ⬜     | 7.4.3      |
 
-**Acceptance for Phase 7:** The complete order loop works end to end. A guest places an order, the kitchen and staff advance it, the guest tracks it, and the table is closed and the session ends.
-
-**Visible progress at the end of Phase 7:** A real order, placed by a real guest, advanced by a real kitchen, delivered by real staff, tracked by the guest, and closed at the end.
-
----
+**Acceptance for Phase 7:** The complete order loop works end to end. A guest places an order, the staff approves it, the kitchen and staff advance it, the guest tracks it, the staff delivers it, and finally, the staff closes the table, ending the guest session and freeing the table.
 
 ## 11. Phase 8 — The Manager Panel
 
