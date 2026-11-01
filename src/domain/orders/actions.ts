@@ -1,5 +1,5 @@
 /**
- * Domain functions: approveOrder, startPreparingOrder, markOrderReady
+ * Domain functions: approveOrder, startPreparingOrder, markOrderReady, deliverOrder, completeOrder
  *
  * Rules:
  * - Pure domain functions: zero dependencies on Prisma, React, HTTP, or Next.js.
@@ -69,4 +69,37 @@ export async function markOrderReady(
     staffMemberId: input.staffMemberId,
   });
 }
+
+/**
+ * Advances an order from READY to DELIVERED.
+ * Used by service staff to indicate that the order has been delivered to the table or room.
+ */
+export async function deliverOrder(
+  deps: AdvanceOrderDeps,
+  input: AdvanceActionRequest
+): Promise<Result<Order>> {
+  return advanceOrder(deps, {
+    venueId: input.venueId,
+    orderId: input.orderId,
+    toState: OrderState.DELIVERED,
+    staffMemberId: input.staffMemberId,
+  });
+}
+
+/**
+ * Advances an order from DELIVERED to COMPLETED.
+ * Used by staff/manager to mark an order completed/settled.
+ */
+export async function completeOrder(
+  deps: AdvanceOrderDeps,
+  input: AdvanceActionRequest
+): Promise<Result<Order>> {
+  return advanceOrder(deps, {
+    venueId: input.venueId,
+    orderId: input.orderId,
+    toState: OrderState.COMPLETED,
+    staffMemberId: input.staffMemberId,
+  });
+}
+
 

@@ -540,12 +540,12 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                      | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.1.1 | Add the order approval action (`PLACED` → `APPROVED`) so orders reach the kitchen                        | ⬜     | 6.4.1      |
-| 7.1.2 | Add the delivery action (`READY` → `DELIVERED`)                                                           | ⬜     | 7.1.1      |
-| 7.1.3 | Add the completion action (`DELIVERED` → `COMPLETED`)                                                     | ⬜     | 7.1.2      |
-| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | ⬜     | 7.1.3      |
-| 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ⬜     | 7.1.4      |
-| 7.1.6 | Add the room-checkout action (invalidates sessions, sets room VACANT)                                     | ⬜     | 7.1.5      |
+| 7.1.1 | Add the order approval action (`PLACED` → `APPROVED`) so orders reach the kitchen                        | ✅ Complete | 6.4.1      |
+| 7.1.2 | Add the delivery action (`READY` → `DELIVERED`)                                                           | ✅ Complete | 7.1.1      |
+| 7.1.3 | Add the completion action (`DELIVERED` → `COMPLETED`)                                                     | ✅ Complete | 7.1.2      |
+| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | ✅ Complete | 7.1.3      |
+| 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ✅ Complete | 7.1.4      |
+| 7.1.6 | Add the room-checkout action (invalidates sessions, sets room VACANT)                                     | ✅ Complete | 7.1.5      |
 | 7.1.7 | Verify: state machine enforced; guest session invalidated on close/checkout                               | ⬜     | 7.1.6      |
 
 ### Milestone 7.2 — The staff routes

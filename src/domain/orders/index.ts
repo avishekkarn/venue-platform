@@ -22,6 +22,8 @@ export {
   approveOrder,
   startPreparingOrder,
   markOrderReady,
+  deliverOrder,
+  completeOrder,
   type AdvanceActionRequest,
 } from "./actions";
 

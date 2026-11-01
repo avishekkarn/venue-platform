@@ -161,5 +161,38 @@ export function createPrismaRoomRepository(
         );
       }
     },
+
+    async setStatus(
+      venueId: string,
+      roomId: string,
+      status: RoomState
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.room.findFirst({
+          where: { id: roomId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Room with id '${roomId}' not found in venue '${venueId}'`
+          );
+        }
+
+        await client.room.update({
+          where: { id: roomId },
+          data: {
+            state: status as unknown as PrismaRoomState,
+          },
+        });
+
+        return ok(undefined);
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
   };
 }

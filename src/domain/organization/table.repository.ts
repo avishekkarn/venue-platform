@@ -17,6 +17,8 @@ export enum TableState {
   OUT_OF_SERVICE = "OUT_OF_SERVICE",
 }
 
+export { TableState as TableStatus };
+
 export interface Table {
   id: string;
   venueId: string;
@@ -37,4 +39,5 @@ export interface TableRepository {
   listForVenue(venueId: string): Promise<Result<Table[]>>;
   create(venueId: string, input: CreateTableInput): Promise<Result<Table>>;
   setState(venueId: string, id: string, state: TableState): Promise<Result<Table>>;
+  setStatus(venueId: string, tableId: string, status: TableState): Promise<Result<void>>;
 }

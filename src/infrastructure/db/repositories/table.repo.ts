@@ -161,5 +161,38 @@ export function createPrismaTableRepository(
         );
       }
     },
+
+    async setStatus(
+      venueId: string,
+      tableId: string,
+      status: TableState
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.table.findFirst({
+          where: { id: tableId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Table with id '${tableId}' not found in venue '${venueId}'`
+          );
+        }
+
+        await client.table.update({
+          where: { id: tableId },
+          data: {
+            state: status as unknown as PrismaTableState,
+          },
+        });
+
+        return ok(undefined);
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
   };
 }

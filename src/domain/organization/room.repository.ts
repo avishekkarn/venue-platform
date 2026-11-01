@@ -18,6 +18,8 @@ export enum RoomState {
   OUT_OF_SERVICE = "OUT_OF_SERVICE",
 }
 
+export { RoomState as RoomStatus };
+
 export interface Room {
   id: string;
   venueId: string;
@@ -38,4 +40,5 @@ export interface RoomRepository {
   listForVenue(venueId: string): Promise<Result<Room[]>>;
   create(venueId: string, input: CreateRoomInput): Promise<Result<Room>>;
   setState(venueId: string, id: string, state: RoomState): Promise<Result<Room>>;
+  setStatus(venueId: string, roomId: string, status: RoomState): Promise<Result<void>>;
 }

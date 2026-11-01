@@ -128,9 +128,10 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
-| ENTRY-0191 | 2026-11-01 | [To be added in Phase 7] | - | Milestone 7.1 | §5.3 |
+| ENTRY-0191 | 2026-11-01 | Phase 7 initialization & roadmap setup | Complete | Milestone 7.1 | git log 1674008 |
+| ENTRY-0192 | 2026-11-01 | Phase 7 Staff Domain: Approve, Deliver, Complete, Close | Complete | Milestone 7.1 | §5.3 |
 
-Next entry number: 0192
+Next entry number: 0193
 
 ### 5.3 Current Milestone — Milestone 7.1 (The Staff Domain). Current task: Task 7.1.1 — Add the order approval action.
 
@@ -138,7 +139,30 @@ New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
 
-*(No entries yet. Phase 7 begins with Task 7.1.1.)*
+### ENTRY-0192 — 2026-11-01: Phase 7 Staff Domain: Approve, Deliver, Complete, Close
+
+- **Task**: TASK 7.1.1 — Phase 7 Staff Domain: Approve, Deliver, Complete, Close (covering tasks 7.1.1 through 7.1.6).
+- **Milestone**: Milestone 7.1 (The Staff Domain).
+- **Scope**:
+  - `src/domain/orders/actions.ts`: Added `deliverOrder` (`READY` → `DELIVERED`) and `completeOrder` (`DELIVERED` → `COMPLETED`), wrapping pure domain `advanceOrder`.
+  - `src/domain/orders/index.ts`: Re-exported `deliverOrder` and `completeOrder`.
+  - `src/domain/organization/table.repository.ts`: Added `TableStatus` alias and `setStatus(venueId, tableId, status: TableState): Promise<Result<void>>` to port interface.
+  - `src/domain/organization/room.repository.ts`: Added `RoomStatus` alias and `setStatus(venueId, roomId, status: RoomState): Promise<Result<void>>` to port interface.
+  - `src/infrastructure/db/repositories/table.repo.ts`: Implemented `setStatus` with venue isolation.
+  - `src/infrastructure/db/repositories/room.repo.ts`: Implemented `setStatus` with venue isolation.
+  - `src/domain/staff/close-table.ts`: Created pure domain function `closeTable(deps, input)` invalidating active table sessions via `invalidateSessionsForPlace` and setting table status to `FREE`.
+  - `src/domain/staff/checkout-room.ts`: Created pure domain function `checkoutRoom(deps, input)` invalidating active room sessions via `invalidateSessionsForPlace` and setting room status to `VACANT`.
+  - `src/domain/staff/index.ts`: Created staff domain module barrel export.
+  - `vitest.config.ts`: Added `tests/unit/staff/**/*.test.ts` to test suite include list.
+  - `tests/unit/orders/actions.test.ts`: Added unit tests for `deliverOrder` and `completeOrder` validating successful state transitions and invalid state error handling.
+  - `tests/unit/staff/close-table.test.ts`: Added unit tests for `closeTable`.
+  - `tests/unit/staff/checkout-room.test.ts`: Added unit tests for `checkoutRoom`.
+  - `docs/ROADMAP.md`: Marked tasks 7.1.1 through 7.1.6 as Complete.
+- **Verification**:
+  - `tsc --noEmit`: 0 errors.
+  - `pnpm test:unit`: 31 test files passed, 223 tests passed.
+  - `pnpm build`: 40 routes + 1 proxy, exit 0.
+  - `pnpm test:integration`: 29 test files passed, 175 tests passed.
 
 ---
 
@@ -156,11 +180,11 @@ Updated at the end of every session.
 
 Current phase: Phase 7 (The Service Staff Queues).
 
-Current milestone: Milestone 7.1 (The Staff Domain).
+Current milestone: Milestone 7.2 (The Staff Routes).
 
-Current task: Task 7.1.1 — Add the order approval action (PLACED → APPROVED).
+Current task: Task 7.2.1 — Add `GET /api/staff/orders` (fetch active orders for the queue).
 
-Current status: Phase 6 is fully closed. All guest session security and kitchen display features are complete. All baselines pass (tsc 0, build 40 routes + 1 proxy, unit 207, integration 175). Ready for Phase 7 to begin.
+Current status: Milestone 7.1 domain layer complete. Order approval, delivery, completion, table close, and room checkout pure domain functions implemented and verified. All 4 baselines pass (`tsc` 0 errors, `pnpm test:unit` 223/223 passed, `pnpm build` 40 routes + 1 proxy, `pnpm test:integration` 175/175 passed). Ready for Task 7.2.1.
 
 ## 8. How the File Evolves
 

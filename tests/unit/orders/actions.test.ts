@@ -3,6 +3,8 @@ import {
   approveOrder,
   startPreparingOrder,
   markOrderReady,
+  deliverOrder,
+  completeOrder,
 } from "@/domain/orders/actions";
 import { type AdvanceOrderDeps } from "@/domain/orders/advance-order";
 import {
@@ -239,6 +241,128 @@ describe("kitchen order actions (approveOrder, startPreparingOrder, markOrderRea
       expect(result.error.code).toBe(DomainErrorCode.INVALID_STATE);
       expect(result.error.message).toBe(
         "Transition from 'APPROVED' to 'READY' is not allowed"
+      );
+
+      expect(mockOrderRepo.findById).toHaveBeenCalledTimes(1);
+      expect(mockOrderRepo.advanceState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deliverOrder", () => {
+    it("successfully advances an order from READY to DELIVERED and calls advanceState once", async () => {
+      const readyOrder: Order = {
+        ...baseOrder,
+        state: OrderState.READY,
+      };
+      const deliveredOrder: Order = {
+        ...baseOrder,
+        state: OrderState.DELIVERED,
+      };
+
+      mockOrderRepo.findById.mockResolvedValueOnce(ok(readyOrder));
+      mockOrderRepo.advanceState.mockResolvedValueOnce(ok(deliveredOrder));
+
+      const result = await deliverOrder(deps, {
+        venueId,
+        orderId,
+        staffMemberId: "waiter-1",
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.state).toBe(OrderState.DELIVERED);
+
+      expect(mockOrderRepo.findById).toHaveBeenCalledTimes(1);
+      expect(mockOrderRepo.findById).toHaveBeenCalledWith(venueId, orderId);
+
+      expect(mockOrderRepo.advanceState).toHaveBeenCalledTimes(1);
+      expect(mockOrderRepo.advanceState).toHaveBeenCalledWith({
+        venueId,
+        orderId,
+        toState: OrderState.DELIVERED,
+        staffMemberId: "waiter-1",
+      });
+    });
+
+    it("returns INVALID_STATE and does NOT call advanceState when order is in PREPARING state", async () => {
+      const preparingOrder: Order = {
+        ...baseOrder,
+        state: OrderState.PREPARING,
+      };
+
+      mockOrderRepo.findById.mockResolvedValueOnce(ok(preparingOrder));
+
+      const result = await deliverOrder(deps, {
+        venueId,
+        orderId,
+      });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe(DomainErrorCode.INVALID_STATE);
+      expect(result.error.message).toBe(
+        "Transition from 'PREPARING' to 'DELIVERED' is not allowed"
+      );
+
+      expect(mockOrderRepo.findById).toHaveBeenCalledTimes(1);
+      expect(mockOrderRepo.advanceState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("completeOrder", () => {
+    it("successfully advances an order from DELIVERED to COMPLETED and calls advanceState once", async () => {
+      const deliveredOrder: Order = {
+        ...baseOrder,
+        state: OrderState.DELIVERED,
+      };
+      const completedOrder: Order = {
+        ...baseOrder,
+        state: OrderState.COMPLETED,
+      };
+
+      mockOrderRepo.findById.mockResolvedValueOnce(ok(deliveredOrder));
+      mockOrderRepo.advanceState.mockResolvedValueOnce(ok(completedOrder));
+
+      const result = await completeOrder(deps, {
+        venueId,
+        orderId,
+        staffMemberId: "manager-1",
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.state).toBe(OrderState.COMPLETED);
+
+      expect(mockOrderRepo.findById).toHaveBeenCalledTimes(1);
+      expect(mockOrderRepo.findById).toHaveBeenCalledWith(venueId, orderId);
+
+      expect(mockOrderRepo.advanceState).toHaveBeenCalledTimes(1);
+      expect(mockOrderRepo.advanceState).toHaveBeenCalledWith({
+        venueId,
+        orderId,
+        toState: OrderState.COMPLETED,
+        staffMemberId: "manager-1",
+      });
+    });
+
+    it("returns INVALID_STATE and does NOT call advanceState when order is in READY state", async () => {
+      const readyOrder: Order = {
+        ...baseOrder,
+        state: OrderState.READY,
+      };
+
+      mockOrderRepo.findById.mockResolvedValueOnce(ok(readyOrder));
+
+      const result = await completeOrder(deps, {
+        venueId,
+        orderId,
+      });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe(DomainErrorCode.INVALID_STATE);
+      expect(result.error.message).toBe(
+        "Transition from 'READY' to 'COMPLETED' is not allowed"
       );
 
       expect(mockOrderRepo.findById).toHaveBeenCalledTimes(1);
