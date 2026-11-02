@@ -9,7 +9,214 @@ import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/roo
 import { getAuthenticatedStaff } from "@/lib/auth/validate-session";
 import { canAccess } from "@/domain/auth/can-access";
 import { OrderState, PlaceType, type Order } from "@/domain/orders/order.repository";
+import { type Table } from "@/domain/organization/table.repository";
+import { type Room } from "@/domain/organization/room.repository";
 import { LogoutButton } from "./_logout-button";
+
+interface EnrichedOrder extends Order {
+  placeNumber: string;
+}
+
+function buttonClassForState(state: OrderState): string {
+  if (state === OrderState.PLACED) {
+    return "inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer";
+  }
+  if (state === OrderState.APPROVED || state === OrderState.PREPARING) {
+    return "inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-surface-raised text-staff-text-muted opacity-60 cursor-not-allowed";
+  }
+  if (state === OrderState.READY) {
+    return "inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-emerald-600 text-white hover:brightness-95 cursor-pointer";
+  }
+  if (state === OrderState.DELIVERED) {
+    return "inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-blue-600 text-white hover:brightness-95 cursor-pointer";
+  }
+  if (state === OrderState.COMPLETED) {
+    return "inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-surface text-staff-text-primary border border-staff-border-strong hover:bg-staff-surface-raised cursor-pointer";
+  }
+  return "inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-surface text-staff-text-primary border border-staff-border-subtle";
+}
+
+function actionLabelForState(state: OrderState): string {
+  if (state === OrderState.PLACED) return "Approve";
+  if (state === OrderState.APPROVED || state === OrderState.PREPARING) return "Preparing…";
+  if (state === OrderState.READY) return "Deliver";
+  if (state === OrderState.DELIVERED) return "Complete";
+  if (state === OrderState.COMPLETED) return "Close Table";
+  return "";
+}
+
+function actionSlugForState(state: OrderState): string {
+  if (state === OrderState.PLACED) return "approve";
+  if (state === OrderState.READY) return "deliver";
+  if (state === OrderState.DELIVERED) return "complete";
+  if (state === OrderState.COMPLETED) return "close-table";
+  return "";
+}
+
+function resolvePlace(
+  order: Order,
+  tableMap: Record<string, string>,
+  roomMap: Record<string, string>
+): { number: string; type: string } {
+  if (order.placeType === PlaceType.TABLE) {
+    return { number: (order.tableId && tableMap[order.tableId]) || "—", type: "Table" };
+  }
+  if (order.placeType === PlaceType.ROOM) {
+    return { number: (order.roomId && roomMap[order.roomId]) || "—", type: "Room" };
+  }
+  return { number: order.pickupName || "Counter", type: "Counter" };
+}
+
+function OrderRow({ order }: { order: EnrichedOrder }): JSX.Element {
+  const label = actionLabelForState(order.state);
+  const slug = actionSlugForState(order.state);
+  const cls = buttonClassForState(order.state);
+  const disabled = order.state === OrderState.APPROVED || order.state === OrderState.PREPARING;
+  const showAction = order.state !== OrderState.COMPLETED || order.tableId !== null;
+  const showCancel = order.state === OrderState.PLACED || order.state === OrderState.READY;
+
+  let badgeClass = "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium";
+  if (order.state === OrderState.PLACED) badgeClass += " bg-amber-100 text-amber-800";
+  else if (order.state === OrderState.READY) badgeClass += " bg-emerald-100 text-emerald-800";
+  else if (order.state === OrderState.DELIVERED) badgeClass += " bg-sky-100 text-sky-800";
+  else if (order.state === OrderState.COMPLETED) badgeClass += " bg-status-done-bg text-status-done";
+  else badgeClass += " bg-purple-100 text-purple-800";
+
+  const itemsSummary = order.items
+    .map((itm) => itm.quantity + "x " + itm.itemName)
+    .join(", ");
+
+  return (
+    <article
+      data-order-id={order.id}
+      data-order-state={order.state}
+      data-place-number={order.placeNumber}
+      data-table-id={order.tableId ?? ""}
+      className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-staff-surface-raised rounded-xl border border-staff-border-subtle"
+    >
+      <div className="flex items-center gap-4">
+        <span className="text-[32px] font-bold">{order.placeNumber}</span>
+        <div className="flex flex-col">
+          <span className="font-mono text-xs">#{order.id.slice(0, 8).toUpperCase()}</span>
+        </div>
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-medium">{itemsSummary}</div>
+        {order.notes && (
+          <div className="text-xs italic text-staff-text-muted">Note: {order.notes}</div>
+        )}
+        <span className={badgeClass}>{order.state}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {showAction && (
+          <button
+            type="button"
+            data-action={slug}
+            data-order-id={order.id}
+            className={cls}
+            disabled={disabled}
+          >
+            {label}
+          </button>
+        )}
+        {showCancel && (
+          <button
+            type="button"
+            data-action="cancel"
+            data-order-id={order.id}
+            className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-red-600 border border-red-300 hover:bg-red-50"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function TableCard({ table, isOccupied }: { table: Table; isOccupied: boolean }): JSX.Element {
+  return (
+    <article
+      data-table-id={table.id}
+      data-table-number={table.number}
+      data-table-status={isOccupied ? "OCCUPIED" : "FREE"}
+      className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[28px] font-bold">{table.number}</div>
+          <div className="text-[11px] uppercase text-staff-text-muted">Table</div>
+        </div>
+        {isOccupied ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+            Occupied
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+            Free
+          </span>
+        )}
+      </div>
+      <div className="pt-2 border-t border-staff-border-subtle">
+        {isOccupied ? (
+          <button
+            type="button"
+            data-action="close-table"
+            data-table-id={table.id}
+            data-table-number={table.number}
+            className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full"
+          >
+            Close Table
+          </button>
+        ) : (
+          <span className="text-xs text-staff-text-muted">—</span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function RoomCard({ room, isOccupied }: { room: Room; isOccupied: boolean }): JSX.Element {
+  return (
+    <article
+      data-room-id={room.id}
+      data-room-number={room.number}
+      data-room-status={isOccupied ? "OCCUPIED" : "FREE"}
+      className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[28px] font-bold">{room.number}</div>
+          <div className="text-[11px] uppercase text-staff-text-muted">Room</div>
+        </div>
+        {isOccupied ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+            Occupied
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+            Vacant
+          </span>
+        )}
+      </div>
+      <div className="pt-2 border-t border-staff-border-subtle">
+        {isOccupied ? (
+          <button
+            type="button"
+            data-action="checkout-room"
+            data-room-id={room.id}
+            data-room-number={room.number}
+            className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full"
+          >
+            Checkout Room
+          </button>
+        ) : (
+          <span className="text-xs text-staff-text-muted">—</span>
+        )}
+      </div>
+    </article>
+  );
+}
 
 export default async function StaffDashboardPage(): Promise<JSX.Element> {
   // 1. Session and role check
@@ -99,6 +306,19 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     }
   }
 
+  const tables = tablesRes.ok ? tablesRes.value : [];
+  const rooms = roomsRes.ok ? roomsRes.value : [];
+
+  const tableMap: Record<string, string> = {};
+  for (const t of tables) {
+    tableMap[t.id] = t.number;
+  }
+
+  const roomMap: Record<string, string> = {};
+  for (const r of rooms) {
+    roomMap[r.id] = r.number;
+  }
+
   const orders: Order[] = rawOrders
     .map((o) => {
       if (o.tableId === null && o.guestSessionId && sessionTableMap[o.guestSessionId]) {
@@ -116,23 +336,21 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     }
   }
 
-  const tables = tablesRes.ok ? tablesRes.value : [];
-  const rooms = roomsRes.ok ? roomsRes.value : [];
+  const enrichedOrders: EnrichedOrder[] = orders.map((o) => ({
+    ...o,
+    placeNumber: resolvePlace(o, tableMap, roomMap).number,
+  }));
 
-  const tableMap: Record<string, string> = {};
-  for (const t of tables) {
-    tableMap[t.id] = t.number;
-  }
-
-  const roomMap: Record<string, string> = {};
-  for (const r of rooms) {
-    roomMap[r.id] = r.number;
-  }
+  const activeOrdersCount = orders.filter(
+    (o) => o.state !== OrderState.COMPLETED && o.state !== OrderState.CANCELLED
+  ).length;
 
   const SCRIPT = `
 (function() {
   var TABLE_MAP = ` + JSON.stringify(tableMap) + `;
   var ROOM_MAP = ` + JSON.stringify(roomMap) + `;
+  var TABLES = ` + JSON.stringify(tables.map((t) => ({ id: t.id, number: t.number }))) + `;
+  var ROOMS = ` + JSON.stringify(rooms.map((r) => ({ id: r.id, number: r.number }))) + `;
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
 
@@ -151,18 +369,13 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   }
 
   function resolvePlace(order) {
-    if (order.placeType === 'TABLE' || order.tableId) {
-      var num = order.tableId ? (TABLE_MAP[order.tableId] || order.tableId.slice(0, 4)) : '—';
-      return { type: 'TABLE', number: 'T' + num };
+    if (order.placeType === 'TABLE') {
+      return { number: TABLE_MAP[order.tableId] || '—', type: 'Table' };
     }
-    if (order.placeType === 'ROOM' || order.roomId) {
-      var rnum = order.roomId ? (ROOM_MAP[order.roomId] || order.roomId.slice(0, 4)) : '—';
-      return { type: 'ROOM', number: 'R' + rnum };
+    if (order.placeType === 'ROOM') {
+      return { number: ROOM_MAP[order.roomId] || '—', type: 'Room' };
     }
-    if (order.placeType === 'COUNTER') {
-      return { type: 'COUNTER', number: order.pickupName || 'Counter' };
-    }
-    return { type: 'UNKNOWN', number: '—' };
+    return { number: order.pickupName || 'Counter', type: 'Counter' };
   }
 
   function formatItemsSummary(items) {
@@ -174,24 +387,56 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     return parts.join(', ');
   }
 
+  function buttonClass(state) {
+    if (state === 'PLACED') return 'inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer';
+    if (state === 'APPROVED' || state === 'PREPARING') return 'inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-surface-raised text-staff-text-muted opacity-60 cursor-not-allowed';
+    if (state === 'READY') return 'inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-emerald-600 text-white hover:brightness-95 cursor-pointer';
+    if (state === 'DELIVERED') return 'inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-blue-600 text-white hover:brightness-95 cursor-pointer';
+    if (state === 'COMPLETED') return 'inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-surface text-staff-text-primary border border-staff-border-strong hover:bg-staff-surface-raised cursor-pointer';
+    return '';
+  }
+
+  function actionLabel(state) {
+    if (state === 'PLACED') return 'Approve';
+    if (state === 'APPROVED' || state === 'PREPARING') return 'Preparing…';
+    if (state === 'READY') return 'Deliver';
+    if (state === 'DELIVERED') return 'Complete';
+    if (state === 'COMPLETED') return 'Close Table';
+    return '';
+  }
+
+  function actionSlug(state) {
+    if (state === 'PLACED') return 'approve';
+    if (state === 'READY') return 'deliver';
+    if (state === 'DELIVERED') return 'complete';
+    if (state === 'COMPLETED') return 'close-table';
+    return '';
+  }
+
   function orderRowHtml(order) {
     var place = resolvePlace(order);
-    var badgeText = order.state === 'PLACED' ? 'Placed' : (order.state === 'READY' ? 'Ready' : (order.state === 'DELIVERED' ? 'Delivered' : 'Completed'));
-    var badgeClass = order.state === 'PLACED' ? 'bg-amber-100 text-amber-800' : (order.state === 'READY' ? 'bg-emerald-100 text-emerald-800' : (order.state === 'DELIVERED' ? 'bg-sky-100 text-sky-800' : 'bg-status-done-bg text-status-done'));
-    var action = order.state === 'PLACED' ? 'approve' : (order.state === 'READY' ? 'deliver' : (order.state === 'DELIVERED' ? 'complete' : 'close-table'));
-    var actionLabel = order.state === 'PLACED' ? 'Approve' : (order.state === 'READY' ? 'Deliver' : (order.state === 'DELIVERED' ? 'Complete' : 'Close Table'));
-    var cancelBtn = (order.state === 'PLACED' || order.state === 'READY') ? '<button type="button" data-action="cancel" data-order-id="' + escapeHtml(order.id) + '" class="px-3 py-1.5 rounded text-xs font-semibold bg-staff-surface border border-staff-border-subtle text-status-cancelled hover:bg-staff-surface-raised">Cancel</button>' : '';
-    var actionBtn = (order.state !== 'COMPLETED' || order.tableId) ? '<button type="button" data-action="' + action + '" data-order-id="' + escapeHtml(order.id) + '" class="px-3 py-1.5 rounded text-xs font-semibold bg-staff-primary text-white hover:opacity-90">' + actionLabel + '</button>' : '';
+    var items = formatItemsSummary(order.items);
+    var label = actionLabel(order.state);
+    var slug = actionSlug(order.state);
+    var cls = buttonClass(order.state);
+    var disabled = (order.state === 'APPROVED' || order.state === 'PREPARING') ? ' disabled' : '';
+    var cancelBtn = (order.state === 'PLACED' || order.state === 'READY') ? '<button type="button" data-action="cancel" data-order-id="' + escapeHtml(order.id) + '" class="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-red-600 border border-red-300 hover:bg-red-50">Cancel</button>' : '';
+    var actionBtn = (order.state !== 'COMPLETED' || order.tableId) ? '<button type="button" data-action="' + escapeHtml(slug) + '" data-order-id="' + escapeHtml(order.id) + '" class="' + cls + '"' + disabled + '>' + escapeHtml(label) + '</button>' : '';
 
-    return '<article data-order-id="' + escapeHtml(order.id) + '" data-order-state="' + escapeHtml(order.state) + '" data-place-number="' + escapeHtml(place.number) + '" data-table-id="' + escapeHtml(order.tableId || '') + '" class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-staff-surface-raised rounded-xl border border-staff-border-subtle shadow-sm">' +
+    var badgeClass = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
+    if (order.state === 'PLACED') badgeClass += ' bg-amber-100 text-amber-800';
+    else if (order.state === 'READY') badgeClass += ' bg-emerald-100 text-emerald-800';
+    else if (order.state === 'DELIVERED') badgeClass += ' bg-sky-100 text-sky-800';
+    else if (order.state === 'COMPLETED') badgeClass += ' bg-status-done-bg text-status-done';
+    else badgeClass += ' bg-purple-100 text-purple-800';
+
+    return '<article data-order-id="' + escapeHtml(order.id) + '" data-order-state="' + escapeHtml(order.state) + '" data-place-number="' + escapeHtml(place.number) + '" data-table-id="' + escapeHtml(order.tableId || '') + '" class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-staff-surface-raised rounded-xl border border-staff-border-subtle">' +
       '<div class="flex items-center gap-4">' +
-        '<span class="text-[32px] font-bold text-staff-text-primary">' + escapeHtml(place.number) + '</span>' +
-        '<span class="font-mono text-xs text-staff-text-muted">#' + escapeHtml(order.id.slice(0, 8).toUpperCase()) + '</span>' +
+        '<span class="text-[32px] font-bold">' + escapeHtml(place.number) + '</span>' +
+        '<div class="flex flex-col"><span class="font-mono text-xs">#' + escapeHtml(order.id.slice(0, 8).toUpperCase()) + '</span></div>' +
       '</div>' +
-      '<div class="flex-1">' +
-        '<div class="text-sm font-medium text-staff-text-primary">' + escapeHtml(formatItemsSummary(order.items)) + '</div>' +
-        (order.notes ? '<div class="text-xs italic text-staff-text-muted">Note: ' + escapeHtml(order.notes) + '</div>' : '') +
-        '<span class="' + badgeClass + ' text-xs px-2 py-0.5 rounded font-medium inline-block mt-1">' + badgeText + '</span>' +
+      '<div class="flex-1"><div class="text-sm font-medium">' + escapeHtml(items) + '</div>' +
+        '<span class="' + badgeClass + '">' + escapeHtml(order.state) + '</span>' +
       '</div>' +
       '<div class="flex flex-wrap items-center gap-2">' +
         actionBtn +
@@ -201,121 +446,87 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   }
 
   function tableCardHtml(table, isOccupied) {
-    var statusText = isOccupied ? 'Occupied' : 'Free';
-    var badgeClass = isOccupied ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300';
-    var closeBtn = isOccupied ? '<button type="button" data-action="close-table" data-table-id="' + escapeHtml(table.id) + '" class="mt-2 w-full py-1.5 px-3 rounded text-xs font-medium bg-staff-surface border border-status-cancelled text-status-cancelled hover:bg-status-cancelled hover:text-white transition-colors">Close Table</button>' : '';
-    return '<div data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" data-table-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="p-4 rounded-xl border border-staff-border-subtle bg-staff-surface-raised flex flex-col justify-between gap-3 shadow-sm">' +
-      '<div class="flex items-center justify-between">' +
-        '<span class="font-bold text-base text-staff-text-primary">Table ' + escapeHtml(table.number) + '</span>' +
-        '<span data-table-status-badge="true" class="px-2 py-0.5 rounded text-xs font-medium border ' + badgeClass + '">' + statusText + '</span>' +
+    var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Free</span>';
+    var action = isOccupied ? '<button type="button" data-action="close-table" data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Close Table</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
+    return '<article data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" data-table-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+      '<div class="flex items-center justify-between gap-2">' +
+        '<div><div class="text-[28px] font-bold">' + escapeHtml(table.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Table</div></div>' +
+        badge +
       '</div>' +
-      closeBtn +
-    '</div>';
+      '<div class="pt-2 border-t border-staff-border-subtle">' + action + '</div>' +
+    '</article>';
   }
 
   function roomCardHtml(room, isOccupied) {
-    var statusText = isOccupied ? 'Occupied' : 'Vacant';
-    var badgeClass = isOccupied ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300';
-    var checkoutBtn = isOccupied ? '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(room.id) + '" class="mt-2 w-full py-1.5 px-3 rounded text-xs font-medium bg-staff-surface border border-status-cancelled text-status-cancelled hover:bg-status-cancelled hover:text-white transition-colors">Checkout Room</button>' : '';
-    return '<div data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'VACANT') + '" class="p-4 rounded-xl border border-staff-border-subtle bg-staff-surface-raised flex flex-col justify-between gap-3 shadow-sm">' +
-      '<div class="flex items-center justify-between">' +
-        '<span class="font-bold text-base text-staff-text-primary">Room ' + escapeHtml(room.number) + '</span>' +
-        '<span data-room-status-badge="true" class="px-2 py-0.5 rounded text-xs font-medium border ' + badgeClass + '">' + statusText + '</span>' +
+    var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Vacant</span>';
+    var action = isOccupied ? '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Checkout Room</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
+    return '<article data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+      '<div class="flex items-center justify-between gap-2">' +
+        '<div><div class="text-[28px] font-bold">' + escapeHtml(room.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Room</div></div>' +
+        badge +
       '</div>' +
-      checkoutBtn +
-    '</div>';
+      '<div class="pt-2 border-t border-staff-border-subtle">' + action + '</div>' +
+    '</article>';
   }
 
-  function updateTableMap() {
-    var cards = document.querySelectorAll('#table-map [data-table-id]');
-    for (var i = 0; i < cards.length; i++) {
-      var c = cards[i];
-      var tid = c.getAttribute('data-table-id');
-      var occ = currentActiveTableIds.indexOf(tid) !== -1;
-      c.setAttribute('data-table-status', occ ? 'OCCUPIED' : 'FREE');
-      var badge = c.querySelector('[data-table-status-badge]');
-      if (badge) {
-        badge.textContent = occ ? 'Occupied' : 'Free';
-        badge.className = 'px-2 py-0.5 rounded text-xs font-medium border ' + (occ ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300');
-      }
-      var existingBtn = c.querySelector('button[data-action="close-table"]');
-      if (occ && !existingBtn) {
-        c.insertAdjacentHTML('beforeend', '<button type="button" data-action="close-table" data-table-id="' + escapeHtml(tid) + '" class="mt-2 w-full py-1.5 px-3 rounded text-xs font-medium bg-staff-surface border border-status-cancelled text-status-cancelled hover:bg-status-cancelled hover:text-white transition-colors">Close Table</button>');
-      } else if (!occ && existingBtn) {
-        existingBtn.remove();
-      }
+  function renderOrderQueue(orders) {
+    var container = document.getElementById('orders-container');
+    if (!container) return;
+    if (orders.length === 0) {
+      container.innerHTML = '<div id="order-empty" class="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle"><p class="text-[18px] font-medium">No active orders.</p></div>';
+      return;
     }
-  }
-
-  function updateRoomMap() {
-    var cards = document.querySelectorAll('#room-map [data-room-id]');
-    for (var i = 0; i < cards.length; i++) {
-      var c = cards[i];
-      var rid = c.getAttribute('data-room-id');
-      var occ = currentActiveRoomIds.indexOf(rid) !== -1;
-      c.setAttribute('data-room-status', occ ? 'OCCUPIED' : 'VACANT');
-      var badge = c.querySelector('[data-room-status-badge]');
-      if (badge) {
-        badge.textContent = occ ? 'Occupied' : 'Vacant';
-        badge.className = 'px-2 py-0.5 rounded text-xs font-medium border ' + (occ ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300');
-      }
-      var existingBtn = c.querySelector('button[data-action="checkout-room"]');
-      if (occ && !existingBtn) {
-        c.insertAdjacentHTML('beforeend', '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(rid) + '" class="mt-2 w-full py-1.5 px-3 rounded text-xs font-medium bg-staff-surface border border-status-cancelled text-status-cancelled hover:bg-status-cancelled hover:text-white transition-colors">Checkout Room</button>');
-      } else if (!occ && existingBtn) {
-        existingBtn.remove();
-      }
-    }
-  }
-
-  function updateEmpty() {
+    container.innerHTML = '<div id="order-queue" class="flex flex-col gap-3"></div>';
     var queue = document.getElementById('order-queue');
-    var empty = document.getElementById('order-empty');
-    if (!queue || !empty) return;
-    var rows = queue.querySelectorAll('[data-order-id]');
-    if (rows.length === 0) {
-      empty.style.display = 'flex';
-      queue.style.display = 'none';
-    } else {
-      empty.style.display = 'none';
-      queue.style.display = 'flex';
+    for (var i = 0; i < orders.length; i++) {
+      queue.insertAdjacentHTML('beforeend', orderRowHtml(orders[i]));
     }
   }
 
-  function pollOrders() {
+  function renderTableMap() {
+    var container = document.getElementById('table-map');
+    if (!container) return;
+    container.innerHTML = '';
+    for (var i = 0; i < TABLES.length; i++) {
+      var t = TABLES[i];
+      var occ = currentActiveTableIds.indexOf(t.id) !== -1;
+      container.insertAdjacentHTML('beforeend', tableCardHtml(t, occ));
+    }
+  }
+
+  function renderRoomMap() {
+    var container = document.getElementById('room-map');
+    if (!container) return;
+    container.innerHTML = '';
+    for (var i = 0; i < ROOMS.length; i++) {
+      var r = ROOMS[i];
+      var occ = currentActiveRoomIds.indexOf(r.id) !== -1;
+      container.insertAdjacentHTML('beforeend', roomCardHtml(r, occ));
+    }
+  }
+
+  function poll() {
     fetch('/api/staff/orders', { credentials: 'same-origin' })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function(body) {
+        var orders = body.data || [];
         if (body.activeTableIds) {
           currentActiveTableIds = body.activeTableIds;
-        }
-        var orders = body.data || [];
-        var queue = document.getElementById('order-queue');
-        if (!queue) return;
-        var domById = {};
-        var rows = queue.querySelectorAll('[data-order-id]');
-        for (var i = 0; i < rows.length; i++) {
-          domById[rows[i].getAttribute('data-order-id')] = rows[i];
-        }
-        var serverIds = {};
-        for (var j = 0; j < orders.length; j++) {
-          var o = orders[j];
-          serverIds[o.id] = true;
-          var ex = domById[o.id];
-          if (!ex) {
-            queue.insertAdjacentHTML('beforeend', orderRowHtml(o));
-          } else if (ex.getAttribute('data-order-state') !== o.state) {
-            ex.remove();
-            queue.insertAdjacentHTML('beforeend', orderRowHtml(o));
+        } else {
+          var activeFromOrders = [];
+          for (var k = 0; k < orders.length; k++) {
+            var ord = orders[k];
+            if (ord.state !== 'COMPLETED' && ord.state !== 'CANCELLED' && ord.tableId) {
+              if (activeFromOrders.indexOf(ord.tableId) === -1) {
+                activeFromOrders.push(ord.tableId);
+              }
+            }
           }
+          currentActiveTableIds = activeFromOrders;
         }
-        for (var id in domById) {
-          if (!serverIds[id]) {
-            domById[id].remove();
-          }
-        }
-        updateEmpty();
-        updateTableMap();
+        renderOrderQueue(orders);
+        renderTableMap();
+        renderRoomMap();
       })
       .catch(function() {});
   }
@@ -325,8 +536,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     var original = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Sending…';
-    var url;
-    var body = null;
+    var url, body = null;
     if (action === 'close-table') {
       var tid = row ? row.getAttribute('data-table-id') : null;
       if (!tid) { showToast('No table'); btn.disabled = false; btn.textContent = original; return; }
@@ -344,382 +554,124 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = body; }
     fetch(url, opts)
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function() { showToast('Done'); pollOrders(); })
+      .then(function() { showToast('Done'); poll(); })
       .catch(function(err) { showToast('Error: ' + err.message); btn.disabled = false; btn.textContent = original; });
   }
 
-  function handleCloseTable(tableId, btn) {
-    var original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Closing…';
-    fetch('/api/staff/tables/' + encodeURIComponent(tableId) + '/close', {
-      method: 'POST',
-      credentials: 'same-origin'
-    })
+  function handleCloseTable(tableId, tableNum) {
+    if (!window.confirm('Close Table ' + tableNum + '?')) return;
+    fetch('/api/staff/tables/' + encodeURIComponent(tableId) + '/close', { method: 'POST', credentials: 'same-origin' })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function() {
-        showToast('Table closed');
-        var idx = currentActiveTableIds.indexOf(tableId);
-        if (idx !== -1) currentActiveTableIds.splice(idx, 1);
-        updateTableMap();
-        pollOrders();
-      })
-      .catch(function(err) { showToast('Error: ' + err.message); btn.disabled = false; btn.textContent = original; });
+      .then(function() { showToast('Table closed'); poll(); })
+      .catch(function(err) { showToast('Error: ' + err.message); });
   }
 
-  function handleCheckoutRoom(roomId, btn) {
-    var original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Checking out…';
-    fetch('/api/staff/rooms/' + encodeURIComponent(roomId) + '/checkout', {
-      method: 'POST',
-      credentials: 'same-origin'
-    })
+  function handleCheckoutRoom(roomId, roomNum) {
+    if (!window.confirm('Checkout Room ' + roomNum + '?')) return;
+    fetch('/api/staff/rooms/' + encodeURIComponent(roomId) + '/checkout', { method: 'POST', credentials: 'same-origin' })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function() {
-        showToast('Room checked out');
-        var idx = currentActiveRoomIds.indexOf(roomId);
-        if (idx !== -1) currentActiveRoomIds.splice(idx, 1);
-        updateRoomMap();
-      })
-      .catch(function(err) { showToast('Error: ' + err.message); btn.disabled = false; btn.textContent = original; });
+      .then(function() { showToast('Room checked out'); poll(); })
+      .catch(function(err) { showToast('Error: ' + err.message); });
   }
 
-  function setupDelegation() {
-    document.getElementById('staff-tab-nav').addEventListener('click', function(e) {
-      var tab = e.target.closest('[data-tab]');
-      if (!tab) return;
-      var name = tab.getAttribute('data-tab');
-      var containers = { orders: 'orders-container', map: 'table-map', rooms: 'room-map' };
-      var tabEls = document.querySelectorAll('[data-tab]');
-      for (var i = 0; i < tabEls.length; i++) {
-        tabEls[i].className = 'pb-3 text-sm font-medium text-staff-text-muted';
-      }
-      tab.className = 'pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand';
-      for (var key in containers) {
-        var el = document.getElementById(containers[key]);
-        if (el) {
-          el.style.display = key === name ? (key === 'orders' ? 'flex' : 'grid') : 'none';
-        }
-      }
-    });
-    document.getElementById('order-queue').addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-action]');
-      if (!btn) return;
+  // === INITIALIZATION — delegation FIRST, polling SECOND ===
+  // The two addEventListener calls must run on the very first synchronous
+  // tick of this script. If they run after any fetch() or setInterval(),
+  // a slow HMR WebSocket storm on mobile can starve the event loop and
+  // prevent the listeners from binding. Binding first guarantees that
+  // every click is caught, regardless of HMR state.
+
+  document.getElementById('staff-tab-nav').addEventListener('click', function(e) {
+    var tab = e.target.closest('[data-tab]');
+    if (!tab) return;
+    var name = tab.getAttribute('data-tab');
+    var tabEls = document.querySelectorAll('[data-tab]');
+    for (var i = 0; i < tabEls.length; i++) {
+      tabEls[i].className = 'pb-3 text-sm font-medium text-staff-text-muted';
+    }
+    tab.className = 'pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand';
+    document.getElementById('orders-container').style.display = name === 'orders' ? 'flex' : 'none';
+    document.getElementById('table-map').style.display = name === 'map' ? 'grid' : 'none';
+    document.getElementById('room-map').style.display = name === 'rooms' ? 'grid' : 'none';
+  });
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.hasAttribute('data-order-id')) {
       handleOrderAction(btn.getAttribute('data-action'), btn.getAttribute('data-order-id'), btn);
-    });
-    document.getElementById('table-map').addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-action="close-table"]');
-      if (!btn) return;
-      handleCloseTable(btn.getAttribute('data-table-id'), btn);
-    });
-    document.getElementById('room-map').addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-action="checkout-room"]');
-      if (!btn) return;
-      handleCheckoutRoom(btn.getAttribute('data-room-id'), btn);
-    });
-  }
+    } else if (btn.getAttribute('data-action') === 'close-table' && btn.hasAttribute('data-table-id')) {
+      handleCloseTable(btn.getAttribute('data-table-id'), btn.getAttribute('data-table-number'));
+    } else if (btn.getAttribute('data-action') === 'checkout-room' && btn.hasAttribute('data-room-id')) {
+      handleCheckoutRoom(btn.getAttribute('data-room-id'), btn.getAttribute('data-room-number'));
+    }
+  });
 
-  setupDelegation();
-  pollOrders();
-  setInterval(pollOrders, 5000);
+  // === POLLING — runs AFTER listeners are attached ===
+  poll();
+  setInterval(poll, 5000);
 })();
 `;
 
   return (
-    <main className="min-h-dvh bg-staff-surface flex flex-col text-staff-text-primary">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 md:px-6 py-3 md:py-4 border-b border-staff-border-subtle bg-staff-surface-raised">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span
-              id="staff-connection-indicator"
-              aria-label="System status: Connected"
-              className="inline-block size-2.5 rounded-full bg-status-ready"
-            />
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-              {venue.name} — Staff Operations
-            </h1>
-          </div>
-          <p className="text-xs md:text-sm text-staff-text-muted">
-            Logged in as <span className="font-semibold text-staff-text-primary">{staff.name}</span> ({staff.roles.join(", ")})
-          </p>
+    <main data-world="staff" className="min-h-dvh bg-staff-surface flex flex-col text-staff-text-primary">
+      <header className="bg-staff-surface-raised border-b border-staff-border-subtle px-4 md:px-6 py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div>
+          <h1 className="text-[20px] font-bold">{venue?.name ?? "Hospitality"} — Staff Operations</h1>
+          <p className="text-xs text-staff-text-muted">Logged in as {staff.name} ({staff.roles.join(", ")})</p>
         </div>
-        <div className="flex items-center gap-3">
-          <LogoutButton />
-        </div>
+        <LogoutButton />
       </header>
 
-      {/* Nav Tabs */}
-      <nav
-        id="staff-tab-nav"
-        className="px-4 md:px-6 bg-staff-surface-raised border-b border-staff-border-subtle flex items-center gap-6 overflow-x-auto pt-3"
-        aria-label="Staff Sections"
-      >
-        <button
-          type="button"
-          data-tab="orders"
-          id="tab-orders"
-          className="pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand whitespace-nowrap cursor-pointer"
-        >
-          Orders ({orders.length})
+      <nav id="staff-tab-nav" className="flex items-center gap-6 border-b border-staff-border-subtle px-6 pt-3 bg-staff-surface-raised">
+        <button data-tab="orders" className="pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer">
+          Orders ({activeOrdersCount})
         </button>
-        <button
-          type="button"
-          data-tab="map"
-          id="tab-map"
-          className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary whitespace-nowrap cursor-pointer"
-        >
+        <button data-tab="map" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
           Table Map ({tables.length})
         </button>
-        <button
-          type="button"
-          data-tab="rooms"
-          id="tab-rooms"
-          className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary whitespace-nowrap cursor-pointer"
-        >
+        <button data-tab="rooms" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
           Room Map ({rooms.length})
         </button>
       </nav>
 
-      {/* Content Container */}
-      <section className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto">
-        {/* Orders Queue */}
-        <div id="orders-container" className="flex flex-col gap-4">
-          <div
-            id="order-empty"
-            className="flex-col items-center justify-center min-h-[30vh] text-center p-8 border border-dashed border-staff-border-subtle rounded-xl"
-            style={{ display: orders.length === 0 ? "flex" : "none" }}
-          >
-            <p className="text-sm md:text-base text-staff-text-muted">
-              No active orders in queue.
-            </p>
-          </div>
-          <div
-            id="order-queue"
-            className="flex flex-col gap-4"
-            style={{ display: orders.length === 0 ? "none" : "flex" }}
-          >
-            {orders.map((order) => {
-              const placeNumber =
-                order.placeType === PlaceType.TABLE && order.tableId
-                  ? "T" + (tableMap[order.tableId] ?? order.tableId.slice(0, 4))
-                  : order.placeType === PlaceType.ROOM && order.roomId
-                  ? "R" + (roomMap[order.roomId] ?? order.roomId.slice(0, 4))
-                  : order.placeType === PlaceType.COUNTER
-                  ? order.pickupName ?? "Counter"
-                  : "—";
-
-              const badgeText =
-                order.state === OrderState.PLACED
-                  ? "Placed"
-                  : order.state === OrderState.READY
-                  ? "Ready"
-                  : order.state === OrderState.DELIVERED
-                  ? "Delivered"
-                  : "Completed";
-
-              const badgeClass =
-                order.state === OrderState.PLACED
-                  ? "bg-amber-100 text-amber-800"
-                  : order.state === OrderState.READY
-                  ? "bg-emerald-100 text-emerald-800"
-                  : order.state === OrderState.DELIVERED
-                  ? "bg-sky-100 text-sky-800"
-                  : "bg-status-done-bg text-status-done";
-
-              const action =
-                order.state === OrderState.PLACED
-                  ? "approve"
-                  : order.state === OrderState.READY
-                  ? "deliver"
-                  : order.state === OrderState.DELIVERED
-                  ? "complete"
-                  : "close-table";
-
-              const actionLabel =
-                order.state === OrderState.PLACED
-                  ? "Approve"
-                  : order.state === OrderState.READY
-                  ? "Deliver"
-                  : order.state === OrderState.DELIVERED
-                  ? "Complete"
-                  : "Close Table";
-
-              const itemsSummary = order.items
-                .map((itm) => itm.quantity + "x " + itm.itemName)
-                .join(", ");
-
-              return (
-                <article
-                  key={order.id}
-                  data-order-id={order.id}
-                  data-order-state={order.state}
-                  data-place-number={placeNumber}
-                  data-table-id={order.tableId ?? ""}
-                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-staff-surface-raised rounded-xl border border-staff-border-subtle shadow-sm"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-[32px] font-bold text-staff-text-primary">
-                      {placeNumber}
-                    </span>
-                    <span className="font-mono text-xs text-staff-text-muted">
-                      #{order.id.slice(0, 8).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-staff-text-primary">
-                      {itemsSummary}
-                    </div>
-                    {order.notes && (
-                      <div className="text-xs italic text-staff-text-muted">
-                        Note: {order.notes}
-                      </div>
-                    )}
-                    <span className={`${badgeClass} text-xs px-2 py-0.5 rounded font-medium inline-block mt-1`}>
-                      {badgeText}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {(order.state !== OrderState.COMPLETED || order.tableId) && (
-                      <button
-                        type="button"
-                        data-action={action}
-                        data-order-id={order.id}
-                        className="px-3 py-1.5 rounded text-xs font-semibold bg-staff-primary text-white hover:opacity-90"
-                      >
-                        {actionLabel}
-                      </button>
-                    )}
-                    {(order.state === OrderState.PLACED || order.state === OrderState.READY) && (
-                      <button
-                        type="button"
-                        data-action="cancel"
-                        data-order-id={order.id}
-                        className="px-3 py-1.5 rounded text-xs font-semibold bg-staff-surface border border-staff-border-subtle text-status-cancelled hover:bg-staff-surface-raised"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+      <section className="flex-1 p-4 md:p-6 max-w-5xl w-full mx-auto">
+        <div id="orders-container" className="flex flex-col gap-3">
+          {enrichedOrders.length === 0 ? (
+            <div id="order-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
+              <p className="text-[18px] font-medium">No active orders.</p>
+            </div>
+          ) : (
+            <div id="order-queue" className="flex flex-col gap-3">
+              {enrichedOrders.map((o) => (
+                <OrderRow key={o.id} order={o} />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Table Map */}
-        <div
-          id="table-map"
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
-          style={{ display: "none" }}
-        >
-          {tables.map((table) => {
-            const isOccupied = activeTableIds.has(table.id) || table.state === "OCCUPIED";
-            const statusText = isOccupied ? "Occupied" : "Free";
-            const badgeClass = isOccupied
-              ? "bg-amber-100 text-amber-800 border-amber-300"
-              : "bg-emerald-100 text-emerald-800 border-emerald-300";
-
-            return (
-              <div
-                key={table.id}
-                data-table-id={table.id}
-                data-table-number={table.number}
-                data-table-status={isOccupied ? "OCCUPIED" : "FREE"}
-                className="p-4 rounded-xl border border-staff-border-subtle bg-staff-surface-raised flex flex-col justify-between gap-3 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-base text-staff-text-primary">
-                    Table {table.number}
-                  </span>
-                  <span
-                    data-table-status-badge="true"
-                    className={`px-2 py-0.5 rounded text-xs font-medium border ${badgeClass}`}
-                  >
-                    {statusText}
-                  </span>
-                </div>
-                {isOccupied && (
-                  <button
-                    type="button"
-                    data-action="close-table"
-                    data-table-id={table.id}
-                    className="mt-2 w-full py-1.5 px-3 rounded text-xs font-medium bg-staff-surface border border-status-cancelled text-status-cancelled hover:bg-status-cancelled hover:text-white transition-colors"
-                  >
-                    Close Table
-                  </button>
-                )}
-              </div>
-            );
-          })}
+        <div id="table-map" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" style={{ display: "none" }}>
+          {tables.map((t) => (
+            <TableCard key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} />
+          ))}
         </div>
 
-        {/* Room Map */}
-        <div
-          id="room-map"
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
-          style={{ display: "none" }}
-        >
-          {rooms.map((room) => {
-            const isOccupied = activeRoomIds.has(room.id) || room.state === "OCCUPIED";
-            const statusText = isOccupied ? "Occupied" : "Vacant";
-            const badgeClass = isOccupied
-              ? "bg-amber-100 text-amber-800 border-amber-300"
-              : "bg-emerald-100 text-emerald-800 border-emerald-300";
-
-            return (
-              <div
-                key={room.id}
-                data-room-id={room.id}
-                data-room-number={room.number}
-                data-room-status={isOccupied ? "OCCUPIED" : "VACANT"}
-                className="p-4 rounded-xl border border-staff-border-subtle bg-staff-surface-raised flex flex-col justify-between gap-3 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-base text-staff-text-primary">
-                    Room {room.number}
-                  </span>
-                  <span
-                    data-room-status-badge="true"
-                    className={`px-2 py-0.5 rounded text-xs font-medium border ${badgeClass}`}
-                  >
-                    {statusText}
-                  </span>
-                </div>
-                {isOccupied && (
-                  <button
-                    type="button"
-                    data-action="checkout-room"
-                    data-room-id={room.id}
-                    className="mt-2 w-full py-1.5 px-3 rounded text-xs font-medium bg-staff-surface border border-status-cancelled text-status-cancelled hover:bg-status-cancelled hover:text-white transition-colors"
-                  >
-                    Checkout Room
-                  </button>
-                )}
-              </div>
-            );
-          })}
+        <div id="room-map" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" style={{ display: "none" }}>
+          {rooms.map((r) => (
+            <RoomCard key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} />
+          ))}
         </div>
       </section>
 
-      {/* Toast Notification Element */}
       <div
         id="staff-toast"
         role="status"
         aria-live="polite"
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm shadow-lg pointer-events-none"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm shadow-xl"
         style={{ display: "none" }}
       />
 
-      {/* Controller Script */}
-      <Script
-        id="staff-controller"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: SCRIPT,
-        }}
-      />
+      <Script id="staff-controller" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: SCRIPT }} />
     </main>
   );
 }

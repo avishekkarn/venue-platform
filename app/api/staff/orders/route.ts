@@ -113,6 +113,25 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     ...deliveredRes.value,
   ];
 
-  return NextResponse.json({ data: combinedOrders }, { status: 200 });
+  // Query all active guest sessions for this venue to derive occupied places
+  const activeSessions = await db.guestSession.findMany({
+    where: {
+      venueId: venue.id,
+      endedAt: null,
+    },
+    select: { tableId: true, roomId: true },
+  });
+
+  const activeTableIds: string[] = [];
+  const activeRoomIds: string[] = [];
+  for (const s of activeSessions) {
+    if (s.tableId) activeTableIds.push(s.tableId);
+    if (s.roomId) activeRoomIds.push(s.roomId);
+  }
+
+  return NextResponse.json(
+    { data: combinedOrders, activeTableIds, activeRoomIds },
+    { status: 200 }
+  );
 }
 
