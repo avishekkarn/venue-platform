@@ -95,6 +95,15 @@
 - **Verification:** Canonical config loader implemented and adopted across all call sites; unit and integration tests pass.
 - **Status:** OPEN
 
+### W-0008 — OPEN — pg@8.x query-during-execution deprecation
+
+- **Originated:** Task 8.0.3 (PROGRESS ENTRY-0203).
+- **Obligation:** @prisma/adapter-pg emits DeprecationWarning: Calling client.query() when the client is already executing a query under pg@8.x; pg@9.0 will reject the pattern. Verify the adapter still works and address the pattern if it surfaces as a hard error.
+- **Files and call site:** src/infrastructure/db/client.ts and node_modules/@prisma/adapter-pg.
+- **Satisfied by:** A future hygiene task when pg@9 is released or the adapter is upgraded.
+- **Depends on:** D-16.3.
+- **Status:** OPEN
+
 ---
 
 ## 3. The Discharged Obligations
@@ -148,9 +157,9 @@ The file is a 0-byte stub. Task 5.4.4 did not need it (the venue record already 
 
 ### F-0004 — Six placeholder `(0 test)` integration suites
 
-Six integration test files report `(0 test)` and are placeholders for later phases: `kitchen-orders.test.ts`, `staff-orders.test.ts`, `guest-orders.test.ts`, `admin-menu.test.ts`, and two others in the same group. They are pre-existing and do not affect the current baseline (27 files / 133 tests).
+Five of the six (0 test) suites have been filled in; only tests/integration/api/admin-menu.test.ts remains.
 
-- **Trigger to schedule:** when Phase 6 (kitchen), Phase 7 (staff queues), and Phase 8 (manager panel) fill those suites in.
+- **Trigger to schedule:** when Phase 6 (kitchen), Phase 7 (staff queues), and Phase 8 (manager panel) fill those suites in; only admin-menu remains, filled by Task 8.3.1.
 - **Owns them when scheduled:** the Phase 6/7/8 tasks that build the routes those suites test.
 - **Why it is here:** so a future session does not mistake `(0 test)` for a passing suite or a regression.
 
