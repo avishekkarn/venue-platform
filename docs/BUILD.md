@@ -554,7 +554,38 @@ A task is not done if any of the following is true:
 - A decision was made silently.
 - The report claims something that is not proven.
 
-*Traces to:* Principle 5 (the process is the guarantee), §11 (the verification protocol), §13 (the report format), §8.8 (the mandatory test layer).
+### 15.8 — Verify commit-message claims against the staged diff before push
+
+Every commit message is a claim about the commit's content. A commit whose message names a change that the diff does not contain is not an honest commit — it is a false record that a future session will trust. The failure mode this rule prevents was observed in commit `20627a0` (2026-11-02), whose message claimed an ENTRY-0203 addendum and an F-0001 discharge that the diff did not include. The record was corrected by a follow-up commit (PROGRESS ENTRY-0204), but the mechanism must not be able to recur.
+
+Before `git commit -m "<message>"`, the developer runs:
+```
+git --no-pager diff --cached --stat
+```
+
+Every substantive noun in the message — a file, a document, an entry, a task, an obligation — must appear as either (a) a file in the stat, or (b) a hunk that `git --no-pager diff --cached -- <that file>` will reveal. A message claiming "addendum to ENTRY-0203" is a claim about `docs/PROGRESS.md`; the staged diff of that file must contain a hunk that matches. A message claiming "F-0001 marked DISCHARGED" is a claim about `docs/WIRING.md`; the staged diff of that file must contain a hunk that matches.
+
+Before `git push`, the developer runs:
+```
+git status
+git log --oneline @{u}..HEAD
+git --no-pager show --stat HEAD
+```
+
+The `show --stat HEAD` output is the final check. If it does not corroborate the message, do not push.
+
+After `git push`, the developer runs:
+```
+git fetch origin
+git status
+git log --oneline origin/main -3
+```
+
+The first line of the fetch output shows the pushed SHA; the status line shows "up to date with 'origin/main'"; the log shows the three most recent remote commits. All three must be visible.
+
+This rule applies to every commit made in this project, from this date forward. It does not supersede §11 (Verification Protocol); it extends it from command-evidence to commit-metadata evidence.
+
+*Traces to:* §11.2 (what is not evidence), §13.3 (rules for a report), §14.7 (what is forbidden in a session), PROGRESS ENTRY-0204 (the correction of the `20627a0` overclaim).
 
 ---
 

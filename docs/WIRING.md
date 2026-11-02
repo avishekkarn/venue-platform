@@ -130,6 +130,8 @@
 
 ### F-0001 — Next.js security advisory
 
+**Status: DISCHARGED (2026-11-02) — resolved by `next@16.4.4` bump in commit `0da44ff`. See PROGRESS ENTRY-0203 and ENTRY-0204.**
+
 Next.js emitted a security-advisory recommendation during the 5.4.x builds. A dependency upgrade is out of scope for Milestone 5.4 tasks and must not be folded into them.
 
 - **Trigger to schedule:** the human decides; not tied to a phase.
