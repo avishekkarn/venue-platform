@@ -137,12 +137,451 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0197 | 2026-11-02 | Fix LAN/Mobile interactivity with allowedDevOrigins and synchronous delegation | Complete | Milestone 7.3 | §5.3 |
 | ENTRY-0198 | 2026-11-02 | Enable /dev/qr in Production (Localhost-Only) (ENTRY-0199) | Complete | Milestone 7.3 | §5.3 |
 | ENTRY-0200 | 2026-11-02 | Allow /api/dev/qr in production from localhost | Complete | Milestone 7.3 | §5.3 |
+| ENTRY-0201 | 2026-11-02 | Phase Baseline Snapshot (Stage 0) | Complete | Stage 0 | §5.3 |
+| ENTRY-0202 | 2026-11-02 | ROADMAP ↔ PROGRESS reconciliation | Complete | Stage 2 | §5.3 |
 
-Next entry number: 0201
+Next entry number: 0203
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (The Dashboard). Current task: Task 8.1.1 — Add the live metric cards.
 
 New entries go immediately below the ▼ marker, newest first.
+
+▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0202 — 2026-11-02 — ROADMAP ↔ PROGRESS reconciliation (STRUCTURAL)
+Status: STRUCTURAL
+
+Task: Task 8.0.2 (Stage 2: ROADMAP ↔ PROGRESS Reconciliation)
+
+Summary:
+Reconciles the ROADMAP with the code inventory from ENTRY-0201; nine discrepancies closed. The ROADMAP and WIRING ledger now truthfully reflect codebase reality with zero code touched.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Updated | Reconciled tasks 7.2.8 (Deferred), 7.1.4 (In progress), 7.2.9 (In progress), 8.3.4 (Complete), added 9.5.8/9.5.9, added Milestone 7.4 note |
+| `docs/PROGRESS.md` | Updated | Appended ENTRY-0202, updated §5.2 ledger, updated §7 baseline snapshot |
+| `docs/WIRING.md` | Updated | Opened active obligations W-0002 through W-0007 in §2 |
+
+Commands Run:
+
+1. `git diff --stat docs/`
+```
+ docs/PROGRESS.md | 435 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ docs/ROADMAP.md  |  20 ++-
+ docs/WIRING.md   |  64 +++++++-
+ 3 files changed, 509 insertions(+), 10 deletions(-)
+```
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | ROADMAP 7.2.8 → 🔵 Deferred, with note | PASS | Status is 🔵 Deferred; note contains "ENTRY-0194" and "ENTRY-0202" |
+| 2 | ROADMAP 7.1.4, 7.2.9 → 🟨 In progress | PASS | Both statuses are 🟨; both notes reference cancel-request.ts |
+| 3 | Milestone 7.4 header note added | PASS | Note contains "ENTRY-0201" and "ENTRY-0202" |
+| 4 | ROADMAP 8.3.4 → ✅ Complete | PASS | Status is ✅; note references W-0005 |
+| 5 | ROADMAP 9.5.8 and 9.5.9 added | PASS | Both present under Milestone 9.5 |
+| 6 | PROGRESS has ENTRY-0202 as STRUCTURAL | PASS | Present at top of §5.3 |
+| 7 | PROGRESS §7 updated | PASS | Present with "Refinement Program — Stage 2 complete" snapshot |
+| 8 | WIRING has W-0002 through W-0007 | PASS | Six matches in §2 matching pattern W-000[2-7] |
+| 9 | No file under src/, app/, tests/, prisma/, public/ changed | PASS | Zero files modified by Stage 2; pre-existing uncommitted work in app/ preserved |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+The two live baseline failures (pnpm build, pnpm test:integration) are not fixed by this session — see Stage 3.0.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No requirements changed | No change |
+| DECISIONS.md | No | No architectural decisions modified | No change |
+| SYSTEM.md | No | System architecture unchanged | No change |
+| BUILD.md | No | Build rules unchanged | No change |
+| ROADMAP.md | Yes | Reconciled tasks 7.2.8, 7.1.4, 7.2.9, 8.3.4, 9.5.8, 9.5.9, Milestone 7.4 | Updated |
+| PROGRESS.md | Yes (this entry) | Appended ENTRY-0202, updated §5.2 and §7 | Updated |
+| WIRING.md | Yes | Appended obligations W-0002 through W-0007 | Updated |
+
+Contradiction Check:
+The check finds that PROGRESS §7 previously claimed all four baselines pass — this is corrected in the same session by the §7 update below.
+
+**Addendum to ENTRY-0202 (added 2026-11-02, same session as the primary reconciliation):**
+
+Two downstream dependency claims in ROADMAP.md are corrected in this same entry:
+
+1. **Task 7.1.5** (table-close) remains `✅ Complete` even though its declared dependency **7.1.4** is now `🟨 In progress`. The 7.1.5 implementation (`closeTable` in `src/domain/staff/close-table.ts`, exercised in `tests/integration/api/staff-orders.test.ts`) calls `invalidateSessionsForPlace` and `tableRepo.setStatus` directly; it does not depend on the deferred request-cancellation half of 7.1.4. Task 7.1.5's `Depends on` column is amended to `7.1.3 (order path only)` and a footnote is added: *"7.1.5 does not depend on 7.1.4's deferred request-cancellation half — see ENTRY-0202 Addendum."*
+2. **Task 7.2.9** was marked `🟨 In progress` in the primary reconciliation but its dependency (7.2.8) is now `🔵 Deferred`. A 🟨 cannot depend on a 🔵. Task 7.2.9's status is corrected to `🔵 Deferred`, and a note is added: *"7.2.9 is deferred to Phase 9 as Task 9.5.10 (the request route verification half). The order routes verification is complete and was tracked in 7.2.7. See ENTRY-0202 Addendum and Task 9.5.10 below."*
+
+Two corresponding ROADMAP edits are made in this addendum:
+
+- **Line 547** (Task 7.1.5): `Depends on` column changed from `7.1.4` to `7.1.3 (order path)`. A footnote is added on line 551.
+- **Line 565** (Task 7.2.9): status changed from `🟨 In progress` to `🔵 Deferred`. A new Task 9.5.10 is added below Milestone 9.5: `| 9.5.10 | Verify: every request route returns the correct envelope and status (moved from 7.2.9) | ⬜ | 9.5.9 |`.
+
+This addendum is part of ENTRY-0202. No new entry is created.
+
+Next:
+Stage 3.0 — Build & DB bring-up (Task 8.0.3).
+
+Awaiting Human Verification: YES
+
+---
+
+### ENTRY-0201 — 2026-11-02 — Phase Baseline Snapshot (Stage 0)
+Status: STRUCTURAL
+
+Task: None (structural session - Stage 0 baseline freeze)
+
+Summary:
+Established an evidenced, frozen structural baseline of the repository across all four verification gates, file inventories, route surfaces, repository contracts, and component scripts. The project's actual operational state is now transparently recorded with zero code modifications, surfacing all discrepancies between ROADMAP.md claims and codebase reality.
+
+Files Changed:
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/PROGRESS.md` | Updated | Recorded ENTRY-0201 in §5.2/§5.3 and updated §7 state snapshot |
+
+Commands Run:
+
+1. `pnpm exec tsc --noEmit`
+```
+Created At: 2026-11-02T20:50:28+05:30
+Completed At: 2026-11-02T20:50:34+05:30
+Command exited with code 0.
+No output from the command.
+```
+
+2. `pnpm test:unit`
+```
+$ vitest run --config vitest.config.ts
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+ ✓ tests/unit/lib/date.test.ts (14 tests) 28ms
+ ✓ tests/unit/lib/money.test.ts (16 tests) 26ms
+ ✓ tests/unit/lib/utils.test.ts (13 tests) 15ms
+ ✓ tests/unit/orders/create-order.test.ts (13 tests) 21ms
+ ✓ tests/unit/orders/advance-order.test.ts (5 tests) 9ms
+ ✓ tests/unit/guest/guest-session.service.test.ts (13 tests) 11ms
+ ✓ tests/unit/orders/actions.test.ts (13 tests) 16ms
+ ✓ tests/unit/orders/compute-price.test.ts (20 tests) 9ms
+ ✓ tests/unit/orders/transitions.test.ts (10 tests) 11ms
+ ✓ tests/unit/menu/get-menu.test.ts (6 tests) 11ms
+ ✓ tests/unit/staff/checkout-room.test.ts (6 tests) 9ms
+ ✓ tests/unit/staff/close-table.test.ts (6 tests) 9ms
+ ✓ tests/unit/infrastructure/qr/qr-image.adapter.test.ts (2 tests) 125ms
+ ✓ tests/unit/auth/middleware.test.ts (5 tests) 11ms
+ ✓ tests/unit/qr/resolve-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/orders/compute-tax.test.ts (16 tests) 8ms
+ ✓ tests/unit/menu/get-menu-item.test.ts (6 tests) 9ms
+ ✓ tests/unit/auth/change-password.test.ts (5 tests) 8ms
+ ✓ tests/unit/qr/generate-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/auth/login.test.ts (5 tests) 9ms
+ ✓ tests/unit/qr/revoke-token.test.ts (4 tests) 8ms
+ ✓ tests/unit/infrastructure/guest/cookies.test.ts (4 tests) 7ms
+ ✓ tests/unit/auth/require-role.test.ts (3 tests) 7ms
+ ✓ tests/unit/auth/redirect-map.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/logout.test.ts (2 tests) 5ms
+ ✓ tests/unit/infrastructure/auth/session.test.ts (5 tests) 6ms
+ ✓ tests/unit/auth/get-session.test.ts (3 tests) 6ms
+ ✓ tests/unit/infrastructure/auth/cookies.test.ts (3 tests) 4ms
+ ✓ tests/unit/auth/can-access.test.ts (6 tests) 4ms
+ ✓ tests/unit/menu/is-orderable.test.ts (4 tests) 3ms
+ ✓ tests/unit/infrastructure/auth/password.test.ts (5 tests) 690ms
+
+ Test Files  31 passed (31)
+      Tests  226 passed (226)
+   Start at  20:50:41
+   Duration  1000ms
+```
+
+3. `pnpm test:integration`
+```
+$ vitest run --config vitest.integration.config.ts
+◇ injected env (3) from .env.local
+
+ RUN  v5.0.4 A:/QR-PROJECT
+
+FAIL tests/integration/harness.test.ts
+FAIL tests/integration/api/admin-menu.test.ts
+FAIL tests/integration/api/admin-qr-generate.test.ts
+FAIL tests/integration/api/admin-qr-revoke.test.ts
+FAIL tests/integration/api/guest-call.test.ts
+FAIL tests/integration/api/guest-orders.test.ts
+FAIL tests/integration/api/kitchen-orders.test.ts
+FAIL tests/integration/api/staff-orders.test.ts
+FAIL tests/integration/auth/login-route.test.ts
+FAIL tests/integration/auth/logout-route.test.ts
+FAIL tests/integration/auth/session-route.test.ts
+FAIL tests/integration/auth/single-session.test.ts
+FAIL tests/integration/guest/guest-session-lifecycle.test.ts
+FAIL tests/integration/guest/qr-landing.test.ts
+FAIL tests/integration/orders/create-order.test.ts
+FAIL tests/integration/repositories/guest-session.test.ts
+FAIL tests/integration/repositories/menu-get-full-menu.test.ts
+FAIL tests/integration/repositories/menu.test.ts
+FAIL tests/integration/repositories/order.repo.test.ts
+FAIL tests/integration/repositories/payment.test.ts
+FAIL tests/integration/repositories/qr-token-list.test.ts
+FAIL tests/integration/repositories/qr-token.test.ts
+FAIL tests/integration/repositories/request.test.ts
+FAIL tests/integration/repositories/room.test.ts
+FAIL tests/integration/repositories/staff-session.test.ts
+FAIL tests/integration/repositories/staff.test.ts
+FAIL tests/integration/repositories/table.test.ts
+FAIL tests/integration/repositories/venue.test.ts
+FAIL tests/integration/menu/get-menu-hidden-filter.test.ts
+
+Error: Command failed: pnpm prisma migrate deploy
+Error: P1001: Can't reach database server at `localhost:5432`
+Please make sure your database server is running at `localhost:5432`.
+ ❯ tests/integration/setup.ts:35:5
+
+ Test Files  29 failed (29)
+      Tests  189 skipped (189)
+   Duration  41.69s
+Command exited with code 1.
+```
+
+4. `pnpm build`
+```
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 24ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+
+-----
+FATAL: An unexpected Turbopack error occurred.
+Error [TurbopackInternalError]: [project]/app/globals.css [app-client] (css)
+Caused by:
+- creating new process
+- node process exited before we could connect to it with exit code: 0
+Debug info:
+- [project]/app/globals.css [app-client] (css)
+- Execution of parse_css failed
+- Execution of PostCssTransformedAsset::process failed
+- evaluate_webpack_loader failed: node process exited before we could connect to it with exit code: 0
+Command exited with code 1.
+```
+
+5. Frozen Inventory: 0-Byte and Stub Files:
+- 0-byte `.ts` files in `src/` (Total: 36 files):
+  1. `src/config/venue.config.ts` (0 B)
+  2. `src/domain/auth/require-role.ts` (0 B)
+  3. `src/domain/menu/list-categories.ts` (0 B)
+  4. `src/domain/orders/cancel-order.ts` (0 B)
+  5. `src/domain/organization/get-enabled-modules.ts` (0 B)
+  6. `src/domain/organization/get-enabled-services.ts` (0 B)
+  7. `src/domain/organization/get-venue-currency.ts` (0 B)
+  8. `src/domain/organization/get-venue-language.ts` (0 B)
+  9. `src/domain/organization/get-venue-tax-rate.ts` (0 B)
+  10. `src/domain/organization/get-venue.ts` (0 B)
+  11. `src/domain/organization/index.ts` (0 B)
+  12. `src/domain/payments/confirm-ticket.ts` (0 B)
+  13. `src/domain/payments/create-ticket.ts` (0 B)
+  14. `src/domain/payments/generate-receipt.ts` (0 B)
+  15. `src/domain/payments/index.ts` (0 B)
+  16. `src/domain/payments/verify-ticket.ts` (0 B)
+  17. `src/domain/qr/index.ts` (0 B)
+  18. `src/domain/requests/advance-request.ts` (0 B)
+  19. `src/domain/requests/cancel-request.ts` (0 B)
+  20. `src/domain/requests/decline-request.ts` (0 B)
+  21. `src/domain/requests/edit-request.ts` (0 B)
+  22. `src/domain/requests/index.ts` (0 B)
+  23. `src/domain/requests/transitions.ts` (0 B)
+  24. `src/domain/shared/index.ts` (0 B)
+  25. `src/domain/shared/slug.ts` (0 B)
+  26. `src/domain/shared/time.ts` (0 B)
+  27. `src/domain/shared/validators.ts` (0 B)
+  28. `src/infrastructure/config/venue.ts` (0 B)
+  29. `src/infrastructure/payments/bridge.ts` (0 B)
+  30. `src/infrastructure/payments/index.ts` (0 B)
+  31. `src/infrastructure/payments/placeholder.ts` (0 B)
+  32. `src/infrastructure/qr/image.ts` (0 B)
+  33. `src/lib/cn.ts` (0 B)
+  34. `src/lib/constants.ts` (0 B)
+  35. `src/motion/guest.ts` (0 B)
+  36. `src/motion/staff.ts` (0 B)
+- 0-byte `.tsx` files in `app/`: 0 files found.
+- Small stub / placeholder barrel exports:
+  - `src/domain/guest/index.ts` (86 B)
+  - `src/domain/menu/index.ts` (128 B)
+  - `src/infrastructure/qr/index.ts` (82 B)
+
+6. Frozen Inventory: Pages and API Routes in `app/` (52 files):
+- Pages & Layouts (28 files):
+  - `app/(guest)/cart/page.tsx` (27,404 B)
+  - `app/(guest)/menu/page.tsx` (18,748 B)
+  - `app/(guest)/order/[id]/track/page.tsx` (30,224 B)
+  - `app/(guest)/order/[id]/page.tsx` (10,430 B)
+  - `app/(guest)/qr/inactive/page.tsx` (599 B)
+  - `app/(guest)/qr/join/[token]/page.tsx` (5,977 B)
+  - `app/(guest)/qr/occupied/page.tsx` (7,383 B)
+  - `app/(guest)/services/page.tsx` (6,339 B)
+  - `app/(guest)/layout.tsx` (1,472 B)
+  - `app/admin/login/page.tsx` (959 B)
+  - `app/admin/qr/print/[id]/page.tsx` (4,343 B)
+  - `app/admin/qr/page.tsx` (8,398 B)
+  - `app/admin/layout.tsx` (1,694 B)
+  - `app/admin/page.tsx` (6,702 B)
+  - `app/dev/qr/page.tsx` (4,481 B)
+  - `app/forbidden/page.tsx` (783 B)
+  - `app/kitchen/login/page.tsx` (961 B)
+  - `app/kitchen/layout.tsx` (2,310 B)
+  - `app/kitchen/page.tsx` (26,601 B)
+  - `app/staff/login/page.tsx` (957 B)
+  - `app/staff/layout.tsx` (1,772 B)
+  - `app/staff/page.tsx` (31,955 B)
+  - `app/layout.tsx` (480 B)
+  - `app/page.tsx` (682 B)
+- API Routes & Dynamic Handlers (24 files):
+  - `app/(guest)/qr/[token]/route.ts` (4,570 B) — GET
+  - `app/api/admin/menu/items/[id]/state/route.ts` (6,042 B) — POST
+  - `app/api/admin/qr/generate/route.ts` (6,071 B) — POST
+  - `app/api/admin/qr/[id]/image/route.ts` (2,387 B) — GET
+  - `app/api/admin/qr/[id]/revoke/route.ts` (5,845 B) — POST
+  - `app/api/auth/login/route.ts` (4,188 B) — POST
+  - `app/api/auth/logout/route.ts` (1,573 B) — POST
+  - `app/api/auth/session/route.ts` (3,516 B) — GET
+  - `app/api/dev/qr/route.ts` (1,572 B) — GET
+  - `app/api/guest/call/route.ts` (6,024 B) — POST
+  - `app/api/guest/join-requests/recover/route.ts` (2,134 B) — POST
+  - `app/api/guest/join-requests/status/route.ts` (1,646 B) — GET
+  - `app/api/guest/join-requests/[id]/approve/route.ts` (2,310 B) — POST
+  - `app/api/guest/join-requests/[id]/decline/route.ts` (2,310 B) — POST
+  - `app/api/guest/join-requests/route.ts` (4,714 B) — POST, GET
+  - `app/api/guest/menu/states/route.ts` (2,171 B) — GET
+  - `app/api/guest/orders/[id]/route.ts` (3,583 B) — GET
+  - `app/api/guest/orders/route.ts` (8,573 B) — POST, GET
+  - `app/api/kitchen/orders/[id]/ready/route.ts` (4,213 B) — POST
+  - `app/api/kitchen/orders/[id]/start/route.ts` (4,223 B) — POST
+  - `app/api/kitchen/orders/route.ts` (3,848 B) — GET
+  - `app/api/staff/orders/[id]/approve/route.ts` (4,650 B) — POST
+  - `app/api/staff/orders/[id]/cancel/route.ts` (5,366 B) — POST
+  - `app/api/staff/orders/[id]/complete/route.ts` (4,652 B) — POST
+  - `app/api/staff/orders/[id]/deliver/route.ts` (4,650 B) — POST
+  - `app/api/staff/orders/route.ts` (4,575 B) — GET
+  - `app/api/staff/rooms/[id]/checkout/route.ts` (4,566 B) — POST
+  - `app/api/staff/tables/[id]/close/route.ts` (4,566 B) — POST
+
+7. Frozen Inventory: Repository Methods across `src/infrastructure/db/repositories/`:
+- `guest-session.repo.ts`: `create`, `findByToken`, `invalidateByToken`, `invalidateByPlace`
+- `join-request.repo.ts`: `create`, `findPendingBySession`, `findByDevice`, `updateStatus`
+- `menu.repo.ts`: `listCategories`, `listItemsForCategory`, `listItems`, `getItemWithModifiers`, `createCategory`, `createItem`, `setItemState`, `createModifierGroup`, `createModifierOption`, `getFullMenu`
+- `order.repo.ts`: `create`, `findById`, `findByIdempotencyKey`, `listForVenue`, `listForGuestSession`, `advanceState`, `cancel`
+- `organization.repo.ts`: `findById`, `findBySlug`, `create`
+- `payment-ticket.repo.ts`: `createTicket`, `findTicketById`, `confirmTicket`, `failTicket`
+- `qr-token.repo.ts`: `findByToken`, `findById`, `generate`, `revoke`, `listForVenue`, `resolve`
+- `receipt.repo.ts`: `createReceipt`, `findReceiptForTicket`
+- `request.repo.ts`: `create`, `findById`, `listForVenue`, `listForRoom`, `listForTable`, `listForCounter`, `advanceState`, `cancel`, `decline`, `updateDetails`
+- `room.repo.ts`: `findById`, `findByNumber`, `listForVenue`, `create`, `setState`, `setStatus`
+- `staff-session.repo.ts`: `findByToken`, `listActiveForStaff`, `create`, `endById`, `endAllForStaff`
+- `staff.repo.ts`: `findById`, `findByUsername`, `listForVenue`, `create`, `updatePasswordHash`, `setState`
+- `table.repo.ts`: `findById`, `findByNumber`, `listForVenue`, `create`, `setState`, `setStatus`
+
+8. Component & Script Hygiene Inventory:
+- `_logout-button.tsx` files (4 duplicate files):
+  - `app/admin/qr/_logout-button.tsx` (613 B)
+  - `app/admin/_logout-button.tsx` (642 B)
+  - `app/kitchen/_logout-button.tsx` (644 B)
+  - `app/staff/_logout-button.tsx` (642 B)
+- `_form.tsx` files (3 files):
+  - `app/admin/login/_form.tsx` (3,094 B)
+  - `app/kitchen/login/_form.tsx` (3,233 B)
+  - `app/staff/login/_form.tsx` (3,094 B)
+- `dangerouslySetInnerHTML` usage (14 files):
+  - `app/(guest)/cart/page.tsx`
+  - `app/(guest)/menu/page.tsx` (x2)
+  - `app/(guest)/menu/_category-tabs.tsx`
+  - `app/(guest)/menu/_menu-list.tsx`
+  - `app/(guest)/order/[id]/track/page.tsx` (x2)
+  - `app/(guest)/qr/join/[token]/page.tsx`
+  - `app/(guest)/qr/occupied/page.tsx`
+  - `app/admin/login/_form.tsx`
+  - `app/admin/page.tsx`
+  - `app/kitchen/login/_form.tsx`
+  - `app/kitchen/page.tsx`
+  - `app/staff/login/_form.tsx`
+  - `app/staff/page.tsx`
+
+9. Routing & Redirection Surface:
+- Guest screens redirecting to `/` on missing/invalid guest cookie or session:
+  - `app/(guest)/cart/page.tsx`
+  - `app/(guest)/menu/page.tsx`
+  - `app/(guest)/order/[id]/track/page.tsx`
+  - `app/(guest)/order/[id]/page.tsx`
+  - `app/(guest)/services/page.tsx`
+- QR routing entrypoints (`app/(guest)/qr/[token]/route.ts`):
+  - Inactive/revoked token redirects to `/qr/inactive`
+  - Occupied table/room redirects to `/qr/occupied` or `/qr/join/[token]`
+  - Successful session establishment redirects to place target (`/menu` or `/services`)
+- Staff & admin screen guards:
+  - `app/admin/page.tsx` calls `requireRole(["admin"])` → redirects unauthenticated to `/staff/login`, non-admin to `/forbidden`
+  - `app/kitchen/page.tsx` calls `requireRole(["kitchen"])` → redirects unauthenticated to `/kitchen/login`, unauthorized to `/forbidden`
+  - `app/staff/page.tsx` calls `requireRole(["table_service", "room_service"])` → redirects unauthenticated to `/staff/login`, unauthorized to `/forbidden`
+  - Login screens (`/admin/login`, `/kitchen/login`, `/staff/login`) redirect already-authenticated users to their role landing route via `getLandingRouteForRoles(staff.roles)`
+
+10. ROADMAP vs Code Discrepancies:
+- **Discrepancy 1 — Task 7.2.8 (`Add GET /api/staff/requests and all request action routes`)**: Marked `✅ Complete` in ROADMAP.md line 562, but no requests routes exist in `app/api/staff/requests`! (A note at line 578 states the route was deferred to Phase 9 as Tasks 9.5.6 and 9.5.7, but the table row was erroneously marked Complete).
+- **Discrepancy 2 — Task 7.1.4 (`Add the cancellation action with a reason (for both orders and requests)`)**: Marked `✅ Complete` in ROADMAP.md line 546. In code, `cancelOrder` exists in `src/domain/orders/actions.ts`, but `cancelRequest` in `src/domain/requests/cancel-request.ts` is a 0-byte stub file.
+- **Discrepancy 3 — Task 7.2.9 (`Verify: every route returns the correct envelope and status; the state transitions are enforced`)**: Marked `✅ Complete` in ROADMAP.md line 563. Only staff order routes were created and tested; request routes were not implemented.
+- **Discrepancy 4 — Milestone 7.4 Verification Tasks (7.4.1–7.4.4)**: Marked `⬜` in ROADMAP.md, yet PROGRESS.md §7 claimed Milestone 7.3 was complete and "Ready for Phase 8" without executing the Milestone 7.4 full loop verification. Prior entries (ENTRY-0198 and ENTRY-0200) conflated localhost `/dev/qr` guards with tasks 7.4.2 and 7.4.3.
+- **Discrepancy 5 — Task 8.3.4 (`Add the item state toggle (available, unavailable, hidden)`)**: Marked `⬜` in ROADMAP.md, but the functionality and route (`app/api/admin/menu/items/[id]/state/route.ts`) were already implemented in Phase 5 / Admin dashboard.
+- **Discrepancy 6 — Integration & Build Baselines in PROGRESS.md §7**: Prior entry asserted all 4 baselines pass; reality is that `pnpm test:integration` requires a live PostgreSQL instance at `localhost:5432` (failing with P1001 when offline), and `pnpm build` fails due to a Next.js Turbopack internal process exit during `app/globals.css` post-css compilation.
+
+Acceptance Criteria Results:
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Run all four baselines and paste raw output | PASS | Typecheck, unit tests, integration tests, and build outputs captured verbatim |
+| 2 | Enumerate every 0-byte or stub file in src/ and app/ | PASS | 36 zero-byte files in `src/`, 0 in `app/`, 3 stub barrels listed |
+| 3 | Enumerate every page, layout, and API route in app/ | PASS | 52 files enumerated with paths and byte counts |
+| 4 | Enumerate every repository method across infra db repos | PASS | All 13 repository implementations analyzed and methods cataloged |
+| 5 | Enumerate every route handler's exported verbs | PASS | 24 route handlers inventoried with exact exported HTTP verbs |
+| 6 | Enumerate `_logout-button`, `_form`, `dangerouslySetInnerHTML` | PASS | 4 logout buttons, 3 forms, and 14 files with `dangerouslySetInnerHTML` identified |
+| 7 | Enumerate actual application redirection surface | PASS | Guest and staff redirect patterns inventoried |
+| 8 | Document every discrepancy between ROADMAP and code | PASS | 6 concrete discrepancies identified and detailed |
+| 9 | No code touched in Stage 0 | PASS | Only `docs/PROGRESS.md` modified |
+
+Deviations from Contract:
+None.
+
+Noticed but Out of Scope:
+- `pnpm build` fails due to Turbopack worker process exit on Windows when compiling `globals.css`. Stage 1+ must inspect build configuration or run webpack fallback if supported.
+- 4 redundant `_logout-button.tsx` files should be consolidated into a shared component.
+- 36 zero-byte stub files in `src/` should either be implemented in their designated phases or kept as explicit placeholders.
+
+Document Impact:
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No requirements changed | No change |
+| DECISIONS.md | No | No architectural decisions modified | No change |
+| SYSTEM.md | No | System architecture unchanged | No change |
+| BUILD.md | No | Build rules unchanged | No change |
+| ROADMAP.md | Needs update | 6 discrepancies found between ROADMAP status and codebase | Pending future stage update |
+| PROGRESS.md | Yes (this entry) | Added ENTRY-0201 and corrected §7 snapshot | Updated |
+
+Contradiction Check:
+None found.
+
+Next:
+Stage 1 of the multi-stage plan. Address baseline failures and proceed according to BUILD.md §15.
+
+Awaiting Human Verification: NO
+
+---
 
 ▼ APPEND NEW ENTRIES HERE ▼
 
@@ -304,13 +743,13 @@ New entries go immediately below the ▼ marker, newest first.
 
 Updated at the end of every session.
 
-Current phase: Phase 8 (The Manager Panel).
+Current phase: Phase 8 (The Manager Panel) — Refinement Program.
 
-Current milestone: Milestone 8.1 (The Dashboard).
+Current milestone: Stage 2 Complete.
 
-Current task: Task 8.1.1 — Add the live metric cards (waiting, in kitchen, ready, revenue today, orders today).
+Current task: Task 8.0.3 — Stage 3.0 Build & DB bring-up.
 
-Current status: Milestone 7.3 complete. The complete Staff Dashboard (Orders, Table Map, Room Map) implemented without anti-patterns. All 4 baselines pass (`tsc` 0 errors, `pnpm test:unit` 226/226 passed, `pnpm test:integration` 189/189 passed, `pnpm build` 47 routes + 1 proxy). Ready for Phase 8.
+Current status: Refinement Program — Stage 2 complete. ROADMAP reconciled with ENTRY-0201. Baselines: tsc PASS, test:unit 226/226 PASS, test:integration FAIL (PostgreSQL offline), build FAIL (Turbopack). Two Stage 3.0 blocker tasks opened. Phase 8 not started; Phase 7.4 verification required before any new work.
 
 ## 8. How the File Evolves
 

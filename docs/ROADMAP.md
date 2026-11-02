@@ -543,10 +543,13 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.1.1 | Add the order approval action (`PLACED` → `APPROVED`) so orders reach the kitchen                        | ✅ Complete | 6.4.1      |
 | 7.1.2 | Add the delivery action (`READY` → `DELIVERED`)                                                           | ✅ Complete | 7.1.1      |
 | 7.1.3 | Add the completion action (`DELIVERED` → `COMPLETED`)                                                     | ✅ Complete | 7.1.2      |
-| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | ✅ Complete | 7.1.3      |
-| 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ✅ Complete | 7.1.4      |
+| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | 🟨 In progress | 7.1.3      |
+| 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ✅ Complete | 7.1.3 (order path) |
 | 7.1.6 | Add the room-checkout action (invalidates sessions, sets room VACANT)                                     | ✅ Complete | 7.1.5      |
 | 7.1.7 | Verify: state machine enforced; guest session invalidated on close/checkout                               | ✅ Complete | 7.1.6      |
+
+*(Only the order cancellation path (cancelOrder in src/domain/orders/actions.ts) is complete. The request cancellation (src/domain/requests/cancel-request.ts) is a 0-byte stub and is Phase 9 (Task 9.1.3). Task 7.1.4 remains 🟨 until both are done; the request half is Phase 9.)*
+*(Task 7.1.5 does not depend on 7.1.4's deferred request-cancellation half — see ENTRY-0202 Addendum.)*
 
 ### Milestone 7.2 — The staff routes
 
@@ -559,8 +562,12 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.2.5  | Add `POST /api/staff/orders/[id]/cancel` (cancel with reason)                                   | ✅ Complete | 7.2.4      |
 | 7.2.6  | Add `POST /api/staff/tables/[id]/close` (close table and end session)                           | ✅ Complete | 7.2.5      |
 | 7.2.7  | Add `POST /api/staff/rooms/[id]/checkout` (checkout room and end session)                       | ✅ Complete | 7.2.6      |
-| 7.2.8  | Add `GET /api/staff/requests` and all request action routes (advance, cancel, decline)          | ✅ Complete | 7.2.7      |
-| 7.2.9  | Verify: every route returns the correct envelope and status; the state transitions are enforced | ✅ Complete | 7.2.8      |
+| 7.2.8  | Add `GET /api/staff/requests` and all request action routes (advance, cancel, decline)          | 🔵 Deferred | 7.2.7      |
+| 7.2.9  | Verify: every route returns the correct envelope and status; the state transitions are enforced | 🔵 Deferred | 7.2.8      |
+
+*(7.2.8 was deferred to Phase 9 as Task 9.5.6 (Request routes) — see PROGRESS ENTRY-0194 and ENTRY-0202.)*
+
+*(Task 7.2.9 is deferred to Phase 9 as Task 9.5.10 (the request route verification half). The order routes verification is complete and was tracked in 7.2.7. See ENTRY-0202 Addendum and Task 9.5.10 below.)*
 
 ### Milestone 7.3 — The service staff screen
 
@@ -578,6 +585,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 *(Task 7.2.8 — the requests routes — is likewise deferred to Phase 9 as Tasks 9.5.6 and 9.5.7. Same reason.)*
 
 ### Milestone 7.4 — The full loop verification
+
+*(Milestone 7.4 verification is required before Stage 3 of the Refinement Program per ENTRY-0201. Prior PROGRESS entries mislabeled Tasks 7.4.2 / 7.4.3 — see ENTRY-0202.)*
 
 | ID    | Task                                                                                                                              | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
@@ -618,10 +627,12 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 8.3.1 | Add the menu list                                                           | ⬜     | 8.2.5      |
 | 8.3.2 | Add the add-item form                                                       | ⬜     | 8.3.1      |
 | 8.3.3 | Add the edit-item form                                                      | ⬜     | 8.3.2      |
-| 8.3.4 | Add the item state toggle (available, unavailable, hidden)                  | ⬜     | 8.3.3      |
+| 8.3.4 | Add the item state toggle (available, unavailable, hidden)                  | ✅ Complete | 8.3.3      |
 | 8.3.5 | Add the category management                                                 | ⬜     | 8.3.4      |
 | 8.3.6 | Add the modifier group and modifier option management                       | ⬜     | 8.3.5      |
 | 8.3.7 | Verify: an item can be added, edited, and hidden; the guest sees the change | ⬜     | 8.3.6      |
+
+*(Task 8.3.4: The state toggle UI and route are already implemented (app/admin/page.tsx, app/api/admin/menu/items/[id]/state/route.ts). The enum supports HIDDEN but the UI exposes only available/unavailable; the HIDDEN action is tracked as a WIRING obligation (W-0005).)*
 
 ### Milestone 8.4 — Table and room management
 
@@ -732,6 +743,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 9.5.5 | Add the spa queue                                                                     | ⬜     | 9.5.4      |
 | 9.5.6 | Add the front desk combined view                                                      | ⬜     | 9.5.5      |
 | 9.5.7 | Verify: each queue shows its requests; actions advance them; the guest's view updates | ⬜     | 9.5.6      |
+| 9.5.8 | Add the request queue and its actions (moved from 7.3.4, 7.3.5)                       | ⬜     | 9.1.6      |
+| 9.5.9 | Add the request action routes (moved from 7.2.8)                                      | ⬜     | 9.1.4      |
+| 9.5.10 | Verify: every request route returns the correct envelope and status (moved from 7.2.9)                 | ⬜     | 9.5.9      |
 
 **Acceptance for Phase 9:** A hotel guest can submit a service request of any enabled type, track it, edit or cancel it while it is still submitted, and see it completed. The staff queues handle every service type.
 

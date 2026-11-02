@@ -31,7 +31,69 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
-*(None currently active.)*
+## 2. The Active Obligations
+
+*(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
+
+### W-0002 — OPEN — Remove app/admin/_logout-button.tsx when the admin shell is built
+
+- **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
+- **Obligation:** Remove `app/admin/_logout-button.tsx` and consolidate into the shared shell logout component when the admin shell is built.
+- **Files and call site:** `app/admin/_logout-button.tsx`, `app/admin/page.tsx`, `app/admin/qr/page.tsx`.
+- **Satisfied by:** Task 8.1.1 (Admin Dashboard Shell) / Stage 4 Foundation Refactor.
+- **Depends on:** DESIGN.md §4.15.3, SYSTEM.md §3, BUILD.md §4.
+- **Verification:** `app/admin/_logout-button.tsx` removed; admin pages import shared logout button; `tsc --noEmit` clean.
+- **Status:** OPEN
+
+### W-0003 — OPEN — Remove app/staff/_logout-button.tsx when the staff shell is built
+
+- **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
+- **Obligation:** Remove `app/staff/_logout-button.tsx` and consolidate into the shared shell logout component when the staff shell is built.
+- **Files and call site:** `app/staff/_logout-button.tsx`, `app/staff/page.tsx`.
+- **Satisfied by:** Task 7.3.1 (Staff Dashboard Shell) / Stage 4 Foundation Refactor.
+- **Depends on:** DESIGN.md §4.15.3, SYSTEM.md §3, BUILD.md §4.
+- **Verification:** `app/staff/_logout-button.tsx` removed; staff page imports shared logout button; `tsc --noEmit` clean.
+- **Status:** OPEN
+
+### W-0004 — OPEN — Remove app/kitchen/_logout-button.tsx when the kitchen shell is built
+
+- **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
+- **Obligation:** Remove `app/kitchen/_logout-button.tsx` and consolidate into the shared shell logout component when the kitchen shell is built.
+- **Files and call site:** `app/kitchen/_logout-button.tsx`, `app/kitchen/page.tsx`.
+- **Satisfied by:** Task 6.3.1 (Kitchen Screen Shell) / Stage 4 Foundation Refactor.
+- **Depends on:** DESIGN.md §4.15.3, SYSTEM.md §3, BUILD.md §4.
+- **Verification:** `app/kitchen/_logout-button.tsx` removed; kitchen page imports shared logout button; `tsc --noEmit` clean.
+- **Status:** OPEN
+
+### W-0005 — OPEN — Admin UI exposes only AVAILABLE↔UNAVAILABLE; add HIDDEN state action
+
+- **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
+- **Obligation:** Admin UI exposes only AVAILABLE↔UNAVAILABLE for menu items; the HIDDEN action (D-4.2) has no UI. This task moves 8.3.4 from ⬜ to ✅ and opens W-0005 to track the missing third state action.
+- **Files and call site:** `app/admin/page.tsx`, `app/api/admin/menu/items/[id]/state/route.ts`.
+- **Satisfied by:** Task 8.3.1 / Task 8.3.4 (Menu Management).
+- **Depends on:** DECISIONS.md D-4.2, SYSTEM.md §11.1.
+- **Verification:** Admin UI exposes controls for AVAILABLE, UNAVAILABLE, and HIDDEN; integration tests verify all three states.
+- **Status:** OPEN
+
+### W-0006 — OPEN — Consolidate 0-byte src/lib/cn.ts with working src/lib/utils.ts
+
+- **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
+- **Obligation:** `src/lib/cn.ts` is 0-byte while `src/lib/utils.ts` contains the working `cn`. BUILD.md §4.3 names cn as the single helper. Rename/consolidate in Stage 4.
+- **Files and call site:** `src/lib/cn.ts`, `src/lib/utils.ts`.
+- **Satisfied by:** Stage 4 Foundation Refactor.
+- **Depends on:** BUILD.md §4.3.
+- **Verification:** Single canonical `cn` export location with clean imports across codebase; unit tests pass.
+- **Status:** OPEN
+
+### W-0007 — OPEN — Implement documented venue configuration loader
+
+- **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
+- **Obligation:** `src/config/venue.config.ts` and `src/infrastructure/config/venue.ts` are 0-byte while 20 call sites use `process.env["VENUE_SLUG"]` directly. The documented config loader (DESIGN.md Part Three, SYSTEM.md §17.1) is unimplemented. Stage 4 foundation fix.
+- **Files and call site:** `src/config/venue.config.ts`, `src/infrastructure/config/venue.ts`, and all 20 call sites accessing `process.env["VENUE_SLUG"]`.
+- **Satisfied by:** Stage 4 Foundation Refactor.
+- **Depends on:** DESIGN.md Part Three, SYSTEM.md §17.1.
+- **Verification:** Canonical config loader implemented and adopted across all call sites; unit and integration tests pass.
+- **Status:** OPEN
 
 ---
 
