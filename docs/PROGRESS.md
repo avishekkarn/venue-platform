@@ -145,14 +145,163 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0206 | 2026-11-03 | Task 7.5.1 flow audit | STRUCTURAL | Milestone 7.5 | §5.3 |
 | ENTRY-0207 | 2026-11-03 | Task 7.5.2 request state transitions | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0208 | 2026-11-03 | Task 7.5.2a vitest config fix | PASS | Milestone 7.5 | §5.3 |
+| ENTRY-0209 | 2026-11-03 | Task 7.5.3.A advanceRequest + cancelRequest | PASS | Milestone 7.5 | §5.3 |
+| ENTRY-0210 | 2026-11-03 | Task 7.5.3.B declineRequest + editRequest | PASS | Milestone 7.5 | §5.3 |
 
-Next entry number: 0209
+Next entry number: 0211
 
-### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.3 — Add request domain functions.
+### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.4 — Add guest request routes.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0210 — 2026-11-03 — Task 7.5.3.B declineRequest + editRequest (PASS)
+
+**Status:** PASS
+
+**Task:** Task 7.5.3.B — Add `decline-request.ts` and `edit-request.ts` domain functions with unit tests. Committed at `9b0b21e`.
+
+**Summary:** Authored `decline-request.ts` mirroring `cancel-request.ts` structure with the transition table restricting `DECLINED` to `SUBMITTED` / `ACKNOWLEDGED` and a required reason. Authored `edit-request.ts` with the D-5.4 rule (edit allowed only while `SUBMITTED`; no transition, delegates to `requestRepo.updateDetails`). The barrel now exports both new functions; the "deferred to Session 7.5.3.B" comment is removed. Nine new tests (5 decline + 4 edit).
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/domain/requests/decline-request.ts` | Created (was 0-byte) | `declineRequest` + types |
+| `src/domain/requests/edit-request.ts` | Created (was 0-byte) | `editRequest` + types |
+| `src/domain/requests/index.ts` | Edited | Added `declineRequest` and `editRequest` exports; removed deferral comment |
+| `tests/unit/requests/decline-request.test.ts` | Created | 5 test cases |
+| `tests/unit/requests/edit-request.test.ts` | Created | 4 test cases |
+
+**Commands Run:**
+```powershell
+pnpm test:unit -- tests/unit/requests/decline-request.test.ts
+```
+Result: `5 passed`.
+
+```powershell
+pnpm test:unit -- tests/unit/requests/edit-request.test.ts
+```
+Result: `4 passed`.
+
+```powershell
+pnpm test:unit
+```
+Result: `Test Files 36 passed (36); Tests 254 passed (254)`.
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Result: exit 0, 0 errors.
+
+```powershell
+git status --porcelain src/domain/requests tests/unit/requests
+```
+Result: exactly the 5 files above.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1–11 | Domain exports, D-5.4 guard, reason validation, barrel, tests, typecheck | PASS | 5 decline + 4 edit; 254 total; 0 errors |
+| 12 | Only 5 files changed | PASS | Exactly the 5 |
+| 13 | Untouched files preserved | PASS | Empty |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:** None.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | 7.5.3 complete | Tracked in 7.5.3.C |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | — | No change |
+
+**Contradiction Check:** None found.
+
+**Next:** Task 7.5.3.C — this documentation reconciliation commit.
+
+**Awaiting Human Verification:** YES
+
+### ENTRY-0209 — 2026-11-03 — Task 7.5.3.A advanceRequest + cancelRequest (PASS)
+
+**Status:** PASS
+
+**Task:** Task 7.5.3.A — Add `advance-request.ts` and `cancel-request.ts` domain functions with unit tests. Committed at `36cd603`.
+
+**Summary:** Authored `advance-request.ts` mirroring `src/domain/orders/advance-order.ts` and `cancel-request.ts` mirroring the `cancelOrder` shape from `src/domain/orders/actions.ts` with one extension: the D-5.3 `by: "guest" | "staff"` parameter that constrains guest cancels to `SUBMITTED` only. The barrel (`index.ts`) exports `createRequest`, `advanceRequest`, `cancelRequest`, transitions, and the repository types; `declineRequest` and `editRequest` are deferred to 7.5.3.B. Thirteen new unit tests (6 advance + 7 cancel).
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/domain/requests/advance-request.ts` | Created (was 0-byte) | `advanceRequest` + `AdvanceRequestDeps` + `AdvanceRequestDomainInput` |
+| `src/domain/requests/cancel-request.ts` | Created (was 0-byte) | `cancelRequest` + `CancelRequestDeps` + `CancelRequestDomainInput` + D-5.3 guest guard |
+| `src/domain/requests/index.ts` | Created (was 0-byte) | Barrel exports |
+| `tests/unit/requests/advance-request.test.ts` | Created | 6 test cases |
+| `tests/unit/requests/cancel-request.test.ts` | Created | 7 test cases |
+
+**Commands Run:**
+```powershell
+pnpm test:unit -- tests/unit/requests/advance-request.test.ts
+```
+Result: `6 passed`.
+
+```powershell
+pnpm test:unit -- tests/unit/requests/cancel-request.test.ts
+```
+Result: `7 passed`.
+
+```powershell
+pnpm test:unit
+```
+Result: `Test Files 34 passed (34); Tests 245 passed (245)`.
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Result: exit 0, 0 errors.
+
+```powershell
+git status --porcelain src tests vitest.config.ts
+```
+Result: exactly the 5 files above. No other code.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | All three domain files non-empty | PASS | 2032 / 2653 / 832 bytes |
+| 2 | `advance-request.ts` exports | PASS | 3 matches |
+| 3 | `cancel-request.ts` exports | PASS | 3 matches |
+| 4 | `cancel-request.ts` D-5.3 guard | PASS | Match at line 68 |
+| 5 | Barrel exports both | PASS | Matches present |
+| 6 | Barrel omits deferral | PASS | 0 matches for declineRequest/editRequest |
+| 7–9 | Advance / cancel / full unit tests | PASS | 6 / 7 / 245 |
+| 10 | Type checker | PASS | 0 errors |
+| 11 | Only 5 files changed | PASS | Exactly the 5 |
+| 12 | Untouched files preserved | PASS | Empty |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:** `decline-request.ts`, `edit-request.ts` still 0-byte; Task 7.5.3.B fills them.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | 7.5.3 partially complete (A half) | Tracked in 7.5.3.C reconciliation |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | — | No change |
+
+**Contradiction Check:** None found.
+
+**Next:** Task 7.5.3.B — declineRequest and editRequest.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0208 — 2026-11-03 — Task 7.5.2a vitest config fix (PASS)
 
@@ -1397,9 +1546,9 @@ Current phase: Phase 7.5 (Room Service & Frontend Convergence).
 
 Current milestone: Milestone 7.5 — The Room & Convergence.
 
-Current task: Task 7.5.3 — Add request domain functions.
+Current task: Task 7.5.4 — Add guest request routes.
 
-Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (request transitions), 7.5.2a (vitest config) complete at commit `ba83f6d`. Baselines: tsc 0 errors, test:unit 232/232 (32 files), test:integration 189/189, build PASS. Phase 8 blocked. Next gate: Task 7.5.3 (request domain functions).
+Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (transitions), 7.5.2a (vitest config), 7.5.2b (docs), 7.5.3.A (advance + cancel), 7.5.3.B (decline + edit) complete. Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 189/189, build PASS. Phase 8 blocked. Next gate: Task 7.5.4 (guest request routes).
 
 ## 8. How the File Evolves
 
