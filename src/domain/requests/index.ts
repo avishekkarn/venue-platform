@@ -14,6 +14,7 @@ export {
   type CreateServiceRequestInput,
   type AdvanceRequestInput,
   type CancelRequestInput,
+  type DeclineRequestInput,
   type RequestFilter,
   type ServiceRequestRepository,
 } from "./request.repository";
@@ -40,3 +41,15 @@ export {
   type CancelRequestDeps,
   type CancelRequestDomainInput,
 } from "./cancel-request";
+
+export {
+  declineRequest,
+  type DeclineRequestDeps,
+  type DeclineRequestDomainInput,
+} from "./decline-request";
+
+export {
+  editRequest,
+  type EditRequestDeps,
+  type EditRequestDomainInput,
+} from "./edit-request";
