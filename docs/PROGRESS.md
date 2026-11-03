@@ -147,14 +147,91 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0208 | 2026-11-03 | Task 7.5.2a vitest config fix | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0209 | 2026-11-03 | Task 7.5.3.A advanceRequest + cancelRequest | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0210 | 2026-11-03 | Task 7.5.3.B declineRequest + editRequest | PASS | Milestone 7.5 | §5.3 |
+| ENTRY-0211 | 2026-11-03 | Task 7.5.4 guest request routes | PASS | Milestone 7.5 | §5.3 |
 
-Next entry number: 0211
+Next entry number: 0212
 
-### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.4 — Add guest request routes.
+### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.5 — Add staff request routes.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0211 — 2026-11-03 — Task 7.5.4 guest request routes (PASS)
+
+**Status:** PASS
+
+**Task:** Task 7.5.4 — Add the guest-facing service-request routes with integration tests. Committed at `3e6e21e`.
+
+**Summary:** Four route files added under `app/api/guest/requests/`: `route.ts` (POST createRequest, GET list), `[id]/route.ts` (GET single, PATCH editRequest with D-5.4 domain guard), `[id]/cancel/route.ts` (POST cancelRequest by='guest' with D-5.3 domain guard). Every route resolves venue and place from the guest session (`session.placeType` + `session.placeId`); no client-supplied venue, room, table, or counter is accepted (SYSTEM.md §15.2, D-2.1). Every route uses `setTestDbClient` (D-3.13) and maps `DomainErrorCode` to HTTP status via a local `domainErrorToStatus` helper (SYSTEM.md §5). Eight integration tests cover: create (201, SUBMITTED), unauthorized (401), invalid serviceType (400), client-supplied place override (201 with session's place — proving the override is ignored), list (200, length 2), edit-while-SUBMITTED (200), edit-when-not-SUBMITTED (409, D-5.4), cancel-while-SUBMITTED (200, D-5.3).
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `app/api/guest/requests/route.ts` | Created | POST (createRequest) + GET (list by session place) |
+| `app/api/guest/requests/[id]/route.ts` | Created | GET (scoped single) + PATCH (editRequest, D-5.4) |
+| `app/api/guest/requests/[id]/cancel/route.ts` | Created | POST (cancelRequest by='guest', D-5.3) |
+| `tests/integration/api/guest-requests.test.ts` | Created | 8 integration tests |
+
+**Commands Run:**
+```powershell
+pnpm test:integration
+```
+Result: `Test Files 30 passed (30); Tests 197 passed (197)` (189 baseline + 8 new).
+
+```powershell
+pnpm test:unit
+```
+Result: `Test Files 36 passed (36); Tests 254 passed (254)` (unchanged).
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Result: exit 0, 0 errors.
+
+```powershell
+git status --porcelain
+```
+Result (pre-commit): exactly the four new files. (Post-push: empty.)
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Four files exist and are non-empty | PASS | 7064 / 7934 / 5463 / 18981 bytes |
+| 2 | Each route exports `setTestDbClient` | PASS | Three matches |
+| 3 | Each route exports at least one HTTP verb | PASS | Post / Get / Post verified |
+| 4 | No client-supplied `venueId` in any route body | PASS | Zero matches |
+| 5 | No client-supplied place override | PASS | Test #4 proves override is ignored |
+| 6 | Session-scoped place resolution present | PASS | `session.placeId` used in all routes |
+| 7 | Four files appear in `git status` | PASS | Exactly the four |
+| 8 | No other file touched | PASS | Empty |
+| 9 | Full unit suite | PASS | 254/254 |
+| 10 | Full integration suite | PASS | 197/197 |
+| 11 | Type checker | PASS | 0 errors |
+
+**Deviations from Contract:** None. (The Gemini session ran with PostgreSQL offline; the human re-ran integration with PostgreSQL up and confirmed 197/197 — this is the BUILD.md §11.4 flow.)
+
+**Noticed but Out of Scope:** `W-0012` (guest `/requests` page + staff request queue) remains OPEN — the guest *API* now exists but the *UI* (7.5.8) and the staff routes (7.5.5) do not.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | — | No change |
+| DECISIONS.md | No | — | No change |
+| SYSTEM.md | No | — | No change |
+| BUILD.md | No | — | No change |
+| ROADMAP.md | Yes | 7.5.4 → ✅ | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | W-0012 remains OPEN | No change |
+
+**Contradiction Check:** None found. All eleven acceptance rows evidence-backed.
+
+**Next:** Task 7.5.5 — staff request routes.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0210 — 2026-11-03 — Task 7.5.3.B declineRequest + editRequest (PASS)
 
@@ -1546,9 +1623,9 @@ Current phase: Phase 7.5 (Room Service & Frontend Convergence).
 
 Current milestone: Milestone 7.5 — The Room & Convergence.
 
-Current task: Task 7.5.4 — Add guest request routes.
+Current task: Task 7.5.5 — Add staff request routes.
 
-Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (transitions), 7.5.2a (vitest config), 7.5.2b (docs), 7.5.3.A (advance + cancel), 7.5.3.B (decline + edit) complete. Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 189/189, build PASS. Phase 8 blocked. Next gate: Task 7.5.4 (guest request routes).
+Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (transitions), 7.5.2a (vitest config), 7.5.2b (docs), 7.5.3 (advance/cancel/decline/edit), 7.5.4 (guest request routes) complete. Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 197/197 (30 files), build PASS. Phase 8 blocked. Next gate: Task 7.5.5 (staff request routes).
 
 ## 8. How the File Evolves
 
