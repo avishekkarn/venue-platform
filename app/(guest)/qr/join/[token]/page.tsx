@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
 import Link from "next/link";
+import { prisma } from "@/infrastructure/db/client";
+import { PlaceType } from "@/domain/guest/guest-session.repository";
 
 export const metadata: Metadata = {
   title: "Waiting for Approval",
@@ -23,6 +25,28 @@ export default async function JoinWaitingPage({
 }: JoinPageProps): Promise<JSX.Element> {
   const { token } = await params;
   const { deviceId = "", sessionId = "" } = await searchParams;
+
+  let session = null;
+  if (sessionId) {
+    session = await prisma.guestSession.findUnique({
+      where: { id: sessionId },
+    });
+  } else if (token) {
+    const qrToken = await prisma.qrToken.findUnique({
+      where: { token },
+      include: { guestSessions: { where: { endedAt: null }, take: 1 } },
+    });
+    session = qrToken?.guestSessions[0] ?? null;
+  }
+
+  let place = "table";
+  if (session?.placeType === PlaceType.ROOM) {
+    place = "room";
+  } else if (session?.placeType === PlaceType.COUNTER) {
+    place = "counter";
+  } else if (session?.placeType === PlaceType.TABLE) {
+    place = "table";
+  }
 
   return (
     <main className="min-h-dvh flex items-center justify-center px-4 py-12 bg-guest-surface text-guest-text-primary">
@@ -48,7 +72,7 @@ export default async function JoinWaitingPage({
             Waiting for host approval
           </h1>
           <p className="text-sm text-guest-text-secondary leading-relaxed">
-            We notified the table host. Once they approve your request, you will
+            We notified the {place} host. Once they approve your request, you will
             join this session automatically.
           </p>
         </div>
@@ -98,7 +122,7 @@ export default async function JoinWaitingPage({
             Request Declined
           </h1>
           <p className="text-sm text-guest-text-secondary leading-relaxed">
-            Your request to join this table was declined by the host.
+            Your request to join this {place} was declined by the host.
           </p>
           <div className="pt-2">
             <Link

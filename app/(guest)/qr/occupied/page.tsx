@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { prisma } from "@/infrastructure/db/client";
+import { PlaceType } from "@/domain/guest/guest-session.repository";
 
 export const metadata: Metadata = {
   title: "Table Active",
@@ -21,6 +23,28 @@ export default async function OccupiedPage({
   searchParams,
 }: OccupiedPageProps): Promise<JSX.Element> {
   const { token = "", sessionId = "" } = await searchParams;
+
+  let session = null;
+  if (sessionId) {
+    session = await prisma.guestSession.findUnique({
+      where: { id: sessionId },
+    });
+  } else if (token) {
+    const qrToken = await prisma.qrToken.findUnique({
+      where: { token },
+      include: { guestSessions: { where: { endedAt: null }, take: 1 } },
+    });
+    session = qrToken?.guestSessions[0] ?? null;
+  }
+
+  let place = "table";
+  if (session?.placeType === PlaceType.ROOM) {
+    place = "room";
+  } else if (session?.placeType === PlaceType.COUNTER) {
+    place = "counter";
+  } else if (session?.placeType === PlaceType.TABLE) {
+    place = "table";
+  }
 
   return (
     <main className="min-h-dvh flex items-center justify-center px-4 py-12 bg-guest-surface text-guest-text-primary">
@@ -67,10 +91,10 @@ export default async function OccupiedPage({
           </div>
 
           <h1 className="font-display text-[24px] leading-[32px] text-guest-text-primary">
-            This table is active on another device
+            This {place} is active on another device
           </h1>
           <p className="mt-2 text-sm text-guest-text-secondary leading-relaxed">
-            Someone has already started a session at this table. Enter your name
+            Someone has already started a session at this {place}. Enter your name
             to request access from the host.
           </p>
 
