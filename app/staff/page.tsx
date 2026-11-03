@@ -6,11 +6,18 @@ import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/or
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
 import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
 import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
+import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
 import { getAuthenticatedStaff } from "@/lib/auth/validate-session";
-import { canAccess, visibleAreasFor } from "@/domain/auth/can-access";
+import { canAccess, visibleAreasFor, type Area } from "@/domain/auth/can-access";
 import { OrderState, PlaceType, type Order } from "@/domain/orders/order.repository";
+import {
+  RequestState,
+  type ServiceRequest,
+  type HotelService,
+} from "@/domain/requests/request.repository";
 import { type Table } from "@/domain/organization/table.repository";
 import { type Room } from "@/domain/organization/room.repository";
+import { RequestQueueRow, SERVICE_LABELS } from "@/components/staff/request-queue-row";
 import { LogoutButton } from "./_logout-button";
 
 interface EnrichedOrder extends Order {
@@ -65,6 +72,20 @@ function resolvePlace(
     return { number: (order.roomId && roomMap[order.roomId]) || "—", type: "Room" };
   }
   return { number: order.pickupName || "Counter", type: "Counter" };
+}
+
+function resolveRequestPlace(
+  request: ServiceRequest,
+  roomMap: Record<string, string>,
+  tableMap: Record<string, string>
+): { number: string; type: string } {
+  if (request.placeType === "ROOM" && request.roomId) {
+    return { number: roomMap[request.roomId] ?? "—", type: "Room" };
+  }
+  if (request.placeType === "TABLE" && request.tableId) {
+    return { number: tableMap[request.tableId] ?? "—", type: "Table" };
+  }
+  return { number: "Counter", type: "Counter" };
 }
 
 function OrderRow({ order }: { order: EnrichedOrder }): JSX.Element {
@@ -272,8 +293,20 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   const tableRepo = createPrismaTableRepository(prisma);
   const roomRepo = createPrismaRoomRepository(prisma);
   const orderRepo = createPrismaOrderRepository(prisma);
+  const requestRepo = createPrismaServiceRequestRepository(prisma);
 
-  const [tablesRes, roomsRes, activeSessions, placedRes, readyRes, deliveredRes, completedRes] = await Promise.all([
+  const [
+    tablesRes,
+    roomsRes,
+    activeSessions,
+    placedRes,
+    readyRes,
+    deliveredRes,
+    completedRes,
+    submittedReqs,
+    acknowledgedReqs,
+    inProgressReqs,
+  ] = await Promise.all([
     tableRepo.listForVenue(venue.id),
     roomRepo.listForVenue(venue.id),
     prisma.guestSession.findMany({
@@ -284,6 +317,9 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     orderRepo.listForVenue(venue.id, { state: OrderState.READY }),
     orderRepo.listForVenue(venue.id, { state: OrderState.DELIVERED }),
     orderRepo.listForVenue(venue.id, { state: OrderState.COMPLETED }),
+    requestRepo.listForVenue(venue.id, { state: RequestState.SUBMITTED }),
+    requestRepo.listForVenue(venue.id, { state: RequestState.ACKNOWLEDGED }),
+    requestRepo.listForVenue(venue.id, { state: RequestState.IN_PROGRESS }),
   ]);
 
   const activeTableIds = new Set<string>();
@@ -373,6 +409,27 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     (o) => o.state !== OrderState.COMPLETED && o.state !== OrderState.CANCELLED
   ).length;
 
+  const requests: ServiceRequest[] = [
+    ...(submittedReqs.ok ? submittedReqs.value : []),
+    ...(acknowledgedReqs.ok ? acknowledgedReqs.value : []),
+    ...(inProgressReqs.ok ? inProgressReqs.value : []),
+  ].filter((r) => {
+    const serviceToArea: Record<HotelService, Area> = {
+      ROOM_SERVICE_FOOD: "room-service",
+      HOUSEKEEPING: "housekeeping",
+      MAINTENANCE: "maintenance",
+      CONCIERGE: "concierge",
+      LAUNDRY: "laundry",
+      SPA: "spa",
+      LATE_CHECKOUT: "front-desk",
+      WAKE_UP_CALL: "front-desk",
+      DO_NOT_DISTURB: "front-desk",
+      CALL_WAITER: "table-service",
+      REQUEST_BILL: "table-service",
+    };
+    return visibleAreas.includes(serviceToArea[r.serviceType]);
+  });
+
   const SCRIPT = `
 (function() {
   var TABLE_MAP = ` + JSON.stringify(tableMap) + `;
@@ -381,6 +438,8 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   var ROOMS = ` + JSON.stringify(rooms.map((r) => ({ id: r.id, number: r.number }))) + `;
   var CAN_CLOSE = ` + JSON.stringify(canClose) + `;
   var CAN_CHECKOUT = ` + JSON.stringify(canCheckout) + `;
+  var CAN_REQUESTS = ` + JSON.stringify(visibleAreas.includes("front-desk")) + `;
+  var SERVICE_LABELS = ` + JSON.stringify(SERVICE_LABELS) + `;
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
 
@@ -535,13 +594,115 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     }
   }
 
+  function formatDetailsSummary(details) {
+    if (!details || typeof details !== 'object') return '';
+    var parts = [];
+    for (var k in details) {
+      if (details[k] === null || details[k] === undefined || details[k] === '') continue;
+      if (Array.isArray(details[k])) {
+        parts.push(k + ': ' + details[k].join(', '));
+      } else {
+        parts.push(k + ': ' + details[k]);
+      }
+    }
+    return parts.join(' · ');
+  }
+
+  function requestRowHtml(req) {
+    var placeNumber = req.placeNumber;
+    var placeTypeLabel = req.placeTypeLabel;
+    if (!placeNumber || !placeTypeLabel) {
+      if (req.placeType === 'ROOM' && req.roomId) {
+        placeNumber = ROOM_MAP[req.roomId] || '—';
+        placeTypeLabel = 'Room';
+      } else if (req.placeType === 'TABLE' && req.tableId) {
+        placeNumber = TABLE_MAP[req.tableId] || '—';
+        placeTypeLabel = 'Table';
+      } else {
+        placeNumber = 'Counter';
+        placeTypeLabel = 'Counter';
+      }
+    }
+    var serviceLabel = SERVICE_LABELS[req.serviceType] || req.serviceType;
+
+    var badgeClass = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
+    if (req.state === 'SUBMITTED') badgeClass += ' bg-amber-100 text-amber-800';
+    else if (req.state === 'ACKNOWLEDGED') badgeClass += ' bg-purple-100 text-purple-800';
+    else if (req.state === 'IN_PROGRESS') badgeClass += ' bg-sky-100 text-sky-800';
+    else if (req.state === 'COMPLETED') badgeClass += ' bg-status-done-bg text-status-done';
+    else badgeClass += ' bg-status-cancelled-bg text-status-cancelled';
+
+    var detailsSummary = formatDetailsSummary(req.details);
+    var detailsHtml = detailsSummary ? '<p class="text-sm text-staff-text-secondary mt-0.5 max-w-md line-clamp-2">' + escapeHtml(detailsSummary) + '</p>' : '';
+
+    var actionsHtml = '';
+    if (req.state === 'SUBMITTED') {
+      actionsHtml = '<button type="button" data-action="request-decline" data-request-id="' + escapeHtml(req.id) + '" data-request-service="' + escapeHtml(req.serviceType) + '" class="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 cursor-pointer">Decline</button>' +
+        '<button type="button" data-action="request-cancel" data-request-id="' + escapeHtml(req.id) + '" data-request-service="' + escapeHtml(req.serviceType) + '" class="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer">Cancel</button>' +
+        '<button type="button" data-action="request-advance" data-request-id="' + escapeHtml(req.id) + '" data-to-state="ACKNOWLEDGED" class="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer">Acknowledge</button>';
+    } else if (req.state === 'ACKNOWLEDGED') {
+      actionsHtml = '<button type="button" data-action="request-decline" data-request-id="' + escapeHtml(req.id) + '" data-request-service="' + escapeHtml(req.serviceType) + '" class="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 cursor-pointer">Decline</button>' +
+        '<button type="button" data-action="request-cancel" data-request-id="' + escapeHtml(req.id) + '" data-request-service="' + escapeHtml(req.serviceType) + '" class="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer">Cancel</button>' +
+        '<button type="button" data-action="request-advance" data-request-id="' + escapeHtml(req.id) + '" data-to-state="IN_PROGRESS" class="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer">Start</button>';
+    } else if (req.state === 'IN_PROGRESS') {
+      actionsHtml = '<button type="button" data-action="request-cancel" data-request-id="' + escapeHtml(req.id) + '" data-request-service="' + escapeHtml(req.serviceType) + '" class="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer">Cancel</button>' +
+        '<button type="button" data-action="request-advance" data-request-id="' + escapeHtml(req.id) + '" data-to-state="COMPLETED" class="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-emerald-600 text-white hover:brightness-95 cursor-pointer">Complete</button>';
+    } else {
+      actionsHtml = '<span class="text-sm text-staff-text-muted">—</span>';
+    }
+
+    return '<article data-request-id="' + escapeHtml(req.id) + '" data-request-state="' + escapeHtml(req.state) + '" data-place-number="' + escapeHtml(placeNumber) + '" class="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 rounded-lg bg-staff-surface flex flex-col items-center justify-center border border-staff-border-subtle shrink-0">' +
+          '<span class="text-[11px] font-semibold text-staff-text-muted uppercase">' + escapeHtml(placeTypeLabel) + '</span>' +
+          '<span class="text-[20px] font-bold text-staff-text-primary">' + escapeHtml(placeNumber) + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="font-semibold text-staff-text-primary">#' + escapeHtml(req.id.slice(0, 8).toUpperCase()) + '</span>' +
+            '<span class="text-sm font-medium text-staff-text-secondary">' + escapeHtml(serviceLabel) + '</span>' +
+            '<span class="' + badgeClass + '">' + escapeHtml(req.state) + '</span>' +
+          '</div>' +
+          detailsHtml +
+        '</div>' +
+      '</div>' +
+      '<div class="flex items-center gap-2 self-end md:self-auto shrink-0">' +
+        actionsHtml +
+      '</div>' +
+    '</article>';
+  }
+
+  function renderRequests(requests) {
+    var container = document.getElementById('requests-container');
+    if (!container) return;
+    if (requests.length === 0) {
+      container.innerHTML = '<div id="request-empty" class="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle"><p class="text-[18px] font-medium">No active requests.</p></div>';
+      return;
+    }
+    container.innerHTML = '<div id="request-queue" class="flex flex-col gap-3"></div>';
+    var queue = document.getElementById('request-queue');
+    for (var i = 0; i < requests.length; i++) {
+      queue.insertAdjacentHTML('beforeend', requestRowHtml(requests[i]));
+    }
+  }
+
   function poll() {
-    fetch('/api/staff/orders', { credentials: 'same-origin' })
-      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function(body) {
-        var orders = body.data || [];
-        if (body.activeTableIds) {
-          currentActiveTableIds = body.activeTableIds;
+    var orderFetch = fetch('/api/staff/orders', { credentials: 'same-origin' })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+
+    var requestFetch = CAN_REQUESTS
+      ? fetch('/api/staff/requests', { credentials: 'same-origin' })
+          .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .catch(function() { return { data: [] }; })
+      : Promise.resolve({ data: [] });
+
+    Promise.all([orderFetch, requestFetch])
+      .then(function(responses) {
+        var ordersBody = responses[0];
+        var requestsBody = responses[1];
+        var orders = ordersBody.data || [];
+        if (ordersBody.activeTableIds) {
+          currentActiveTableIds = ordersBody.activeTableIds;
         } else {
           var activeFromOrders = [];
           for (var k = 0; k < orders.length; k++) {
@@ -557,6 +718,12 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
         renderOrderQueue(orders);
         renderTableMap();
         renderRoomMap();
+        var requests = requestsBody.data || [];
+        renderRequests(requests);
+        var reqTab = document.querySelector('[data-tab="requests"]');
+        if (reqTab) {
+          reqTab.textContent = 'Requests (' + requests.length + ')';
+        }
       })
       .catch(function() {});
   }
@@ -604,6 +771,55 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
       .catch(function(err) { showToast('Error: ' + err.message); });
   }
 
+  function handleRequestAdvance(requestId, toState, btn) {
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    fetch('/api/staff/requests/' + encodeURIComponent(requestId) + '/advance', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toState: toState }),
+    })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function() { showToast('Request updated'); poll(); })
+      .catch(function(err) { showToast('Error: ' + err.message); btn.disabled = false; btn.textContent = original; });
+  }
+
+  function handleRequestCancel(requestId, btn) {
+    var reason = window.prompt('Reason for cancellation:');
+    if (!reason) return;
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    fetch('/api/staff/requests/' + encodeURIComponent(requestId) + '/cancel', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason }),
+    })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function() { showToast('Request cancelled'); poll(); })
+      .catch(function(err) { showToast('Error: ' + err.message); btn.disabled = false; btn.textContent = original; });
+  }
+
+  function handleRequestDecline(requestId, btn) {
+    var reason = window.prompt('Reason for declining:');
+    if (!reason) return;
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    fetch('/api/staff/requests/' + encodeURIComponent(requestId) + '/decline', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason }),
+    })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function() { showToast('Request declined'); poll(); })
+      .catch(function(err) { showToast('Error: ' + err.message); btn.disabled = false; btn.textContent = original; });
+  }
+
   // === INITIALIZATION — delegation FIRST, polling SECOND ===
   // The two addEventListener calls must run on the very first synchronous
   // tick of this script. If they run after any fetch() or setInterval(),
@@ -617,23 +833,35 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     var name = tab.getAttribute('data-tab');
     var tabEls = document.querySelectorAll('[data-tab]');
     for (var i = 0; i < tabEls.length; i++) {
-      tabEls[i].className = 'pb-3 text-sm font-medium text-staff-text-muted';
+      tabEls[i].className = 'pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer';
     }
-    tab.className = 'pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand';
-    document.getElementById('orders-container').style.display = name === 'orders' ? 'flex' : 'none';
-    document.getElementById('table-map').style.display = name === 'map' ? 'grid' : 'none';
-    document.getElementById('room-map').style.display = name === 'rooms' ? 'grid' : 'none';
+    tab.className = 'pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer';
+    var ordersEl = document.getElementById('orders-container');
+    if (ordersEl) ordersEl.style.display = name === 'orders' ? 'flex' : 'none';
+    var tableMapEl = document.getElementById('table-map');
+    if (tableMapEl) tableMapEl.style.display = name === 'map' ? 'grid' : 'none';
+    var roomMapEl = document.getElementById('room-map');
+    if (roomMapEl) roomMapEl.style.display = name === 'rooms' ? 'grid' : 'none';
+    var requestsEl = document.getElementById('requests-container');
+    if (requestsEl) requestsEl.style.display = name === 'requests' ? 'flex' : 'none';
   });
 
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('[data-action]');
     if (!btn) return;
-    if (btn.hasAttribute('data-order-id')) {
-      handleOrderAction(btn.getAttribute('data-action'), btn.getAttribute('data-order-id'), btn);
-    } else if (btn.getAttribute('data-action') === 'close-table' && btn.hasAttribute('data-table-id')) {
+    var action = btn.getAttribute('data-action');
+    if (action === 'close-table' && btn.hasAttribute('data-table-id')) {
       handleCloseTable(btn.getAttribute('data-table-id'), btn.getAttribute('data-table-number'));
-    } else if (btn.getAttribute('data-action') === 'checkout-room' && btn.hasAttribute('data-room-id')) {
+    } else if (action === 'checkout-room' && btn.hasAttribute('data-room-id')) {
       handleCheckoutRoom(btn.getAttribute('data-room-id'), btn.getAttribute('data-room-number'));
+    } else if (action === 'request-advance' && btn.hasAttribute('data-request-id')) {
+      handleRequestAdvance(btn.getAttribute('data-request-id'), btn.getAttribute('data-to-state'), btn);
+    } else if (action === 'request-cancel' && btn.hasAttribute('data-request-id')) {
+      handleRequestCancel(btn.getAttribute('data-request-id'), btn);
+    } else if (action === 'request-decline' && btn.hasAttribute('data-request-id')) {
+      handleRequestDecline(btn.getAttribute('data-request-id'), btn);
+    } else if (btn.hasAttribute('data-order-id')) {
+      handleOrderAction(action, btn.getAttribute('data-order-id'), btn);
     }
   });
 
@@ -667,6 +895,11 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
             Room Map ({rooms.length})
           </button>
         )}
+        {visibleAreas.includes("front-desk") && (
+          <button data-tab="requests" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
+            Requests ({requests.length})
+          </button>
+        )}
       </nav>
 
       <section className="flex-1 p-4 md:p-6 max-w-5xl w-full mx-auto">
@@ -695,6 +928,30 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
             <RoomCard key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} canCheckout={canCheckout} />
           ))}
         </div>
+
+        {visibleAreas.includes("front-desk") && (
+          <div id="requests-container" className="flex flex-col gap-3" style={{ display: "none" }}>
+            {requests.length === 0 ? (
+              <div id="request-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
+                <p className="text-[18px] font-medium">No active requests.</p>
+              </div>
+            ) : (
+              <div id="request-queue" className="flex flex-col gap-3">
+                {requests.map((r) => {
+                  const place = resolveRequestPlace(r, roomMap, tableMap);
+                  return (
+                    <RequestQueueRow
+                      key={r.id}
+                      request={r}
+                      placeNumber={place.number}
+                      placeTypeLabel={place.type}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <div
