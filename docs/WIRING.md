@@ -104,6 +104,14 @@
 - **Depends on:** D-16.3.
 - **Status:** OPEN
 
+### W-0009 — OPEN — Charlie must be elevated to LEADER in seed
+
+Originated: Task 7.5.0 (ENTRY-0205).
+Obligation: Update the seed or database to make `charlie` a `LEADER` for testing.
+Satisfied by: Task 7.5.9.
+Depends on: D-18.1.
+Status: OPEN.
+
 ---
 
 ## 3. The Discharged Obligations

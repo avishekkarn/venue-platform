@@ -2294,9 +2294,36 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ---
 
+### D-18.1 — The staff focus model: Leader, Focused, and the Notify Toggle
+
+**Decision:** The staff experience has two visibility tiers and one opt-in:
+
+- **LEADER** — a staff member holding `OWNER` or `MANAGER` role, or explicitly granted the Leader status. Sees every queue (table, room, kitchen, housekeeping, maintenance, concierge, laundry, spa, front-desk) simultaneously. Can act on any item. Receives live updates from every domain.
+- **FOCUSED** — a staff member holding one or more specific service roles (e.g., `TABLE_SERVICE`, `ROOM_SERVICE`, `HOUSEKEEPING`). Sees only the queues for their assigned areas by default. Can act on any item in their queues. Receives live updates only from their queues.
+- **NOTIFY TOGGLE** — any staff member can opt in, per-device, to receive notifications from all domains. The toggle does not change what they can act on.
+
+**Context:** The current staff dashboard shows every order to every staff member with order access. That will not scale and creates a scope leak (e.g., showing room actions to table staff). We need a model that supports both all-seeing leaders (for testing and management) and scoped staff (for daily operations).
+
+**Alternatives considered:**
+- Flat staff model: Rejected. Does not scale; lacks role separation.
+- Hide actions, show data: Rejected. Showing data without actions is confusing.
+- Per-venue config: Deferred. The two-tier model is the correct default for v1.
+
+**Consequences:**
+- A new domain helper `visibleAreasFor(roles)` returns the set of areas a staff member sees by default. Leader gets all; Focused gets mapped areas.
+- Staff routes (`/api/staff/*`) filter results to `visibleAreasFor`.
+- The room map and table map hide action buttons (not just disable them) when the staff member is not authorized.
+- The Notify toggle is a client-side localStorage preference.
+
+**What would make us revisit:** If a venue requests granular role-to-area mapping, or a third tier of leadership (e.g., Floor Supervisor).
+
+**Traces to:** SYSTEM.md §7, D-3.6, D-4.9, PRODUCT.md §9–§10.
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 100
+**Total decisions:** 101
 **Categories:** 17
 **Status:** All locked.
 

@@ -141,14 +141,87 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0202 | 2026-11-02 | ROADMAP ↔ PROGRESS reconciliation | Complete | Stage 2 | §5.3 |
 | ENTRY-0203 | 2026-11-02 | Stage 3.0: Build bring-up | Complete | Stage 3.0 | §5.3 |
 | ENTRY-0204 | 2026-11-02 | Stage 3.0 record correction + §15.8 guardrail | STRUCTURAL | Stage 3.0 | §5.3 |
+| ENTRY-0205 | 2026-11-03 | Phase 7.5 Formalization and D-18.1 | STRUCTURAL | Milestone 7.5 | §5.3 |
 
-Next entry number: 0205
+Next entry number: 0206
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.1 (The Dashboard). Current task: Task 8.1.1 — Add the live metric cards.
+### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.1 — Stage 3 flow audit.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0205 — 2026-11-03 — Phase 7.5 Formalization and D-18.1 (STRUCTURAL)
+
+**Status:** STRUCTURAL
+
+**Task:** Task 7.5.0 (Pre-Phase 8 Refinement).
+
+**Summary:** Formalized the Phase 7.5 milestone to complete the room service flow and frontend optimization. Recorded decision D-18.1 defining the LEADER / FOCUSED staff visibility model, placing Charlie as the testing LEADER.
+
+**Files Changed:**
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/DECISIONS.md` | Updated | Added D-18.1; updated Appendix count to 101. |
+| `docs/ROADMAP.md` | Updated | Added §10.5 Phase 7.5 with 13 tasks. |
+| `docs/PROGRESS.md` | Updated | Added ENTRY-0205; updated §5.2 ledger (next = 0206); updated §7 snapshot. |
+| `docs/WIRING.md` | Updated | Added W-0009 (Charlie LEADER obligation). |
+
+**Commands Run:**
+```powershell
+Select-String -Path docs/DECISIONS.md -Pattern "D-18.1"
+Select-String -Path docs/ROADMAP.md -Pattern "Phase 7.5"
+Select-String -Path docs/PROGRESS.md -Pattern "ENTRY-0205"
+Select-String -Path docs/WIRING.md -Pattern "W-0009"
+git status --porcelain src app
+```
+
+Raw outputs:
+```text
+docs\DECISIONS.md:2297:### D-18.1 — The staff focus model: Leader, Focused, and the Notify Toggle
+docs\ROADMAP.md:33:10.5 Phase 7.5 — Room Service & Frontend Convergence
+docs\ROADMAP.md:601:## 10.5 Phase 7.5 — Room Service & Frontend Convergence
+docs\ROADMAP.md:609:| 7.5.0 | Formalize Phase 7.5, D-18.1, and update docs | ⬜ | 7.4.4 |
+docs\ROADMAP.md:714:*(Tasks 9.1.1 through 9.1.6 moved to Phase 7.5 (Tasks 7.5.2 and 7.5.3) for room service convergence to avoid duplication. Retained here for traceability.)*
+docs\ROADMAP.md:727:*(Tasks 9.2.1 through 9.2.5 moved to Phase 7.5 (Tasks 7.5.4 and 7.5.5) for room service convergence to avoid duplication. Retained here for traceability.)*
+docs\WIRING.md:107:### W-0009 — OPEN — Charlie must be elevated to LEADER in seed
+(git status --porcelain src app is empty)
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | D-18.1 present in DECISIONS.md | PASS | Line found at docs/DECISIONS.md:2297 |
+| 2 | Appendix count updated to 101 | PASS | Line found at docs/DECISIONS.md:2326 |
+| 3 | Phase 7.5 present in ROADMAP.md | PASS | Section found at docs/ROADMAP.md:601 |
+| 4 | ENTRY-0205 present in PROGRESS.md | PASS | Present at top of §5.3 |
+| 5 | §7 updated | PASS | Snapshot references Phase 7.5 |
+| 6 | No code files touched | PASS | git status --porcelain src app is empty |
+
+**Deviations:** None.
+
+**Noticed but Out of Scope:**
+
+Charlie's database role must be updated to LEADER in Task 7.5.9. For now, the docs reflect the decision.
+
+**Document Impact:**
+
+| Document | Affected? | Reason |
+|---|---|---|
+| PRODUCT.md | No | |
+| DECISIONS.md | Yes | Added D-18.1 |
+| SYSTEM.md | No | |
+| BUILD.md | No | |
+| ROADMAP.md | Yes | Added Phase 7.5 |
+| PROGRESS.md | Yes | This entry |
+| WIRING.md | Yes | Added W-0009 |
+
+**Contradiction Check:** None found.
+
+**Next:** Task 7.5.1 — Stage 3 flow audit.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0204 — 2026-11-02 — Stage 3.0 record correction + §15.8 guardrail (STRUCTURAL)
 
@@ -1145,13 +1218,13 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current phase: Phase 8 (The Manager Panel) — Refinement Program.
+Current phase: Phase 7.5 (Room Service & Frontend Convergence).
 
-Current milestone: Stage 3.0 Complete.
+Current milestone: Milestone 7.5 — The Room & Convergence.
 
-Current task: Task 8.0.3 — Stage 3.0 Build bring-up.
+Current task: Task 7.5.1 — Stage 3 flow audit.
 
-Current status: Refinement Program — Stage 3.0 closed (code + record). All four baselines PASS: tsc 0 errors, test:unit 226/226, test:integration 189/189 (human re-run 2026-11-02 with PostgreSQL up), build PASS (next@16.4.4, deterministic across two runs). F-0001 discharged. W-0008 open. BUILD.md §15.8 added to prevent commit-message-vs-diff drift. Phase 8 not started. Next gate: Phase 7.4 verification (ENTRY-0205).
+Current status: Refinement Program — Phase 7.5 (Room Service & Convergence) formalized. Phase 8 blocked. Next gate: Task 7.5.1 flow audit.
 
 ## 8. How the File Evolves
 

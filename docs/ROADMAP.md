@@ -30,6 +30,7 @@
 8. Phase 5 — The Menu and the Guest Order Flow
 9. Phase 6 — The Kitchen
 10. Phase 7 — The Service Staff Queues
+10.5 Phase 7.5 — Room Service & Frontend Convergence
 11. Phase 8 — The Manager Panel
 12. Phase 9 — Hotel Services
 13. Phase 10 — Payments, Polish, Production
@@ -597,6 +598,28 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 **Acceptance for Phase 7:** The complete order loop works end to end. A guest places an order, the staff approves it, the kitchen and staff advance it, the guest tracks it, the staff delivers it, and finally, the staff closes the table, ending the guest session and freeing the table.
 
+## 10.5 Phase 7.5 — Room Service & Frontend Convergence
+
+**Goal:** The room service flow (food + all 8 non-food services) works end to end with the same completeness as the table flow, the staff role model enforces focused visibility per D-18.1, and the frontend (kitchen especially) is optimized for tablets. No Phase 8 dashboard work begins until 7.5 closes.
+
+### Milestone 7.5 — The Room & Convergence
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 7.5.0 | Formalize Phase 7.5, D-18.1, and update docs | ⬜ | 7.4.4 |
+| 7.5.1 | Stage 3 flow audit (walk all 16 flows; catalog defects) | ⬜ | 7.5.0 |
+| 7.5.2 | Add `src/domain/requests/transitions.ts` with unit tests | ⬜ | 7.5.1 |
+| 7.5.3 | Add `advance`, `cancel`, `decline`, `edit` request domain functions | ⬜ | 7.5.2 |
+| 7.5.4 | Add `app/api/guest/requests/*` routes (submit, edit, cancel, list) | ⬜ | 7.5.3 |
+| 7.5.5 | Add `app/api/staff/requests/*` routes (queue, advance, cancel, decline) | ⬜ | 7.5.4 |
+| 7.5.6 | Fix room→menu navigation (Room Service tile opens menu with `placeType=ROOM`) | ⬜ | 7.5.5 |
+| 7.5.7 | Build guest request forms for the 8 non-food services | ⬜ | 7.5.6 |
+| 7.5.8 | Build guest Requests view (combined active requests timeline) | ⬜ | 7.5.7 |
+| 7.5.9 | Implement D-18.1 staff focus model (Charlie = LEADER) | ⬜ | 7.5.8 |
+| 7.5.10 | Optimize kitchen screen for tablets (fixed header, tabbed grids) | ⬜ | 7.5.9 |
+| 7.5.11 | Fix room checkout 403 UX (hide actions based on role) | ⬜ | 7.5.10 |
+| 7.5.12 | Verify: Full loop for table and room works without regressions | ⬜ | 7.5.11 |
+
 ## 11. Phase 8 — The Manager Panel
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports.
@@ -688,6 +711,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 ### Milestone 9.1 — The service request domain
 
+*(Tasks 9.1.1 through 9.1.6 moved to Phase 7.5 (Tasks 7.5.2 and 7.5.3) for room service convergence to avoid duplication. Retained here for traceability.)*
+
 | ID    | Task                                                                                                  | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------------------------- | ------ | ---------- |
 | 9.1.1 | Add the `createRequest` domain function                                                               | ⬜     | 8.7.4      |
@@ -698,6 +723,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 9.1.6 | Verify: every function is correct; the state machine is enforced; the guest's edit window is enforced | ⬜     | 9.1.5      |
 
 ### Milestone 9.2 — The service request routes
+
+*(Tasks 9.2.1 through 9.2.5 moved to Phase 7.5 (Tasks 7.5.4 and 7.5.5) for room service convergence to avoid duplication. Retained here for traceability.)*
 
 | ID    | Task                                                              | Status | Depends on |
 | ----- | ----------------------------------------------------------------- | ------ | ---------- |
