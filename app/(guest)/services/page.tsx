@@ -173,6 +173,20 @@ export default async function ServicesPage(): Promise<JSX.Element> {
                   </Link>
                 );
               }
+              if (service === "HOUSEKEEPING") {
+                return (
+                  <Link key={service} href="/services/housekeeping" aria-label={`Open ${label}`}>
+                    {card}
+                  </Link>
+                );
+              }
+              if (service === "MAINTENANCE") {
+                return (
+                  <Link key={service} href="/services/maintenance" aria-label={`Open ${label}`}>
+                    {card}
+                  </Link>
+                );
+              }
 
               return card;
             })}
