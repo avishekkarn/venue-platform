@@ -104,19 +104,67 @@
 - **Depends on:** D-16.3.
 - **Status:** OPEN
 
-### W-0009 — OPEN — Charlie must be elevated to LEADER in seed
+### W-0009 — SUPERSEDED BY W-0013 — Charlie must be elevated to LEADER in seed
 
+**SUPERSEDED BY W-0013** (2026-11-03, ENTRY-0208). W-0013 supersedes this entry with full file/call-site detail.
 Originated: Task 7.5.0 (ENTRY-0205).
 Obligation: Update the seed or database to make `charlie` a `LEADER` for testing.
 Satisfied by: Task 7.5.9.
 Depends on: D-18.1.
+Status: SUPERSEDED.
+
+### W-0010 — OPEN — Build the 8 non-food service forms
+Originated: Task 7.5.1 (ENTRY-0206).
+Obligation: The 9 service tiles on `/services` are inert. Task 7.5.6 wires "Room Service" to `/menu`; Task 7.5.7 wires the other 8 tiles to their dedicated forms. The 8 subfolders under `app/(guest)/services/` exist as empty directories and must gain a `page.tsx`.
+Files and call site: `app/(guest)/services/page.tsx` (tiles have no `<Link>`); the 8 empty folders under `app/(guest)/services/`.
+Satisfied by: Task 7.5.6 (Room Service tile) and Task 7.5.7 (8 non-food forms).
+Depends on: PRODUCT.md §6.4–§6.11, DESIGN.md §4.6.17.7, D-5.1.
 Status: OPEN.
+
+### W-0011 — OPEN — `request-form-field.tsx` must be authored
+Originated: Task 7.5.1 (ENTRY-0206).
+Obligation: `src/components/guest/request-form-field.tsx` is 0-byte. The 8 non-food forms will reuse it for text, textarea, single-select chips, multi-select chips, time picker, and photo upload. It must be authored before Task 7.5.7 begins.
+Files and call site: `src/components/guest/request-form-field.tsx`, consumed by each of the 8 forms.
+Satisfied by: The first sub-task of Task 7.5.7.
+Depends on: DESIGN.md §4.6.17.7, DESIGN.md §4.13.
+Status: OPEN.
+
+### W-0012 — OPEN — Guest `/requests/page.tsx` and staff request queue
+Originated: Task 7.5.1 (ENTRY-0206).
+Obligation: The guest combined-requests view (`app/(guest)/requests/page.tsx`) does not exist; only `[id]/` subfolder is present. The staff request queue (`/api/staff/requests/`) and its UI queue also do not exist.
+Files and call site: `app/(guest)/requests/page.tsx`, `app/api/staff/requests/`, `app/staff/`.
+Satisfied by: Task 7.5.4, 7.5.5, 7.5.8, 7.5.9.
+Depends on: PRODUCT.md §6.12, SYSTEM.md §10.
+Status: OPEN.
+
+### W-0013 — OPEN — Charlie must be elevated to LEADER
+Originated: Task 7.5.0 (ENTRY-0205). Reconciled: Task 7.5.2 (ENTRY-0207).
+Obligation: `charlie` (currently `TABLE_SERVICE` only) must be elevated to `LEADER` for the full-loop verification to succeed. The elevation is a seed change (`prisma/seed.ts`) plus a `StaffRole` extension (`src/domain/auth/staff.repository.ts`). `canAccess` and the staff dashboard must honor the LEADER tier per D-18.1.
+Files and call site: `prisma/seed.ts`, `src/domain/auth/staff.repository.ts`, `src/domain/auth/can-access.ts`, `app/staff/page.tsx`.
+Satisfied by: Task 7.5.9.
+Depends on: D-18.1, SYSTEM.md §7.
+Status: OPEN.
+
+### W-0014 — DISCHARGED — `vitest.config.ts` include array missed `tests/unit/requests/`
+Originated: Task 7.5.2a (ENTRY-0208).
+Obligation: Task 7.5.2 wrote `tests/unit/requests/transitions.test.ts` but `vitest.config.ts`'s explicit `include` array did not list `tests/unit/requests/`, so the file was silently skipped (226 tests, not 232). Task 7.5.2a added the line.
+Files and call site: `vitest.config.ts`, `include` array.
+Satisfied by: Task 7.5.2a (this entry).
+Status: DISCHARGED at commit `ba83f6d`.
 
 ---
 
 ## 3. The Discharged Obligations
 
 *(Newest first. Each entry was moved here from §2 with the PROGRESS entry that proved it satisfied, per Rule 1.)*
+
+### W-0014 — DISCHARGED — `vitest.config.ts` include array missed `tests/unit/requests/`
+
+- **Originated:** Task 7.5.2a (PROGRESS ENTRY-0208).
+- **Obligation:** Task 7.5.2 wrote `tests/unit/requests/transitions.test.ts` but `vitest.config.ts`'s explicit `include` array did not list `tests/unit/requests/`, so the file was silently skipped (226 tests, not 232). Task 7.5.2a added the line.
+- **Files and call site:** `vitest.config.ts`, `include` array.
+- **Satisfied by:** Task 7.5.2a (commit `ba83f6d`).
+- **Status:** DISCHARGED
 
 ### W-0001 — DISCHARGED — Cart "Place order" submission seam
 

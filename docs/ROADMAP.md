@@ -606,9 +606,9 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 7.5.0 | Formalize Phase 7.5, D-18.1, and update docs | ⬜ | 7.4.4 |
-| 7.5.1 | Stage 3 flow audit (walk all 16 flows; catalog defects) | ⬜ | 7.5.0 |
-| 7.5.2 | Add `src/domain/requests/transitions.ts` with unit tests | ⬜ | 7.5.1 |
+| 7.5.0 | Formalize Phase 7.5, D-18.1, and update docs | ✅ Complete | 7.4.4 |
+| 7.5.1 | Stage 3 flow audit (walk all 16 flows; catalog defects) | ✅ Complete | 7.5.0 |
+| 7.5.2 | Add `src/domain/requests/transitions.ts` with unit tests | ✅ Complete | 7.5.1 |
 | 7.5.3 | Add `advance`, `cancel`, `decline`, `edit` request domain functions | ⬜ | 7.5.2 |
 | 7.5.4 | Add `app/api/guest/requests/*` routes (submit, edit, cancel, list) | ⬜ | 7.5.3 |
 | 7.5.5 | Add `app/api/staff/requests/*` routes (queue, advance, cancel, decline) | ⬜ | 7.5.4 |
@@ -619,6 +619,10 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.5.10 | Optimize kitchen screen for tablets (fixed header, tabbed grids) | ⬜ | 7.5.9 |
 | 7.5.11 | Fix room checkout 403 UX (hide actions based on role) | ⬜ | 7.5.10 |
 | 7.5.12 | Verify: Full loop for table and room works without regressions | ⬜ | 7.5.11 |
+
+*(7.5.0 completed at commit `61e9049` (ENTRY-0205). 7.5.1 audit completed via live walk of 16 flows; defects catalogued in ENTRY-0206. 7.5.2 completed at commit `ba83f6d`; see ENTRY-0207. 7.5.2a (vitest config fix) completed at the same commit; see ENTRY-0208.)*
+
+*(7.5.1 audit finding: the 9 service tiles on `/services` are inert — no `href`, no `onClick`, no network request on click. The `/menu` → `/cart` → `/api/guest/orders` flow is place-agnostic and already supports ROOM sessions; only the tiles need to navigate. Task 7.5.6 will make "Room Service" a `<Link href="/menu">`; Task 7.5.7 will make the other 8 tiles route to their forms.)*
 
 ## 11. Phase 8 — The Manager Panel
 
@@ -773,6 +777,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 9.5.8 | Add the request queue and its actions (moved from 7.3.4, 7.3.5)                       | ⬜     | 9.1.6      |
 | 9.5.9 | Add the request action routes (moved from 7.2.8)                                      | ⬜     | 9.1.4      |
 | 9.5.10 | Verify: every request route returns the correct envelope and status (moved from 7.2.9)                 | ⬜     | 9.5.9      |
+
+*(Tasks 9.5.8 and 9.5.9 (request queue + action routes) moved to Phase 7.5 (Task 7.5.5) per ENTRY-0205. This table remains for traceability.)*
 
 **Acceptance for Phase 9:** A hotel guest can submit a service request of any enabled type, track it, edit or cancel it while it is still submitted, and see it completed. The staff queues handle every service type.
 

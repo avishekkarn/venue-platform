@@ -142,14 +142,189 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0203 | 2026-11-02 | Stage 3.0: Build bring-up | Complete | Stage 3.0 | §5.3 |
 | ENTRY-0204 | 2026-11-02 | Stage 3.0 record correction + §15.8 guardrail | STRUCTURAL | Stage 3.0 | §5.3 |
 | ENTRY-0205 | 2026-11-03 | Phase 7.5 Formalization and D-18.1 | STRUCTURAL | Milestone 7.5 | §5.3 |
+| ENTRY-0206 | 2026-11-03 | Task 7.5.1 flow audit | STRUCTURAL | Milestone 7.5 | §5.3 |
+| ENTRY-0207 | 2026-11-03 | Task 7.5.2 request state transitions | PASS | Milestone 7.5 | §5.3 |
+| ENTRY-0208 | 2026-11-03 | Task 7.5.2a vitest config fix | PASS | Milestone 7.5 | §5.3 |
 
-Next entry number: 0206
+Next entry number: 0209
 
-### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.1 — Stage 3 flow audit.
+### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.3 — Add request domain functions.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0208 — 2026-11-03 — Task 7.5.2a vitest config fix (PASS)
+
+**Status:** PASS
+
+**Task:** Task 7.5.2a — Add `tests/unit/requests/**/*.test.ts` to `vitest.config.ts` include array.
+
+**Summary:** Task 7.5.2 wrote `tests/unit/requests/transitions.test.ts` but `vitest.config.ts`'s explicit `include` array did not list `tests/unit/requests/`, so Vitest silently skipped the file. Task 7.5.2a added one line to the include array. Unit suite grew from 226 to 232. Committed at `ba83f6d`.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `vitest.config.ts` | Edited | Added `tests/unit/requests/**/*.test.ts` |
+
+**Commands Run:**
+```powershell
+pnpm test:unit
+```
+Result: `Test Files 32 passed (32); Tests 232 passed (232)`.
+
+```powershell
+pnpm test:integration
+```
+Result: `Test Files 29 passed (29); Tests 189 passed (189)`.
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Result: exit 0, 0 errors.
+
+```powershell
+git status --porcelain
+```
+Result: `vitest.config.ts` + the two Task 7.5.2 files. No other code.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Command | Result | Evidence |
+|---|-----------|---------|--------|----------|
+| 1 | New line exists | `Select-String ...` | PASS | vitest.config.ts:36 |
+| 2 | Only the expected three files changed | `git status --porcelain` | PASS | Three files |
+| 3 | Six request tests pass | `pnpm test:unit -- ...` | PASS | 6/6 |
+| 4 | Full unit suite | `pnpm test:unit` | PASS | 232/232 |
+| 5 | Integration baseline | `pnpm test:integration` | PASS | 189/189 |
+| 6 | Type checker | `pnpm exec tsc --noEmit` | PASS | 0 errors |
+
+**Deviations from Contract:** None. Gemini's session had PostgreSQL offline; the human re-ran with PostgreSQL up and confirmed 189/189.
+
+**Noticed but Out of Scope:** No other `tests/unit/**` path added to the include array; other folders gain their entries as their tasks begin.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | 7.5.2a tracked under 7.5.2 milestone note | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | Yes | W-0014 opened | Updated |
+
+**Contradiction Check:** None found.
+
+**Next:** Task 7.5.2b — this documentation reconciliation commit.
+
+**Awaiting Human Verification:** YES
+
+### ENTRY-0207 — 2026-11-03 — Task 7.5.2 request state transitions (PASS)
+
+**Status:** PASS
+
+**Task:** Task 7.5.2 — Add `src/domain/requests/transitions.ts` with unit tests.
+
+**Summary:** Authored `src/domain/requests/transitions.ts` mirroring `src/domain/orders/transitions.ts`. Exports `ALLOWED_TRANSITIONS` (6 states, 8 allowed edges per SYSTEM.md §10.2) and `isTransitionAllowed` (Result<true>). Six unit tests cover table completeness, all 8 allowed edges, all 28 forbidden pairs, terminal states, self-transitions, and error message format. Committed at `ba83f6d`.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/domain/requests/transitions.ts` | Created (was 0-byte) | Transition table + validator |
+| `tests/unit/requests/transitions.test.ts` | Created | 6 test cases |
+
+**Commands Run:**
+```powershell
+pnpm test:unit -- tests/unit/requests/transitions.test.ts
+```
+Result: `Test Files 1 passed (1); Tests 6 passed (6)` (after 7.5.2a's vitest config fix).
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Result: exit 0, 0 errors.
+
+```powershell
+git status --porcelain src tests
+```
+Result: only the two new files.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Command | Result | Evidence |
+|---|-----------|---------|--------|----------|
+| 1 | `transitions.ts` non-empty | `Get-Item ...` | PASS | 1,842 bytes |
+| 2 | No forbidden imports | `Select-String ...` | PASS | 0 matches |
+| 3 | Both exports present | `Select-String ...` | PASS | 2 matches |
+| 4 | Six tests pass | `pnpm test:unit -- ...` | PASS | 6/6 |
+| 5 | Full unit suite | `pnpm test:unit` | PASS | 232/232 (verified in 7.5.2a) |
+| 6 | Type checker | `pnpm exec tsc --noEmit` | PASS | 0 errors |
+| 7 | Only two code files changed | `git status --porcelain src tests` | PASS | Two files |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:** `advance-request.ts`, `cancel-request.ts`, `decline-request.ts`, `edit-request.ts`, `index.ts` still 0-byte; Task 7.5.3 fills them.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| ROADMAP.md | Yes | 7.5.2 → ✅ | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | — | No change |
+
+**Contradiction Check:** None found.
+
+**Next:** Task 7.5.2a — vitest config fix.
+
+**Awaiting Human Verification:** YES
+
+### ENTRY-0206 — 2026-11-03 — Task 7.5.1 flow audit (STRUCTURAL)
+
+**Status:** STRUCTURAL
+
+**Task:** Task 7.5.1 — Stage 3 flow audit.
+
+**Summary:** Live walk of all 16 documented flows on `http://192.168.1.79:3000`. The table flow, kitchen flow, staff approve/deliver/complete flow, and table close all work end to end. The room flow is broken at three points: (a) the 9 service tiles on `/services` are inert (no navigation, no network request), (b) the 8 non-food service forms do not exist (empty folders under `app/(guest)/services/`), (c) `POST /api/staff/rooms/[id]/checkout` returns 403 for `charlie` (correct permission behavior, but the UI does not hide the button from unauthorized staff). The kitchen screen overlaps the fixed status strip at 8+ tickets.
+
+**Files Changed:** None (evidence-only).
+
+**Commands Run:** Live walk evidence across 16 flows. Full evidence catalogued in WIRING.md W-0010 through W-0012.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Table flow walks end to end | PASS | Screenshots + Prisma Studio |
+| 2 | Kitchen flow walks end to end | PASS | Screenshots |
+| 3 | Room scan creates ROOM session | PASS | Prisma Studio |
+| 4 | Room menu path works when reached manually | PASS | Order has place_type=ROOM |
+| 5 | Service tiles are inert | PASS (defect confirmed) | No network request on click |
+| 6 | Request forms missing | PASS (defect confirmed) | `app/(guest)/services/` subfolders empty |
+| 7 | Room checkout returns 403 for Charlie | PASS (defect confirmed) | Screenshot toast "Error: HTTP 403" |
+| 8 | Kitchen overflow at 8+ tickets | PASS (defect confirmed) | Screenshot |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:** `/api/guest/requests/` route tree absent; `app/(guest)/requests/page.tsx` absent; `src/components/guest/request-form-field.tsx` 0-byte; `src/domain/requests/{advance,cancel,decline,edit}-request.ts` 0-byte.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | — | No change |
+| DECISIONS.md | No | — | No change |
+| SYSTEM.md | No | — | No change |
+| BUILD.md | No | — | No change |
+| ROADMAP.md | Yes | 7.5.1 → ✅ | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | Yes | W-0010, W-0011, W-0012 opened | Updated |
+
+**Contradiction Check:** None found.
+
+**Next:** Task 7.5.2 — request state transitions.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0205 — 2026-11-03 — Phase 7.5 Formalization and D-18.1 (STRUCTURAL)
 
@@ -1222,9 +1397,9 @@ Current phase: Phase 7.5 (Room Service & Frontend Convergence).
 
 Current milestone: Milestone 7.5 — The Room & Convergence.
 
-Current task: Task 7.5.1 — Stage 3 flow audit.
+Current task: Task 7.5.3 — Add request domain functions.
 
-Current status: Refinement Program — Phase 7.5 (Room Service & Convergence) formalized. Phase 8 blocked. Next gate: Task 7.5.1 flow audit.
+Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (request transitions), 7.5.2a (vitest config) complete at commit `ba83f6d`. Baselines: tsc 0 errors, test:unit 232/232 (32 files), test:integration 189/189, build PASS. Phase 8 blocked. Next gate: Task 7.5.3 (request domain functions).
 
 ## 8. How the File Evolves
 
