@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   UtensilsCrossed,
@@ -152,7 +153,7 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {venue.value.services.map((service) => {
               const { label, icon: Icon } = getServiceDescriptor(service);
-              return (
+              const card = (
                 <Card
                   key={service}
                   interactive={true}
@@ -164,6 +165,16 @@ export default async function ServicesPage(): Promise<JSX.Element> {
                   </span>
                 </Card>
               );
+
+              if (service === "ROOM_SERVICE_FOOD") {
+                return (
+                  <Link key={service} href="/menu" aria-label={`Open ${label}`}>
+                    {card}
+                  </Link>
+                );
+              }
+
+              return card;
             })}
           </div>
         </div>
