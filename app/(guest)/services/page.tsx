@@ -208,6 +208,27 @@ export default async function ServicesPage(): Promise<JSX.Element> {
                   </Link>
                 );
               }
+              if (service === "LATE_CHECKOUT") {
+                return (
+                  <Link key={service} href="/services/late-checkout" aria-label={`Open ${label}`}>
+                    {card}
+                  </Link>
+                );
+              }
+              if (service === "WAKE_UP_CALL") {
+                return (
+                  <Link key={service} href="/services/wake-up-call" aria-label={`Open ${label}`}>
+                    {card}
+                  </Link>
+                );
+              }
+              if (service === "DO_NOT_DISTURB") {
+                return (
+                  <Link key={service} href="/services/do-not-disturb" aria-label={`Open ${label}`}>
+                    {card}
+                  </Link>
+                );
+              }
 
               return card;
             })}
