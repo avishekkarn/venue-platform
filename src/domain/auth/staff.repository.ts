@@ -19,6 +19,7 @@ import { type Result } from "@/domain/shared/result";
 export enum StaffRole {
   OWNER = "OWNER",
   MANAGER = "MANAGER",
+  LEADER = "LEADER",
   CHEF = "CHEF",
   TABLE_SERVICE = "TABLE_SERVICE",
   ROOM_SERVICE = "ROOM_SERVICE",

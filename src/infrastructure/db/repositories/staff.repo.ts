@@ -39,6 +39,7 @@ type DbClient = PrismaClient | Prisma.TransactionClient;
 const PRISMA_TO_DOMAIN_ROLE: Record<PrismaStaffRole, StaffRole> = {
   [PrismaStaffRole.OWNER]: StaffRole.OWNER,
   [PrismaStaffRole.MANAGER]: StaffRole.MANAGER,
+  [PrismaStaffRole.LEADER]: StaffRole.LEADER,
   [PrismaStaffRole.CHEF]: StaffRole.CHEF,
   [PrismaStaffRole.TABLE_SERVICE]: StaffRole.TABLE_SERVICE,
   [PrismaStaffRole.ROOM_SERVICE]: StaffRole.ROOM_SERVICE,
@@ -53,6 +54,7 @@ const PRISMA_TO_DOMAIN_ROLE: Record<PrismaStaffRole, StaffRole> = {
 const DOMAIN_TO_PRISMA_ROLE: Record<StaffRole, PrismaStaffRole> = {
   [StaffRole.OWNER]: PrismaStaffRole.OWNER,
   [StaffRole.MANAGER]: PrismaStaffRole.MANAGER,
+  [StaffRole.LEADER]: PrismaStaffRole.LEADER,
   [StaffRole.CHEF]: PrismaStaffRole.CHEF,
   [StaffRole.TABLE_SERVICE]: PrismaStaffRole.TABLE_SERVICE,
   [StaffRole.ROOM_SERVICE]: PrismaStaffRole.ROOM_SERVICE,

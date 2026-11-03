@@ -2319,11 +2319,44 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 **Traces to:** SYSTEM.md §7, D-3.6, D-4.9, PRODUCT.md §9–§10.
 
+### D-18.2 — The LEADER role is a distinct hospitality-operations tier
+
+**Decision:** The product has a `LEADER` staff role. `LEADER` is a distinct tier below `MANAGER` and above the per-area focused roles:
+
+- **OWNER** — everything, including ownership and venue configuration.
+- **ADMIN** — reserved for Phase 8; not present today. Will cover all venue operations + staff + reports.
+- **MANAGER** — hospitality operations + menu + staff + reports. Full access to all queues, menu edits, staff management, and reporting.
+- **LEADER** — hospitality operations only: all queues (table service, room service, housekeeping, maintenance, concierge, laundry, spa, front-desk), the ability to close tables and check out rooms, but no menu edits, no staff management, no finance, no reports.
+- **FOCUSED roles** — the per-area roles: `CHEF`, `TABLE_SERVICE`, `ROOM_SERVICE`, `HOUSEKEEPING`, `MAINTENANCE`, `CONCIERGE`, `LAUNDRY`, `SPA`, `FRONT_DESK`.
+
+`LEADER` is added to the `StaffRole` enum and to the Prisma `StaffRole` enum (with a migration). It is granted to the seed's `charlie` account in Task 7.5.9 for full-loop verification.
+
+**Context:** Task 7.5.9 (from Phase 7.5) requires `charlie` to have full hospitality-operations access so that his `/staff` dashboard can show every table order, every room order, and every request, and so that he can click "Checkout Room" and "Close Table" successfully. Two options were considered: reuse `MANAGER` (which today sees everything), or add a distinct `LEADER` tier. The product's growth path requires the distinct tier: `MANAGER` is the operations-and-finance tier (menu, staff, reports); `LEADER` is the pure hospitality tier (queues and session termination). They overlap today but diverge as Phase 8's admin panel and Phase 10's finance reporting are built. Reusing `MANAGER` would postpone the divergence, and when the divergence becomes necessary the migration would touch live data. Doing it now, before the seed's `charlie` has production history, is cheaper.
+
+**Alternatives considered:**
+
+- **Reuse `MANAGER`.** Rejected. `MANAGER` today bypasses all area checks (see `can-access.ts`), so reusing it would work for testing. But it would conflate two tiers that diverge in Phase 8 and Phase 10. The cost of splitting later, with live staff records and historical actions, exceeds the cost of splitting now.
+- **Do nothing; keep Charlie `TABLE_SERVICE`.** Rejected. Without elevated access, the full room loop cannot be verified end to end. The task cannot be tested without a role that has `room-service` access.
+- **Add `ADMIN` now (the Phase 8 tier).** Rejected. Phase 8 is not started. `ADMIN` has no distinct behavior in the current codebase and would be a synonym for `MANAGER`.
+
+**Consequences:**
+
+- `schema.prisma` gains `LEADER` in the `StaffRole` enum.
+- A new Prisma migration `add_leader_role_to_staff_role` is applied.
+- `src/domain/auth/staff.repository.ts` gains `LEADER` in its `StaffRole` enum.
+- `src/infrastructure/db/repositories/staff.repo.ts` gains `LEADER` in both mapping tables.
+- Task 7.5.9 will add `LEADER` to `canAccess` (as a full-access tier for all hospitality areas) and add `visibleAreasFor`, and update `prisma/seed.ts` to give `charlie` the roles `[TABLE_SERVICE, LEADER]`.
+- The `Admin` role is not present in the product. When Phase 8 begins, it will be added via a new decision record (`D-18.3` or later) if the distinction is necessary. Today, `MANAGER` covers what Phase 8 will likely call `ADMIN`.
+
+**What would make us revisit:** If Phase 8's admin panel finds that MANAGER and LEADER need to be collapsed into a single role, D-18.2 would be superseded by a decision that merges them. If Phase 8 finds it needs `ADMIN` as a distinct tier, a new decision record (D-18.3) adds it, and D-18.2 remains the reference for the LEADER tier's boundaries.
+
+**Traces to:** D-18.1 (the LEADER / FOCUSED model), SYSTEM.md §7 (role model), Task 7.5.9 (Phase 7.5), PRODUCT.md §3.6 and §8 (staff roles), Phase 8 (admin panel).
+
 ---
 
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 101
+**Total decisions:** 102
 **Categories:** 17
 **Status:** All locked.
 
@@ -2380,5 +2413,6 @@ Building the motion abstraction before its first consumer would mean inventing i
 | Automatic deployments (D-14.3)                             | The product stabilises, or more than one developer joins                              |
 | Motion implementation strategy for complex motion (D-16.1) | The guest hero is built (Phase 5), and The Draw (§4.12.1) must be implemented         |
 | Test engine error log suppression (D-16.4)                 | Phase 3 test harness hardening or clean-stdout requirement                            |
+| ADMIN as a distinct tier (D-18.2)                          | Phase 8 admin panel design                                                            |
 
 ---
