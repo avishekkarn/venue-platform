@@ -148,14 +148,93 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0209 | 2026-11-03 | Task 7.5.3.A advanceRequest + cancelRequest | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0210 | 2026-11-03 | Task 7.5.3.B declineRequest + editRequest | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0211 | 2026-11-03 | Task 7.5.4 guest request routes | PASS | Milestone 7.5 | §5.3 |
+| ENTRY-0212 | 2026-11-03 | Task 7.5.5 staff request routes | PASS | Milestone 7.5 | §5.3 |
 
-Next entry number: 0212
+Next entry number: 0213
 
-### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.5 — Add staff request routes.
+### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.6 — Room Service tile fix.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0212 — 2026-11-03 — Task 7.5.5 staff request routes (PASS)
+
+**Status:** PASS
+
+**Task:** Task 7.5.5 — Add the staff-facing service-request routes with integration tests. Committed at `4425444`.
+
+**Summary:** Four route files added under `app/api/staff/requests/`: `route.ts` (GET, all active requests), `[id]/advance/route.ts` (POST advanceRequest, toState from body, transition table enforced by the domain), `[id]/cancel/route.ts` (POST cancelRequest by='staff'), `[id]/decline/route.ts` (POST declineRequest). All routes mirror the 10-step shape of `app/api/staff/orders/[id]/approve/route.ts` and `app/api/staff/tables/[id]/close/route.ts`: session cookie → validate → venue → staff active → role check (`canAccess(roles, "front-desk")`) → `await context.params` → `UUID_REGEX` validation → body parse → domain delegation → explicit `DomainErrorCode` switch. No client-supplied venue, place, or staff id is accepted. Eight integration tests cover: list (length === 3 across three states), unauthorized (401), forbidden (403 with TABLE_SERVICE-only staff), advance success (200), advance invalid transition (409), cancel success (200), decline success (200), decline empty reason (400).
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `app/api/staff/requests/route.ts` | Created | GET — list three active states |
+| `app/api/staff/requests/[id]/advance/route.ts` | Created | POST — advanceRequest |
+| `app/api/staff/requests/[id]/cancel/route.ts` | Created | POST — cancelRequest by='staff' |
+| `app/api/staff/requests/[id]/decline/route.ts` | Created | POST — declineRequest |
+| `tests/integration/api/staff-requests.test.ts` | Created | 8 integration tests |
+
+**Commands Run:**
+```powershell
+pnpm test:integration
+```
+Result: `Test Files 31 passed (31); Tests 205 passed (205)` (197 baseline + 8 new).
+
+```powershell
+pnpm test:unit
+```
+Result: `Test Files 36 passed (36); Tests 254 passed (254)` (unchanged).
+
+```powershell
+pnpm exec tsc --noEmit
+```
+Result: exit 0, 0 errors.
+
+```powershell
+git status --porcelain -u
+```
+Result (pre-commit): exactly the five new files, all `??`. (Post-push: empty.)
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Five files exist, all non-empty | PASS | 3983 / 5677 / 5466 / 5446 / 18903 bytes |
+| 2 | Each route exports `setTestDbClient` | PASS | 4 matches |
+| 3 | Each `[id]` route uses `await context.params` | PASS | 3 matches |
+| 4 | Each `[id]` route uses `UUID_REGEX` | PASS | 3 matches |
+| 5 | Role check predicate present | PASS | `canAccess(roles, "front-desk")` in all 4 |
+| 6 | No client-supplied venueId | PASS | 0 matches |
+| 7 | `by: "staff"` in cancel route | PASS | 1 match |
+| 8 | Full unit suite | PASS | 254/254 |
+| 9 | Full integration suite | PASS | 205/205 |
+| 10 | Type checker | PASS | 0 errors |
+| 11 | Exactly 5 files created | PASS | 5 `??` |
+| 12 | No `M` (modified) files | PASS | Empty |
+
+**Deviations from Contract:** None. (Gemini's session reported the standard Postgres-offline `205 skipped`; the human re-ran with PostgreSQL up and confirmed `205 passed` — BUILD.md §11.4 flow.)
+
+**Noticed but Out of Scope:** **W-0012 is now partially discharged.** The staff API exists; the guest `/requests` page (7.5.8) and the staff queue UI (`/staff/requests` page, deferred) do not. **W-0012 stays OPEN until 7.5.8 completes.**
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | — | No change |
+| DECISIONS.md | No | — | No change |
+| SYSTEM.md | No | — | No change |
+| BUILD.md | No | — | No change |
+| ROADMAP.md | Yes | 7.5.5 → ✅ | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | W-0012 remains OPEN | No change |
+
+**Contradiction Check:** None found. All twelve acceptance rows are evidence-backed.
+
+**Next:** Task 7.5.6 — Room Service tile fix (one-line change to `app/(guest)/services/page.tsx`).
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0211 — 2026-11-03 — Task 7.5.4 guest request routes (PASS)
 
@@ -1623,9 +1702,9 @@ Current phase: Phase 7.5 (Room Service & Frontend Convergence).
 
 Current milestone: Milestone 7.5 — The Room & Convergence.
 
-Current task: Task 7.5.5 — Add staff request routes.
+Current task: Task 7.5.6 — Room Service tile fix.
 
-Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (transitions), 7.5.2a (vitest config), 7.5.2b (docs), 7.5.3 (advance/cancel/decline/edit), 7.5.4 (guest request routes) complete. Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 197/197 (30 files), build PASS. Phase 8 blocked. Next gate: Task 7.5.5 (staff request routes).
+Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (transitions), 7.5.2a (vitest config), 7.5.2b (docs), 7.5.3 (advance/cancel/decline/edit), 7.5.4 (guest request routes), 7.5.4b (docs), 7.5.5 (staff request routes) complete. Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 205/205 (31 files), build PASS. Phase 8 blocked. Next gate: Task 7.5.6 (Room Service tile fix — one-line change unblocking the room flow).
 
 ## 8. How the File Evolves
 

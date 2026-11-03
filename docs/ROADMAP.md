@@ -611,7 +611,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.5.2 | Add `src/domain/requests/transitions.ts` with unit tests | ✅ Complete | 7.5.1 |
 | 7.5.3 | Add `advance`, `cancel`, `decline`, `edit` request domain functions | ✅ Complete | 7.5.2 |
 | 7.5.4 | Add `app/api/guest/requests/*` routes (submit, edit, cancel, list) | ✅ Complete | 7.5.3 |
-| 7.5.5 | Add `app/api/staff/requests/*` routes (queue, advance, cancel, decline) | ⬜ | 7.5.4 |
+| 7.5.5 | Add `app/api/staff/requests/*` routes (queue, advance, cancel, decline) | ✅ Complete | 7.5.4 |
 | 7.5.6 | Fix room→menu navigation (Room Service tile opens menu with `placeType=ROOM`) | ⬜ | 7.5.5 |
 | 7.5.7 | Build guest request forms for the 8 non-food services | ⬜ | 7.5.6 |
 | 7.5.8 | Build guest Requests view (combined active requests timeline) | ⬜ | 7.5.7 |
@@ -627,6 +627,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 *(7.5.3 completed across two commits: 7.5.3.A at `36cd603` (advanceRequest + cancelRequest, 13 tests) and 7.5.3.B at `9b0b21e` (declineRequest + editRequest, 9 tests). See ENTRY-0209 and ENTRY-0210. Unit suite: 232 -> 245 -> 254. The request domain layer is now complete and mirrors the order domain layer.)*
 
 *(7.5.4 completed at commit `3e6e21e`. Guest request routes `POST /api/guest/requests`, `GET /api/guest/requests`, `GET /api/guest/requests/[id]`, `PATCH /api/guest/requests/[id]`, and `POST /api/guest/requests/[id]/cancel` are on `origin/main`. Eight integration tests prove the flow, including the client-supplied-place rejection (SYSTEM.md §15.2) and the D-5.3 / D-5.4 windows. See ENTRY-0211. Integration suite: 189 -> 197. Unit suite unchanged at 254.)*
+
+*(7.5.5 completed at commit `4425444`. Staff request routes `GET /api/staff/requests`, `POST /api/staff/requests/[id]/advance`, `POST /api/staff/requests/[id]/cancel`, and `POST /api/staff/requests/[id]/decline` are on `origin/main`. Eight integration tests prove the flow, including the role gate (`canAccess(roles, "front-desk")`), the transition-table enforcement, and the reason-required guard on cancel/decline. See ENTRY-0212. Integration suite: 197 -> 205. Unit suite unchanged at 254. The request lifecycle is now callable end-to-end at the API level: guest creates, staff lists / advances / cancels / declines.)*
 
 ## 11. Phase 8 — The Manager Panel
 
