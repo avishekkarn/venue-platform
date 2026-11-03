@@ -33,6 +33,7 @@ export default defineConfig({
       "tests/unit/guest/**/*.test.ts",
       "tests/unit/menu/**/*.test.ts",
       "tests/unit/orders/**/*.test.ts",
+      "tests/unit/requests/**/*.test.ts",
       "tests/unit/staff/**/*.test.ts",
     ],
     passWithNoTests: true,
