@@ -149,14 +149,88 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0210 | 2026-11-03 | Task 7.5.3.B declineRequest + editRequest | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0211 | 2026-11-03 | Task 7.5.4 guest request routes | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0212 | 2026-11-03 | Task 7.5.5 staff request routes | PASS | Milestone 7.5 | §5.3 |
+| ENTRY-0218 | 2026-11-03 | ROADMAP amendment: add Task 7.5.14 (STRUCTURAL) | STRUCTURAL | Milestone 7.5 | §5.3 |
 
-Next entry number: 0213
+Next entry number: 0219
 
 ### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.6 — Room Service tile fix.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0218 — 2026-11-03 — ROADMAP amendment: add Task 7.5.14 (STRUCTURAL)
+
+**Status:** STRUCTURAL
+
+**Task:** Task 7.5.14-pre — Amend ROADMAP, WIRING, and PROGRESS to add Task 7.5.14 (Staff Request Queue UI) to Phase 7.5.
+
+**Summary:** Manual end-to-end testing on the phone (guest: scan Room 401 → services → Housekeeping form → submit; then Maintenance form → submit) confirmed that both requests land in `service_requests` with `state = SUBMITTED` (verified via Prisma Studio). However, the staff dashboard (`/staff`) has no Requests tab — Charlie (LEADER) cannot see or act on any request. Additionally, the guest has no view of their own requests after submission (that is Task 7.5.8). Without a staff surface, the room service loop does not close: guest submits, request sits in the DB forever. Phase 7.5's stated goal ("complete room service flow with the same completeness as the table flow") cannot be met without a staff UI. Task 7.5.14 is added to Phase 7.5 to close the loop; Phase 9's Task 9.5.8 remains the canonical focused per-role queue.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Updated | Inserted Task 7.5.14 in §10.5; added milestone note |
+| `docs/WIRING.md` | Updated | Added W-0017 (staff request queue UI) |
+| `docs/PROGRESS.md` | Updated | This entry; §5.2 ledger (next = 0219); §7 snapshot |
+
+**Commands Run:**
+
+```powershell
+Select-String -Path docs/ROADMAP.md -Pattern "7.5.14"
+```
+Result: at least two matches (table row + milestone note).
+
+```powershell
+Select-String -Path docs/WIRING.md -Pattern "W-0017"
+```
+Result: at least one match.
+
+```powershell
+Select-String -Path docs/PROGRESS.md -Pattern "ENTRY-0218"
+```
+Result: at least two matches (§5.3 heading + §5.2 ledger).
+
+```powershell
+git status --porcelain
+```
+Result: exactly `M docs/PROGRESS.md`, `M docs/ROADMAP.md`, `M docs/WIRING.md`. No code touched.
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Task 7.5.14 in §10.5 | PASS | ROADMAP line number |
+| 2 | Milestone note added | PASS | ROADMAP line number |
+| 3 | W-0017 in §2 | PASS | WIRING line number |
+| 4 | ENTRY-0218 in §5.3 | PASS | PROGRESS line number |
+| 5 | §5.2 ledger next = 0219 | PASS | PROGRESS line number |
+| 6 | §7 snapshot updated | PASS | PROGRESS line number |
+| 7 | Only three docs files changed | PASS | git status |
+| 8 | No code touched | PASS | git status on src/ app/ tests/ prisma/ |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:** The 4 requests currently in the database (2 from the phone test, 2 from prior sessions) will remain `SUBMITTED` until 7.5.14 is built. This is expected — 7.5.14 is the fix.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | — | No change |
+| DECISIONS.md | No | — | No change |
+| SYSTEM.md | No | — | No change |
+| BUILD.md | No | — | No change |
+| ROADMAP.md | Yes | Added Task 7.5.14 | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | Yes | Added W-0017 | Updated |
+
+**Contradiction Check:** None found. Phase 7.5's stated goal ("complete room service flow") requires the staff surface. The amendment closes the gap between what the milestone promises and what the ROADMAP currently schedules within Phase 7.5.
+
+**Next:** Task 7.5.7.B — the 6 remaining service forms.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0212 — 2026-11-03 — Task 7.5.5 staff request routes (PASS)
 
@@ -1698,13 +1772,7 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current phase: Phase 7.5 (Room Service & Frontend Convergence).
-
-Current milestone: Milestone 7.5 — The Room & Convergence.
-
-Current task: Task 7.5.6 — Room Service tile fix.
-
-Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 (docs), 7.5.1 (audit), 7.5.2 (transitions), 7.5.2a (vitest config), 7.5.2b (docs), 7.5.3 (advance/cancel/decline/edit), 7.5.4 (guest request routes), 7.5.4b (docs), 7.5.5 (staff request routes) complete. Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 205/205 (31 files), build PASS. Phase 8 blocked. Next gate: Task 7.5.6 (Room Service tile fix — one-line change unblocking the room flow).
+Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 through 7.5.6, 7.5.13, 7.5.9-pre, 7.5.9, and 7.5.7.A are complete on `origin/main` (HEAD `b15a412`). Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 212/212 (33 files), build PASS (32 routes). Task 7.5.14 (Staff Request Queue UI) added to Phase 7.5 as of this entry. Phase 8 blocked. Next gate: Task 7.5.7.B (6 remaining service forms), followed by 7.5.14 and 7.5.8.
 
 ## 8. How the File Evolves
 

@@ -619,6 +619,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.5.10 | Optimize kitchen screen for tablets (fixed header, tabbed grids) | ⬜ | 7.5.9 |
 | 7.5.11 | Fix room checkout 403 UX (hide actions based on role) | ⬜ | 7.5.10 |
 | 7.5.12 | Verify: Full loop for table and room works without regressions | ⬜ | 7.5.11 |
+| 7.5.14 | Add the staff request queue UI (LEADER-visible `/staff/requests` tab with queue, actions, and status) | ⬜ | 7.5.8 |
 
 *(7.5.0 completed at commit `61e9049` (ENTRY-0205). 7.5.1 audit completed via live walk of 16 flows; defects catalogued in ENTRY-0206. 7.5.2 completed at commit `ba83f6d`; see ENTRY-0207. 7.5.2a (vitest config fix) completed at the same commit; see ENTRY-0208.)*
 
@@ -629,6 +630,8 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 *(7.5.4 completed at commit `3e6e21e`. Guest request routes `POST /api/guest/requests`, `GET /api/guest/requests`, `GET /api/guest/requests/[id]`, `PATCH /api/guest/requests/[id]`, and `POST /api/guest/requests/[id]/cancel` are on `origin/main`. Eight integration tests prove the flow, including the client-supplied-place rejection (SYSTEM.md §15.2) and the D-5.3 / D-5.4 windows. See ENTRY-0211. Integration suite: 189 -> 197. Unit suite unchanged at 254.)*
 
 *(7.5.5 completed at commit `4425444`. Staff request routes `GET /api/staff/requests`, `POST /api/staff/requests/[id]/advance`, `POST /api/staff/requests/[id]/cancel`, and `POST /api/staff/requests/[id]/decline` are on `origin/main`. Eight integration tests prove the flow, including the role gate (`canAccess(roles, "front-desk")`), the transition-table enforcement, and the reason-required guard on cancel/decline. See ENTRY-0212. Integration suite: 197 -> 205. Unit suite unchanged at 254. The request lifecycle is now callable end-to-end at the API level: guest creates, staff lists / advances / cancels / declines.)*
+
+*(7.5.14 added on 2026-11-03 per ENTRY-0218. The Phase 7.5 goal — "the room service flow (food + all 8 non-food services) works end to end with the same completeness as the table flow" — cannot be satisfied without a staff surface to see and act on the 8 service request types. Phase 9's Task 9.5.8 remains the canonical focused per-role Request Queue (with scoped queues per HOUSEKEEPING / MAINTENANCE / CONCIERGE / LAUNDRY / SPA / FRONT_DESK). Task 7.5.14 is the minimal LEADER-visible queue that closes the loop in Phase 7.5. Both are tracked; they are not duplicates — 7.5.14 delivers the LEADER view; 9.5.8 delivers the focused per-role views. See WIRING.md W-0017.)*
 
 ## 11. Phase 8 — The Manager Panel
 

@@ -152,6 +152,14 @@ Files and call site: `vitest.config.ts`, `include` array.
 Satisfied by: Task 7.5.2a (this entry).
 Status: DISCHARGED at commit `ba83f6d`.
 
+### W-0017 — OPEN — Staff request queue UI
+Originated: Task 7.5.14-pre (PROGRESS ENTRY-0218).
+Obligation: The staff dashboard (`/staff`) has three tabs — Orders, Table Map, Room Map — but no Requests tab. Every guest service request (Housekeeping, Maintenance, Concierge, Laundry, Spa, Late Checkout, Wake-up Call, Do Not Disturb) is stored in `service_requests` and is callable via `GET /api/staff/requests`, but no screen in the product displays or acts on them. Task 7.5.14 adds the `/staff/requests` tab: a queue of SUBMITTED / ACKNOWLEDGED / IN_PROGRESS requests with per-row actions (Advance → Acknowledge → Start → Complete; Cancel; Decline). A LEADER-visible tab is the Phase 7.5 scope; Phase 9's Task 9.5.8 remains the canonical focused per-role Request Queue.
+Files and call site: `app/staff/page.tsx` (add the fourth tab and its queue rendering); `app/staff/requests/` (new route or embedded tab component); potential one new component under `src/components/staff/` for the queue row.
+Satisfied by: Task 7.5.14.
+Depends on: D-18.1 (LEADER / FOCUSED), D-18.2 (LEADER tier), SYSTEM.md §10 (request lifecycle), SYSTEM.md §7.1 (role model), Task 7.5.5 (the routes this UI calls), Task 7.5.8 (guest requests view — the symmetric surface).
+Status: OPEN.
+
 ---
 
 ## 3. The Discharged Obligations
