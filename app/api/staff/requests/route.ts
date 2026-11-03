@@ -6,9 +6,9 @@ import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/st
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
 import { validateSession } from "@/infrastructure/auth/session";
-import { canAccess } from "@/domain/auth/can-access";
+import { canAccess, visibleAreasFor, type Area } from "@/domain/auth/can-access";
 import { StaffRole, StaffState } from "@/domain/auth/staff.repository";
-import { RequestState } from "@/domain/requests/request.repository";
+import { RequestState, type HotelService } from "@/domain/requests/request.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -103,11 +103,26 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  const visibleAreas = visibleAreasFor(staff.roles);
+  const serviceTypeToArea: Record<HotelService, Area> = {
+    ROOM_SERVICE_FOOD: "room-service",
+    HOUSEKEEPING: "housekeeping",
+    MAINTENANCE: "maintenance",
+    CONCIERGE: "concierge",
+    LAUNDRY: "laundry",
+    SPA: "spa",
+    LATE_CHECKOUT: "front-desk",
+    WAKE_UP_CALL: "front-desk",
+    DO_NOT_DISTURB: "front-desk",
+    CALL_WAITER: "table-service",
+    REQUEST_BILL: "table-service",
+  };
+
   const combined = [
     ...submittedRes.value,
     ...acknowledgedRes.value,
     ...inProgressRes.value,
-  ];
+  ].filter((r) => visibleAreas.includes(serviceTypeToArea[r.serviceType]));
 
   return NextResponse.json({ data: combined }, { status: 200 });
 }

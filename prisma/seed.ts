@@ -669,12 +669,12 @@ export async function seedStaff(venueId: string): Promise<void> {
   console.log("Seeding staff...");
   const staffRepo = createPrismaStaffRepository(prisma);
 
-  const staffDefs = [
-    { name: "Alice Manager", username: "alice", role: StaffRole.MANAGER },
-    { name: "Bob Chef", username: "bob", role: StaffRole.CHEF },
-    { name: "Charlie Server", username: "charlie", role: StaffRole.TABLE_SERVICE },
-    { name: "Diana Housekeeper", username: "diana", role: StaffRole.HOUSEKEEPING },
-    { name: "Eve Front Desk", username: "eve", role: StaffRole.FRONT_DESK },
+  const staffDefs: Array<{ name: string; username: string; roles: StaffRole[] }> = [
+    { name: "Alice Manager", username: "alice", roles: [StaffRole.MANAGER] },
+    { name: "Bob Chef", username: "bob", roles: [StaffRole.CHEF] },
+    { name: "Charlie Server", username: "charlie", roles: [StaffRole.TABLE_SERVICE, StaffRole.LEADER] },
+    { name: "Diana Housekeeper", username: "diana", roles: [StaffRole.HOUSEKEEPING] },
+    { name: "Eve Front Desk", username: "eve", roles: [StaffRole.FRONT_DESK] },
   ];
 
   for (const def of staffDefs) {
@@ -703,7 +703,7 @@ export async function seedStaff(venueId: string): Promise<void> {
       name: def.name,
       username: def.username,
       passwordHash,
-      roles: [def.role],
+      roles: def.roles,
     });
 
     if (!created.ok) {
@@ -712,7 +712,7 @@ export async function seedStaff(venueId: string): Promise<void> {
       );
       throw new Error(created.error.message);
     }
-    console.log(`Created staff ${def.username} (role: ${def.role}).`);
+    console.log(`Created staff ${def.username} (roles: ${def.roles.join(", ")}).`);
   }
 }
 

@@ -7,7 +7,7 @@ import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/or
 import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
 import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
 import { getAuthenticatedStaff } from "@/lib/auth/validate-session";
-import { canAccess } from "@/domain/auth/can-access";
+import { canAccess, visibleAreasFor } from "@/domain/auth/can-access";
 import { OrderState, PlaceType, type Order } from "@/domain/orders/order.repository";
 import { type Table } from "@/domain/organization/table.repository";
 import { type Room } from "@/domain/organization/room.repository";
@@ -134,7 +134,15 @@ function OrderRow({ order }: { order: EnrichedOrder }): JSX.Element {
   );
 }
 
-function TableCard({ table, isOccupied }: { table: Table; isOccupied: boolean }): JSX.Element {
+function TableCard({
+  table,
+  isOccupied,
+  canClose = true,
+}: {
+  table: Table;
+  isOccupied: boolean;
+  canClose?: boolean;
+}): JSX.Element {
   return (
     <article
       data-table-id={table.id}
@@ -158,7 +166,7 @@ function TableCard({ table, isOccupied }: { table: Table; isOccupied: boolean })
         )}
       </div>
       <div className="pt-2 border-t border-staff-border-subtle">
-        {isOccupied ? (
+        {isOccupied && canClose ? (
           <button
             type="button"
             data-action="close-table"
@@ -176,7 +184,15 @@ function TableCard({ table, isOccupied }: { table: Table; isOccupied: boolean })
   );
 }
 
-function RoomCard({ room, isOccupied }: { room: Room; isOccupied: boolean }): JSX.Element {
+function RoomCard({
+  room,
+  isOccupied,
+  canCheckout = true,
+}: {
+  room: Room;
+  isOccupied: boolean;
+  canCheckout?: boolean;
+}): JSX.Element {
   return (
     <article
       data-room-id={room.id}
@@ -200,7 +216,7 @@ function RoomCard({ room, isOccupied }: { room: Room; isOccupied: boolean }): JS
         )}
       </div>
       <div className="pt-2 border-t border-staff-border-subtle">
-        {isOccupied ? (
+        {isOccupied && canCheckout ? (
           <button
             type="button"
             data-action="checkout-room"
@@ -224,6 +240,8 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   if (staff === null) {
     redirect("/staff/login");
   }
+
+  const visibleAreas = visibleAreasFor(staff.roles);
 
   const hasAccess =
     canAccess(staff.roles, "table-service") ||
@@ -336,12 +354,22 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     }
   }
 
+  const canClose = visibleAreas.includes("table-service");
+  const canCheckout = visibleAreas.includes("room-service") || visibleAreas.includes("front-desk");
+
   const enrichedOrders: EnrichedOrder[] = orders.map((o) => ({
     ...o,
     placeNumber: resolvePlace(o, tableMap, roomMap).number,
   }));
 
-  const activeOrdersCount = orders.filter(
+  const filteredOrders = enrichedOrders.filter((o) => {
+    if (o.placeType === PlaceType.TABLE) return visibleAreas.includes("table-service");
+    if (o.placeType === PlaceType.ROOM) return visibleAreas.includes("room-service") || visibleAreas.includes("front-desk");
+    if (o.placeType === PlaceType.COUNTER) return visibleAreas.includes("front-desk");
+    return false;
+  });
+
+  const activeOrdersCount = filteredOrders.filter(
     (o) => o.state !== OrderState.COMPLETED && o.state !== OrderState.CANCELLED
   ).length;
 
@@ -351,6 +379,8 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   var ROOM_MAP = ` + JSON.stringify(roomMap) + `;
   var TABLES = ` + JSON.stringify(tables.map((t) => ({ id: t.id, number: t.number }))) + `;
   var ROOMS = ` + JSON.stringify(rooms.map((r) => ({ id: r.id, number: r.number }))) + `;
+  var CAN_CLOSE = ` + JSON.stringify(canClose) + `;
+  var CAN_CHECKOUT = ` + JSON.stringify(canCheckout) + `;
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
 
@@ -447,7 +477,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   function tableCardHtml(table, isOccupied) {
     var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Free</span>';
-    var action = isOccupied ? '<button type="button" data-action="close-table" data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Close Table</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
+    var action = (isOccupied && CAN_CLOSE) ? '<button type="button" data-action="close-table" data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Close Table</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
     return '<article data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" data-table-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
       '<div class="flex items-center justify-between gap-2">' +
         '<div><div class="text-[28px] font-bold">' + escapeHtml(table.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Table</div></div>' +
@@ -459,7 +489,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   function roomCardHtml(room, isOccupied) {
     var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Vacant</span>';
-    var action = isOccupied ? '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Checkout Room</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
+    var action = (isOccupied && CAN_CHECKOUT) ? '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Checkout Room</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
     return '<article data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
       '<div class="flex items-center justify-between gap-2">' +
         '<div><div class="text-[28px] font-bold">' + escapeHtml(room.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Room</div></div>' +
@@ -627,23 +657,27 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
         <button data-tab="orders" className="pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer">
           Orders ({activeOrdersCount})
         </button>
-        <button data-tab="map" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
-          Table Map ({tables.length})
-        </button>
-        <button data-tab="rooms" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
-          Room Map ({rooms.length})
-        </button>
+        {visibleAreas.includes("table-service") && (
+          <button data-tab="map" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
+            Table Map ({tables.length})
+          </button>
+        )}
+        {(visibleAreas.includes("room-service") || visibleAreas.includes("front-desk")) && (
+          <button data-tab="rooms" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
+            Room Map ({rooms.length})
+          </button>
+        )}
       </nav>
 
       <section className="flex-1 p-4 md:p-6 max-w-5xl w-full mx-auto">
         <div id="orders-container" className="flex flex-col gap-3">
-          {enrichedOrders.length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <div id="order-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
               <p className="text-[18px] font-medium">No active orders.</p>
             </div>
           ) : (
             <div id="order-queue" className="flex flex-col gap-3">
-              {enrichedOrders.map((o) => (
+              {filteredOrders.map((o) => (
                 <OrderRow key={o.id} order={o} />
               ))}
             </div>
@@ -652,13 +686,13 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
         <div id="table-map" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" style={{ display: "none" }}>
           {tables.map((t) => (
-            <TableCard key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} />
+            <TableCard key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} canClose={canClose} />
           ))}
         </div>
 
         <div id="room-map" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" style={{ display: "none" }}>
           {rooms.map((r) => (
-            <RoomCard key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} />
+            <RoomCard key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} canCheckout={canCheckout} />
           ))}
         </div>
       </section>

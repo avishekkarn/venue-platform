@@ -9,6 +9,6 @@ export * from "./staff-session.repository";
 export * from "./login";
 export * from "./logout";
 export * from "./get-session";
-export * from "./can-access";
+export { canAccess, visibleAreasFor, type Area } from "./can-access";
 export * from "./change-password";
 export * from "./enforce-single-session";

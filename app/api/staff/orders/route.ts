@@ -6,9 +6,9 @@ import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/st
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
 import { validateSession } from "@/infrastructure/auth/session";
-import { canAccess } from "@/domain/auth/can-access";
+import { canAccess, visibleAreasFor } from "@/domain/auth/can-access";
 import { StaffRole, StaffState } from "@/domain/auth/staff.repository";
-import { OrderState } from "@/domain/orders/order.repository";
+import { OrderState, PlaceType } from "@/domain/orders/order.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -107,11 +107,21 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  const visibleAreas = visibleAreasFor(staff.roles);
+  const allowTable = visibleAreas.includes("table-service");
+  const allowRoom = visibleAreas.includes("room-service") || visibleAreas.includes("front-desk");
+
   const combinedOrders = [
     ...placedRes.value,
     ...readyRes.value,
     ...deliveredRes.value,
-  ];
+  ].filter((o) => {
+    if (o.placeType === PlaceType.TABLE) return allowTable;
+    if (o.placeType === PlaceType.ROOM) return allowRoom;
+    // COUNTER — include for front-desk
+    if (o.placeType === PlaceType.COUNTER) return visibleAreas.includes("front-desk");
+    return false;
+  });
 
   // Query all active guest sessions for this venue to derive occupied places
   const activeSessions = await db.guestSession.findMany({
