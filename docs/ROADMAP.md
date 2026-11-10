@@ -698,9 +698,9 @@ Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The g
 
 | ID | Task | Status | Depends on | Scope |
 |----|------|--------|------------|-------|
-| 7.6.1 | ROADMAP.md rewrite (this file) | ⬜ | 7.5 | 1 file |
-| 7.6.2 | README.md reconciliation | ⬜ | 7.6.1 | 1 file |
-| 7.6.3 | DECISIONS.md — new records D-19.1, D-19.2 | ⬜ | 7.6.2 | 1 file |
+| 7.6.1 | ROADMAP.md rewrite (this file) | ✅ Complete | 7.5 | 1 file |
+| 7.6.2 | README.md reconciliation | ✅ Complete | 7.6.1 | 1 file |
+| 7.6.3 | DECISIONS.md — new records D-19.1, D-19.2 | ✅ Complete | 7.6.2 | 1 file |
 | 7.6.4 | DECISIONS.md — appendix + count reconciliation | ⬜ | (folded into 7.6.3) | — |
 | 7.6.5 | SYSTEM.md — API surface reconciliation | ⬜ | 7.6.3 | 1 file |
 | 7.6.6 | PHASE_TESTS.md — Phase 7.5 closure note | ⬜ | 7.6.5 | 1 file |

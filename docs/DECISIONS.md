@@ -2354,9 +2354,84 @@ Building the motion abstraction before its first consumer would mean inventing i
 
 ---
 
+### D-19.1 — Guest tracking surfaces use vanilla-JS DOM replacement for live polling, not React state
+
+**Decision:** The three guest tracking surfaces — `/order/[id]/track`, `/requests`, and the join-request banner (which renders on `/menu`, `/services`, and `/order/[id]/track`) — update live status changes via vanilla-JS `innerHTML` replacement, not React `useState`. The polling callback fetches a JSON endpoint (`/api/guest/orders`, `/api/guest/requests`, `/api/guest/join-requests`), builds an HTML string from server-controlled data, and assigns it to the matching container's `innerHTML`. React's `useState` is not used for polling updates on these surfaces. Client state (`useState`) is used only for presentational toggles that do not depend on a 5-second poll.
+
+**Context:** Phase 7.5 attempted React `useState` polling three times (7.5.17.FIX, .FIX.2, .FIX.3). Each attempt passed the manual check once, then failed on a real phone after a few minutes — the timeline froze at `SUBMITTED` even though `/api/guest/requests` was returning the correct updated state. The failure mode was not diagnosed to a single root cause, but three contributing factors were observed: (a) React's reconciliation of nested array-of-objects state with `Date` instances can silently bail on mobile browsers under memory pressure; (b) `useState` updates inside `setInterval` callbacks that close over the last-known state can race with the Server Component's re-renders; (c) the `<RequestStatusTimeline>` component's `key` prop was insufficient to force a remount when only `state` changed but `updatedAt` did not (because the timeline's internal animation state was preserved). The Order Tracking page (`/order/[id]/track`) had always worked because it used a vanilla `<script>` tag with `innerHTML` replacement, bypassing React entirely.
+
+**Alternatives considered:**
+
+- **React `useState` with a `key` prop that includes `state` and `updatedAt`.** Tried in 7.5.17.FIX.3. Passed the manual check once, failed on real devices. Rejected because the failure is real and not reproducible under test.
+- **React `useState` with `JSON.stringify` diff guard.** Tried in 7.5.17.FIX.2. Failed. Rejected.
+- **React `useState` with direct `setRequests(parsed)` and no guards.** Tried in 7.5.17.FIX. Failed. Rejected.
+- **`router.refresh()` on a timer.** Rejected because it re-serializes the entire RSC payload (200ms–1500ms), defeats the polling freshness, and is explicitly forbidden by the guest tracking design.
+- **`window.location.reload()` on every poll.** Rejected because it destroys scroll position, resets the cart, and causes a visible flash.
+- **Server-Sent Events (SSE).** Deferred (D-8.1). Not needed for the current scope; polling is adequate.
+- **Vanilla-JS `innerHTML` replacement, matching `/order/[id]/track`.** **Chosen.** It does not rely on React's reconciliation. It does not close over stale state. It re-renders every tick unconditionally, which means the browser *must* repaint. It has been running in production on `/order/[id]/track` since Phase 5 with zero failures across dozens of manual tests.
+
+**Consequences:**
+
+- The `/requests` client (`src/components/guest/requests-client.tsx`) is a React Client Component whose primary job is to render the initial list from the Server Component's props, plus a `useEffect` that injects the vanilla-JS polling script. It does not call `useState` for the polled data.
+- The join-request banner (`src/components/guest/join-request-script.tsx`) is a Server Component that outputs a raw `<script dangerouslySetInnerHTML>` tag. It runs on parse, not after hydration. It polls `/api/guest/join-requests` every 5 seconds.
+- The Order Tracking page remains unchanged — it has always used this pattern.
+- **XSS safety is a hard requirement.** Every string interpolated into the polling script's HTML string must come from server-controlled data (`id`, `state`, `serviceType`, `occurredAt`) or must be passed through `escapeHtml`. Phase 9 introduces free-text service notes; those must be escaped before interpolation. A pre-emptive `escapeHtml` pass was added in Task 7.6.8.
+- A future session that reads D-8.1 ("polling every 5 seconds") must also read D-19.1. D-8.1 describes the *frequency*; D-19.1 describes the *mechanism*. They are consistent (both 5 seconds), but D-8.1 alone does not tell the reader *how* to implement the poll.
+
+**What would make us revisit:** If React's reconciliation proves reliable on all target mobile browsers, or if the product moves to a framework that handles incremental state updates without a virtual DOM (e.g., Solid, Svelte), the vanilla-JS approach is no longer the only safe option. The trigger is a framework change, not a new React version. Until then, the vanilla-JS pattern is the standard.
+
+**Traces to:** 7.5.17.FIX.4 (the vanilla-JS implementation for `/requests`), 7.5.16.FIX.2 (the vanilla-JS implementation for the join banner), 7.5.16.FIX.3 (the server-side cookie that the banner relies on), `/order/[id]/track/page.tsx` (the original vanilla-JS precedent), BUILD.md §3.4 (Client Components talk to the API — still true; the API is called from the injected script), DESIGN.md §4.8.5 and §4.9.5 (the guest tracking screen's live-update behavior).
+
+---
+
+### D-19.2 — The join-approval session cookie is set server-side via NextResponse, not client-side via document.cookie
+
+**Decision:** When a guest's join request is approved and the polling device (`/qr/join/[token]`) learns the approval via `GET /api/guest/join-requests/status` (or `GET /api/guest/join-requests`), the session cookie `venue_guest` is set by the API route on the `NextResponse` object (`response.cookies.set(...)`). The client script does not call `document.cookie`. The client script waits for the fetch to complete, then performs `window.location.href` to the resolved destination. The browser processes the `Set-Cookie` response header before the redirect fires.
+
+**Context:** The original join flow (from Phase 4) used `document.cookie` in the join page's client script:
+```js
+if (data.sessionToken) {
+  document.cookie = 'venue_guest=' + encodeURIComponent(data.sessionToken) + '; path=/; max-age=' + (60 * 60 * 24 * 30) + '; SameSite=Lax';
+}
+setTimeout(function() {
+  window.location.href = '/menu';
+}, 800);
+```
+The 800ms delay was an attempt to let the cookie write complete before the redirect. On a slow mobile browser (or under memory pressure), 800ms is not enough. The browser fires the /menu request before the cookie is committed to disk. The request arrives at the server without the venue_guest cookie. The server redirects to / (the "Scan the QR code" screen). The guest sees the join screen disappear and the root scan screen appear. The join has silently failed. This was observed on a real phone in Phase 7.5.
+
+The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.cookies.set on a NextResponse.redirect. That is why the initial scan worked. The join flow did not, because it was set up as a separate client-only path.
+
+Alternatives considered:
+
+Increase the setTimeout to 2000ms. Rejected. It is a race condition with a longer fuse, not a fix. On a slow phone it still fails; on a fast phone it adds two seconds of perceived latency for no reason.
+
+Use document.cookie with expires in addition to max-age. Rejected. The expires / max-age distinction is not the problem. The problem is that document.cookie is not guaranteed to be committed to disk before the next network request.
+
+Redirect with a query parameter and let the Server Component set the cookie. Rejected. The Server Component cannot set a cookie on a GET request in Next.js App Router. Only route handlers and Server Actions can.
+
+Use a POST request from the join page to a route handler that both sets the cookie and issues a redirect. Rejected. It adds complexity (the join page is a client-component, it already has the session token in memory, and the current GET pattern works). The response.cookies.set on the existing GET route is simpler.
+
+Server-side response.cookies.set on the existing status GET route, with the client waiting for the fetch to complete before redirecting. Chosen. The server attaches the Set-Cookie header to the response. The browser receives the response and processes the header before the .then() callback fires. The client script then waits a short buffer (1000ms) and calls window.location.href. The buffer is not load-bearing (the header has already been processed by then) — it is a defensive wait for the redirect to be initiated from a settled state. The initial-scan route uses the same pattern, so the join flow and the scan flow behave identically.
+
+Consequences:
+
+app/api/guest/join-requests/status/route.ts and app/api/guest/join-requests/route.ts both call response.cookies.set("venue_guest", session.token, {...}) when found.value.status === "APPROVED". Both use httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 30 days.
+
+The join page script (app/(guest)/qr/join/[token]/page.tsx) no longer contains document.cookie. It waits for the fetch to resolve (the .then() callback has already fired by then), then waits a 1000ms buffer and redirects to /services (for ROOM) or /menu (for TABLE).
+
+The destination is resolved from the place variable, which the Server Component derives from session.placeType. A TABLE guest goes to /menu; a ROOM guest goes to /services. This matches the initial scan route's destination logic.
+
+The initial-scan route and the join flow now both set the cookie via response.cookies.set. They are the same pattern.
+
+What would make us revisit: If Next.js changes the semantics of response.cookies.set on a GET route handler (for example, deprecating it in favor of Server Actions), the pattern is updated to match. Until then, the server-side Set-Cookie is the correct primitive.
+
+Traces to: 7.5.16.FIX.3 (the implementation), 7.5.16.FIX.2 (the vanilla-JS join banner that depends on the cookie being set), /qr/[token]/route.ts (the initial-scan precedent), SYSTEM.md §6.2 and §8.3 (the guest session flow), D-3.11 (auth forms use API routes — the join flow is consistent with this).
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 102
+**Total decisions:** 104
 **Categories:** 17
 **Status:** All locked.
 
