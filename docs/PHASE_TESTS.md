@@ -863,6 +863,10 @@ Any step shows an unexpected outcome. An action button's label does not match th
 
 Paste the twelve pieces of evidence into a new `PROGRESS.md` entry, mark every Phase 7 task ✅ in `ROADMAP.md`, and advance `PROGRESS.md` §7 to Phase 8.
 
+**Phase 7.5 closure note (2026-11-03):** Phase 7.5 (Room Service & Frontend Convergence) was inserted between Phase 7 and Phase 8 to complete the room service flow to the same standard as the table flow. It was closed by the convergence work documented in `PROGRESS.md` ENTRY-0219 and by the manual walkthrough that entry records. There is no separate Phase 7.5 acceptance test in this file; the phase was closed via convergence with Phase 7, and its acceptance evidence is the manual walkthrough in ENTRY-0219. A future session that adds a Phase 7.5 test must also update the header of this file (currently "eleven phase acceptance tests") to reflect the new count.
+
+---
+
 ## 10. Phase 8 — The Manager Panel
 
 **Prerequisite:** Phase 7 is closed. The manager panel is running on the developer's machine, at a desktop viewport (1440×900 or larger). The database is populated with the seeded venue and at least twenty completed orders spread across the last thirty days.

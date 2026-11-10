@@ -2401,31 +2401,24 @@ The 800ms delay was an attempt to let the cookie write complete before the redir
 
 The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.cookies.set on a NextResponse.redirect. That is why the initial scan worked. The join flow did not, because it was set up as a separate client-only path.
 
-Alternatives considered:
+**Alternatives considered:**
 
-Increase the setTimeout to 2000ms. Rejected. It is a race condition with a longer fuse, not a fix. On a slow phone it still fails; on a fast phone it adds two seconds of perceived latency for no reason.
+- **Increase the `setTimeout` to 2000ms.** Rejected. It is a race condition with a longer fuse, not a fix. On a slow phone it still fails; on a fast phone it adds two seconds of perceived latency for no reason.
+- **Use `document.cookie` with `expires` in addition to `max-age`.** Rejected. The `expires` / `max-age` distinction is not the problem. The problem is that `document.cookie` is not guaranteed to be committed to disk before the next network request.
+- **Redirect with a query parameter and let the Server Component set the cookie.** Rejected. The Server Component cannot set a cookie on a GET request in Next.js App Router. Only route handlers and Server Actions can.
+- **Use a POST request from the join page to a route handler that both sets the cookie and issues a redirect.** Rejected. It adds complexity (the join page is a client-component, it already has the session token in memory, and the current GET pattern works). The `response.cookies.set` on the existing GET route is simpler.
+- **Server-side `response.cookies.set` on the existing status GET route, with the client waiting for the fetch to complete before redirecting.** **Chosen.** The server attaches the `Set-Cookie` header to the response. The browser receives the response and processes the header before the `.then()` callback fires. The client script then waits a short buffer (1000ms) and calls `window.location.href`. The buffer is not load-bearing (the header has already been processed by then) — it is a defensive wait for the redirect to be initiated from a settled state. The initial-scan route uses the same pattern, so the join flow and the scan flow behave identically.
 
-Use document.cookie with expires in addition to max-age. Rejected. The expires / max-age distinction is not the problem. The problem is that document.cookie is not guaranteed to be committed to disk before the next network request.
+**Consequences:**
 
-Redirect with a query parameter and let the Server Component set the cookie. Rejected. The Server Component cannot set a cookie on a GET request in Next.js App Router. Only route handlers and Server Actions can.
+- `app/api/guest/join-requests/status/route.ts` and `app/api/guest/join-requests/route.ts` both call `response.cookies.set("venue_guest", session.token, {...})` when `found.value.status === "APPROVED"`. Both use `httpOnly: true`, `secure: process.env.NODE_ENV === "production"`, `sameSite: "lax"`, `path: "/"`, `maxAge: 30 days`.
+- The join page script (`app/(guest)/qr/join/[token]/page.tsx`) no longer contains `document.cookie`. It waits for the fetch to resolve (the `.then()` callback has already fired by then), then waits a 1000ms buffer and redirects to `/services` (for ROOM) or `/menu` (for TABLE).
+- The destination is resolved from the `place` variable, which the Server Component derives from `session.placeType`. A TABLE guest goes to `/menu`; a ROOM guest goes to `/services`. This matches the initial scan route's destination logic.
+- The initial-scan route and the join flow now both set the cookie via `response.cookies.set`. They are the same pattern.
 
-Use a POST request from the join page to a route handler that both sets the cookie and issues a redirect. Rejected. It adds complexity (the join page is a client-component, it already has the session token in memory, and the current GET pattern works). The response.cookies.set on the existing GET route is simpler.
+**What would make us revisit:** If Next.js changes the semantics of `response.cookies.set` on a GET route handler (for example, deprecating it in favor of Server Actions), the pattern is updated to match. Until then, the server-side Set-Cookie is the correct primitive.
 
-Server-side response.cookies.set on the existing status GET route, with the client waiting for the fetch to complete before redirecting. Chosen. The server attaches the Set-Cookie header to the response. The browser receives the response and processes the header before the .then() callback fires. The client script then waits a short buffer (1000ms) and calls window.location.href. The buffer is not load-bearing (the header has already been processed by then) — it is a defensive wait for the redirect to be initiated from a settled state. The initial-scan route uses the same pattern, so the join flow and the scan flow behave identically.
-
-Consequences:
-
-app/api/guest/join-requests/status/route.ts and app/api/guest/join-requests/route.ts both call response.cookies.set("venue_guest", session.token, {...}) when found.value.status === "APPROVED". Both use httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 30 days.
-
-The join page script (app/(guest)/qr/join/[token]/page.tsx) no longer contains document.cookie. It waits for the fetch to resolve (the .then() callback has already fired by then), then waits a 1000ms buffer and redirects to /services (for ROOM) or /menu (for TABLE).
-
-The destination is resolved from the place variable, which the Server Component derives from session.placeType. A TABLE guest goes to /menu; a ROOM guest goes to /services. This matches the initial scan route's destination logic.
-
-The initial-scan route and the join flow now both set the cookie via response.cookies.set. They are the same pattern.
-
-What would make us revisit: If Next.js changes the semantics of response.cookies.set on a GET route handler (for example, deprecating it in favor of Server Actions), the pattern is updated to match. Until then, the server-side Set-Cookie is the correct primitive.
-
-Traces to: 7.5.16.FIX.3 (the implementation), 7.5.16.FIX.2 (the vanilla-JS join banner that depends on the cookie being set), /qr/[token]/route.ts (the initial-scan precedent), SYSTEM.md §6.2 and §8.3 (the guest session flow), D-3.11 (auth forms use API routes — the join flow is consistent with this).
+**Traces to:** 7.5.16.FIX.3 (the implementation), 7.5.16.FIX.2 (the vanilla-JS join banner that depends on the cookie being set), `/qr/[token]/route.ts` (the initial-scan precedent), SYSTEM.md §6.2 and §8.3 (the guest session flow), D-3.11 (auth forms use API routes — the join flow is consistent with this).
 
 ---
 
