@@ -131,7 +131,7 @@ export interface ServiceRequestRepository {
     venueId: string,
     counterId: string
   ): Promise<Result<ServiceRequest[]>>;
-  listForGuestSession?(
+  listForGuestSession(
     venueId: string,
     guestSessionId: string
   ): Promise<Result<ServiceRequest[]>>;

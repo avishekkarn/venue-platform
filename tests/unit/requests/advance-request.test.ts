@@ -53,6 +53,7 @@ describe("advanceRequest domain function", () => {
       listForRoom: vi.fn().mockResolvedValue(ok([])),
       listForTable: vi.fn().mockResolvedValue(ok([])),
       listForCounter: vi.fn().mockResolvedValue(ok([])),
+      listForGuestSession: vi.fn().mockResolvedValue(ok([])),
       advanceState: vi.fn(),
       cancel: vi.fn().mockImplementation(() => {
         throw new Error("cancel is not used by advanceRequest");

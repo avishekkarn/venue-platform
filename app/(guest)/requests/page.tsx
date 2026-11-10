@@ -43,7 +43,7 @@ export default async function RequestsPage(): Promise<JSX.Element> {
   }
 
   const requestRepo = createPrismaServiceRequestRepository(prisma);
-  const requestsResult = await requestRepo.listForGuestSession!(venue.value.id, session.value.id);
+  const requestsResult = await requestRepo.listForGuestSession(venue.value.id, session.value.id);
   const initialRequests = requestsResult.ok ? requestsResult.value : [];
 
   const locale = venue.value.language === "en" ? "en-US" : venue.value.language;
