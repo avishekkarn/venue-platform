@@ -140,9 +140,11 @@ export default async function ServicesPage(): Promise<JSX.Element> {
         <Button variant="ghost" size="sm">
           Call the front desk
         </Button>
-        <Button variant="ghost" size="sm">
-          View requests
-        </Button>
+        <Link href="/requests">
+          <Button variant="ghost" size="sm">
+            View requests
+          </Button>
+        </Link>
       </div>
 
       {venue.value.services && venue.value.services.length > 0 && (

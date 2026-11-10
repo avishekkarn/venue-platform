@@ -119,6 +119,12 @@ export default async function LateCheckoutPage(): Promise<JSX.Element> {
           >
             Back to services
           </Link>
+          <Link
+            href="/requests"
+            className="mt-2 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-guest-border-strong text-guest-text-primary hover:bg-guest-surface-sunken transition-all"
+          >
+            View request status
+          </Link>
         </div>
 
         {/* Form container */}
