@@ -725,7 +725,7 @@ Every response uses one of two shapes:
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/guest/menu` | Load the menu for the current venue |
+| GET | `/api/guest/menu/states` | Read the availability state of menu items (polled by the menu screen) |
 | POST | `/api/guest/orders` | Place an order (body includes the idempotency key) |
 | GET | `/api/guest/orders/[id]` | Read the state of one order |
 | GET | `/api/guest/orders` | Read all orders for the current guest session |
@@ -735,6 +735,8 @@ Every response uses one of two shapes:
 | GET | `/api/guest/requests` | Read all requests for the current guest session |
 | POST | `/api/guest/call` | Call a waiter or request the bill |
 | GET | `/api/guest/receipt/[id]` | Read a receipt |
+
+The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, not by an API route. The only menu-related API route is `/api/guest/menu/states`, which the menu screen polls to detect availability changes. There is no `GET /api/guest/menu`.
 
 ### 12.3 The staff routes
 
@@ -844,7 +846,8 @@ In the first version, the kitchen screen, the staff queues, and the guest's trac
 
 - The kitchen screen polls for active tickets and their states.
 - Each staff queue polls for its own items and their states.
-- The guest's tracking screen polls for the state of their own order or request.
+- The guest's tracking screen (`/order/[id]/track`) polls `GET /api/guest/orders` for the state of their own orders.
+- The guest's `/requests` screen polls `GET /api/guest/requests` for the state of their own service requests.
 - The manager's dashboard polls for the venue's live metrics.
 
 ### 14.3 The connection drops
