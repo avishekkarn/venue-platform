@@ -151,14 +151,97 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0212 | 2026-11-03 | Task 7.5.5 staff request routes | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0218 | 2026-11-03 | ROADMAP amendment: add Task 7.5.14 (STRUCTURAL) | STRUCTURAL | Milestone 7.5 | §5.3 |
 | ENTRY-0219 | 2026-11-10 | Phase 7.5 Reconciliation & Closure | STRUCTURAL | Milestone 7.5 | §5.3 |
+| ENTRY-0220 | 2026-11-10 | Phase 7.6 closure & foundation verification | PASS | Milestone 7.6 | §5.3 |
 
-Next entry number: 0220
+Next entry number: 0221
 
 ### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Phase 7.5 closed. Next: Phase 8 (The Manager Panel).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0220 — 2026-11-10 — Phase 7.6 closure & foundation verification (PASS)
+
+**Status:** PASS
+
+**Task:** Phase 7.6 (Foundation Hardening) — Tasks 7.6.1 through 7.6.11, plus 7.6.8.FIX and 7.6.8.FIX.3.
+
+**Summary:** Phase 7.6 closed. All ten documentation and code-adjacent tasks are complete on `origin/main`. The foundation was verified end-to-end: Table loop, Room food loop, Room service request loop, shared session join (Table and Room), and kitchen layout at three viewports. All four baselines pass unchanged (tsc 0, unit 254/254, integration 233/233, build 39 routes). Phase 8 is now unblocked.
+
+**Files Changed:** (documentation only; no code changes)
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Updated | §10.6: 7.6.11 → ✅ Complete; §11: Phase 8 marked as current |
+| `docs/PROGRESS.md` | Updated | ENTRY-0220; §5.2 ledger; §7 snapshot |
+| `docs/README.md` | Updated | §4 current-phase line; §5 current-state paragraph |
+
+**Commands Run:**
+pnpm exec tsc --noEmit
+
+```
+Result: exit 0, no output.
+```
+
+pnpm test:unit
+
+```
+Result: 36 test files, 254 tests, all passing (36/36, 254/254).
+```
+
+pnpm test:integration
+
+```
+Result: 38 test files, 233 tests, all passing (38/38, 233/233).
+```
+
+pnpm build
+
+```
+Result: 39 routes, build succeeds.
+```
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `tsc` 0 errors | PASS | exit code 0, no output |
+| 2 | `test:unit` 254/254 | PASS | 36 files passed, 254 tests (1.19s) |
+| 3 | `test:integration` 233/233 | PASS | 38 files passed, 233 tests (100.78s) |
+| 4 | `build` 39 routes | PASS | 39 routes generated |
+| 5 | Table loop end-to-end | PASS | Table 12 QR scan → cart burger order → staff approve (1.2s) → kitchen start/ready (0.8s/0.9s) → staff deliver (1.1s) → phone tracking timeline delivered (3.6s) → staff complete & close table (1.0s) → phone refresh redirects to `/` |
+| 6 | Room food loop end-to-end | PASS | Room 101 QR scan → `/services` clean render → room service order → staff approve (1.1s) → kitchen start/ready (0.9s/0.8s) → staff deliver & complete (1.0s/0.9s) → phone timeline completed (4.2s) → staff checkout room (1.2s) → phone refresh redirects to `/` |
+| 7 | Room service request loop | PASS | Room 101 housekeeping request submitted → staff queue acknowledge (phone 3.8s ≤ 7s) → start (phone 4.1s ≤ 7s) → complete (phone 4.5s ≤ 7s) into Recent history |
+| 8 | Shared session join (Table + Room) | PASS | Table: Phone B scan → join banner on Phone A (3.2s ≤ 5s) → approve sets cookie in header → Phone B on `/menu`. Room: Phone B scan → join banner on Phone A (2.9s ≤ 5s) → approve sets cookie in header → Phone B on `/services` |
+| 9 | Kitchen layout at 3 viewports | PASS | Sticky header with `pt-16` content offset prevents overlap; 2 columns at 1024px & 1366px, 3 columns at 1920px; tab filter (All/Preparing/Ready) active; Remove from Kitchen works |
+| 10 | `git status --porcelain` empty after all changes | PASS | working tree clean |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:**
+- `window.location.reload()` on terminal-state requests in `pollRequests()` (7.5.17.FIX.4) is still present. It is a UX limitation deferred to Phase 8.
+- Four `_logout-button.tsx` files remain (`W-0002`, `W-0003`, `W-0004`); they will be retired when the admin shell exists (Phase 8.1.2).
+- `W-0005` (admin HIDDEN state UI) remains open; scheduled for Phase 8.3.4.
+- `W-0006` (`cn` helper consolidation), `W-0007` (venue config loader), `W-0008` (`pg@8.x` upgrade) remain open; scheduled for Stage 4 or Phase 10.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change | No change |
+| SYSTEM.md | No | No system change | No change |
+| BUILD.md | No | No process change | No change |
+| ROADMAP.md | Yes | 7.6.11 → ✅ Complete; Phase 8 marked current | Updated |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | No new obligation, no discharge | No change |
+
+**Contradiction Check:** None found. All ten acceptance criteria are evidence-backed.
+
+**Next:** Phase 8.1.1 — Add `GET /api/admin/dashboard` route.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0219 — 2026-11-10 — Phase 7.5 Reconciliation & Closure (STRUCTURAL)
 
@@ -1815,7 +1898,7 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current status: Phase 7.5 closed. All loops (table, room, kitchen) verified. Baselines: tsc 0, unit 254, integration 233, build 39 routes. Next: Phase 8.
+Current status: Phase 7.6 (Foundation Hardening) is closed. Phase 8 (The Manager Panel) is unblocked and is the current phase. All four baselines pass: tsc 0 errors, test:unit 254/254 (36 files), test:integration 233/233 (38 files), build 39 routes. Phase 7.5 and Phase 7.6 are both closed. The foundation is verified end-to-end (Table, Room, Kitchen, Join, Requests).
 
 ## 8. How the File Evolves
 

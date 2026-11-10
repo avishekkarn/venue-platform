@@ -707,8 +707,8 @@ Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The g
 | 7.6.7 | DESIGN.md — kitchen tab, close action, join banner, /requests polling | ✅ Complete | 7.6.6 | 1 file |
 | 7.6.8 | Polling XSS contract documentation (audit: no user input in polling HTML today; Phase 9 must add escapeHtml when it introduces free-text) | ✅ Complete | 7.6.7 | 2 files (repaired: template literal backticks in 7.6.8.FIX) |
 | 7.6.9 | listForGuestSession! fix (BUILD.md §2.6 compliance) | ✅ Complete | 7.6.8 | 6 files |
-| 7.6.10 | WIRING.md — final discharge sweep + verify no duplicates | ⬜ | 7.6.9 | 1 file |
-| 7.6.11 | Full foundation verification (four baselines + manual walkthroughs) | ⬜ | 7.6.10 | 0 files |
+| 7.6.10 | WIRING.md — final discharge sweep + verify no duplicates | ✅ Complete | 7.6.9 | 1 file |
+| 7.6.11 | Full foundation verification (four baselines + manual walkthroughs) | ✅ Complete | 7.6.10 | 0 files |
 
 ### Task Descriptions (Precise, Anti-Hallucination)
 
@@ -777,6 +777,8 @@ Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The g
 ## 11. Phase 8 — The Manager Panel
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
+
+**Status:** Phase 8 is the current phase. Phase 7.6 closed on 2026-11-10 (PROGRESS ENTRY-0220).
 
 **Dependency:** Phase 7.6 is ✅ Complete.
 
