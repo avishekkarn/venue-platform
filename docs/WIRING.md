@@ -31,21 +31,35 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
-### W-0011 — OPEN — `request-form-field.tsx` must be authored
-Originated: Task 7.5.1 (ENTRY-0206).
-Obligation: `src/components/guest/request-form-field.tsx` is 0-byte. The 8 non-food forms will reuse it for text, textarea, single-select chips, multi-select chips, time picker, and photo upload. It must be authored before Task 7.5.7 begins.
-Files and call site: `src/components/guest/request-form-field.tsx`, consumed by each of the 8 forms.
-Satisfied by: The first sub-task of Task 7.5.7.
-Depends on: DESIGN.md §4.6.17.7, DESIGN.md §4.13.
-Status: OPEN.
+### W-0020 — OPEN — Guest-screen manual checks must verify that no injected script renders as raw text
 
-### W-0010 — OPEN — Build the 8 non-food service forms
-Originated: Task 7.5.1 (ENTRY-0206).
-Obligation: The 9 service tiles on `/services` are inert. Task 7.5.6 wires "Room Service" to `/menu`; Task 7.5.7 wires the other 8 tiles to their dedicated forms. The 8 subfolders under `app/(guest)/services/` exist as empty directories and must gain a `page.tsx`.
-Files and call site: `app/(guest)/services/page.tsx` (tiles have no `<Link>`); the 8 empty folders under `app/(guest)/services/`.
-Satisfied by: Task 7.5.6 (Room Service tile) and Task 7.5.7 (8 non-food forms).
-Depends on: PRODUCT.md §6.4–§6.11, DESIGN.md §4.6.17.7, D-5.1.
-Status: OPEN.
+- **Originated:** Tasks 7.6.8, 7.6.8.FIX, 7.6.8.FIX.3 (PROGRESS ENTRY-0220).
+- **Obligation:** Every guest-facing screen manual check (BUILD.md §8.8, "Guest-facing screen") must include an observation that no raw JavaScript renders as visible text on the page. The failure mode — a broken `dangerouslySetInnerHTML` string — is invisible to `tsc`, invisible to `pnpm test:unit`, and invisible to `pnpm build`. It is only visible in a browser.
+- **Files and call site:** Any guest screen that injects a script. Currently: `/services`, `/menu`, `/order/[id]/track`, `/requests`, `/qr/[token]`, `/qr/join/[token]`.
+- **Satisfied by:** Process rule — applies to every future guest-screen manual check.
+- **Depends on:** BUILD.md §8.8 (mandatory test layer), BUILD.md §11 (verification protocol).
+- **Verification:** A guest screen renders normally (no raw JS text) on a real phone, and its injected script executes correctly (e.g., the join banner appears within 5 seconds).
+- **Status:** OPEN
+
+### W-0019 — OPEN — Comments inside `dangerouslySetInnerHTML` must not contain backticks or script tags
+
+- **Originated:** Tasks 7.6.8, 7.6.8.FIX, 7.6.8.FIX.3 (PROGRESS ENTRY-0220).
+- **Obligation:** Any comment placed inside a `dangerouslySetInnerHTML` template literal (or any string that is injected into the browser as HTML or JS) must contain no backtick (`` ` ``), no `<script>`, and no `</script>` literal. Task 7.6.8's first attempt broke the page because the comment contained an unescaped backtick. Task 7.6.8.FIX did not fully fix it because the comment contained `</script>`. Task 7.6.8.FIX.3 moved the comment outside the template literal entirely, which is the correct pattern.
+- **Files and call site:** Any component that uses `<script dangerouslySetInnerHTML={{ __html: \`...\` }} />` under `src/components/`. Currently: `src/components/guest/join-request-script.tsx`, `src/components/guest/requests-client.tsx`, `app/(guest)/order/[id]/track/page.tsx`, `app/kitchen/page.tsx`, `app/staff/page.tsx`.
+- **Satisfied by:** Process rule — applies to every future comment in an injected string.
+- **Depends on:** BUILD.md §3 (React/Next.js standards), BUILD.md §14 (session hygiene).
+- **Verification:** A guest-facing screen renders without raw JavaScript text visible on the page. Manual mobile check required.
+- **Status:** OPEN
+
+### W-0018 — OPEN — Port signature changes require `tsc` after the change, not just grep
+
+- **Originated:** Task 7.6.9 (PROGRESS ENTRY-0220).
+- **Obligation:** When a method on a domain port interface changes shape (made required, made optional, renamed, or its parameters changed), the task's audit must run `pnpm exec tsc --noEmit` **after** modifying the port. Grep (`Select-String`) is not sufficient because TypeScript mocks declare the method as a type property, not as a string literal. Task 7.6.9's initial audit missed four test mocks that grep could not find; `tsc` caught them.
+- **Files and call site:** Any domain port under `src/domain/*/*.repository.ts`, and every mock that references the port's type in `tests/unit/` and `tests/integration/`.
+- **Satisfied by:** Process rule — applies to every future port change.
+- **Depends on:** BUILD.md §11 (verification protocol), BUILD.md §15 (definition of done).
+- **Verification:** A port change that `tsc` passes is a completed port change; a port change that only grep-verifies has no proof the mocks were updated.
+- **Status:** OPEN
 
 ### W-0009 — SUPERSEDED BY W-0013 — Charlie must be elevated to LEADER in seed
 
@@ -161,6 +175,26 @@ Status: SUPERSEDED.
 - **Status:** DISCHARGED
 - **Discharged by:** Task 7.5.8 and Task 7.5.14.
 
+### W-0011 — DISCHARGED — `request-form-field.tsx` must be authored
+
+- **Originated:** Task 7.5.1 (ENTRY-0206).
+- **Obligation:** `src/components/guest/request-form-field.tsx` is 0-byte. The 8 non-food forms will reuse it for text, textarea, single-select chips, multi-select chips, time picker, and photo upload. It must be authored before Task 7.5.7 begins.
+- **Files and call site:** `src/components/guest/request-form-field.tsx`, consumed by each of the 8 forms.
+- **Satisfied by:** The first sub-task of Task 7.5.7.
+- **Depends on:** DESIGN.md §4.6.17.7, DESIGN.md §4.13.
+- **Status:** DISCHARGED
+- **Discharged by:** Task 7.5.7 (Task 7.5.7.A, commit `b15a412`).
+
+### W-0010 — DISCHARGED — Build the 8 non-food service forms
+
+- **Originated:** Task 7.5.1 (ENTRY-0206).
+- **Obligation:** The 9 service tiles on `/services` are inert. Task 7.5.6 wires "Room Service" to `/menu`; Task 7.5.7 wires the other 8 tiles to their dedicated forms. The 8 subfolders under `app/(guest)/services/` exist as empty directories and must gain a `page.tsx`.
+- **Files and call site:** `app/(guest)/services/page.tsx` (tiles have no `<Link>`); the 8 empty folders under `app/(guest)/services/`.
+- **Satisfied by:** Task 7.5.6 (Room Service tile) and Task 7.5.7 (8 non-food forms).
+- **Depends on:** PRODUCT.md §6.4–§6.11, DESIGN.md §4.6.17.7, D-5.1.
+- **Status:** DISCHARGED
+- **Discharged by:** Task 7.5.6 (commit `9621c0f`) and Task 7.5.7 (commits `b15a412`, `9f9a097`, `f460bad`).
+
 ### W-0014 — DISCHARGED — `vitest.config.ts` include array missed `tests/unit/requests/`
 
 - **Originated:** Task 7.5.2a (PROGRESS ENTRY-0208).
@@ -170,16 +204,6 @@ Status: SUPERSEDED.
 - **Status:** DISCHARGED
 
 ### W-0001 — DISCHARGED — Cart "Place order" submission seam
-
-- **Originated:** Task 5.4.5 (PROGRESS ENTRY-0141).
-- **Obligation:** Replace the disabled placeholder in `app/(guest)/cart/page.tsx` with the real submission. The submission (5.6.1) must send both the place identifier and the pickup name (when present) so that Phase 7's staff screen can render "Table 12 — Ramesh".
-- **Files and call site:** `app/(guest)/cart/page.tsx`, the PLACE-ORDER SEAM comment location.
-- **Satisfied by:** Task 5.6.1 (`POST /api/guest/orders`), with 5.7.1 (confirmation) and 5.5.1–5.5.3 (domain/snapshot) as dependencies.
-- **Depends on:** D-4.12, SYSTEM.md §9.7, BUILD.md §6, ROADMAP.md Task 5.6.1.
-- **Related decision:** D-17.5.
-- **Verification:** The PROGRESS entry at the close of 5.6, and the Phase 5/6 boundary per PHASE_TESTS.md §7.
-- **Status:** DISCHARGED
-- **Discharged by:** PROGRESS ENTRY-0148 (Task 5.6.1).
 
 - **Originated:** Task 5.4.5 (PROGRESS ENTRY-0141).
 - **Obligation:** Replace the disabled placeholder in `app/(guest)/cart/page.tsx` with the real submission. The submission (5.6.1) must send both the place identifier and the pickup name (when present) so that Phase 7's staff screen can render "Table 12 — Ramesh".
