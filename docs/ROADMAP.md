@@ -544,7 +544,7 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.1.1 | Add the order approval action (`PLACED` → `APPROVED`) so orders reach the kitchen                        | ✅ Complete | 6.4.1      |
 | 7.1.2 | Add the delivery action (`READY` → `DELIVERED`)                                                           | ✅ Complete | 7.1.1      |
 | 7.1.3 | Add the completion action (`DELIVERED` → `COMPLETED`)                                                     | ✅ Complete | 7.1.2      |
-| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | 🟨 In progress | 7.1.3      |
+| 7.1.4 | Add the cancellation action with a reason (for both orders and requests)                                  | ✅ Complete | 7.1.3      |
 | 7.1.5 | Add the table-close action (invalidates sessions, sets table FREE)                                        | ✅ Complete | 7.1.3 (order path) |
 | 7.1.6 | Add the room-checkout action (invalidates sessions, sets room VACANT)                                     | ✅ Complete | 7.1.5      |
 | 7.1.7 | Verify: state machine enforced; guest session invalidated on close/checkout                               | ✅ Complete | 7.1.6      |
@@ -591,10 +591,12 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 | ID    | Task                                                                                                                              | Status | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 7.4.1 | Verify the full table loop: guest places order → staff approves → kitchen starts → kitchen ready → staff delivers → staff completes → staff closes table | ⬜     | 7.3.8      |
-| 7.4.2 | Verify the full room service loop with the same shape                                                                             | ⬜     | 7.4.1      |
-| 7.4.3 | Verify the guest's tracking screen reflects every state change                                                                    | ⬜     | 7.4.2      |
-| 7.4.4 | Verify the table close and room checkout end the guest session (and kick the guest out)                                           | ⬜     | 7.4.3      |
+| 7.4.1 | Verify the full table loop: guest places order → staff approves → kitchen starts → kitchen ready → staff delivers → staff completes → staff closes table | ✅ Complete | 7.3.8      |
+| 7.4.2 | Verify the full room service loop with the same shape                                                                             | ✅ Complete | 7.4.1      |
+| 7.4.3 | Verify the guest's tracking screen reflects every state change                                                                    | ✅ Complete | 7.4.2      |
+| 7.4.4 | Verify the table close and room checkout end the guest session (and kick the guest out)                                           | ✅ Complete | 7.4.3      |
+
+*(Phase 7 closed via Phase 7.5 convergence. All loops verified end-to-end.)*
 
 **Acceptance for Phase 7:** The complete order loop works end to end. A guest places an order, the staff approves it, the kitchen and staff advance it, the guest tracks it, the staff delivers it, and finally, the staff closes the table, ending the guest session and freeing the table.
 
@@ -612,14 +614,27 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 | 7.5.3 | Add `advance`, `cancel`, `decline`, `edit` request domain functions | ✅ Complete | 7.5.2 |
 | 7.5.4 | Add `app/api/guest/requests/*` routes (submit, edit, cancel, list) | ✅ Complete | 7.5.3 |
 | 7.5.5 | Add `app/api/staff/requests/*` routes (queue, advance, cancel, decline) | ✅ Complete | 7.5.4 |
-| 7.5.6 | Fix room→menu navigation (Room Service tile opens menu with `placeType=ROOM`) | ⬜ | 7.5.5 |
-| 7.5.7 | Build guest request forms for the 8 non-food services | ⬜ | 7.5.6 |
-| 7.5.8 | Build guest Requests view (combined active requests timeline) | ⬜ | 7.5.7 |
-| 7.5.9 | Implement D-18.1 staff focus model (Charlie = LEADER) | ⬜ | 7.5.8 |
-| 7.5.10 | Optimize kitchen screen for tablets (fixed header, tabbed grids) | ⬜ | 7.5.9 |
-| 7.5.11 | Fix room checkout 403 UX (hide actions based on role) | ⬜ | 7.5.10 |
-| 7.5.12 | Verify: Full loop for table and room works without regressions | ⬜ | 7.5.11 |
-| 7.5.14 | Add the staff request queue UI (LEADER-visible `/staff/requests` tab with queue, actions, and status) | ⬜ | 7.5.8 |
+| 7.5.6 | Fix room→menu navigation (Room Service tile opens menu with `placeType=ROOM`) | ✅ Complete | 7.5.5 |
+| 7.5.7 | Build guest request forms for the 8 non-food services | ✅ Complete | 7.5.6 |
+| 7.5.8 | Build guest Requests view (combined active requests timeline) | ✅ Complete | 7.5.7 |
+| 7.5.9 | Implement D-18.1 staff focus model (Charlie = LEADER) | ✅ Complete | 7.5.8 |
+| 7.5.10 | Optimize kitchen screen for tablets (fixed header, tabbed grids, close action) | ✅ Complete | 7.5.9 |
+| 7.5.11 | Fix room checkout 403 UX (hide actions based on role) | ✅ Complete | 7.5.10 |
+| 7.5.12 | Verify: Full loop for table and room works without regressions | ✅ Complete | 7.5.11 |
+| 7.5.13 | Copy fix & consistency for service requests | ✅ Complete | 7.5.8 |
+| 7.5.14 | Add the staff request queue UI (LEADER-visible `/staff/requests` tab with queue, actions, and status) | ✅ Complete | 7.5.8 |
+| 7.5.15.A | Add `guestSessionId` to `ServiceRequest` schema and repository | ✅ Complete | 7.5.14 |
+| 7.5.15.B | Wire `guestSessionId` into guest request flow | ✅ Complete | 7.5.15.A |
+| 7.5.15.C | Active-session filter for staff requests queue | ✅ Complete | 7.5.15.B |
+| 7.5.16 | Add back-link to `/services` on `/menu` for ROOM sessions | ✅ Complete | 7.5.15.C |
+| 7.5.16.FIX | Align Room Join Request experience with Table flow | ✅ Complete | 7.5.16 |
+| 7.5.16.FIX.2 | Vanilla join request script injection | ✅ Complete | 7.5.16.FIX |
+| 7.5.16.FIX.3 | Server-side cookie injection for join approval | ✅ Complete | 7.5.16.FIX.2 |
+| 7.5.17 | Live polling on guest `/requests` | ✅ Complete | 7.5.15.B |
+| 7.5.17.FIX | Convert `/requests` to JSON polling | ✅ Complete | 7.5.17 |
+| 7.5.17.FIX.2 | Align polling discipline with order tracking | ✅ Complete | 7.5.17.FIX |
+| 7.5.17.FIX.3 | Direct useState update for requests timeline | ✅ Complete | 7.5.17.FIX.2 |
+| 7.5.17.FIX.4 | Vanilla-JS DOM replacement polling for `/requests` | ✅ Complete | 7.5.17.FIX.3 |
 
 *(7.5.0 completed at commit `61e9049` (ENTRY-0205). 7.5.1 audit completed via live walk of 16 flows; defects catalogued in ENTRY-0206. 7.5.2 completed at commit `ba83f6d`; see ENTRY-0207. 7.5.2a (vitest config fix) completed at the same commit; see ENTRY-0208.)*
 
@@ -633,15 +648,19 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 *(7.5.14 added on 2026-11-03 per ENTRY-0218. The Phase 7.5 goal — "the room service flow (food + all 8 non-food services) works end to end with the same completeness as the table flow" — cannot be satisfied without a staff surface to see and act on the 8 service request types. Phase 9's Task 9.5.8 remains the canonical focused per-role Request Queue (with scoped queues per HOUSEKEEPING / MAINTENANCE / CONCIERGE / LAUNDRY / SPA / FRONT_DESK). Task 7.5.14 is the minimal LEADER-visible queue that closes the loop in Phase 7.5. Both are tracked; they are not duplicates — 7.5.14 delivers the LEADER view; 9.5.8 delivers the focused per-role views. See WIRING.md W-0017.)*
 
+Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The guest polling, the shared join sessions, and the kitchen layout are all verified.
+
 ## 11. Phase 8 — The Manager Panel
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports.
 
 ### Milestone 8.1 — The dashboard
 
+*(Phase 8 unblocked. Foundation for Manager Panel is stable.)*
+
 | ID    | Task                                                                                | Status | Depends on |
 | ----- | ----------------------------------------------------------------------------------- | ------ | ---------- |
-| 8.1.1 | Add the live metric cards (waiting, in kitchen, ready, revenue today, orders today) | ⬜     | 7.4.4      |
+| 8.1.1 | Add the live metric cards (waiting, in kitchen, ready, revenue today, orders today) | 🟨 In progress | 7.4.4      |
 | 8.1.2 | Add the active orders list                                                          | ⬜     | 8.1.1      |
 | 8.1.3 | Add the polling on the dashboard                                                    | ⬜     | 8.1.2      |
 | 8.1.4 | Verify: the metrics update as orders move                                           | ⬜     | 8.1.3      |

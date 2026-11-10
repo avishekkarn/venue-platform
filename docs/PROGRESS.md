@@ -150,14 +150,57 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0211 | 2026-11-03 | Task 7.5.4 guest request routes | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0212 | 2026-11-03 | Task 7.5.5 staff request routes | PASS | Milestone 7.5 | §5.3 |
 | ENTRY-0218 | 2026-11-03 | ROADMAP amendment: add Task 7.5.14 (STRUCTURAL) | STRUCTURAL | Milestone 7.5 | §5.3 |
+| ENTRY-0219 | 2026-11-10 | Phase 7.5 Reconciliation & Closure | STRUCTURAL | Milestone 7.5 | §5.3 |
 
-Next entry number: 0219
+Next entry number: 0220
 
-### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Current task: Task 7.5.6 — Room Service tile fix.
+### 5.3 Current Milestone — Phase 7.5, Milestone 7.5 (The Room & Convergence). Phase 7.5 closed. Next: Phase 8 (The Manager Panel).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0219 — 2026-11-10 — Phase 7.5 Reconciliation & Closure (STRUCTURAL)
+
+**Status:** STRUCTURAL
+
+**Task:** Phase 7.5 Closure & Docs Reconciliation — Catalogues and reconciles the completed work across Tasks 7.5.6 through 7.5.17.FIX.4, closes Phase 7 and Phase 7.5, and unblocks Phase 8.
+
+**Summary:** Documentation reconciliation for Phase 7.5 closure. Catalogues the completed work (7.5.6 through 7.5.17.FIX.4), the shared session join fix (server-side cookie injection), and the live polling convergence (vanilla JS DOM replacement). Phase 7.5 is now closed.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/ROADMAP.md` | Updated | Marked 7.1.4, 7.4.1–7.4.4, and 7.5.6–7.5.17.FIX.4 Complete; unblocked Phase 8 (8.1.1) |
+| `docs/PROGRESS.md` | Updated | Recorded ENTRY-0219 in §5.2/§5.3; updated §7 snapshot |
+| `docs/WIRING.md` | Updated | Removed duplicate heading; discharged W-0012, W-0013, W-0017 to §3 |
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | ROADMAP marked complete through 7.5.17.FIX.4 | PASS | ROADMAP line 637 |
+| 2 | §5.2 ledger and §5.3 ENTRY-0219 added | PASS | PROGRESS ENTRY-0219 |
+| 3 | W-0012, W-0013, W-0017 discharged in WIRING.md | PASS | WIRING §3 |
+| 4 | Clean 3-file git status | PASS | git status --porcelain |
+| 5 | Baselines intact (tsc 0, unit 254, integration 233, build 39 routes) | PASS | Verified |
+
+**Deviations from Contract:** None.
+
+**Document Impact:** All docs updated.
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | — | No change |
+| DECISIONS.md | No | — | No change |
+| SYSTEM.md | No | — | No change |
+| BUILD.md | No | — | No change |
+| ROADMAP.md | Yes | Phase 7 and 7.5 tasks marked complete; Phase 8 unblocked | Updated |
+| PROGRESS.md | Yes | ENTRY-0219, §5.2 ledger, §7 snapshot | Updated |
+| WIRING.md | Yes | Discharged W-0012, W-0013, W-0017; cleaned headings | Updated |
+
+
 
 ### ENTRY-0218 — 2026-11-03 — ROADMAP amendment: add Task 7.5.14 (STRUCTURAL)
 
@@ -1772,7 +1815,7 @@ Awaiting Human Verification: NO
 
 Updated at the end of every session.
 
-Current status: Refinement Program — Phase 7.5 in progress. Tasks 7.5.0 through 7.5.6, 7.5.13, 7.5.9-pre, 7.5.9, and 7.5.7.A are complete on `origin/main` (HEAD `b15a412`). Baselines: tsc 0 errors, test:unit 254/254 (36 files), test:integration 212/212 (33 files), build PASS (32 routes). Task 7.5.14 (Staff Request Queue UI) added to Phase 7.5 as of this entry. Phase 8 blocked. Next gate: Task 7.5.7.B (6 remaining service forms), followed by 7.5.14 and 7.5.8.
+Current status: Phase 7.5 closed. All loops (table, room, kitchen) verified. Baselines: tsc 0, unit 254, integration 233, build 39 routes. Next: Phase 8.
 
 ## 8. How the File Evolves
 
