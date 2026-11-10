@@ -149,6 +149,7 @@ function mapServiceRequest(raw: RawServiceRequestWithRelations): ServiceRequest 
     roomId: raw.roomId,
     tableId: raw.tableId,
     counterId: raw.counterId,
+    guestSessionId: raw.guestSessionId,
     serviceType: fromPrismaHotelService(raw.serviceType),
     state: PRISMA_TO_DOMAIN_REQUEST_STATE[raw.state],
     details,
@@ -202,6 +203,7 @@ export function createPrismaServiceRequestRepository(
               roomId: input.roomId ?? null,
               tableId: input.tableId ?? null,
               counterId: input.counterId ?? null,
+              guestSessionId: input.guestSessionId ?? null,
               serviceType: toPrismaHotelService(input.serviceType),
               state: PrismaRequestState.SUBMITTED,
               detailsJson: (input.details ?? {}) as Prisma.InputJsonValue,
@@ -345,6 +347,27 @@ export function createPrismaServiceRequestRepository(
           error instanceof Error
             ? error.message
             : "Failed to list service requests for counter"
+        );
+      }
+    },
+
+    listForGuestSession: async (
+      venueId: string,
+      guestSessionId: string
+    ): Promise<Result<ServiceRequest[]>> => {
+      try {
+        const rawList = await client.serviceRequest.findMany({
+          where: { venueId, guestSessionId },
+          include: REQUEST_INCLUDE,
+          orderBy: { submittedAt: "desc" },
+        });
+        return ok(rawList.map(mapServiceRequest));
+      } catch (error) {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          error instanceof Error
+            ? error.message
+            : "Failed to list service requests for guest session"
         );
       }
     },

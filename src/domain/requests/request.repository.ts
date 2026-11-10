@@ -66,6 +66,7 @@ export interface ServiceRequest {
   readonly roomId: string | null;
   readonly tableId?: string | null;
   readonly counterId?: string | null;
+  readonly guestSessionId?: string | null;
   readonly serviceType: HotelService;
   readonly state: RequestState;
   readonly details: ServiceRequestDetails;
@@ -80,6 +81,7 @@ export interface CreateServiceRequestInput {
   readonly roomId?: string | null;
   readonly tableId?: string | null;
   readonly counterId?: string | null;
+  readonly guestSessionId?: string | null;
   readonly serviceType: HotelService;
   readonly details?: ServiceRequestDetails;
 }
@@ -128,6 +130,10 @@ export interface ServiceRequestRepository {
   listForCounter(
     venueId: string,
     counterId: string
+  ): Promise<Result<ServiceRequest[]>>;
+  listForGuestSession?(
+    venueId: string,
+    guestSessionId: string
   ): Promise<Result<ServiceRequest[]>>;
   advanceState(input: AdvanceRequestInput): Promise<Result<ServiceRequest>>;
   cancel(input: CancelRequestInput): Promise<Result<ServiceRequest>>;
