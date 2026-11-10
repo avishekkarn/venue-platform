@@ -650,275 +650,298 @@ The build progresses in eleven phases. Each phase has a goal — a thing that is
 
 Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The guest polling, the shared join sessions, and the kitchen layout are all verified.
 
-## 11. Phase 8 — The Manager Panel
+## 10.5 Phase 7.5 — Room Service & Frontend Convergence
 
-**Goal:** The manager can see everything, manage the venue's data, and export reports.
+**Status:** ✅ COMPLETE — Phase 7.5 is closed. All tasks ✅ Complete. See PROGRESS ENTRY-0219.
 
-### Milestone 8.1 — The dashboard
+*(The full task list is preserved below for audit; all statuses are ✅ as of ENTRY-0219.)*
 
-*(Phase 8 unblocked. Foundation for Manager Panel is stable.)*
+| ID | Task | Status |
+|----|------|--------|
+| 7.5.0 | Formalize Phase 7.5, D-18.1, and update docs | ✅ Complete |
+| 7.5.1 | Stage 3 flow audit | ✅ Complete |
+| 7.5.2 | request transitions.ts | ✅ Complete |
+| 7.5.3 | advance, cancel, decline, edit request domain functions | ✅ Complete |
+| 7.5.4 | Guest request routes | ✅ Complete |
+| 7.5.5 | Staff request routes | ✅ Complete |
+| 7.5.6 | Room Service tile fix | ✅ Complete |
+| 7.5.7 | 8 non-food service forms | ✅ Complete |
+| 7.5.8 | Guest /requests view | ✅ Complete |
+| 7.5.9 | LEADER role + focus model | ✅ Complete |
+| 7.5.10 | Kitchen layout polish (tabbed filter, close action) | ✅ Complete |
+| 7.5.11 | Room checkout 403 UX | ✅ Complete |
+| 7.5.12 | Full loop verification | ✅ Complete |
+| 7.5.13 | Copy fix | ✅ Complete |
+| 7.5.14 | Staff request queue UI | ✅ Complete |
+| 7.5.15.A/B/C | guestSessionId scoping | ✅ Complete |
+| 7.5.16 | Back-link on /menu | ✅ Complete |
+| 7.5.16.FIX/2/3 | Join request alignment (server cookie) | ✅ Complete |
+| 7.5.17.FIX.1–4 | Vanilla-JS polling for /requests | ✅ Complete |
 
-| ID    | Task                                                                                | Status | Depends on |
-| ----- | ----------------------------------------------------------------------------------- | ------ | ---------- |
-| 8.1.1 | Add the live metric cards (waiting, in kitchen, ready, revenue today, orders today) | 🟨 In progress | 7.4.4      |
-| 8.1.2 | Add the active orders list                                                          | ⬜     | 8.1.1      |
-| 8.1.3 | Add the polling on the dashboard                                                    | ⬜     | 8.1.2      |
-| 8.1.4 | Verify: the metrics update as orders move                                           | ⬜     | 8.1.3      |
-
-### Milestone 8.2 — Order management
-
-| ID    | Task                                                                                      | Status | Depends on |
-| ----- | ----------------------------------------------------------------------------------------- | ------ | ---------- |
-| 8.2.1 | Add the Active Orders tab                                                                 | ⬜     | 8.1.4      |
-| 8.2.2 | Add the Completed Orders tab with date filters                                            | ⬜     | 8.2.1      |
-| 8.2.3 | Add the order detail view (items, states, history)                                        | ⬜     | 8.2.2      |
-| 8.2.4 | Add the CSV export                                                                        | ⬜     | 8.2.2      |
-| 8.2.5 | Verify: the manager can filter orders by any range within 6 months and export them as CSV | ⬜     | 8.2.4      |
-
-### Milestone 8.3 — Menu management
-
-| ID    | Task                                                                        | Status | Depends on |
-| ----- | --------------------------------------------------------------------------- | ------ | ---------- |
-| 8.3.1 | Add the menu list                                                           | ⬜     | 8.2.5      |
-| 8.3.2 | Add the add-item form                                                       | ⬜     | 8.3.1      |
-| 8.3.3 | Add the edit-item form                                                      | ⬜     | 8.3.2      |
-| 8.3.4 | Add the item state toggle (available, unavailable, hidden)                  | ✅ Complete | 8.3.3      |
-| 8.3.5 | Add the category management                                                 | ⬜     | 8.3.4      |
-| 8.3.6 | Add the modifier group and modifier option management                       | ⬜     | 8.3.5      |
-| 8.3.7 | Verify: an item can be added, edited, and hidden; the guest sees the change | ⬜     | 8.3.6      |
-
-*(Task 8.3.4: The state toggle UI and route are already implemented (app/admin/page.tsx, app/api/admin/menu/items/[id]/state/route.ts). The enum supports HIDDEN but the UI exposes only available/unavailable; the HIDDEN action is tracked as a WIRING obligation (W-0005).)*
-
-### Milestone 8.4 — Table and room management
-
-| ID    | Task                                                                        | Status | Depends on |
-| ----- | --------------------------------------------------------------------------- | ------ | ---------- |
-| 8.4.1 | Add the table list and add/edit forms                                       | ⬜     | 8.3.7      |
-| 8.4.2 | Add the room list and add/edit forms                                        | ⬜     | 8.4.1      |
-| 8.4.3 | Add the table and room QR management                                        | ⬜     | 8.4.2      |
-| 8.4.4 | Add the batch QR print view                                                 | ⬜     | 8.4.3      |
-| 8.4.5 | Verify: a table can be added, a QR generated, and the QR printed in a batch | ⬜     | 8.4.4      |
-
-### Milestone 8.5 — Staff management
-
-| ID    | Task                                                                                         | Status | Depends on |
-| ----- | -------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 8.5.1 | Add the staff list                                                                           | ⬜     | 8.4.5      |
-| 8.5.2 | Add the add-staff form                                                                       | ⬜     | 8.5.1      |
-| 8.5.3 | Add the edit-staff form                                                                      | ⬜     | 8.5.2      |
-| 8.5.4 | Add the role assignment                                                                      | ⬜     | 8.5.3      |
-| 8.5.5 | Add the deactivate action                                                                    | ⬜     | 8.5.4      |
-| 8.5.6 | Add the password reset action                                                                | ⬜     | 8.5.5      |
-| 8.5.7 | Verify: a staff member can be added, given roles, deactivated, and have their password reset | ⬜     | 8.5.6      |
-
-### Milestone 8.6 — Reports
-
-| ID    | Task                                                                              | Status | Depends on |
-| ----- | --------------------------------------------------------------------------------- | ------ | ---------- |
-| 8.6.1 | Add the sales report (by day)                                                     | ⬜     | 8.5.7      |
-| 8.6.2 | Add the sales report by week                                                      | ⬜     | 8.6.1      |
-| 8.6.3 | Add the sales report by month                                                     | ⬜     | 8.6.2      |
-| 8.6.4 | Add the custom range report (up to 6 months)                                      | ⬜     | 8.6.3      |
-| 8.6.5 | Add the CSV export                                                                | ⬜     | 8.6.4      |
-| 8.6.6 | Verify: a report can be filtered by any range within 6 months and exported as CSV | ⬜     | 8.6.5      |
-
-### Milestone 8.7 — Settings and modules
-
-| ID    | Task                                                                       | Status | Depends on |
-| ----- | -------------------------------------------------------------------------- | ------ | ---------- |
-| 8.7.1 | Add the settings screen (venue name, address, tax rate, currency)          | ⬜     | 8.6.6      |
-| 8.7.2 | Add the module toggles                                                     | ⬜     | 8.7.1      |
-| 8.7.3 | Add the service toggles                                                    | ⬜     | 8.7.2      |
-| 8.7.4 | Verify: turning a module off hides its screens; turning it on reveals them | ⬜     | 8.7.3      |
-
-**Acceptance for Phase 8:** The manager can log in and use every screen. The dashboard shows live metrics. Orders can be filtered and exported. The menu, tables, rooms, staff, and settings can all be managed. Reports can be generated for any range up to 6 months and exported as CSV. Modules and services can be toggled.
-
-**Visible progress at the end of Phase 8:** A manager runs the venue's operation from a single panel.
+**Phase 7.5 is closed.** The Room loop is now 1:1 aligned with the Table loop. The guest polling, the shared join sessions, and the kitchen layout are all verified. All WIRING obligations from Phase 7.5 (W-0012, W-0013, W-0017) are discharged.
 
 ---
 
-## 12. Phase 9 — Hotel Services
+## 10.6 Phase 7.6 — Foundation Hardening (NEW)
 
-**Goal:** The guest can submit service requests, and the staff queues handle them.
+**Goal:** Before Phase 8 begins, every documentation and code-level debt identified in the post-7.5 audit is closed. The four baselines remain green. No new features. No scope creep.
 
-### Milestone 9.1 — The service request domain
+**Why this phase exists:** Three of the last five sessions were spent on bugs caused by documentation drift and code-level ambiguity (React polling failures, join-banner overlay, cookie race). This phase is a deliberate pause to lock in what we have built and to make the ground clean enough for Phase 8 to be built on it without inheriting the debt.
 
-*(Tasks 9.1.1 through 9.1.6 moved to Phase 7.5 (Tasks 7.5.2 and 7.5.3) for room service convergence to avoid duplication. Retained here for traceability.)*
+**Dependency:** Phase 7.5 is ✅ Complete (commit `5ff756f`).
 
-| ID    | Task                                                                                                  | Status | Depends on |
-| ----- | ----------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 9.1.1 | Add the `createRequest` domain function                                                               | ⬜     | 8.7.4      |
-| 9.1.2 | Add the `advanceRequest` domain function                                                              | ⬜     | 9.1.1      |
-| 9.1.3 | Add the `cancelRequest` domain function                                                               | ⬜     | 9.1.2      |
-| 9.1.4 | Add the `declineRequest` domain function                                                              | ⬜     | 9.1.3      |
-| 9.1.5 | Add the edit-while-submitted rule                                                                     | ⬜     | 9.1.1      |
-| 9.1.6 | Verify: every function is correct; the state machine is enforced; the guest's edit window is enforced | ⬜     | 9.1.5      |
+**Duration:** 10 tasks, 1 task per session.
 
-### Milestone 9.2 — The service request routes
+**Acceptance for Phase 7.6:** Every acceptance criterion has raw evidence. The four baselines pass. The docs match the code. The audit findings are all closed. No code outside the task's scope was touched. `git status --porcelain` is empty after the last task.
 
-*(Tasks 9.2.1 through 9.2.5 moved to Phase 7.5 (Tasks 7.5.4 and 7.5.5) for room service convergence to avoid duplication. Retained here for traceability.)*
+### Milestone 7.6 — The Hardening
 
-| ID    | Task                                                              | Status | Depends on |
-| ----- | ----------------------------------------------------------------- | ------ | ---------- |
-| 9.2.1 | Add `POST /api/guest/requests`                                    | ⬜     | 9.1.6      |
-| 9.2.2 | Add `PATCH /api/guest/requests/[id]`                              | ⬜     | 9.2.1      |
-| 9.2.3 | Add `POST /api/guest/requests/[id]/cancel`                        | ⬜     | 9.2.2      |
-| 9.2.4 | Add `GET /api/guest/requests`                                     | ⬜     | 9.2.1      |
-| 9.2.5 | Verify: a request can be submitted, edited, cancelled, and listed | ⬜     | 9.2.4      |
+| ID | Task | Status | Depends on | Scope |
+|----|------|--------|------------|-------|
+| 7.6.1 | ROADMAP.md rewrite (this file) | ⬜ | 7.5 | 1 file |
+| 7.6.2 | README.md reconciliation | ⬜ | 7.6.1 | 1 file |
+| 7.6.3 | DECISIONS.md — new records D-19.1, D-19.2 | ⬜ | 7.6.2 | 1 file |
+| 7.6.4 | DECISIONS.md — appendix + count reconciliation | ⬜ | (folded into 7.6.3) | — |
+| 7.6.5 | SYSTEM.md — API surface reconciliation | ⬜ | 7.6.3 | 1 file |
+| 7.6.6 | PHASE_TESTS.md — Phase 7.5 closure note | ⬜ | 7.6.5 | 1 file |
+| 7.6.7 | DESIGN.md — kitchen tab, close action, join banner, /requests polling | ⬜ | 7.6.6 | 1 file |
+| 7.6.8 | escapeHtml hardening (XSS pre-emption for Phase 9) | ⬜ | 7.6.7 | 2 files |
+| 7.6.9 | listForGuestSession! fix (BUILD.md §2.6 compliance) | ⬜ | 7.6.8 | 2 files |
+| 7.6.10 | WIRING.md — final discharge sweep + verify no duplicates | ⬜ | 7.6.9 | 1 file |
+| 7.6.11 | Full foundation verification (four baselines + manual walkthroughs) | ⬜ | 7.6.10 | 0 files |
 
-### Milestone 9.3 — The guest service catalog
+### Task Descriptions (Precise, Anti-Hallucination)
 
-| ID     | Task                                                          | Status | Depends on |
-| ------ | ------------------------------------------------------------- | ------ | ---------- |
-| 9.3.1  | Add the service catalog grid (the services the venue enables) | ⬜     | 9.2.5      |
-| 9.3.2  | Add the room service food form (reuses the menu flow)         | ⬜     | 9.3.1      |
-| 9.3.3  | Add the housekeeping form                                     | ⬜     | 9.3.1      |
-| 9.3.4  | Add the maintenance form (with photo upload)                  | ⬜     | 9.3.1      |
-| 9.3.5  | Add the concierge form                                        | ⬜     | 9.3.1      |
-| 9.3.6  | Add the laundry form                                          | ⬜     | 9.3.1      |
-| 9.3.7  | Add the spa form                                              | ⬜     | 9.3.1      |
-| 9.3.8  | Add the late checkout form                                    | ⬜     | 9.3.1      |
-| 9.3.9  | Add the wake-up call form                                     | ⬜     | 9.3.1      |
-| 9.3.10 | Add the do-not-disturb toggle                                 | ⬜     | 9.3.1      |
-| 9.3.11 | Verify: each form submits and the request is stored           | ⬜     | 9.3.10     |
+**7.6.1 — ROADMAP.md rewrite**
+- **Files:** `docs/ROADMAP.md`
+- **Action:** Replace §10.5 (Phase 7.5) through §17 with the new content you paste from this message.
+- **Acceptance:** `Select-String -Path docs/ROADMAP.md -Pattern "Phase 7.6"` returns ≥1. `Select-String -Path docs/ROADMAP.md -Pattern "10.6 Phase 7.6"` returns ≥1. The four baselines unchanged.
+- **Why:** the ROADMAP must reflect the new Phase 7.6 before any other task references it.
 
-### Milestone 9.4 — The guest's requests view
+**7.6.2 — README.md reconciliation**
+- **Files:** `README.md`
+- **Action:** Update §1 decisions count from 88 to 104. Update §4 numbers (254 unit tests, current phase = 7.6). Update §5 pointer to PROGRESS §7. Remove the "Phase 1 closed; Phase 2 pending" line.
+- **Acceptance:** `Select-String -Path README.md -Pattern "88"` returns 0. `Select-String -Path README.md -Pattern "104"` returns ≥1. `Select-String -Path README.md -Pattern "Phase 7.6"` returns ≥1. Four baselines unchanged.
+- **Why:** a new chat reads README first; it must not be misled.
 
-| ID    | Task                                                                                        | Status | Depends on |
-| ----- | ------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 9.4.1 | Add the combined requests view                                                              | ⬜     | 9.3.11     |
-| 9.4.2 | Add the request detail view with the timeline                                               | ⬜     | 9.4.1      |
-| 9.4.3 | Add the edit and cancel actions (while Submitted)                                           | ⬜     | 9.4.2      |
-| 9.4.4 | Verify: a guest sees all their active requests; a request's status updates as the staff act | ⬜     | 9.4.3      |
+**7.6.3 — DECISIONS.md new records**
+- **Files:** `docs/DECISIONS.md`
+- **Action:** Add D-19.1 (Vanilla-JS Polling for guest tracking + join banner) and D-19.2 (Server-side cookie injection for join approval). Each follows the six-part template. Update the Appendix total from 102 to 104.
+- **Acceptance:** `Select-String -Path docs/DECISIONS.md -Pattern "D-19.1"` returns ≥1. Same for D-19.2. Appendix total reads 104. Four baselines unchanged.
+- **Why:** the last three sessions spent three attempts on React polling. A new chat must not "fix" it back to React.
 
-### Milestone 9.5 — The staff request queues
+**7.6.5 — SYSTEM.md API surface reconciliation**
+- **Files:** `docs/SYSTEM.md`
+- **Action:** In §12.2, remove `GET /api/guest/menu` (phantom), add `GET /api/guest/menu/states` (real), add `GET /api/guest/requests` (real, missing). In §14.2, clarify `/requests` polls `/api/guest/requests`.
+- **Acceptance:** `Select-String -Path docs/SYSTEM.md -Pattern "GET /api/guest/menu$"` returns 0. `Select-String -Path docs/SYSTEM.md -Pattern "GET /api/guest/requests"` returns ≥1.
+- **Why:** the audit found the phantom route and the missing routes.
 
-| ID    | Task                                                                                  | Status | Depends on |
-| ----- | ------------------------------------------------------------------------------------- | ------ | ---------- |
-| 9.5.1 | Add the housekeeping queue                                                            | ⬜     | 9.4.4      |
-| 9.5.2 | Add the maintenance queue                                                             | ⬜     | 9.5.1      |
-| 9.5.3 | Add the concierge queue                                                               | ⬜     | 9.5.2      |
-| 9.5.4 | Add the laundry queue                                                                 | ⬜     | 9.5.3      |
-| 9.5.5 | Add the spa queue                                                                     | ⬜     | 9.5.4      |
-| 9.5.6 | Add the front desk combined view                                                      | ⬜     | 9.5.5      |
-| 9.5.7 | Verify: each queue shows its requests; actions advance them; the guest's view updates | ⬜     | 9.5.6      |
-| 9.5.8 | Add the request queue and its actions (moved from 7.3.4, 7.3.5)                       | ⬜     | 9.1.6      |
-| 9.5.9 | Add the request action routes (moved from 7.2.8)                                      | ⬜     | 9.1.4      |
-| 9.5.10 | Verify: every request route returns the correct envelope and status (moved from 7.2.9)                 | ⬜     | 9.5.9      |
+**7.6.6 — PHASE_TESTS.md note**
+- **Files:** `docs/PHASE_TESTS.md`
+- **Action:** Add a note under §9 (Phase 7) that Phase 7.5 closed via convergence. Cite ENTRY-0219.
+- **Acceptance:** `Select-String -Path docs/PHASE_TESTS.md -Pattern "Phase 7.5"` returns ≥1.
+- **Why:** PHASE_TESTS.md says "eleven phases." Phase 7.5 was the twelfth.
 
-*(Tasks 9.5.8 and 9.5.9 (request queue + action routes) moved to Phase 7.5 (Task 7.5.5) per ENTRY-0205. This table remains for traceability.)*
+**7.6.7 — DESIGN.md additions**
+- **Files:** `docs/DESIGN.md`
+- **Action:** Add §4.11.2 kitchen tab bar (All | Preparing | Ready). Add §4.11.3 "Remove from Kitchen" action. Add §4.6.17.19 JoinRequestBanner (fixed top-center, z-50, Approve/Decline). Clarify §4.9.5 that /requests uses vanilla-JS polling.
+- **Acceptance:** `Select-String -Path docs/DESIGN.md -Pattern "JoinRequestBanner"` returns ≥1. `Select-String -Path docs/DESIGN.md -Pattern "Remove from Kitchen"` returns ≥1.
+- **Why:** the design spec is the visual contract. The additions must be documented.
 
-**Acceptance for Phase 9:** A hotel guest can submit a service request of any enabled type, track it, edit or cancel it while it is still submitted, and see it completed. The staff queues handle every service type.
+**7.6.8 — escapeHtml hardening**
+- **Files:** `src/components/guest/requests-client.tsx`, `src/components/guest/join-request-script.tsx`
+- **Action:** Add an `escapeHtml(str)` function to each file. Apply it to `req.name` in the join banner. Apply it to `serviceType` in the requests HTML. Add a comment in both: "Phase 9 must apply escapeHtml to every details field."
+- **Acceptance:** `Select-String -Path src/components/guest/join-request-script.tsx -Pattern "escapeHtml"` returns ≥2. Same for requests-client. Manual mobile test: banner still works. `/requests` still updates. Four baselines pass.
+- **Why:** Phase 9 introduces free-text service notes. The XSS surface must be safe before Phase 9.
 
-**Visible progress at the end of Phase 9:** A real hotel guest in a real room submits a real request and a real staff member completes it.
+**7.6.9 — listForGuestSession! fix**
+- **Files:** `src/domain/requests/request.repository.ts` (remove `?`), `app/(guest)/requests/page.tsx` (remove `!`)
+- **Action:** Make `listForGuestSession` a required method on the port. Remove the non-null assertion in the page.
+- **Acceptance:** `Select-String -Path 'app/(guest)/requests/page.tsx' -Pattern "listForGuestSession!"` returns 0. `Select-String -Path 'src/domain/requests/request.repository.ts' -Pattern "listForGuestSession\?"` returns 0. Four baselines pass.
+- **Why:** BUILD.md §2.6 forbids non-null assertions.
+
+**7.6.10 — WIRING.md final sweep**
+- **Files:** `docs/WIRING.md`
+- **Action:** Verify §2 contains only genuinely open items. Verify no entry appears in both §2 and §3 (the audit found W-0001 duplicated). Verify no §2 entry has a DISCHARGED status. Ensure the four `_logout-button.tsx` entries (W-0002, W-0003, W-0004) stay OPEN (D-9.7 discharge is Phase 8).
+- **Acceptance:** `Select-String -Path docs/WIRING.md -Pattern "W-0001"` returns exactly one entry in §3. `Select-String -Path docs/WIRING.md -Pattern "W-0002"` returns one entry in §2. No entry in §2 has "Status: DISCHARGED". Four baselines unchanged.
+- **Why:** the pasted WIRING.md showed W-0001 duplicated in §3.
+
+**7.6.11 — Full foundation verification**
+- **Files:** (none)
+- **Action:** Run the four baselines fresh. Run manual walkthroughs: Table order → kitchen → staff → close table. Room service request → staff queue → guest /requests live. Join banner appears on /menu and /services. Kitchen tablet filter works. Record every observation.
+- **Acceptance:** tsc 0, unit 254/254, integration 233/233, build 39 routes. Manual walkthroughs pass. `git status --porcelain` empty.
+- **Why:** the phase's acceptance criterion is not "docs updated" — it is "foundation verified clean."
+
+---
+
+## 11. Phase 8 — The Manager Panel
+
+**Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
+
+**Dependency:** Phase 7.6 is ✅ Complete.
+
+**Note on Phase 8 dependency:** The original sequence had 8.1.1 (dashboard) as the first task. This was wrong — the admin shell must exist before the dashboard can render inside it. The resequenced 8.1 fixes this.
+
+### Milestone 8.1 — Dashboard
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 8.1.1 | Add `GET /api/admin/dashboard` route | ⬜ | 7.6.11 |
+| 8.1.2 | Add the admin shell layout (sidebar, header, sign-out) — retires D-9.7 per-page buttons; discharges W-0002 | ⬜ | 8.1.1 |
+| 8.1.3 | Add the dashboard page (metric tiles + active orders list + recent requests) | ⬜ | 8.1.2 |
+| 8.1.4 | Add 5s polling on the dashboard | ⬜ | 8.1.3 |
+| 8.1.5 | Verify: metrics update as orders move (manual desktop at 1440×900) | ⬜ | 8.1.4 |
+
+### Milestone 8.2 — Order Management
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 8.2.1 | Add `GET /api/admin/orders` (with filters: date range, state) | 8.1.5 |
+| 8.2.2 | Add the Active Orders tab | 8.2.1 |
+| 8.2.3 | Add the Completed Orders tab with date filters | 8.2.2 |
+| 8.2.4 | Add `GET /api/admin/orders/export` (CSV) | 8.2.3 |
+| 8.2.5 | Verify: filter by 6-month range, export CSV | 8.2.4 |
+
+### Milestone 8.3 — Menu Management
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 8.3.1 | Add the menu list screen | 8.2.5 |
+| 8.3.2 | Add `POST /api/admin/menu/items` | 8.3.1 |
+| 8.3.3 | Add `PATCH /api/admin/menu/items/[id]` | 8.3.2 |
+| 8.3.4 | Add HIDDEN state to existing toggle (discharges W-0005) | 8.3.3 |
+| 8.3.5 | Add category management CRUD | 8.3.4 |
+| 8.3.6 | Add modifier group/option CRUD | 8.3.5 |
+| 8.3.7 | Verify: add, edit, hide, guest sees within 5s | 8.3.6 |
+
+### Milestone 8.4 — Tables and Rooms
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 8.4.1 | Add `GET/POST/PATCH /api/admin/tables` | 8.3.7 |
+| 8.4.2 | Add `GET/POST/PATCH /api/admin/rooms` | 8.4.1 |
+| 8.4.3 | Add the Tables/Rooms screens with QR preview | 8.4.2 |
+| 8.4.4 | Add batch QR print view | 8.4.3 |
+| 8.4.5 | Verify: add table, generate QR, print sheet | 8.4.4 |
+
+### Milestone 8.5 — Staff Management
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 8.5.1 | Add `GET /api/admin/staff` | 8.4.5 |
+| 8.5.2 | Add `POST /api/admin/staff` | 8.5.1 |
+| 8.5.3 | Add `PATCH /api/admin/staff/[id]` (edit, roles, deactivate) | 8.5.2 |
+| 8.5.4 | Add `POST /api/admin/staff/[id]/reset-password` | 8.5.3 |
+| 8.5.5 | Add the Staff Management screen | 8.5.4 |
+| 8.5.6 | Verify: create, assign roles, deactivate, reset password | 8.5.5 |
+
+### Milestone 8.6 — Reports
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 8.6.1 | Add `GET /api/admin/reports/sales` | 8.5.6 |
+| 8.6.2 | Add `GET /api/admin/reports/sales/export` (CSV) | 8.6.1 |
+| 8.6.3 | Add the Reports screen | 8.6.2 |
+| 8.6.4 | Verify: 6-month range, export, open CSV | 8.6.3 |
+
+### Milestone 8.7 — Settings
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 8.7.1 | Add `GET/PATCH /api/admin/settings` (read-only tax/currency/language; editable address/hours) | 8.6.4 |
+| 8.7.2 | Add `PATCH /api/admin/modules` | 8.7.1 |
+| 8.7.3 | Add `PATCH /api/admin/services` | 8.7.2 |
+| 8.7.4 | Add the Settings screen | 8.7.3 |
+| 8.7.5 | Verify: read-only fields stay read-only; module toggles hide screens | 8.7.4 |
+
+---
+
+## 12. Phase 9 — Focused Hotel Service Queues
+
+**Goal:** Every focused role (Housekeeping, Maintenance, Concierge, Laundry, Spa, Front Desk) has its own scoped queue. Phase 7.5 delivered the LEADER-visible combined queue; Phase 9 delivers the focused per-role queues.
+
+**Dependency:** Phase 8.7.5 is ✅ Complete.
+
+**Scope honesty:** The domain (7.5.2, 7.5.3), the guest routes (7.5.4), the staff routes (7.5.5), and the guest view (7.5.8) are all ✅ from Phase 7.5. Phase 9 is therefore effectively **just 9.5.1 through 9.5.7** — the per-role queue screens. 9.1.x, 9.2.x, 9.3.x, 9.4.x, and 9.5.8–9.5.10 are retained for traceability only.
+
+### Milestone 9.5 — The Focused Queues
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 9.5.1 | Add the Housekeeping queue (filter `/api/staff/requests` by HOUSEKEEPING; role gate) | 8.7.5 |
+| 9.5.2 | Add the Maintenance queue | 9.5.1 |
+| 9.5.3 | Add the Concierge queue | 9.5.2 |
+| 9.5.4 | Add the Laundry queue | 9.5.3 |
+| 9.5.5 | Add the Spa queue | 9.5.4 |
+| 9.5.6 | Add the Front Desk combined view | 9.5.5 |
+| 9.5.7 | Verify: each queue shows only its role's requests; actions advance them; guest /requests updates within 5s | 9.5.6 |
 
 ---
 
 ## 13. Phase 10 — Payments, Polish, Production
 
-**Goal:** The payment bridge is wired, the product is accessible, the product is fast, and the product is in production.
+**Goal:** The product is deployable and safe for 1,000 users per venue. Every BUILD.md §7.4 release blocker is closed.
 
-### Milestone 10.1 — The payment bridge
+**Dependency:** Phase 9.5.7 is ✅ Complete.
 
-| ID     | Task                                                                                                 | Status | Depends on |
-| ------ | ---------------------------------------------------------------------------------------------------- | ------ | ---------- |
-| 10.1.1 | Add the payment ticket domain                                                                        | ⬜     | 9.5.7      |
-| 10.1.2 | Add the ticket creation route                                                                        | ⬜     | 10.1.1     |
-| 10.1.3 | Add the confirmation route                                                                           | ⬜     | 10.1.2     |
-| 10.1.4 | Add the verification step                                                                            | ⬜     | 10.1.3     |
-| 10.1.5 | Add the receipt generation                                                                           | ⬜     | 10.1.4     |
-| 10.1.6 | Add the cash-at-counter path                                                                         | ⬜     | 10.1.5     |
-| 10.1.7 | Add the tip field                                                                                    | ⬜     | 10.1.6     |
-| 10.1.8 | Add the placeholder provider adapter                                                                 | ⬜     | 10.1.7     |
-| 10.1.9 | Verify: a ticket is created, a callback is verified, a receipt is generated, and the cash path works | ⬜     | 10.1.8     |
+### Milestone 10.1 — Payment Bridge (unchanged from prior plan; 10.1.1–10.1.9)
 
-### Milestone 10.2 — Accessibility and polish
+### Milestone 10.2 — Security Hardening (NEW)
 
-| ID     | Task                                            | Status | Depends on |
-| ------ | ----------------------------------------------- | ------ | ---------- |
-| 10.2.1 | Audit keyboard navigation on every guest screen | ⬜     | 10.1.9     |
-| 10.2.2 | Audit screen reader compatibility               | ⬜     | 10.2.1     |
-| 10.2.3 | Audit contrast                                  | ⬜     | 10.2.2     |
-| 10.2.4 | Audit reduced-motion handling                   | ⬜     | 10.2.3     |
-| 10.2.5 | Audit every empty state                         | ⬜     | 10.2.4     |
-| 10.2.6 | Audit every error state                         | ⬜     | 10.2.5     |
-| 10.2.7 | Verify: every screen passes the audit           | ⬜     | 10.2.6     |
+| ID | Task | Depends on |
+|----|------|------------|
+| 10.2.1 | Add CSRF protection on every state-changing route | 10.1.9 |
+| 10.2.2 | Add rate limiting to `/api/auth/login` | 10.2.1 |
+| 10.2.3 | Audit every `dangerouslySetInnerHTML` — verify `escapeHtml` used for user data | 10.2.2 |
+| 10.2.4 | Verify: login attempt limit; CSRF token accepted on form submission | 10.2.3 |
 
-### Milestone 10.3 — Performance
+### Milestone 10.3 — Accessibility & Polish (was 10.2)
 
-| ID     | Task                                                           | Status | Depends on |
-| ------ | -------------------------------------------------------------- | ------ | ---------- |
-| 10.3.1 | Measure the guest landing screen's first-paint time            | ⬜     | 10.2.7     |
-| 10.3.2 | Optimise the landing screen to under 1 second on 4G            | ⬜     | 10.3.1     |
-| 10.3.3 | Measure the kitchen screen's refresh and rendering             | ⬜     | 10.3.2     |
-| 10.3.4 | Measure the guest's tracking screen's refresh                  | ⬜     | 10.3.3     |
-| 10.3.5 | Verify: the performance targets from D-15.5 and D-15.6 are met | ⬜     | 10.3.4     |
+### Milestone 10.4 — Performance (was 10.3)
 
-### Milestone 10.4 — The real-venue dry run
+### Milestone 10.5 — Observability (NEW)
 
-| ID     | Task                                                          | Status | Depends on |
-| ------ | ------------------------------------------------------------- | ------ | ---------- |
-| 10.4.1 | Deploy the product to a hosting environment                   | ⬜     | 10.3.5     |
-| 10.4.2 | Configure the venue's real data (menu, tables, rooms, staff)  | ⬜     | 10.4.1     |
-| 10.4.3 | Print and place the real QR codes                             | ⬜     | 10.4.2     |
-| 10.4.4 | Run a full meal service with real guests and real staff       | ⬜     | 10.4.3     |
-| 10.4.5 | Run a full housekeeping cycle with real guests and real staff | ⬜     | 10.4.4     |
-| 10.4.6 | Collect feedback and address any issues found                 | ⬜     | 10.4.5     |
-| 10.4.7 | Verify: the product runs a real service end to end            | ⬜     | 10.4.6     |
+| ID | Task | Depends on |
+|----|------|------------|
+| 10.5.1 | Add server-side structured error logging | 10.4.5 |
+| 10.5.2 | Add DB health-check endpoint | 10.5.1 |
+| 10.5.3 | Add API request latency logging | 10.5.2 |
+| 10.5.4 | Verify: simulate DB outage; observe logs and health endpoint | 10.5.3 |
 
-### Milestone 10.5 — Documentation and handover
+### Milestone 10.6 — Real-Venue Dry Run (was 10.4)
 
-| ID     | Task                                                                   | Status | Depends on |
-| ------ | ---------------------------------------------------------------------- | ------ | ---------- |
-| 10.5.1 | Write the deployment documentation                                     | ⬜     | 10.4.7     |
-| 10.5.2 | Write the backup and recovery procedure                                | ⬜     | 10.5.1     |
-| 10.5.3 | Write the venue onboarding checklist for the developer                 | ⬜     | 10.5.2     |
-| 10.5.4 | Write the staff training notes                                         | ⬜     | 10.5.3     |
-| 10.5.5 | Verify: the developer can onboard a new venue from the checklist alone | ⬜     | 10.5.4     |
-
-**Acceptance for Phase 10:** The product is deployed, the payment bridge is wired, the product is accessible and fast, and a real venue has run a real service with real guests and real staff.
-
-**Visible progress at the end of Phase 10:** The product is in production and used by a real venue.
+### Milestone 10.7 — Documentation and Handover (was 10.5)
 
 ---
 
 ## 14. The Dependency Graph
+7.5 (closed)
+→ 7.6.1 (ROADMAP rewrite)
+→ 7.6.2 (README)
+→ 7.6.3 (DECISIONS)
+→ 7.6.5 (SYSTEM)
+→ 7.6.6 (PHASE_TESTS)
+→ 7.6.7 (DESIGN)
+→ 7.6.8 (escapeHtml)
+→ 7.6.9 (listForGuestSession)
+→ 7.6.10 (WIRING)
+→ 7.6.11 (full verification)
+→ 8.1.1 (dashboard route)
+→ 8.1.2 (admin shell)
+→ 8.1.3 (dashboard page)
+→ 8.1.4 (polling)
+→ 8.1.5 (verify)
+→ 8.2.1 ... → 8.7.5
+→ 9.5.1 ... → 9.5.7
+→ 10.1.9 (payment bridge)
+→ 10.2.4 (security)
+→ 10.3.7 (accessibility)
+→ 10.4.5 (performance)
+→ 10.5.4 (observability)
+→ 10.6.7 (real venue dry run)
+→ 10.7.5 (handover)
 
-The critical path — the sequence that cannot be shortened — is:
-
-```
-0.6
- → 1.1.1 (repo)
- → 1.5.4 (dev server)
- → 2.1.12 (schema)
- → 2.2.9 (repositories)
- → 2.3.7 (seed)
- → 3.1.5 (session)
- → 3.6.4 (placeholder dashboards)
- → 4.1.5 (QR domain)
- → 4.4.7 (guest landing)
- → 5.5.3 (order domain)
- → 5.7.6 (order tracking)
- → 6.3.8 (kitchen screen)
- → 7.4.4 (full loop)
- → 8.7.4 (settings and modules)
- → 9.5.7 (all service queues)
- → 10.1.9 (payment bridge)
- → 10.4.7 (real-venue dry run)
-```
-
-Every task on this path is a blocker for the next. Tasks off the path can be reordered within their phase, but the path is fixed.
-
-**The tasks that can run in parallel if two developers are available:**
-
-- Phase 1: tokens can be authored while the base components are installed.
-- Phase 2: the schema can be finalised while the seed's content is being written.
-- Phase 3: the login screens can be built while the middleware is being built.
-- Phase 5: the cart screen can be built while the order domain is being written.
-- Phase 8: the reports can be built while the menu management is being built.
-- Phase 9: the guest forms can be built while the staff queues are being built.
-
-For a single developer, the order in the phase tables is the right order.
+text
 
 ---
 
@@ -933,7 +956,7 @@ A task can start when:
 5. The task has a rollback.
 6. The previous task's report has been read.
 
-If any of these is missing, the task is not ready. The developer does not start an unready task.
+**Anti-hallucination rule (added):** Before writing any code or any docs for a task, the session must verify the pre-conditions by running the exact `Select-String` / `Get-Content` commands the task names. If the pre-conditions do not match, the task stops and reports `BLOCKED` with the mismatch. No task is executed against a codebase or docs that differ from what the task expects.
 
 ---
 
@@ -949,7 +972,7 @@ A task is finished when:
 6. The report is written.
 7. The status is updated in this file.
 
-The developer stops after the report. The next session begins with the next task.
+**Anti-hallucination rule (added):** If the report claims a `PASS` but the manual verification step has not been run, the report is `NOT VERIFIED` and the task is not closed. A `PASS` requires the evidence to include the raw output of the manual step. A client-component change without a manual mobile check is `NOT VERIFIED`, not `PASS`.
 
 ---
 
@@ -964,6 +987,6 @@ This file is updated at the end of every session:
 - If a new task is discovered mid-phase, it is added to the phase's table at the correct position and its dependency is recorded.
 - If a task is split, the original task's status is changed to `✅ Complete` with a note pointing to the new tasks, and the new tasks are added to the table.
 
-The file is never rewritten wholesale. It grows and updates as the project moves. It is the live board the developer consults at the start of every session.
+**Anti-hallucination rule (added):** A structural change to this file (a new phase, a split task, a deferred task) requires a PROGRESS `STRUCTURAL` entry in the same session. A session that changes the ROADMAP without a matching PROGRESS entry is not complete.
 
----
+The file is never rewritten wholesale. It grows and updates as the project moves. It is the live board the developer consults at the start of every session.
