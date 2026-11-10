@@ -1,18 +1,13 @@
 import type { JSX } from "react";
 
-export function JoinRequestScript(): JSX.Element {
-  return (
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `
 /*
  * JOIN BANNER XSS CONTRACT (task 7.6.8, decisions D-19.1 and D-19.2)
  *
  * This script sets every dynamic string via textContent, not innerHTML.
- * textContent does not parse HTML; a name of '<script>alert(1)</script>'
- * renders as literal text on the screen and does not execute. The only
- * innerHTML assignment in this file is the static icon SVG (a hard-coded
- * string with no user data).
+ * textContent does not parse HTML; a name with HTML tags renders as literal
+ * text on the screen and does not execute. The only innerHTML assignment in
+ * the injected script is the static icon SVG (a hard-coded string with no
+ * user data).
  *
  * req.name reaches the DOM via:
  *   title.textContent = req.name + ' wants to join';
@@ -26,6 +21,11 @@ export function JoinRequestScript(): JSX.Element {
  * A future session that changes any of these to innerHTML re-opens the
  * XSS surface and must add an escapeHtml(str) function first. Do not do it.
  */
+export function JoinRequestScript(): JSX.Element {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
 (function() {
   var BANNER_ID = 'host-join-request-banner';
   var inFlightAction = false;

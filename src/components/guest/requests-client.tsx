@@ -11,6 +11,31 @@ import {
 import { RequestStatusTimeline } from "@/components/guest/request-status-timeline";
 import { formatDateTime } from "@/lib/date";
 
+/*
+ * POLLING HTML XSS CONTRACT (task 7.6.8, decisions D-19.1 and D-19.2)
+ *
+ * Every string passed to renderTimelineHtml (or interpolated into the
+ * container.innerHTML) MUST come from one of:
+ *   1. The FLOW constant defined inside this script (labels and copy).
+ *   2. The FLOW_INDEX enum (derived from the request's state field, which
+ *      the API route validates against HotelService and RequestState).
+ *   3. The occurredAt timestamps from stateChanges, formatted by
+ *      formatTimeSimple (a fixed toLocaleTimeString output).
+ *
+ * None of those are user-supplied. Today's polling surface has zero XSS
+ * vectors by construction.
+ *
+ * Phase 9 will add free-text service request details (guest notes,
+ * maintenance descriptions). At the moment those are first interpolated
+ * into a polling HTML string, an escapeHtml(str) function MUST be added
+ * inside this script and applied to every details field before
+ * concatenation. Do not interpolate user input without it.
+ *
+ * A future session that adds a new field to the polling HTML must also
+ * add it to this contract. A field not listed here is not covered by the
+ * guarantee.
+ */
+
 export interface RequestsClientProps {
   readonly initialRequests: readonly ServiceRequest[];
   readonly placeContext: string | null;
@@ -164,30 +189,6 @@ export function RequestsClient({
       <script
         dangerouslySetInnerHTML={{
           __html: `
-/*
- * POLLING HTML XSS CONTRACT (task 7.6.8, decisions D-19.1 and D-19.2)
- *
- * Every string passed to renderTimelineHtml (or interpolated into the
- * container.innerHTML) MUST come from one of:
- *   1. The FLOW constant defined inside this script (labels and copy).
- *   2. The FLOW_INDEX enum (derived from the request's \`state\` field, which
- *      the API route validates against \`HotelService\` and \`RequestState\`).
- *   3. The \`occurredAt\` timestamps from \`stateChanges\`, formatted by
- *      formatTimeSimple (a fixed toLocaleTimeString output).
- *
- * None of those are user-supplied. Today's polling surface has zero XSS
- * vectors by construction.
- *
- * Phase 9 will add free-text service request details (guest notes,
- * maintenance descriptions). At the moment those are first interpolated
- * into a polling HTML string, an escapeHtml(str) function MUST be added
- * inside this script and applied to every details field before
- * concatenation. Do not interpolate user input without it.
- *
- * A future session that adds a new field to the polling HTML must also
- * add it to this contract. A field not listed here is not covered by the
- * guarantee.
- */
 (function() {
   var locale = ${JSON.stringify(locale)};
 
