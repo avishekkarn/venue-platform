@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
@@ -118,6 +119,18 @@ export default async function MenuPage(): Promise<JSX.Element> {
 
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
+      {session.value.placeType === PlaceType.ROOM && (
+        <div className="w-full max-w-2xl mx-auto px-4 pt-3">
+          <Link
+            href="/services"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-guest-text-secondary hover:text-guest-text-primary transition-colors w-fit focus-visible:outline-none"
+            aria-label="Back to services"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Services</span>
+          </Link>
+        </div>
+      )}
       <GuestHero venue={venue.value} placeContext={placeContext} />
       <div className="mt-4 flex flex-col items-center justify-center gap-2.5 animate-in fade-in duration-700 delay-500 ease-guest-entrance">
         <a href="#menu-heading">
