@@ -139,7 +139,7 @@ export function KitchenTicket({
       </div>
 
       {/* Footer Action Button */}
-      <div className="pt-2">
+      <div className="pt-2 flex flex-col gap-2">
         <Button
           type="button"
           variant="primary"
@@ -152,6 +152,16 @@ export function KitchenTicket({
         >
           {getActionButtonLabel(order.state)}
         </Button>
+        {isReady && (
+          <button
+            type="button"
+            data-order-id={order.id}
+            data-action="complete"
+            className="w-full h-10 rounded-md bg-guest-brand text-guest-brand-contrast text-sm font-medium hover:brightness-95 transition-all"
+          >
+            Remove from Kitchen
+          </button>
+        )}
       </div>
     </article>
   );

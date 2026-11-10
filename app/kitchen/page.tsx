@@ -180,7 +180,12 @@ export default async function KitchenPage(): Promise<JSX.Element> {
       </header>
 
       {/* Ticket Grid or Empty State */}
-      <section className="flex-1 p-4">
+      <section className="flex-1 p-4 pt-16">
+        <div className="flex items-center gap-2 mb-4 sticky top-12 z-10 bg-staff-surface py-2 -mx-4 px-4">
+          <button data-filter="all" className="px-3 py-1.5 rounded-md text-sm font-medium bg-staff-brand text-staff-brand-contrast">All</button>
+          <button data-filter="active" className="px-3 py-1.5 rounded-md text-sm font-medium text-staff-text-secondary hover:bg-staff-surface-sunken">Preparing</button>
+          <button data-filter="ready" className="px-3 py-1.5 rounded-md text-sm font-medium text-staff-text-secondary hover:bg-staff-surface-sunken">Ready</button>
+        </div>
         <div
           id="ticket-empty"
           className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8"
@@ -192,7 +197,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
         </div>
         <div
           id="ticket-grid"
-          className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
           style={{ display: orders.length === 0 ? "none" : "" }}
         >
           {orders.map((order) => {
@@ -229,6 +234,36 @@ export default async function KitchenPage(): Promise<JSX.Element> {
         dangerouslySetInnerHTML={{
           __html: `
 (function() {
+  var currentFilter = 'all';
+  document.addEventListener('click', function(event) {
+    var el = event.target;
+    if (el.hasAttribute && el.hasAttribute('data-filter')) {
+      currentFilter = el.getAttribute('data-filter');
+      var buttons = document.querySelectorAll('[data-filter]');
+      for (var b = 0; b < buttons.length; b++) {
+        buttons[b].className = buttons[b].getAttribute('data-filter') === currentFilter
+          ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-staff-brand text-staff-brand-contrast'
+          : 'px-3 py-1.5 rounded-md text-sm font-medium text-staff-text-secondary hover:bg-staff-surface-sunken';
+      }
+      applyFilter();
+    }
+  });
+
+  function applyFilter() {
+    var grid = document.getElementById('ticket-grid');
+    if (!grid) return;
+    var articles = grid.querySelectorAll('[data-ticket-id]');
+    for (var i = 0; i < articles.length; i++) {
+      var art = articles[i];
+      var state = art.getAttribute('data-order-state');
+      var show = false;
+      if (currentFilter === 'all') show = true;
+      else if (currentFilter === 'active' && (state === 'PREPARING' || state === 'APPROVED')) show = true;
+      else if (currentFilter === 'ready' && state === 'READY') show = true;
+      art.style.display = show ? '' : 'none';
+    }
+  }
+
   var THEME_KEY = 'kitchen_theme';
   var THEME_ELEMENT_SELECTOR = '[data-world="staff"]';
 
@@ -451,6 +486,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
     var disabledAttr = isReady ? ' disabled' : '';
     var btnText = (order.state === 'APPROVED' || order.state === 'PLACED') ? 'Start' : (order.state === 'PREPARING' ? 'Ready' : (order.state === 'READY' ? 'Done' : 'View'));
     var btnClass = "group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-transparent bg-clip-padding font-medium whitespace-nowrap select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=\'size-\'])]:size-4 bg-guest-brand text-guest-brand-contrast hover:brightness-95 [data-world=staff]_&:bg-staff-brand [data-world=staff]_&:text-staff-brand-contrast h-[52px] px-5 text-base w-full";
+    var removeBtnHtml = isReady ? '<button type="button" data-order-id="' + escapeHtml(order.id) + '" data-action="complete" class="w-full h-10 rounded-md bg-guest-brand text-guest-brand-contrast text-sm font-medium hover:brightness-95 transition-all">Remove from Kitchen</button>' : '';
 
     return '<article data-ticket-id="' + escapeHtml(order.id) + '" data-order-state="' + escapeHtml(order.state) + '" data-placed-at="' + escapeHtml(new Date(order.placedAt).toISOString()) + '" class="bg-staff-surface-raised rounded-lg p-5 flex flex-col justify-between gap-4 ' + borderClass + '">' +
       '<div class="flex flex-col gap-4">' +
@@ -466,10 +502,11 @@ export default async function KitchenPage(): Promise<JSX.Element> {
         '<ul class="flex flex-col gap-3">' + itemsHtml + '</ul>' +
         orderNotesHtml +
       '</div>' +
-      '<div class="pt-2">' +
+      '<div class="pt-2 flex flex-col gap-2">' +
         '<button type="button" data-slot="button"' + disabledAttr + ' data-order-id="' + escapeHtml(order.id) + '"' + actionAttr + ' data-current-state="' + escapeHtml(order.state) + '" class="' + btnClass + '">' +
           btnText +
         '</button>' +
+        removeBtnHtml +
       '</div>' +
     '</article>';
   }
@@ -588,6 +625,17 @@ export default async function KitchenPage(): Promise<JSX.Element> {
                     btn.textContent = 'Done';
                     btn.removeAttribute('data-action');
                     btn.disabled = true;
+                    var footer = btn.parentElement;
+                    if (footer && !footer.querySelector('[data-action="complete"]')) {
+                      footer.className = 'pt-2 flex flex-col gap-2';
+                      var completeBtn = document.createElement('button');
+                      completeBtn.type = 'button';
+                      completeBtn.setAttribute('data-order-id', order.id);
+                      completeBtn.setAttribute('data-action', 'complete');
+                      completeBtn.className = 'w-full h-10 rounded-md bg-guest-brand text-guest-brand-contrast text-sm font-medium hover:brightness-95 transition-all';
+                      completeBtn.textContent = 'Remove from Kitchen';
+                      footer.appendChild(completeBtn);
+                    }
                   }
                 }
               }
@@ -619,6 +667,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
           }
 
           updateElapsedTimers();
+          applyFilter();
         });
       })
       .catch(function() {
@@ -666,14 +715,47 @@ export default async function KitchenPage(): Promise<JSX.Element> {
     btn.disabled = true;
     btn.textContent = 'Sending…';
 
-    fetch('/api/kitchen/orders/' + encodeURIComponent(orderId) + '/' + action, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
+    var fetchPromise;
+    if (action === 'complete') {
+      fetchPromise = fetch('/api/staff/orders/' + encodeURIComponent(orderId) + '/deliver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      }).then(function(delivRes) {
+        if (delivRes.ok || delivRes.status === 409) {
+          return fetch('/api/staff/orders/' + encodeURIComponent(orderId) + '/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        return delivRes;
+      });
+    } else {
+      fetchPromise = fetch('/api/kitchen/orders/' + encodeURIComponent(orderId) + '/' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    fetchPromise
     .then(function(res) {
       if (res.ok) {
         return res.json().then(function(body) {
           var newState = body && body.data && body.data.state;
+          if (newState === 'COMPLETED') {
+            var art = btn.closest ? btn.closest('article') : null;
+            if (art && art.parentNode) art.parentNode.removeChild(art);
+            var grid = document.getElementById('ticket-grid');
+            var empty = document.getElementById('ticket-empty');
+            if (grid && empty) {
+              var remaining = grid.querySelectorAll('[data-ticket-id]');
+              if (remaining.length === 0) {
+                empty.style.display = '';
+                grid.style.display = 'none';
+              }
+            }
+            return;
+          }
+
           btn.setAttribute('data-current-state', newState || '');
           var art = btn.closest ? btn.closest('article') : null;
           if (art && newState) {
@@ -687,6 +769,17 @@ export default async function KitchenPage(): Promise<JSX.Element> {
             btn.textContent = 'Done';
             btn.removeAttribute('data-action');
             btn.disabled = true;
+            var footer = btn.parentElement;
+            if (footer && !footer.querySelector('[data-action="complete"]')) {
+              footer.className = 'pt-2 flex flex-col gap-2';
+              var completeBtn = document.createElement('button');
+              completeBtn.type = 'button';
+              completeBtn.setAttribute('data-order-id', orderId);
+              completeBtn.setAttribute('data-action', 'complete');
+              completeBtn.className = 'w-full h-10 rounded-md bg-guest-brand text-guest-brand-contrast text-sm font-medium hover:brightness-95 transition-all';
+              completeBtn.textContent = 'Remove from Kitchen';
+              footer.appendChild(completeBtn);
+            }
           } else {
             if (previousState === 'APPROVED' || previousState === 'PLACED') {
               btn.textContent = 'Ready';
@@ -698,6 +791,7 @@ export default async function KitchenPage(): Promise<JSX.Element> {
               btn.disabled = true;
             }
           }
+          applyFilter();
         });
       }
 
