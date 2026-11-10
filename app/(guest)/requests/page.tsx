@@ -23,7 +23,7 @@ import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/or
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
-import { RequestState, HotelService, type ServiceRequest } from "@/domain/requests/request.repository";
+import { RequestState, HotelService } from "@/domain/requests/request.repository";
 import { RequestStatusTimeline } from "@/components/guest/request-status-timeline";
 import { formatDateTime } from "@/lib/date";
 
@@ -89,19 +89,12 @@ export default async function RequestsPage(): Promise<JSX.Element> {
     if (table) placeContext = `Table ${table.number}`;
   }
 
-  // Fetch all requests for the guest's place
+  // Fetch all requests for the guest's session
   const requestRepo = createPrismaServiceRequestRepository(prisma);
-  const placeType = session.value.placeType;
-  let requestsResult;
-  if (placeType === PlaceType.ROOM) {
-    requestsResult = await requestRepo.listForRoom(venue.value.id, session.value.placeId);
-  } else if (placeType === PlaceType.TABLE) {
-    requestsResult = await requestRepo.listForTable(venue.value.id, session.value.placeId);
-  } else if (placeType === PlaceType.COUNTER) {
-    requestsResult = await requestRepo.listForCounter(venue.value.id, session.value.placeId);
-  } else {
-    requestsResult = { ok: true as const, value: [] as ServiceRequest[] };
-  }
+  const requestsResult = await requestRepo.listForGuestSession!(
+    venue.value.id,
+    session.value.id
+  );
 
   const allRequests = requestsResult.ok ? requestsResult.value : [];
   const activeRequests = allRequests.filter((r) => ACTIVE_STATES.includes(r.state));

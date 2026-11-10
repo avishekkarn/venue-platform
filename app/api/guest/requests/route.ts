@@ -159,6 +159,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const createRequestInput: CreateRequestInput = {
     venueId: session.venueId,
+    guestSessionId: session.id,
     placeType,
     tableId,
     roomId,
@@ -219,19 +220,12 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
   }
   const session = sessionResult.value;
 
-  // 2. Fetch requests scoped to the session's place
+  // 2. Fetch requests scoped to the guest session
   const requestRepo = createPrismaServiceRequestRepository(db);
-  let listResult: Result<ServiceRequest[]>;
-
-  if (session.placeType === PlaceType.TABLE) {
-    listResult = await requestRepo.listForTable(session.venueId, session.placeId);
-  } else if (session.placeType === PlaceType.ROOM) {
-    listResult = await requestRepo.listForRoom(session.venueId, session.placeId);
-  } else if (session.placeType === PlaceType.COUNTER) {
-    listResult = await requestRepo.listForCounter(session.venueId, session.placeId);
-  } else {
-    return NextResponse.json({ data: [] }, { status: 200 });
-  }
+  const listResult = await requestRepo.listForGuestSession!(
+    session.venueId,
+    session.id
+  );
 
   if (!listResult.ok) {
     const status = domainErrorToStatus(listResult.error.code);

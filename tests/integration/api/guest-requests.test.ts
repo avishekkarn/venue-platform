@@ -574,5 +574,146 @@ describe("Guest Service Requests Integration Tests", () => {
       }
     });
   });
+
+  it("Case 9: POST writes guestSessionId (201, matches session.id, persisted in DB)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+
+      // 1. Fixtures: venue and room
+      const venue = await tx.venue.create({
+        data: {
+          name: "Session Requests Hotel",
+          slug: `req-venue-${Date.now()}-9`,
+          taxRate: "0.1000",
+        },
+      });
+
+      const room = await tx.room.create({
+        data: {
+          venueId: venue.id,
+          number: "R-901",
+        },
+      });
+
+      // 2. Fixture: guest session bound to room
+      const sessionResult = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionResult.ok).toBe(true);
+      if (!sessionResult.ok) return;
+      const session = sessionResult.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(session.token);
+
+      // 3. POST /api/guest/requests
+      const req = new NextRequest("http://localhost/api/guest/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceType: HotelService.HOUSEKEEPING,
+          details: { note: "Fresh towels" },
+        }),
+      });
+
+      const res = await postRequest(req);
+      const json = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(json.data).toBeDefined();
+      expect(json.data.guestSessionId).toBe(session.id);
+
+      // 4. Verify DB read-back
+      const readBack = await requestRepo.findById(venue.id, json.data.id);
+      expect(readBack.ok).toBe(true);
+      if (readBack.ok) {
+        expect(readBack.value.guestSessionId).toBe(session.id);
+      }
+    });
+  });
+
+  it("Case 10: GET returns only the current session's requests (200, session-scoped)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      // 1. Fixtures: venue and room
+      const venue = await tx.venue.create({
+        data: {
+          name: "Session Scoped Get Hotel",
+          slug: `req-venue-${Date.now()}-10`,
+          taxRate: "0.1000",
+        },
+      });
+
+      const room = await tx.room.create({
+        data: {
+          venueId: venue.id,
+          number: "R-1001",
+        },
+      });
+
+      // 2. Two sessions on the same room
+      const sessionResultA = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionResultA.ok).toBe(true);
+      if (!sessionResultA.ok) return;
+      const sessionA = sessionResultA.value;
+
+      const sessionResultB = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionResultB.ok).toBe(true);
+      if (!sessionResultB.ok) return;
+      const sessionB = sessionResultB.value;
+
+      // 3. POST request from session A
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+      const reqA = new NextRequest("http://localhost/api/guest/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceType: HotelService.HOUSEKEEPING,
+          details: { note: "Session A request" },
+        }),
+      });
+      const resA = await postRequest(reqA);
+      expect(resA.status).toBe(201);
+
+      // 4. POST request from session B
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionB.token);
+      const reqB = new NextRequest("http://localhost/api/guest/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceType: HotelService.MAINTENANCE,
+          details: { note: "Session B request" },
+        }),
+      });
+      const resB = await postRequest(reqB);
+      expect(resB.status).toBe(201);
+
+      // 5. GET /api/guest/requests with session A's cookie
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+      const getReq = new NextRequest("http://localhost/api/guest/requests", {
+        method: "GET",
+      });
+      const getRes = await listRequests(getReq);
+      expect(getRes.status).toBe(200);
+      const getJson = await getRes.json();
+
+      expect(getJson.data).toHaveLength(1);
+      expect(getJson.data[0].guestSessionId).toBe(sessionA.id);
+      expect(getJson.data[0].serviceType).toBe(HotelService.HOUSEKEEPING);
+    });
+  });
 });
 
