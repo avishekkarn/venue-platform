@@ -22,6 +22,7 @@ import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
 import { type HotelService } from "@/domain/organization/venue.repository";
 import { GuestHero } from "@/components/guest/hero";
+import { JoinRequestScript } from "@/components/guest/join-request-script";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -270,6 +271,7 @@ export default async function ServicesPage(): Promise<JSX.Element> {
         <p className="font-display text-guest-text-secondary">{venue.value.name}</p>
         <p className="mt-1 text-[10px]">Open daily. Powered by IronMan.</p>
       </footer>
+      <JoinRequestScript />
     </div>
   );
 }

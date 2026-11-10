@@ -41,23 +41,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  let sessionToken: string | undefined;
+  const response = NextResponse.json(
+    { data: { ...found.value } },
+    { status: 200 }
+  );
+
   if (found.value.status === "APPROVED") {
     const session = await prisma.guestSession.findUnique({
       where: { id: sessionId },
       select: { token: true },
     });
-    sessionToken = session?.token;
+
+    if (session?.token) {
+      response.cookies.set("venue_guest", session.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
   }
 
-  return NextResponse.json(
-    {
-      data: {
-        ...found.value,
-        sessionToken,
-      },
-    },
-    { status: 200 }
-  );
+  return response;
 }
-

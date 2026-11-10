@@ -142,6 +142,7 @@ export default async function JoinWaitingPage({
   var sessionId = ${JSON.stringify(sessionId)};
   var deviceId = ${JSON.stringify(deviceId)};
   var token = ${JSON.stringify(token)};
+  var place = ${JSON.stringify(place)};
   var pollInterval = null;
 
   var waitingState = document.getElementById('join-waiting-state');
@@ -164,13 +165,10 @@ export default async function JoinWaitingPage({
           if (waitingState) waitingState.style.display = 'none';
           if (approvedState) approvedState.style.display = 'block';
 
-          if (data.sessionToken) {
-            document.cookie = 'venue_guest=' + encodeURIComponent(data.sessionToken) + '; path=/; max-age=' + (60 * 60 * 24 * 30) + '; SameSite=Lax';
-          }
-
+          // Cookie is set by the server headers. Wait for the request to complete.
           setTimeout(function() {
-            window.location.href = '/menu';
-          }, 800);
+            window.location.href = (place === 'room') ? '/services' : '/menu';
+          }, 1000); // 1 second is plenty for the browser to ingest the Set-Cookie header
         } else if (data.status === 'REJECTED') {
           if (pollInterval) clearInterval(pollInterval);
           if (waitingState) waitingState.style.display = 'none';
