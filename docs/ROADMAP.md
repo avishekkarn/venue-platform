@@ -704,7 +704,7 @@ Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The g
 | 7.6.4 | DECISIONS.md — appendix + count reconciliation | ✅ Complete | (folded into 7.6.3) | — |
 | 7.6.5 | SYSTEM.md — API surface reconciliation | ✅ Complete | 7.6.3 | 1 file |
 | 7.6.6 | PHASE_TESTS.md — Phase 7.5 closure note | ✅ Complete | 7.6.5 | 1 file |
-| 7.6.7 | DESIGN.md — kitchen tab, close action, join banner, /requests polling | ⬜ | 7.6.6 | 1 file |
+| 7.6.7 | DESIGN.md — kitchen tab, close action, join banner, /requests polling | ✅ Complete | 7.6.6 | 1 file |
 | 7.6.8 | escapeHtml hardening (XSS pre-emption for Phase 9) | ⬜ | 7.6.7 | 2 files |
 | 7.6.9 | listForGuestSession! fix (BUILD.md §2.6 compliance) | ⬜ | 7.6.8 | 2 files |
 | 7.6.10 | WIRING.md — final discharge sweep + verify no duplicates | ⬜ | 7.6.9 | 1 file |

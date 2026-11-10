@@ -1065,6 +1065,26 @@ Below are the components invented specifically for this product.
 
 **Motion:** None.
 
+**4.6.17.19 JoinRequestBanner**
+
+**Purpose:** Show the host device a guest's request to join an active Table or Room session, with Approve and Decline actions.
+
+**World:** Guest only.
+
+**Anatomy:** `root` → `icon-wrapper` (a circular `Users` icon in `--guest-brand/10`), `text-column` (title "**[Name]** wants to join", subtitle "Allow this device to join your session and order."), `button-row` (Decline ghost button, Approve primary button).
+
+**Position:** Fixed. Top: `--space-4` from the viewport top; horizontally centered; max-width 440px; `z-50` (above all other guest content). It does not block the underlying page — the guest can still scroll the menu or services page behind the banner.
+
+**States:** `idle` (not rendered), `visible` (banner shown), `dismissing` (Approve or Decline tapped; button label switches to "Approving…" or "Declining…"; buttons disabled until the request resolves), `dismissed` (banner removed after successful Approve or Decline).
+
+**Motion:** Entrance — fade in + slide down 8px over `--guest-motion-fast` (200ms) with `--guest-ease-out`. Exit — fade out over 200ms. No other motion.
+
+**Behavior:** Polled by `src/components/guest/join-request-script.tsx` (a Server Component that outputs a raw `<script dangerouslySetInnerHTML>` tag) every 5 seconds while `document.visibilityState === "visible"`. The script runs on parse, not after hydration — it does not wait for React to mount. If multiple pending requests exist, only the most recent is shown. On Approve, the API sets the `venue_guest` cookie server-side (per D-19.2); the polling device that issued the join request receives the cookie via a `Set-Cookie` response header on its own `/api/guest/join-requests/status` poll and redirects itself.
+
+**Accessibility:** The banner is `role="dialog"` with `aria-modal="false"` (it does not block the underlying page). The title is `aria-labelledby`. Buttons are native `<button>` elements with `aria-label` where the label alone is not sufficient. The banner is announced via `aria-live="assertive"` on the container.
+
+**Tokens:** `--guest-surface-raised`, `--guest-border-strong`, `--guest-text-primary`, `--guest-text-secondary`, `--guest-brand`, `--guest-brand-contrast`, `--shadow-2xl`, `--radius-xl`, `--guest-motion-fast`, `--guest-ease-out`.
+
 ## 4.7 Customer Landing Page — Full Spec
 
 ### 4.7.1 Section Order and Rationale
@@ -1379,6 +1399,8 @@ Each service form follows the same template:
 - Each request is a card with: the service name, the current status, the last status change time, and a compact horizontal timeline.
 - Tapping a card opens a detail screen with the full `RequestStatusTimeline`, the request's details, and (while in the Submitted state) an "Edit" and a "Cancel" button.
 
+The screen updates live via a 5-second poll of `GET /api/guest/requests`. The update mechanism is vanilla-JS `innerHTML` replacement on each request card's `data-timeline-container`, not React `useState` (per D-19.1). The mechanism matches `/order/[id]/track`: the server returns the current state, the browser repaints the timeline unconditionally every tick, and no React reconciliation can silently bail. When a state changes between ticks, the transition appears within 5 seconds without a manual refresh.
+
 ### 4.9.6 What the Room Flow Does Not Include
 
 - No menu of the hotel's restaurant. A hotel that also operates a restaurant (per PRODUCT.md §4.4) enables the table module alongside the room module. The guest in a room uses the room flow and sees the room service catalog; the guest at a restaurant table uses the table flow. The two flows share a kitchen queue but not a guest menu. The room flow never surfaces the table flow's menu.
@@ -1513,6 +1535,7 @@ The kitchen display is on a screen in a hot, loud, chaotic environment. It must 
 - The only persistent UI is a small status strip at the very top (48px), showing: the venue's name in small text, the current time, and a connection indicator (a small dot: green = connected, amber = reconnecting, red = disconnected).
 - Below the strip, the ticket grid.
 - The grid is 3 columns at 1920px, 2 columns at 1366px, 1 column below 1024px.
+- **Tablet viewports (below 1024px) and any viewport where the grid holds more than 6 tickets:** a sticky tab bar sits directly beneath the status strip. Three tabs: `All` | `Preparing` | `Ready`. The active tab is highlighted with the staff accent color. Tapping a tab filters the grid to tickets in that state (`Preparing` also includes `APPROVED`; `Ready` shows only `READY`; `All` shows everything). The tab bar is 44px tall and does not scroll with the tickets — it is sticky at the top of the grid area.
 - Ticket width: fixed at 320px (or, at 1920px, a flexible width of `(viewport - padding) / 3`).
 - Gap between tickets: `--space-4` (16px).
 - Tickets are ordered left-to-right, top-to-bottom, oldest first.
@@ -1537,6 +1560,8 @@ Each ticket is a `KitchenTicket`:
    - Placed: "Start"
    - Preparing: "Ready"
    - Ready: "Done"
+
+When a ticket is in the `READY` state, the footer renders a second button below the disabled primary action, labeled **"Remove from Kitchen"**. It is a full-width button at 40px height, background `--guest-brand` (the staff world's accent color), text `--guest-brand-contrast`. Tapping it marks the ticket `COMPLETED` (via `POST /api/staff/orders/[id]/complete`) and removes the ticket card from the grid. The purpose is to keep the kitchen view focused on active cooking tasks: once a ticket is done and the ticket has been handed to service staff, the kitchen no longer needs to see it. A ticket that is `COMPLETED` is removed from the grid by the next poll (within 5 seconds) even if the kitchen does not tap the button — the button is a manual shortcut for a state change the poll will eventually reflect.
 
 **States:**
 - **Placed:** background `--staff-surface-raised`, action button primary.
