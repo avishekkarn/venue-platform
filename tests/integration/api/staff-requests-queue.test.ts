@@ -15,6 +15,7 @@ import {
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
+import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createSession } from "@/infrastructure/auth/session";
 import { hashPassword } from "@/infrastructure/auth/password";
 import { StaffRole } from "@/domain/auth/staff.repository";
@@ -97,12 +98,23 @@ describe("Staff Request Queue UI & API Integration Tests", () => {
         data: { venueId: venue.id, number: "R-LEADER-1" },
       });
 
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+      const sessionRes = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionRes.ok).toBe(true);
+      if (!sessionRes.ok) return;
+      const guestSession = sessionRes.value;
+
       // 1. SUBMITTED request
       const req1 = await requestRepo.create({
         venueId: venue.id,
         placeType: PlaceType.ROOM,
         roomId: room.id,
         serviceType: HotelService.HOUSEKEEPING,
+        guestSessionId: guestSession.id,
       });
       expect(req1.ok).toBe(true);
 
@@ -112,6 +124,7 @@ describe("Staff Request Queue UI & API Integration Tests", () => {
         placeType: PlaceType.ROOM,
         roomId: room.id,
         serviceType: HotelService.LAUNDRY,
+        guestSessionId: guestSession.id,
       });
       expect(req2.ok).toBe(true);
       if (!req2.ok) return;
@@ -128,6 +141,7 @@ describe("Staff Request Queue UI & API Integration Tests", () => {
         placeType: PlaceType.ROOM,
         roomId: room.id,
         serviceType: HotelService.MAINTENANCE,
+        guestSessionId: guestSession.id,
       });
       expect(req3.ok).toBe(true);
       if (!req3.ok) return;

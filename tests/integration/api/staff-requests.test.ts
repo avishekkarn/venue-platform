@@ -19,6 +19,7 @@ import {
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
+import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createSession } from "@/infrastructure/auth/session";
 import { hashPassword } from "@/infrastructure/auth/password";
 import { StaffRole } from "@/domain/auth/staff.repository";
@@ -93,12 +94,23 @@ describe("Staff Service Requests Integration Tests", () => {
         data: { venueId: venue.id, number: "R-101" },
       });
 
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+      const sessionRes = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionRes.ok).toBe(true);
+      if (!sessionRes.ok) return;
+      const guestSession = sessionRes.value;
+
       // 1. SUBMITTED
       const req1 = await requestRepo.create({
         venueId: venue.id,
         placeType: PlaceType.ROOM,
         roomId: room.id,
         serviceType: HotelService.HOUSEKEEPING,
+        guestSessionId: guestSession.id,
       });
       expect(req1.ok).toBe(true);
 
@@ -108,6 +120,7 @@ describe("Staff Service Requests Integration Tests", () => {
         placeType: PlaceType.ROOM,
         roomId: room.id,
         serviceType: HotelService.LAUNDRY,
+        guestSessionId: guestSession.id,
       });
       expect(req2.ok).toBe(true);
       if (!req2.ok) return;
@@ -124,6 +137,7 @@ describe("Staff Service Requests Integration Tests", () => {
         placeType: PlaceType.ROOM,
         roomId: room.id,
         serviceType: HotelService.MAINTENANCE,
+        guestSessionId: guestSession.id,
       });
       expect(req3.ok).toBe(true);
       if (!req3.ok) return;
@@ -568,6 +582,176 @@ describe("Staff Service Requests Integration Tests", () => {
       expect(res.status).toBe(400);
       const json = await res.json();
       expect(json.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
+    });
+  });
+
+  it("Test 9: Request from a closed session is excluded", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+      const venueResult = await venueRepo.create({
+        name: "Juniper House",
+        slug: venueSlug,
+        taxRate: "0.1000",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venue = venueResult.value;
+
+      const passwordHash = await hashPassword("ValidPass123!");
+      const staffResult = await staffRepo.create({
+        venueId: venue.id,
+        name: "Front Desk Staff",
+        username: `fd-closed-${Date.now()}@example.com`,
+        passwordHash,
+        roles: [StaffRole.FRONT_DESK],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const staff = staffResult.value;
+
+      const session = await createSession(tx, staff.id);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      const room = await tx.room.create({
+        data: { venueId: venue.id, number: "R-CLOSED-1" },
+      });
+
+      const sessionRes = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionRes.ok).toBe(true);
+      if (!sessionRes.ok) return;
+      const guestSession = sessionRes.value;
+
+      // Close the session
+      await tx.guestSession.update({
+        where: { id: guestSession.id },
+        data: { endedAt: new Date() },
+      });
+
+      const req1 = await requestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        roomId: room.id,
+        serviceType: HotelService.HOUSEKEEPING,
+        guestSessionId: guestSession.id,
+      });
+      expect(req1.ok).toBe(true);
+
+      const req = new NextRequest("http://localhost/api/staff/requests", {
+        method: "GET",
+      });
+      const res = await GET_REQUESTS(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+
+      expect(json.data).toBeDefined();
+      expect(json.data).toHaveLength(0);
+    });
+  });
+
+  it("Test 10: Request from an active session is included while closed session request is excluded", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+      const venueResult = await venueRepo.create({
+        name: "Juniper House",
+        slug: venueSlug,
+        taxRate: "0.1000",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venue = venueResult.value;
+
+      const passwordHash = await hashPassword("ValidPass123!");
+      const staffResult = await staffRepo.create({
+        venueId: venue.id,
+        name: "Front Desk Staff",
+        username: `fd-active-${Date.now()}@example.com`,
+        passwordHash,
+        roles: [StaffRole.FRONT_DESK],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const staff = staffResult.value;
+
+      const session = await createSession(tx, staff.id);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      const room = await tx.room.create({
+        data: { venueId: venue.id, number: "R-ACTIVE-1" },
+      });
+
+      // Session A: Active (endedAt is null)
+      const sessionResA = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionResA.ok).toBe(true);
+      if (!sessionResA.ok) return;
+      const sessionA = sessionResA.value;
+
+      // Session B: Closed (endedAt set)
+      const sessionResB = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      expect(sessionResB.ok).toBe(true);
+      if (!sessionResB.ok) return;
+      const sessionB = sessionResB.value;
+
+      await tx.guestSession.update({
+        where: { id: sessionB.id },
+        data: { endedAt: new Date() },
+      });
+
+      // Request for sessionA (active)
+      const reqA = await requestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        roomId: room.id,
+        serviceType: HotelService.HOUSEKEEPING,
+        guestSessionId: sessionA.id,
+      });
+      expect(reqA.ok).toBe(true);
+
+      // Request for sessionB (closed)
+      const reqB = await requestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        roomId: room.id,
+        serviceType: HotelService.LAUNDRY,
+        guestSessionId: sessionB.id,
+      });
+      expect(reqB.ok).toBe(true);
+
+      const req = new NextRequest("http://localhost/api/staff/requests", {
+        method: "GET",
+      });
+      const res = await GET_REQUESTS(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+
+      expect(json.data).toBeDefined();
+      expect(json.data).toHaveLength(1);
+      expect(json.data[0].guestSessionId).toBe(sessionA.id);
     });
   });
 });

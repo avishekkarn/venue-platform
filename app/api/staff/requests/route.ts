@@ -118,11 +118,28 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     REQUEST_BILL: "table-service",
   };
 
+  // Fetch active guest sessions for this venue. Requests whose guestSessionId
+  // is not in this set are excluded from the active queue — they belong to a
+  // session that has already been closed by staff (checkout or table close).
+  // Legacy requests with guestSessionId = null (pre-7.5.15.A data) are also
+  // excluded; they remain in the DB for audit and future dashboard filters.
+  const activeSessions = await db.guestSession.findMany({
+    where: { venueId: venue.id, endedAt: null },
+    select: { id: true },
+  });
+  const activeSessionIds = new Set(activeSessions.map((s) => s.id));
+
   const combined = [
     ...submittedRes.value,
     ...acknowledgedRes.value,
     ...inProgressRes.value,
-  ].filter((r) => visibleAreas.includes(serviceTypeToArea[r.serviceType]));
+  ].filter(
+    (r) =>
+      r.guestSessionId !== null &&
+      r.guestSessionId !== undefined &&
+      activeSessionIds.has(r.guestSessionId) &&
+      visibleAreas.includes(serviceTypeToArea[r.serviceType])
+  );
 
   return NextResponse.json({ data: combined }, { status: 200 });
 }
