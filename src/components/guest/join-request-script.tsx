@@ -14,16 +14,16 @@ export function JoinRequestScript(): JSX.Element {
  * innerHTML assignment in this file is the static icon SVG (a hard-coded
  * string with no user data).
  *
- * \`req.name\` reaches the DOM via:
+ * req.name reaches the DOM via:
  *   title.textContent = req.name + ' wants to join';
  *
- * That is safe by construction. Do not change it to \`.innerHTML\`.
+ * That is safe by construction. Do not change it to innerHTML.
  *
- * The same guarantee applies to \`subtitle.textContent\`,
- * \`declineBtn.textContent\`, and \`approveBtn.textContent\`. None of those
+ * The same guarantee applies to subtitle.textContent,
+ * declineBtn.textContent, and approveBtn.textContent. None of those
  * insert user-supplied text; the two button labels are fixed strings.
  *
- * A future session that changes any of these to \`.innerHTML\` re-opens the
+ * A future session that changes any of these to innerHTML re-opens the
  * XSS surface and must add an escapeHtml(str) function first. Do not do it.
  */
 (function() {
@@ -147,4 +147,3 @@ export function JoinRequestScript(): JSX.Element {
     />
   );
 }
-
