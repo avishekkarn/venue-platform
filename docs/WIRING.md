@@ -31,6 +31,36 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
+### W-0021 — OPEN — Every Phase 8 API route must use `withAudit`
+
+- **Originated:** Phase 7.7 amendment (PROGRESS ENTRY-0221).
+- **Obligation:** Every API route added in Phase 8 (dashboard, orders, menu, tables, rooms, staff, reports, settings, audit viewer) must be wrapped with `withAudit` from `src/infrastructure/audit/logger.ts`. The wrapper is introduced in Task 7.7.1a. A route that does not use `withAudit` is `FAIL` — it is a blind spot in the audit trail.
+- **Files and call site:** Every file under `app/api/admin/` that adds a route in Phase 8. The pattern is demonstrated in `app/api/admin/qr/generate/route.ts` (Task 7.7.1c).
+- **Satisfied by:** Every Phase 8 task's acceptance criteria includes "the route uses `withAudit`". The obligation is discharged route-by-route as Phase 8 proceeds.
+- **Depends on:** 7.7.1, BUILD.md §6.
+- **Verification:** A route call produces a row in the audit log. The audit log is downloadable via `GET /api/admin/audit/export` (Task 7.7.1b).
+- **Status:** OPEN
+
+### W-0022 — OPEN — Daily backups must be automated and restore-tested
+
+- **Originated:** Phase 7.7 amendment (PROGRESS ENTRY-0221).
+- **Obligation:** Task 7.7.3 adds the `pg_dump`-based daily backup scripts. This obligation tracks the deployment-side step: the script must be scheduled by the OS's scheduler at the venue, and a restore test must succeed before the venue goes live. A backup that has never been restored is a backup that does not exist.
+- **Files and call site:** `scripts/backup-daily.ps1`, `scripts/backup-daily.sh`, `scripts/restore-backup.ps1`, `scripts/restore-backup.sh`. Documented in `docs/DEPLOYMENT.md` (Task 10.7.1).
+- **Satisfied by:** Task 7.7.3 (the scripts) + Task 10.6.1 (the real-venue dry run, which includes a restore). Discharge evidence is a successful `restore-backup` against a test database, documented in PROGRESS.
+- **Depends on:** 7.7.3, D-8.5, BUILD.md §7.4.
+- **Verification:** `pg_dump` produces a `.sql.gz` file daily; `restore-backup` restores it to a test database without errors. Documented in `docs/DEPLOYMENT.md`.
+- **Status:** OPEN
+
+### W-0023 — DEFERRED — Distributed rate limiter for multi-instance deployments
+
+- **Originated:** Phase 7.7 amendment (PROGRESS ENTRY-0221).
+- **Obligation:** Task 7.7.5 adds an **in-memory** rate limiter to `/api/auth/login`. This is sufficient for a single-venue deployment (D-10.1). When a venue grows large enough that the app runs on multiple processes behind a load balancer, the in-memory limiter will not enforce across instances. This obligation tracks the migration to a distributed limiter.
+- **Files and call site:** `src/infrastructure/rate-limit/` (new directory, not yet created). `app/api/auth/login/route.ts` is the only consumer today; only the limiter's backing store changes.
+- **Satisfied by:** A future task when the first venue runs on multi-instance hosting. Not scheduled. Trigger: a venue requests multi-instance deployment, or the developer moves to a load balancer.
+- **Depends on:** 7.7.5, D-10.1, D-14.1.
+- **Verification:** Login attempts from the same IP are counted across all instances. Tested with two app instances writing to the same rate-limit store.
+- **Status:** DEFERRED
+
 ### W-0020 — OPEN — Guest-screen manual checks must verify that no injected script renders as raw text
 
 - **Originated:** Tasks 7.6.8, 7.6.8.FIX, 7.6.8.FIX.3 (PROGRESS ENTRY-0220).

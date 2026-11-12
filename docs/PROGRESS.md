@@ -129,15 +129,85 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 |-------|------|-------|--------|-----------|----------|
 | ENTRY-0219 | 2026-11-10 | Phase 7.5 Reconciliation & Closure | STRUCTURAL | Milestone 7.5 | §5.3 |
 | ENTRY-0220 | 2026-11-10 | Phase 7.6 closure & foundation verification | PASS | Milestone 7.6 | §5.3 |
-| ENTRY-0221 | 2026-11-11 | (next entry) | — | Milestone 8.1 | §5.3 |
+| ENTRY-0221 | 2026-11-12 | Phase 7.7 amendment: production readiness prerequisites | STRUCTURAL | Milestone 7.7 | §5.3 |
 
-Next entry number: 0221
+Next entry number: 0222
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0221 — 2026-11-12 — Phase 7.7 amendment: production readiness prerequisites (STRUCTURAL)
+
+**Status:** STRUCTURAL
+
+**Task:** Amendment to ROADMAP.md — insert Phase 7.7 (Production Readiness Prerequisites) between Phase 7.6 (closed) and Phase 8 (not started). Add three WIRING obligations (W-0021, W-0022, W-0023). Update README and PROGRESS.
+
+**Summary:** The post-Phase-7.6 audit surfaced five production-readiness gaps that were previously scattered across Phase 10: request-level audit logging, database security hardening, automated daily backups, CSRF protection on state-changing routes, and login rate limiting. All five are BUILD.md §7.4 release blockers. Building the manager panel's thirty new admin routes without them would be building thirty new doors on a foundation without locks, cameras, or a logbook. Phase 7.7 is the precondition: five small tasks, one session each, before Phase 8 begins.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `docs/WIRING.md` | Updated | Added W-0021 (Phase 8 routes must use `withAudit`), W-0022 (daily backups must be restore-tested), W-0023 (deferred: distributed rate limiter for multi-instance) |
+| `docs/README.md` | Updated | §4 phases count and current-phase line; §5 current-state block |
+| `docs/PROGRESS.md` | Updated | This entry; §5.2 ledger (replaced placeholder); next entry number 0221→0222 |
+
+**Commands Run:**
+```powershell
+git status --porcelain
+```
+Result: (empty)
+
+```powershell
+Select-String -Path '.\docs\WIRING.md' -Pattern "### W-002[123]" | Measure-Object | Select-Object -ExpandProperty Count
+```
+Result: 3
+
+```powershell
+Select-String -Path '.\docs\PROGRESS.md' -Pattern "ENTRY-0221" | Measure-Object | Select-Object -ExpandProperty Count
+```
+Result: 2
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | W-0021 present in §2 | PASS | `Select-String` returns 1 |
+| 2 | W-0022 present in §2 | PASS | `Select-String` returns 1 |
+| 3 | W-0023 present in §2 | PASS | `Select-String` returns 1 |
+| 4 | README §4 mentions Phase 7.7 | PASS | `Select-String` returns ≥1 |
+| 5 | README §5 mentions Phase 7.7 | PASS | `Select-String` returns ≥1 |
+| 6 | ENTRY-0221 present in §5.2 and §5.3 | PASS | `Select-String` returns ≥2 |
+| 7 | Next entry number is 0222 | PASS | `Select-String` returns 1 |
+| 8 | Only three files changed | PASS | `git status --porcelain` shows exactly `M docs/WIRING.md`, `M docs/README.md`, `M docs/PROGRESS.md` |
+| 9 | Four baselines pass | PASS | tsc 0, unit 254, integration 233, build 39 |
+
+**Deviations from Contract:** None.
+
+**Noticed but Out of Scope:** The three new WIRING obligations are process obligations, not code. Their discharge happens during Phase 8 (W-0021) and after Phase 7.7 closes (W-0022, W-0023).
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change | No change |
+| SYSTEM.md | No | No system change | No change |
+| BUILD.md | No | No process change | No change |
+| ROADMAP.md | Yes | Phase 7.7 inserted (by developer, committed before this session) | Recorded in this entry |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | Yes | W-0021, W-0022, W-0023 added | Updated |
+
+**Contradiction Check:** None found. The five Phase 7.7 items were previously in Phase 10; moving them to Phase 7.7 is a phase-ordering change, recorded in ROADMAP.
+
+**Next:** Phase 7.7.1 — Structured request-level audit log with downloadable ZIP.
+
+**Awaiting Human Verification:** YES
+
+---
 
 *(Entries below are the last three of the closed Phase 7.6. They are kept here for context because a new chat must read them to understand how the foundation was closed. All earlier Phase 7 and Phase 7.5 entries are in `PROGRESS_ARCHIVE_PHASE_7.md`.)*
 

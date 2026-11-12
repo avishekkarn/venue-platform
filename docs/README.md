@@ -71,11 +71,11 @@ These are the counts as of the current state (2026-11-10, Phase 7.6):
 
 - **Documents:** 8 canonical files (PRODUCT, DECISIONS, SYSTEM, BUILD, ROADMAP, PROGRESS, DESIGN, PHASE_TESTS) + README
 - **Decisions:** 104, across 17 categories (see `DECISIONS.md` Appendix)
-- **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed) and Phase 7.6 (foundation hardening, in progress)
+- **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed), Phase 7.6 (foundation hardening, closed), and Phase 7.7 (production readiness prerequisites, in progress)
 - **Unit tests passing:** 254 (36 files)
 - **Integration tests passing:** 233 (38 files)
 - **Production routes:** 39
-- **Current phase:** Phase 8 — The Manager Panel (Phase 7.6 is closed; Phase 8.1.1 is the next task)
+- **Current phase:** Phase 7.7 — Production Readiness Prerequisites (Phase 7.6 is closed; Phase 8 begins after 7.7)
 
 ---
 
@@ -86,6 +86,7 @@ See the top of `PROGRESS.md` §7 (The Current State Snapshot). That snapshot is 
 As of the last session:
 
 - **Phase 7.5** (Room Service & Frontend Convergence) is **closed**. The guest request loop is 1:1 aligned with the order loop. Polling uses vanilla-JS DOM replacement on the guest tracking surfaces (`/order/[id]/track`, `/requests`, and the join banner) — see D-19.1. The join-approval cookie is set server-side via `NextResponse` — see D-19.2.
-- **Phase 7.6** (Foundation Hardening) is **closed**. All eleven tasks plus two FIX commits are on `origin/main`. See PROGRESS ENTRY-0220 for the closure evidence.
-- **Phase 8** (The Manager Panel) is the **current phase**. Task 8.1.1 (add `GET /api/admin/dashboard`) is next.
+- **Phase 7.6** (Foundation Hardening) is **closed** (commit `145d479`). All eleven tasks plus two FIX commits are on `origin/main`. The foundation is verified end-to-end. See PROGRESS ENTRY-0220.
+- **Phase 7.7** (Production Readiness Prerequisites) is **in progress**. It closes five gaps before Phase 8 begins: request-level audit log with ZIP download (7.7.1), database security hardening (7.7.2), automated daily backups (7.7.3), CSRF protection (7.7.4), and login rate limiting (7.7.5).
+- **Phase 8** (The Manager Panel) begins after Phase 7.7 closes. Task 8.1.1 (add `GET /api/admin/dashboard` route) is the first task of Phase 8.
 - **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 254/254, `test:integration` 233/233, `build` 39 routes.
