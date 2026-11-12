@@ -131,14 +131,94 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0220 | 2026-11-10 | Phase 7.6 closure & foundation verification | PASS | Milestone 7.6 | §5.3 |
 | ENTRY-0221 | 2026-11-12 | Phase 7.7 amendment: production readiness prerequisites | STRUCTURAL | Milestone 7.7 | §5.3 |
 | ENTRY-0222 | 2026-11-12 | Milestone 7.7.1 closed: request-level audit log with downloadable ZIP | PASS | Milestone 7.7.1 | §5.3 |
+| ENTRY-0223 | 2026-11-12 | Milestone 7.7.2 closed: database security hardening | PASS | Milestone 7.7.2 | §5.3 |
 
-Next entry number: 0223
+Next entry number: 0224
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0223 — 2026-11-12 — Milestone 7.7.2 closed: database security hardening (PASS)
+
+**Status:** PASS
+
+**Task:** Milestone 7.7.2 — Task 7.7.2 (single-task milestone). One prior attempt failed and rolled back cleanly; the corrected instruction shipped on the second attempt.
+
+**Summary:** Milestone 7.7.2 closed. The production database connection is now hardened: `DATABASE_URL` must include `sslmode=require` in production runtime or the process refuses to boot; the check is skipped during `next build` so local builds against a plaintext `.env.local` succeed. The `pg.Pool` connection limit is read from `DB_POOL_MAX` (default 20) and falls back to 20 with a one-time warning on a malformed value. The production database user (`venue_prod`) and its least-privilege grants are documented in `.env.production.example` and `docs/SYSTEM.md §15.4.1`.
+
+**Files Changed:**
+
+| Path | Action | Purpose |
+|------|--------|---------|
+| `src/infrastructure/db/client.ts` | Modified | `assertProductionSsl` (runtime guard, build-phase skip via `NEXT_PHASE === "phase-production-build"`); `readPoolMax` (default 20, warn-fallback); `new Pool({ connectionString, max: readPoolMax() })` |
+| `.env.production.example` | Created | Production env template. `DATABASE_URL` uses `venue_prod` + `sslmode=require`. `DB_POOL_MAX=20`. Grants documented in the header comment |
+| `docs/SYSTEM.md` | Modified | New `#### 15.4.1 The production database user and SSL requirement` under §15.4 |
+| `docs/ROADMAP.md` | Modified | Row 7.7.2 → ✅ |
+
+**Commands Run:** (final baseline at `bac0cf3`)
+pnpm exec tsc --noEmit → exit 0, no output
+pnpm test:unit → 36 files, 254/254
+pnpm test:integration → 41 files, 257/257
+pnpm build → PASS, 40 routes
+
+**Manual Check Results:**
+
+| # | Check | Result | Evidence |
+|---|-------|--------|----------|
+| 1 | Production runtime refuses without `sslmode=require` | PASS | `tsx -e "import('./src/infrastructure/db/client.ts')..."` with `NODE_ENV=production` and a plaintext URL → `THROWN: [db] DATABASE_URL must include sslmode=require in production...` |
+| 2 | Build phase skips the guard; `pnpm build` succeeds with plaintext `.env.local` | PASS | `Compiled successfully in 856ms`; `Generating static pages using 15 workers (40/40)`; no SSL error |
+| 3 | Dev server starts with plaintext local URL | PASS | `Ready in 334ms`; `GET / 200 in 369ms`; no `[db]` errors |
+| 4 | Bad `DB_POOL_MAX` warns and falls back to 20 | PASS | `[db] DB_POOL_MAX="not-a-number" is not a positive integer; falling back to 20.` (Gemini's run + the developer's re-proof via `tsx -e "require('./src/infrastructure/db/client.ts')"`) |
+| 5 | Valid `DB_POOL_MAX` is used | PASS | `module loaded with DB_POOL_MAX=30` |
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | `client.ts` has `assertProductionSsl` | PASS | 2 matches (definition + call) |
+| 2 | `client.ts` skips guard during build via `NEXT_PHASE` | PASS | line 59 |
+| 3 | Error message names `§15.4.1` | PASS | 2 matches |
+| 4 | `client.ts` has `readPoolMax` and `max: readPoolMax()` | PASS | 2 matches |
+| 5 | `client.ts` has no `any` / `@ts-ignore` / `!` | PASS | 0 matches |
+| 6 | `.env.production.example` exists with `sslmode=require` and `DB_POOL_MAX=20` | PASS | present |
+| 7 | `SYSTEM.md` has §15.4.1 with `venue_prod` | PASS | 3 matches |
+| 8 | `ROADMAP` 7.7.1 and 7.7.2 both ✅ | PASS | lines 793, 812 |
+| 9–13 | The five manual checks | PASS | table above |
+| 14 | `tsc --noEmit` | PASS | exit 0 |
+| 15 | `test:unit` | PASS | 36 files, 254/254 |
+| 16 | `test:integration` | PASS | 41 files, 257/257 |
+| 17 | `pnpm build` | PASS | 40 routes |
+| 18 | Working tree exactly 4 entries before commit | PASS | 4 lines |
+| 19 | No ENTRY-0223 in PROGRESS before this session | PASS | 0 matches |
+
+**Deviations from Contract:** The first attempt of Task 7.7.2 failed and rolled back. It was diagnosed by Gemini's report as follows: `next build` unconditionally sets `NODE_ENV=production`, causing `assertProductionSsl` to fire during the "page data collection" phase against the local `.env.local` (plaintext URL). The guard's intent was "the production **runtime** refuses", not "the production **build** fails". The corrected instruction added the `NEXT_PHASE === "phase-production-build"` skip and a manual check that exercises the runtime path directly (via `tsx -e`) rather than the build path. The corrected instruction passed all 19 criteria on the first try. **This was an instruction-side design gap (mine), not an implementation error (Gemini's).**
+
+**Noticed but Out of Scope:**
+- The build emits `⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.` This is a Next.js 16 deprecation. Migration to `proxy.ts` is a Phase 10 task (documented as "middleware → proxy" in the end-of-Phase-7.7 sweep). Not a 7.7.2 concern.
+- `archiver@^7.0.1` still pulls `glob@10.5.0` (deprecated subdependency, from 7.7.1b). Not a 7.7.2 concern.
+- `.env.production.example` names `docs/DEPLOYMENT.md (Phase 10.7)` — that file does not exist yet. It is created in Phase 10.7 per the roadmap. The reference is forward-looking and honest (it names where the procedure will be documented).
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change; the SSL/pool choices trace to existing decisions (D-3.9 precedent for dependency choices, D-15.4 for pool ceiling, D-8.5 for audit log backup) and do not warrant a new record | No change |
+| SYSTEM.md | Yes | §15.4.1 added | Updated in 7.7.2's commit |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | 7.7.2 → ✅ | Updated in 7.7.2's commit |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | No new obligation; W-0022 (backup restore test) and W-0023 (distributed rate limiter) remain open, but neither is affected by 7.7.2 | No change |
+
+**Contradiction Check:** None found. §15.4.1's grants list is consistent with D-3.7 (staff deactivation, not deletion), D-4.2 (menu item state, not deletion), D-1.2 (QR revocation, not deletion), D-10.4 (venue deactivation, not deletion). The `NEXT_PHASE` skip is documented in §15.4.1 itself and in the code comment.
+
+**Next:** Phase 7.7.3 — Automated daily backups (`pg_dump` + retention + restore test). Task 7.7.3 in ROADMAP.md §11.
+
+**Awaiting Human Verification:** YES
+
 
 ### ENTRY-0222 — 2026-11-12 — Milestone 7.7.1 closed: request-level audit log with downloadable ZIP (PASS)
 
@@ -439,12 +519,15 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Milestone 7.7.1 (request-level audit log with downloadable ZIP) is closed. All five sub-tasks 7.7.1, 7.7.1a, 7.7.1b, 7.7.1c, 7.7.1d are ✅ on `origin/main`, plus two in-session .FIXes folded into 7.7.1a's and 7.7.1c's commits. The four baselines pass at `integration 257/257` and `build 40 routes`. Phase 7.7.2 (database security hardening) is the current task.
+**Current status:** Milestone 7.7.2 (database security hardening) is closed. Implementation shipped on `bac0cf3`. The production database connection enforces `sslmode=require` at runtime (build phase skipped via `NEXT_PHASE`); the `pg.Pool` `max` is read from `DB_POOL_MAX` (default 20); the `venue_prod` role's least-privilege grants are documented in `docs/SYSTEM.md §15.4.1` and `.env.production.example`. Baselines: tsc 0, unit 254/254 (36 files), integration 257/257 (41 files), build 40 routes. **Next task: Phase 7.7.3 — Automated daily backups.**
 
 **Key facts for a new session:**
 - `withAudit` is the mandatory wrapper for every Phase 8 admin route (BUILD.md §6.11, W-0021).
 - `audit/export` is the first fully-wrapped admin route; `qr/generate` is the second. Both are the Phase 8 template.
 - Two in-session .FIXes are recorded in this entry: the `\u0000` false-positive and the side-effect isolation gap. Both are instructions to future sessions on how to test wrapper-introduced side effects.
+- `assertProductionSsl` in `client.ts` fires in production **runtime** only; `NEXT_PHASE === "phase-production-build"` skips it so `pnpm build` succeeds with a plaintext local URL (Phase 7.7.2).
+- `readPoolMax` in `client.ts` reads `DB_POOL_MAX`, default 20, warn-fallback on malformed value (Phase 7.7.2).
+- The `venue_prod` least-privilege grants live in `docs/SYSTEM.md §15.4.1` (Phase 7.7.2).
 - Polling is vanilla-JS DOM replacement, not React `useState` (D-19.1).
 - The join-approval cookie is set server-side via `NextResponse` (D-19.2).
 - `listForGuestSession` is a required method on the port (7.6.9).
