@@ -130,14 +130,97 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0219 | 2026-11-10 | Phase 7.5 Reconciliation & Closure | STRUCTURAL | Milestone 7.5 | §5.3 |
 | ENTRY-0220 | 2026-11-10 | Phase 7.6 closure & foundation verification | PASS | Milestone 7.6 | §5.3 |
 | ENTRY-0221 | 2026-11-12 | Phase 7.7 amendment: production readiness prerequisites | STRUCTURAL | Milestone 7.7 | §5.3 |
+| ENTRY-0222 | 2026-11-12 | Milestone 7.7.1 closed: request-level audit log with downloadable ZIP | PASS | Milestone 7.7.1 | §5.3 |
 
-Next entry number: 0222
+Next entry number: 0223
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0222 — 2026-11-12 — Milestone 7.7.1 closed: request-level audit log with downloadable ZIP (PASS)
+
+**Status:** PASS
+
+**Task:** Milestone 7.7.1 — Tasks 7.7.1, 7.7.1a, 7.7.1b, 7.7.1c, 7.7.1d. Two in-session fixes were folded into commits: 7.7.1a.FIX (the `\u0000` fallback false-positive in `logger.test.ts`) and 7.7.1c.FIX (the `AUDIT_LOG_DIR` isolation missing from `admin-qr-generate.test.ts`).
+
+**Summary:** Milestone 7.7.1 closed. Every request that passes through a wrapped route writes one JSON-lines audit line; the admin-only `GET /api/admin/audit/export` streams those lines as a single ZIP; the ZIP opens in a text editor and contains the exact line the wrapped route wrote. 7.7.1c applied the wrapper to `POST /api/admin/qr/generate` as the gold-standard proof; §6.11 of BUILD.md documents the pattern for Phase 8 (W-0021). 7.7.1d proved the composition end-to-end with two integration tests and a manual browser check.
+
+**Files Changed:** (catalogued across the five sub-tasks + two .FIXes)
+
+| Path | Action | Purpose | Sub-task |
+|------|--------|---------|----------|
+| `src/infrastructure/audit/logger.ts` | Created | File-based JSON-lines logger; `writeAudit`, `auditFilePath`, `actorFromSession`, `ActorResolvers`, `AuditEvent`, `AuditActor`, `AuditActorType` | 7.7.1, extended in 7.7.1a |
+| `tests/integration/audit/logger.test.ts` | Created | 9 tests (6 in 7.7.1, 2 replaced + 2 new in 7.7.1a, +1 net from .FIX) | 7.7.1, 7.7.1a, .FIX |
+| `.gitignore` | Modified | Ignore `logs/` (runtime JSON-lines, never committed) | 7.7.1 |
+| `.env.local.example` | Modified | Add `AUDIT_LOG_DIR=logs/audit` | 7.7.1 |
+| `src/infrastructure/audit/with-audit.ts` | Created | `withAudit` higher-order route wrapper; `AuditedRouteHandler`, `AuditMeta` | 7.7.1a |
+| `tests/integration/audit/with-audit.test.ts` | Created | 7 tests proving pass-through, audit line shape, 500-on-throw, resolver call counts | 7.7.1a |
+| `package.json` | Modified | `archiver@^7.0.1` (deps); `@types/archiver@^6.0.4` (devDeps) | 7.7.1b |
+| `pnpm-lock.yaml` | Modified | Lockfile for the pinned dependencies | 7.7.1b |
+| `src/infrastructure/audit/collect.ts` | Created | `listAuditFiles`; `AuditFile` — read-only `.jsonl` enumeration, sorted, returns `[]` when absent | 7.7.1b |
+| `app/api/admin/audit/export/route.ts` | Created | `GET` wrapped with `withAudit`; admin-gated; streams ZIP via archiver; exports `setTestDbClient` | 7.7.1b |
+| `tests/integration/api/admin-audit-export.test.ts` | Created | 5 tests in 7.7.1b; +2 tests in 7.7.1d | 7.7.1b, 7.7.1d |
+| `app/api/admin/qr/generate/route.ts` | Modified | `routeHandler: AuditedRouteHandler` (body unchanged); `meta` + `resolvers`; `POST = withAudit(...)` | 7.7.1c |
+| `tests/integration/api/admin-qr-generate.test.ts` | Modified | +1 test asserting one JSONL line per request; `beforeEach`/`afterEach` gain `AUDIT_LOG_DIR` isolation via `.FIX`; the 12 pre-existing tests' assertions are untouched | 7.7.1c, .FIX |
+| `docs/BUILD.md` | Modified | New §6.11 documents the `withAudit` contract, the two resolver helpers, the double-read, the `AuditedRouteHandler` type, and the two reference implementations | 7.7.1c |
+| `docs/ROADMAP.md` | Modified | 7.7.1, 7.7.1a, 7.7.1b, 7.7.1c, 7.7.1d → ✅ | 7.7.1–7.7.1d |
+| `docs/SYSTEM.md` | Modified | §12.5 gains `GET /api/admin/audit/export` | 7.7.1b |
+| `docs/PROGRESS.md` | Modified | This entry (ENTRY-0222); §5.2 ledger; §5.3 marker; §7 snapshot | 7.7.1d |
+
+**Commands Run:** (final baseline at `7.7.1d`)
+pnpm exec tsc --noEmit → exit 0, no output
+pnpm test:unit → 36 files, 254/254
+pnpm test:integration → 41 files, 257/257
+pnpm build → PASS, 40 routes
+Test-Path '.\logs' → False
+
+**Acceptance Criteria Results:**
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Every commit of 7.7.1, 7.7.1a, 7.7.1b, 7.7.1c on `origin/main` | PASS | `git log --oneline origin/main -5` shows `585c8fa`, `a8332ed`, `534f83d`, `dbeb225`, plus this session's commit |
+| 2 | File-based JSON-lines logger writes one line per request | PASS | `logger.test.ts` 9 tests; `with-audit.test.ts` 7 tests |
+| 3 | `withAudit` wrapper transparent to the handler's response | PASS | `with-audit.test.ts` "returns the handler's response unchanged" |
+| 4 | Export route streams a valid ZIP | PASS | `admin-audit-export.test.ts` 5 tests (empty dir → 200 + empty ZIP; populated → 200 + non-empty ZIP; no session → 401; CHEF → 403; LEADER → 403) |
+| 5 | Wrapped `POST /api/admin/qr/generate` unchanged in behavior | PASS | The 12 pre-existing `admin-qr-generate.test.ts` assertions unmodified; all 12 still pass |
+| 6 | §6.11 in `BUILD.md` documents the pattern for Phase 8 | PASS | `Select-String -Pattern '^### 6\.11' docs/BUILD.md` → 1 match |
+| 7 | End-to-end: a route call produces a JSONL line that the ZIP contains | PASS | `admin-audit-export.test.ts` new test #1; manual browser check recorded below |
+| 8 | Anonymous call logs an anonymous line that the ZIP contains | PASS | `admin-audit-export.test.ts` new test #2 |
+| 9 | ZIP opens in a text editor and contains the line | PASS | Manual check: `audit-2026-11-12.zip` downloaded; opened in zipfile / text editor; extracted `2026-11-12.jsonl`; first line verbatim: `{"timestamp":"2026-11-12T15:47:14.580Z","actorType":"staff","actorId":"17af6c59-eafa-4d15-a0d9-a9cc70926eb5","actorRole":"MANAGER","venueId":"0d1a545a-6cbb-43be-9c6d-654f00b0c45d","route":"/api/admin/qr/generate","method":"POST","status":201,"latencyMs":69,"ip":"127.0.0.1"}` |
+| 10 | ROADMAP 7.7.1–7.7.1d all ✅ | PASS | `Select-String '^\| 7\.7\.1[abcd]? ' docs/ROADMAP.md` → 5 ✅ |
+
+**Deviations from Contract:** None in the final state. Two in-session repairs were required:
+- **7.7.1a.FIX:** the original `logger.test.ts` "does not throw when the audit directory cannot be created" test used `\u0000impossible` as `AUDIT_LOG_DIR`. On Windows, `process.env` truncates NUL bytes to `""`, so `auditDir()` fell back to `DEFAULT_AUDIT_DIR = "logs/audit"` and `mkdirSync` **succeeded**, writing a real 188-byte file to `./logs/audit/2026-11-12.jsonl` while the assertion `not.toThrow()` held. The test was a false positive. Fixed in `7.7.1a.FIX` by replacing the NUL-byte approach with a blocker-file `ENOTDIR` failure — deterministic on every OS, never touches the repo's `./logs/`. Evidence of the original bug: two identical `{"actorType":"anonymous","route":"/api/anything",...}` lines in `logs/audit/2026-11-12.jsonl`, captured before deletion.
+- **7.7.1c.FIX:** wrapping `qr/generate` in `withAudit` introduced a new side effect (a file write per request). The 12 pre-existing tests in `admin-qr-generate.test.ts` did not isolate `AUDIT_LOG_DIR`, so their 12 calls wrote 12 lines to `./logs/audit/2026-11-12.jsonl` during the integration run — which failed criterion 17 (`Test-Path '.\logs'` must be `False`). Fixed in `7.7.1c.FIX` by adding `AUDIT_LOG_DIR` isolation to `beforeEach`/`afterEach` exactly as `admin-audit-export.test.ts` already does. The 12 pre-existing tests' assertions are untouched. Evidence of the original bug: `Get-Content '.\logs\audit\2026-11-12.jsonl' | Measure-Object -Line` returned 12, and the first 3 lines named the 12 test-generated manager UUIDs.
+
+**Noticed but Out of Scope:**
+- `archiver@^7.0.1` pulls in `glob@10.5.0` (a deprecated subdependency). Not a functional issue; `pnpm add` emits a `[WARN] 1 deprecated subdependencies found: glob@10.5.0`. When `archiver@8` becomes the right upgrade (a dedicated task, a dedicated decision), the deprecation resolves. Tracked informally; no W- obligation.
+- The `pnpm build` output emits `⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.` Pre-existing since Phase 7.6. This is a Next.js 16 deprecation notice; migrating `middleware.ts` to `proxy.ts` is Phase 10's task. **A W- obligation will be opened at the end of Milestone 7.7** (not this session) to track it, so it does not get lost between now and Phase 10.
+- The double-resolve in every wrapped route (wrapper calls `resolveStaff` for audit; handler calls `validateSession` again for authorization) is deliberate (see BUILD.md §6.11). A future optimization is possible but should be a specific task, not a session-level refactor.
+- The `AuditedRouteHandler` type does not support dynamic routes (`[id]`). When Phase 8 adds the first dynamic route, a variant (`withAuditedDynamicRoute`) will be introduced; the §6.11 note names this. Not a 7.7.1 gap; a Phase 8 shape concern.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change; `archiver@7` was a session-level choice under D-3.9 / D-16.3's precedent, not a new decision | No change |
+| SYSTEM.md | Yes | §12.5 gains `GET /api/admin/audit/export` | Updated in 7.7.1b |
+| BUILD.md | Yes | New §6.11 documents the `withAudit` contract | Updated in 7.7.1c |
+| ROADMAP.md | Yes | 7.7.1, 7.7.1a, 7.7.1b, 7.7.1c, 7.7.1d → ✅ | Updated across the five commits |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | W-0021 (every Phase 8 route uses `withAudit`) is now **partially discharged** — the pattern is demonstrated and documented; it becomes fully exercised as Phase 8's routes adopt it. W-0021's status remains OPEN until Phase 8 completes. No WIRING.md edit in this session. | No change |
+
+**Contradiction Check:** None found. The pattern documented in BUILD.md §6.11 matches SYSTEM.md §15.1, §16.3, D-3.13, and the two reference implementations. The `resolveGuest: async () => null` branch in `qr/generate` and `audit/export` is consistent with §6.11's stated rule ("a staff-only admin route sets `resolveGuest: async () => null`").
+
+**Next:** Phase 7.7.2 — Database security hardening (SSL, dedicated user, connection pool tuning). Task 7.7.2 in ROADMAP.md §11.
+
+**Awaiting Human Verification:** YES
+
+
 
 ### ENTRY-0221 — 2026-11-12 — Phase 7.7 amendment: production readiness prerequisites (STRUCTURAL)
 
@@ -356,9 +439,12 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 7.6 (Foundation Hardening) is closed. Phase 8 (The Manager Panel) is unblocked and is the current phase. All four baselines pass: tsc 0 errors, test:unit 254/254 (36 files), test:integration 233/233 (38 files), build 39 routes. Phase 7.5 and Phase 7.6 are both closed. The foundation is verified end-to-end (Table, Room, Kitchen, Join, Requests). Next task: Phase 8.1.1 — Add `GET /api/admin/dashboard` route.
+**Current status:** Milestone 7.7.1 (request-level audit log with downloadable ZIP) is closed. All five sub-tasks 7.7.1, 7.7.1a, 7.7.1b, 7.7.1c, 7.7.1d are ✅ on `origin/main`, plus two in-session .FIXes folded into 7.7.1a's and 7.7.1c's commits. The four baselines pass at `integration 257/257` and `build 40 routes`. Phase 7.7.2 (database security hardening) is the current task.
 
 **Key facts for a new session:**
+- `withAudit` is the mandatory wrapper for every Phase 8 admin route (BUILD.md §6.11, W-0021).
+- `audit/export` is the first fully-wrapped admin route; `qr/generate` is the second. Both are the Phase 8 template.
+- Two in-session .FIXes are recorded in this entry: the `\u0000` false-positive and the side-effect isolation gap. Both are instructions to future sessions on how to test wrapper-introduced side effects.
 - Polling is vanilla-JS DOM replacement, not React `useState` (D-19.1).
 - The join-approval cookie is set server-side via `NextResponse` (D-19.2).
 - `listForGuestSession` is a required method on the port (7.6.9).
