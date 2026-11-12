@@ -132,14 +132,91 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0221 | 2026-11-12 | Phase 7.7 amendment: production readiness prerequisites | STRUCTURAL | Milestone 7.7 | §5.3 |
 | ENTRY-0222 | 2026-11-12 | Milestone 7.7.1 closed: request-level audit log with downloadable ZIP | PASS | Milestone 7.7.1 | §5.3 |
 | ENTRY-0223 | 2026-11-12 | Milestone 7.7.2 closed: database security hardening | PASS | Milestone 7.7.2 | §5.3 |
+| ENTRY-0224 | 2026-11-13 | Milestone 7.7.3 closed: automated daily backups | PASS | Milestone 7.7.3 | §5.3 |
 
-Next entry number: 0224
+Next entry number: 0225
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0224 — 2026-11-13 — Milestone 7.7.3 closed: automated daily backups (PASS)
+
+**Status:** PASS
+
+**Task:** Milestone 7.7.3 — split into 7.7.3.A (backup half) and 7.7.3.B (restore half). Two prior attempts failed and rolled back cleanly: the first on `pwsh` not installed on the host; the second on the Windows `gunzip` shim. Both were instruction-side environment assumptions, not implementation errors. The corrected instruction for each half passed on the first try.
+
+**Summary:** Milestone 7.7.3 closed. Daily database backups are now automated via the four scripts in `scripts/`: `backup-daily.ps1` / `.sh` (pg_dump → gzip → `${BACKUP_DIR}/YYYY-MM-DD.sql.gz`, 30-day UTC retention prune) and `restore-backup.ps1` / `.sh` (pg_restore --clean --if-exists into a target database, `-Force` gate, DATABASE_URL guard). The operator's manual lives in `scripts/README.md`. The operational specification lives in `docs/SYSTEM.md §18.5`. W-0022's script-half is satisfied (the scripts exist and work); its scheduling-half is deferred to Phase 10.6.1 (the real-venue dry run). D-8.5's "outside the database" rule is documented and enforced by convention, not by the scripts (a script cannot detect a mount).
+
+**Files Changed:**
+
+| Path | Action | Purpose | Sub-task |
+|------|--------|---------|----------|
+| `scripts/backup-daily.ps1` | Created | Daily pg_dump | gzip in PowerShell 7+; 30-day UTC prune; non-zero exit on failure; `#Requires -Version 7.0`. | 7.7.3.A |
+| `scripts/backup-daily.sh` | Created | Same behaviour, bash (`set -Eeuo pipefail`). | 7.7.3.A |
+| `scripts/README.md` | Created | Operator manual: prerequisites, configuration, Task Scheduler / cron install, alerting, "outside the database" rule, "What This Directory Does Not Do". The Restore stub was replaced in 7.7.3.B. | 7.7.3.A (Backup section) + 7.7.3.B (Restore section) |
+| `.gitignore` | Modified | Add `backups/` (runtime .sql.gz dumps, never committed). | 7.7.3.A |
+| `scripts/restore-backup.ps1` | Created | Restore a .sql.gz into a target DB via `pg_restore --clean --if-exists`. Requires `-Force`. Refuses to restore into `DATABASE_URL`. Requires PowerShell 7. | 7.7.3.B |
+| `scripts/restore-backup.sh` | Created | Same behaviour, bash. | 7.7.3.B |
+| `docs/SYSTEM.md` | Modified | New §18.5 documents the operational scripts, prerequisites (pg_dump/pg_restore 14+, gzip, pwsh 7.0+), BACKUP_DIR / RESTORE_DB_URL, failure semantics (no retry; non-zero exit; scheduler notification), and the quarterly restore test (W-0022). | 7.7.3.B |
+| `docs/ROADMAP.md` | Modified | 7.7.3 → ✅. | 7.7.3.B |
+
+**Commands Run:** (final baseline at `bf8e101`)
+```text
+pnpm exec tsc --noEmit → exit 0, no output
+pnpm test:unit → 36 files, 254/254
+pnpm test:integration → 41 files, 257/257
+pnpm build → PASS, 40 routes
+```
+
+**Manual Check Results:**
+
+| # | Check | Result | Evidence | Session |
+|---|-------|--------|----------|---------|
+| 1 | Backup runs and produces a .sql.gz | PASS | `2026-11-12.sql.gz` (31,511 bytes) written; script exited 0. | 7.7.3.A |
+| 2 | Backup content is valid gzip with PGDMP header | PASS | `gzip integrity OK`; first 5 bytes `PGDMP`. | 7.7.3.A |
+| 3 | Retention prunes 31-day-old files | PASS | `Pruning old backup: ...2026-10-12.sql.gz`; `Test-Path $oldFile` → `False`. | 7.7.3.A |
+| 4 | Cleanup after backup test | PASS | `Test-Path $env:BACKUP_DIR` → `False`. | 7.7.3.A |
+| 5 | Bash syntax valid (Git Bash + WSL dry-run) | PASS | Both produced the expected dry-run log; `bash -n` exit 0. | 7.7.3.A |
+| 6 | Restore into a fresh test DB succeeds | PASS | Restore exited 0; `SELECT COUNT(*)` → venues=1, menu_items=10. | 7.7.3.B |
+| 7 | Restore refuses without `-Force` | PASS | Exit 1; error names the target; target unchanged (venues=1 after). | 7.7.3.B |
+
+**Deviations from Contract:**
+
+- **BUILD.md §12.3 rule 3 (200 lines) overridden.** Milestone 7.7.3 was split into 7.7.3.A (backup half; ~340 lines) and 7.7.3.B (restore half; ~320 lines). Neither half could be split further without fragmenting a single script's coherent design. The split itself is the mitigation; the override is documented in each session's report.
+- **First attempt of 7.7.3 failed** because `pwsh` was not installed on the host (only Windows PowerShell 5.1). The instruction's `#Requires -Version 7.0` was correct; the host environment was missing the tool. The corrected instruction pre-read `pwsh --version` (which showed 7.7.0 after the install) and the `scripts/README.md` scheduling command uses `pwsh.exe`, not `powershell.exe`.
+- **First attempt of 7.7.3.B failed** because the restore script used `gunzip -c` in the pipeline. On Windows, Git for Windows ships `gunzip` as a shell-script wrapper without an `.exe` extension; PowerShell 7's pipeline refuses to execute it (`Cannot run a document in the middle of a pipeline`). The fix: `gzip -d -c` (`.ps1`) and `gzip -dc` (`.sh`) — both use `gzip.exe`, which is available on all three platforms. The corrected instruction passed all 21 criteria on the first try.
+- **Rollback procedure fix:** the prior rollback's `psql` call did not set `$env:PGPASSWORD`, causing an interactive-password hang. The corrected rollback sets `$env:PGPASSWORD` before `psql`. This is a documentation fix, not a code fix.
+
+**Noticed but Out of Scope:**
+
+- **The `.sh` restore script's functional execution against real `pg_restore` is deferred to production (Linux) at Phase 10.6.1.** Windows-hosted testing cannot exercise the `.sh` pipeline against a real PostgreSQL; the `.sh` script's syntax is proven by `bash -n` (Git Bash + WSL), its functional correctness at production. Consistent with D-14.1's portability discipline.
+- **`BACKUP_DIR` is not added to `.env.production.example`.** The variable is documented in `scripts/README.md`. Adding it to the production env template is a Phase 10.7 concern (the production env template is a deployment deliverable, not a 7.7.3 one).
+- **The scripts do not encrypt the `.sql.gz`.** Encryption at rest is a separate concern; the production disk's encryption covers it. A future iteration may add script-level encryption if the backup disk is not encrypted. Named in `scripts/README.md`'s "What This Directory Does Not Do" section as a deliberate deferral.
+- **The scripts do not push to cloud storage.** Named in the same section as a deliberate deferral.
+- **The scripts do not schedule themselves.** Scheduling is the OS's job. Named in `scripts/README.md` as the correct design (a script that schedules itself is a footgun).
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|----------|-----------|--------|--------|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change; the scripts implement D-8.5 | No change |
+| SYSTEM.md | Yes | §18.5 added | Updated in 7.7.3.B's commit |
+| BUILD.md | No | No build rule change | No change |
+| ROADMAP.md | Yes | 7.7.3 → ✅ | Updated in 7.7.3.B's commit |
+| PROGRESS.md | Yes | This entry | Updated |
+| WIRING.md | No | W-0022 remains OPEN (script-half satisfied by 7.7.3; scheduling-half at Phase 10.6.1). W-0022's WIRING.md status is not flipped here because the discharge is partial. When Phase 10.6.1 proves the schedule is registered at the venue, W-0022 is fully discharged and WIRING.md is updated in that session's PROGRESS entry. | No change |
+
+**Contradiction Check:** None found. §18.5's `#Requires -Version 7.0` and `gzip -d -c` are both consistent with the code; the `scripts/README.md` Prerequisites section names `pwsh` 7.0+ explicitly; the `Task Scheduler` install command uses `pwsh.exe`. The BUILD.md §12.3 override is recorded in Deviations, not silently applied.
+
+**Next:** Phase 7.7.4 — CSRF protection on state-changing routes (Task 7.7.4 and its four sub-tasks: 7.7.4a, 7.7.4b, 7.7.4c, 7.7.4d). Task 7.7.4 in ROADMAP.md §11.
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0223 — 2026-11-12 — Milestone 7.7.2 closed: database security hardening (PASS)
 
@@ -519,9 +596,12 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Milestone 7.7.2 (database security hardening) is closed. Implementation shipped on `bac0cf3`. The production database connection enforces `sslmode=require` at runtime (build phase skipped via `NEXT_PHASE`); the `pg.Pool` `max` is read from `DB_POOL_MAX` (default 20); the `venue_prod` role's least-privilege grants are documented in `docs/SYSTEM.md §15.4.1` and `.env.production.example`. Baselines: tsc 0, unit 254/254 (36 files), integration 257/257 (41 files), build 40 routes. **Next task: Phase 7.7.3 — Automated daily backups.**
+**Current status:** Milestone 7.7.3 (automated daily backups) is closed. Implementation shipped on `553f94f` (7.7.3.A, backup half) and `bf8e101` (7.7.3.B, restore half). Four scripts under `scripts/` (backup-daily.ps1/.sh, restore-backup.ps1/.sh); the operator manual is `scripts/README.md`; the operational spec is `docs/SYSTEM.md §18.5`. Baselines: tsc 0, unit 254/254 (36 files), integration 257/257 (41 files), build 40 routes. **Next task: Phase 7.7.4 — CSRF protection on state-changing routes.**
 
 **Key facts for a new session:**
+- The backup and restore scripts live in `scripts/`; the operator manual is `scripts/README.md`; the operational spec is `docs/SYSTEM.md §18.5` (Phase 7.7.3). W-0022's script-half is satisfied; scheduling-half is Phase 10.6.1.
+- The `.ps1` scripts require PowerShell 7 (`pwsh`), not Windows PowerShell 5.1: PS5.1's pipeline exit-code propagation is unreliable, so a failed `pg_dump` piped into a successful `gzip` would exit zero under 5.1.
+- `gunzip` on Windows is a shell-script wrapper, not an `.exe`; use `gzip -d -c` / `gzip -dc` in pipelines (Phase 7.7.3.B's fix).
 - `withAudit` is the mandatory wrapper for every Phase 8 admin route (BUILD.md §6.11, W-0021).
 - `audit/export` is the first fully-wrapped admin route; `qr/generate` is the second. Both are the Phase 8 template.
 - Two in-session .FIXes are recorded in this entry: the `\u0000` false-positive and the side-effect isolation gap. Both are instructions to future sessions on how to test wrapper-introduced side effects.
