@@ -821,7 +821,7 @@ text
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 7.7.3 | Add a `pg_dump`-based daily backup script; document the retention policy (30 days, D-8.5); add a restore-test procedure | ⬜ | 7.7.2 |
+| 7.7.3 | Add a `pg_dump`-based daily backup script; document the retention policy (30 days, D-8.5); add a restore-test procedure | ✅ | 7.7.2 |
 
 **Details:**
 - `scripts/backup-daily.ps1` (PowerShell, Windows-hosted venues) and `scripts/backup-daily.sh` (bash, Linux-hosted venues) — both wrap `pg_dump` and gzip the output to `backups/YYYY-MM-DD.sql.gz`. They are scheduled via the OS's scheduler (Task Scheduler on Windows, cron on Linux). The scheduling command is documented in `docs/DEPLOYMENT.md` (which will be created in Phase 10.7; for Phase 7.7, the script and its README are the deliverable).

@@ -146,9 +146,79 @@ and the `.env.production.example` reference make it clear.
 
 ## Restore and the Quarterly Restore Test
 
-*(The 7.7.3.B session adds this section. It documents the restore scripts,
-the `-Force` / `--force` confirmation gate, and the quarterly restore
-test that discharges W-0022's script-half.)*
+**A backup that has never been restored is a backup that does not exist.**
+The restore scripts are destructive — they wipe the target database and
+recreate it from the backup. They require `-Force` / `--force` to run.
+They refuse to restore into the application's own database.
+
+### The restore scripts
+
+| File | Platform | Purpose |
+|------|----------|---------|
+| `restore-backup.ps1` | Windows (PowerShell 7+) | Restore a `.sql.gz` into a target database via `pg_restore --clean --if-exists`. Requires `-Force`. |
+| `restore-backup.sh` | Linux / macOS / WSL | Same behaviour, bash. Requires `--force`. |
+
+Both wrap `pg_restore` (PostgreSQL client 14+; built against 18.x). Both
+read the target from `-TargetDatabase` / `--target` or from the
+`RESTORE_DB_URL` environment variable.
+
+### The `DATABASE_URL` guard
+
+Even with `-Force` / `--force`, the scripts refuse to restore into the
+`DATABASE_URL`'s database. The `DATABASE_URL` is the running application's
+connection; restoring over it would destroy live data. A restore must be
+into a distinct database — typically a fresh test database
+(`venue_restore_test`) or a restored-into-staging database.
+
+### The quarterly restore test (W-0022)
+
+Once per quarter, the developer restores the most recent backup into a
+fresh test database and confirms the venue's data is intact. This is
+W-0022's script-half — the script exists and works; the scheduling-half
+(the venue's server actually runs the quarterly test and records the
+result) is satisfied at Phase 10.6.1's real-venue dry run.
+
+### Windows
+
+```powershell
+# 1. Create a fresh test database (one-time, or after each cleanup).
+psql -h localhost -U postgres -c "CREATE DATABASE venue_restore_test"
+
+# 2. Restore the most recent backup into it.
+$env:BACKUP_DIR = "C:\QR-PROJECT\backups"
+$latest = Get-ChildItem "$env:BACKUP_DIR\*.sql.gz" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$env:RESTORE_DB_URL = "postgresql://postgres:REPLACE_WITH_PASSWORD@localhost:5432/venue_restore_test"
+.\scripts\restore-backup.ps1 -BackupFile $latest.FullName -Force
+
+# 3. Verify the restore: the venue's tables and a sample row count.
+psql -h localhost -U postgres -d venue_restore_test -c "SELECT COUNT(*) FROM venues; SELECT COUNT(*) FROM orders; SELECT COUNT(*) FROM menu_items"
+
+# 4. Clean up.
+psql -h localhost -U postgres -c "DROP DATABASE venue_restore_test"
+Remove-Item Env:RESTORE_DB_URL
+```
+
+### Linux
+
+```bash
+# 1. Create a fresh test database.
+createdb -h localhost -U postgres venue_restore_test
+
+# 2. Restore the most recent backup into it.
+LATEST=$(ls -1t "$BACKUP_DIR"/*.sql.gz | head -n 1)
+export RESTORE_DB_URL="postgresql://postgres:REPLACE_WITH_PASSWORD@localhost:5432/venue_restore_test"
+./scripts/restore-backup.sh --backup-file "$LATEST" --force
+
+# 3. Verify the restore.
+psql -h localhost -U postgres -d venue_restore_test -c "SELECT COUNT(*) FROM venues"
+
+# 4. Clean up.
+dropdb -h localhost -U postgres venue_restore_test
+unset RESTORE_DB_URL
+```
+
+Record the result in the `PROGRESS.md` entry of the quarter's session. The
+test's PASS / FAIL is the quarter's backup-verification evidence.
 
 ---
 

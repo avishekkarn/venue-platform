@@ -1054,6 +1054,53 @@ The recovery point is up to 24 hours before the loss (the time of the most recen
 
 *Traces to:* D-8.5.
 
+### 18.5 The operational backup scripts
+
+The backup and recovery model (§18.1–§18.4) is implemented by the
+operational scripts in `scripts/`. Phase 7.7.3 added them; Phase 10.7's
+`docs/DEPLOYMENT.md` documents their installation on a venue's server.
+
+**The scripts.** Four files, two platforms:
+
+- `scripts/backup-daily.ps1` and `scripts/backup-daily.sh` — daily
+  `pg_dump` of the venue's database, written as a gzip-compressed
+  custom-format dump to `${BACKUP_DIR}/YYYY-MM-DD.sql.gz`, with a 30-day
+  retention prune (D-8.5).
+- `scripts/restore-backup.ps1` and `scripts/restore-backup.sh` — restore
+  a `.sql.gz` into a target database. Destructive; requires `-Force` /
+  `--force`. Refuses to restore into the application's own database.
+
+**Configuration.** `BACKUP_DIR` (default `backups/`) names the backup
+directory. In production it MUST point outside the database's disk
+(D-8.5). `DATABASE_URL` is the source; `RESTORE_DB_URL` is the target.
+
+**Prerequisites.** `pg_dump` and `pg_restore` (PostgreSQL client 14+; built
+against 18.x), `gzip`, and — for the `.ps1` scripts — PowerShell 7
+(`pwsh`). Windows PowerShell 5.1 is not supported: PS5.1's pipeline
+exit-code propagation is unreliable, and a failed `pg_dump` piped into a
+successful `gzip` would exit zero under 5.1 — the "silently failed
+backup" failure mode the scripts exist to prevent.
+
+**Scheduling.** The scripts do not schedule themselves. The OS scheduler
+(Task Scheduler on Windows, cron on Linux) runs them once per day. The
+exact commands are in `scripts/README.md` and will be in
+`docs/DEPLOYMENT.md` (Phase 10.7).
+
+**Failure semantics.** A failed `pg_dump` or `pg_restore` exits non-zero
+with the tool's stderr. **No retry, no silent fallback.** The scheduler's
+failure notification (Task Scheduler's event log / cron's `MAILTO`) is
+the alert channel. A backup that fails silently is a backup that does not
+exist; the alert is the mechanism that prevents it.
+
+**Restore test.** Once per quarter, the developer restores the most
+recent backup into a fresh test database and confirms the venue's data
+is intact. W-0022 tracks this obligation. The script-half is satisfied
+by Phase 7.7.3; the scheduling-half is satisfied by Phase 10.6.1's
+real-venue dry run.
+
+*Traces to:* D-8.5, WIRING.md W-0022, ROADMAP.md §11 (Task 7.7.3),
+`scripts/README.md`.
+
 ---
 
 ## 19. The Deployment Model
