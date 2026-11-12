@@ -809,7 +809,7 @@ text
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 7.7.2 | Add `sslmode=require` to the production connection string; document a dedicated `venue_prod` database user with minimum permissions; tune the `pg.Pool` limit to the venue's staff count | ⬜ | 7.7.1 |
+| 7.7.2 | Add `sslmode=require` to the production connection string; document a dedicated `venue_prod` database user with minimum permissions; tune the `pg.Pool` limit to the venue's staff count | ✅ | 7.7.1 |
 
 **Details:**
 - `prisma.config.ts` reads `DATABASE_URL` from env. Add a startup check: if `NODE_ENV === "production"` and the URL does not contain `sslmode=require`, the app refuses to boot with a clear message.

@@ -909,6 +909,54 @@ When the product grows large enough that polling is too heavy, the polling is re
 
 *Traces to:* §6 (sessions), §9 (order state), §13 (payment verification), D-10.2 (isolation).
 
+#### 15.4.1 The production database user and SSL requirement
+
+The application connects to PostgreSQL through the `pg.Pool` in
+`src/infrastructure/db/client.ts`. In production, two guarantees are
+enforced at process start:
+
+**SSL is required.** `DATABASE_URL` MUST contain `sslmode=require`. The
+`assertProductionSsl` check in `client.ts` runs at module load in the
+production **runtime**. A production process whose `DATABASE_URL` is
+missing or does not include `sslmode=require` throws and refuses to boot.
+The check is skipped during `next build` (via `NEXT_PHASE ===
+"phase-production-build"`), so a local build against a plaintext
+`.env.local` succeeds; the deployed runtime (`next start` or the deployed
+Node process) still refuses. Development and test are exempt entirely.
+
+**The connection uses a dedicated, least-privilege role.** The production
+`DATABASE_URL`'s user MUST be `venue_prod`, not `postgres` and not the
+developer's local account. The `venue_prod` role's grants are:
+
+- `SELECT` on every venue-scoped table.
+- `INSERT` on `orders`, `order_items`, `order_state_changes`,
+  `service_requests`, `request_state_changes`, `guest_sessions`,
+  `guest_join_requests`, `payment_tickets`, `receipts`, `qr_tokens`,
+  `staff_sessions`.
+- `UPDATE` on the same tables plus `staff_members`,
+  `menu_items`, `menu_categories`, `tables`, `rooms`, `counters`,
+  `venues`, `venue_module_toggles`, `venue_service_toggles`.
+- **No `DROP`, no `ALTER`, no `CREATE`, no `TRUNCATE`.**
+- **No `DELETE` on historical rows.** Deactivation replaces deletion (D-3.7
+  for staff, D-4.2 for menu items, D-1.2 for QR tokens, D-10.4 for venues).
+- `USAGE` on the venue's sequences.
+
+The `venue_prod` role is created ONCE per installation by the developer at
+onboarding. It is not created by any migration and it is not created by the
+application. The procedure is documented in `.env.production.example` and in
+Phase 10.7's `docs/DEPLOYMENT.md`.
+
+**The connection pool is bounded.** `pg.Pool`'s `max` is read from
+`DB_POOL_MAX` (default 20). Per D-15.4 the venue supports up to 20
+concurrent staff sessions; 20 connections is the honest ceiling for the
+current scope. A malformed `DB_POOL_MAX` falls back to 20 with a one-time
+server-side log — a broken environment variable must not take the venue
+offline.
+
+*Traces to:* ROADMAP.md §11 (Task 7.7.2), SYSTEM.md §15.1 (what is trusted),
+SYSTEM.md §15.2 (what is not), D-3.7, D-4.2, D-1.2, D-10.4, D-15.4, D-8.5,
+BUILD.md §7.4.
+
 ---
 
 ## 16. The Error and Failure Model
