@@ -782,6 +782,7 @@ The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, 
 | PATCH | `/api/admin/services` | Turn services on or off |
 | PATCH | `/api/admin/settings` | Update venue settings |
 | PATCH | `/api/admin/payments` | Configure the payment bridge |
+| GET | `/api/admin/audit/export` | Download every audit log file as a single ZIP (admin-only; 7.7.1b) |
 
 ### 12.6 The payment routes
 
