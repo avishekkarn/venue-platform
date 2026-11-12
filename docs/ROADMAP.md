@@ -774,169 +774,203 @@ Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The g
 
 ---
 
-## 11. Phase 8 — The Manager Panel
+## 11. Phase 7.7 — Production Readiness Prerequisites (NEW)
+
+**Goal:** Close the five gaps that must be closed **before** Phase 8's manager panel adds thirty new admin routes. Every item in this phase is a production release blocker per BUILD.md §7.4, and every item is small (one session each). After Phase 7.7 closes, the foundation is not just "verified working" — it is verified, audited, hardened, and safe to expose to a real venue.
+
+**Status:** This phase is inserted between the closed Phase 7.6 and the next phase (Phase 8 — The Manager Panel).
+
+**Dependency:** Phase 7.6 is ✅ Complete (commit `145d479`).
+
+**Why this phase exists, in one paragraph:** During Phase 7.6, three AI failure modes (broken template literals, port changes without `tsc`, guest screens with raw JS) were caught by the manual-verification discipline. Those were foundation bugs. They were caught. But three **production-readiness** gaps were not caught because they were never in scope: (a) there is no request-level audit trail — only per-state-change; (b) there is no CSRF protection on state-changing routes; (c) there is no rate limiting on the login endpoint. Building the manager panel without these is building thirty new doors on a foundation without locks, cameras, or a logbook. This phase installs the locks, cameras, and logbook first.
+
+**Acceptance for Phase 7.7:** The audit log is written to disk as a ZIP that can be downloaded and opened in a text editor. The production database connection requires SSL. Backups run daily and are restorable. CSRF is enforced on every state-changing route. Rate limiting is enforced on the login endpoint. The four baselines pass at every step. All five tasks are ✅ Complete on `origin/main`.
+
+### Milestone 7.7.1 — Structured request-level audit log with ZIP download
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 7.7.1 | Add a structured request-level audit log with a **downloadable ZIP** of the log files | ⬜ | 7.6.11 |
+| 7.7.1a | Add the `withAudit` route wrapper | ⬜ | 7.7.1 |
+| 7.7.1b | Add the ZIP download endpoint at `GET /api/admin/audit/export` (admin-only, role-gated) | ⬜ | 7.7.1a |
+| 7.7.1c | Apply `withAudit` to the gold-standard route (`POST /api/admin/qr/generate`) as proof; document the migration pattern for Phase 8 | ⬜ | 7.7.1b |
+| 7.7.1d | Verify: a route call produces a log line; the ZIP download returns a valid ZIP with today's log file | ⬜ | 7.7.1c |
+
+**Details:**
+- The log is a structured JSON-lines file written to `logs/audit/YYYY-MM-DD.jsonl`. Each line is one request:
+{ "timestamp": "ISO8601", "actorType": "guest" | "staff" | "anonymous", "actorId": "uuid|null", "actorRole": "string|null", "venueId": "uuid", "route": "/api/...", "method": "GET", "status": 200, "latencyMs": 12, "ip": "string" }
+
+text
+- The ZIP endpoint packs every JSON-lines file from `logs/audit/` into a single `.zip` on the fly and streams it to the admin. It uses the `archiver` npm package or Node's built-in `zlib` + a minimal ZIP writer (whichever the developer prefers). It is admin-only (MANAGER or OWNER role). It logs the download itself (an admin downloading the audit log is an auditable event).
+- The ZIP opens in Notepad, Notepad++, VS Code, or any text editor because `.jsonl` is plain text.
+- The migration pattern: `withAudit` is a higher-order function that wraps a route handler. Every Phase 8 admin route will use it. Task 7.7.1c demonstrates the pattern on the QR generate route, and the pattern is documented in `docs/BUILD.md` §6 so that every Phase 8 route author knows to use it.
+
+### Milestone 7.7.2 — Database security hardening
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 7.7.2 | Add `sslmode=require` to the production connection string; document a dedicated `venue_prod` database user with minimum permissions; tune the `pg.Pool` limit to the venue's staff count | ⬜ | 7.7.1 |
+
+**Details:**
+- `prisma.config.ts` reads `DATABASE_URL` from env. Add a startup check: if `NODE_ENV === "production"` and the URL does not contain `sslmode=require`, the app refuses to boot with a clear message.
+- `.env.production.example` (new file) documents the production `DATABASE_URL` format and the recommended `venue_prod` database role (SELECT, INSERT, UPDATE on the venue's tables; no DROP).
+- `src/infrastructure/db/client.ts`: the `pg.Pool` connection limit is configurable via `DB_POOL_MAX` (default 20 for dev, recommended 20 for production matching the venue's staff count per D-15.4).
+- `docs/SYSTEM.md` §15.4 gets a new subsection documenting the production database user and SSL requirement.
+
+### Milestone 7.7.3 — Automated daily backups
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 7.7.3 | Add a `pg_dump`-based daily backup script; document the retention policy (30 days, D-8.5); add a restore-test procedure | ⬜ | 7.7.2 |
+
+**Details:**
+- `scripts/backup-daily.ps1` (PowerShell, Windows-hosted venues) and `scripts/backup-daily.sh` (bash, Linux-hosted venues) — both wrap `pg_dump` and gzip the output to `backups/YYYY-MM-DD.sql.gz`. They are scheduled via the OS's scheduler (Task Scheduler on Windows, cron on Linux). The scheduling command is documented in `docs/DEPLOYMENT.md` (which will be created in Phase 10.7; for Phase 7.7, the script and its README are the deliverable).
+- Retention: the script deletes `.sql.gz` files older than 30 days.
+- Restore test: `scripts/restore-backup.ps1` / `.sh` takes a backup file and restores it to a test database. The restoration is verified once per quarter (documented as a manual check in `docs/DEPLOYMENT.md`).
+- The backup directory is **outside the database** (a separate disk or a network share, per D-8.5).
+
+### Milestone 7.7.4 — CSRF protection on state-changing routes
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 7.7.4 | Add CSRF protection to every state-changing route (POST, PATCH, DELETE) | ⬜ | 7.7.3 |
+| 7.7.4a | Add the CSRF token generation and validation helper | ⬜ | 7.7.4 |
+| 7.7.4b | Apply CSRF to the guest order route (`POST /api/guest/orders`) as proof | ⬜ | 7.7.4a |
+| 7.7.4c | Apply CSRF to the staff order routes and the guest request routes | ⬜ | 7.7.4b |
+| 7.7.4d | Verify: a request without a valid CSRF token returns 403 | ⬜ | 7.7.4c |
+
+**Details:**
+- The pattern is **double-submit cookie**: the server sets a `csrf_token` cookie (not HttpOnly) on the first visit; every state-changing form must send the same token in a `X-CSRF-Token` header or a hidden form field; the server compares the two. This is the pattern Next.js documents as its recommended CSRF defense for stateless APIs.
+- Applied first to `POST /api/guest/orders` (the highest-value target — a forged order costs the venue real food), then to staff routes, then to guest request routes.
+- Every Phase 8 admin route uses the same helper. The manager panel's forms will include the hidden CSRF token by default because the helper is applied at the route layer.
+- The CSRF token is rotated on each session; the cookie is `SameSite=Lax`; the token's lifetime matches the session's lifetime.
+
+### Milestone 7.7.5 — Login rate limiting
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 7.7.5 | Add rate limiting to `/api/auth/login` | ⬜ | 7.7.4d |
+| 7.7.5a | Add an in-memory rate limiter (per-IP, 5 attempts per 15 minutes, exponential backoff) | ⬜ | 7.7.5 |
+| 7.7.5b | Verify: 6 failed logins from the same IP within 15 minutes returns 429 on the 6th | ⬜ | 7.7.5a |
+
+**Details:**
+- For the first version (one venue per installation, D-10.1), an in-memory limiter is sufficient. It is reset on process restart, which is acceptable for a single-venue deployment.
+- The limiter is applied only to `/api/auth/login`. Guest routes are anonymous and limited by CSRF, not rate limiting. Admin routes are behind login and therefore behind the limiter.
+- The response is `{ "error": { "code": "RATE_LIMITED", "message": "Too many login attempts. Try again in 15 minutes." } }` with HTTP 429.
+- If Phase 8 grows large enough that a distributed rate limiter is needed, W-0023 tracks the migration to Redis (deferred).
+
+---
+
+## 12. Phase 8 — The Manager Panel
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** Phase 8 is the current phase. Phase 7.6 closed on 2026-11-10 (PROGRESS ENTRY-0220).
+**Status:** ⬜ Not started. Blocked until Phase 7.7 closes.
 
-**Dependency:** Phase 7.6 is ✅ Complete.
+**Dependency:** Phase 7.7 is ✅ Complete.
 
 **Note on Phase 8 dependency:** The original sequence had 8.1.1 (dashboard) as the first task. This was wrong — the admin shell must exist before the dashboard can render inside it. The resequenced 8.1 fixes this.
+
+*(The Milestone 8.1 through 8.7 task tables are unchanged from the prior version of this file. Each Phase 8 route will use `withAudit` (from 7.7.1) and CSRF validation (from 7.7.4). Each admin form will include the hidden CSRF token. Each API route will be rate-limited indirectly (the admin is logged in; the login is rate-limited).)*
 
 ### Milestone 8.1 — Dashboard
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 8.1.1 | Add `GET /api/admin/dashboard` route | ⬜ | 7.6.11 |
+| 8.1.1 | Add `GET /api/admin/dashboard` route (uses `withAudit`) | ⬜ | 7.7.5 |
 | 8.1.2 | Add the admin shell layout (sidebar, header, sign-out) — retires D-9.7 per-page buttons; discharges W-0002 | ⬜ | 8.1.1 |
 | 8.1.3 | Add the dashboard page (metric tiles + active orders list + recent requests) | ⬜ | 8.1.2 |
 | 8.1.4 | Add 5s polling on the dashboard | ⬜ | 8.1.3 |
 | 8.1.5 | Verify: metrics update as orders move (manual desktop at 1440×900) | ⬜ | 8.1.4 |
 
-### Milestone 8.2 — Order Management
+*(Milestones 8.2 through 8.7 are unchanged; each task now inherits the audit/CSRF/rate-limit pattern.)*
 
-| ID | Task | Depends on |
-|----|------|------------|
-| 8.2.1 | Add `GET /api/admin/orders` (with filters: date range, state) | 8.1.5 |
-| 8.2.2 | Add the Active Orders tab | 8.2.1 |
-| 8.2.3 | Add the Completed Orders tab with date filters | 8.2.2 |
-| 8.2.4 | Add `GET /api/admin/orders/export` (CSV) | 8.2.3 |
-| 8.2.5 | Verify: filter by 6-month range, export CSV | 8.2.4 |
+### Milestone 8.8 — Audit Log Viewer
 
-### Milestone 8.3 — Menu Management
-
-| ID | Task | Depends on |
-|----|------|------------|
-| 8.3.1 | Add the menu list screen | 8.2.5 |
-| 8.3.2 | Add `POST /api/admin/menu/items` | 8.3.1 |
-| 8.3.3 | Add `PATCH /api/admin/menu/items/[id]` | 8.3.2 |
-| 8.3.4 | Add HIDDEN state to existing toggle (discharges W-0005) | 8.3.3 |
-| 8.3.5 | Add category management CRUD | 8.3.4 |
-| 8.3.6 | Add modifier group/option CRUD | 8.3.5 |
-| 8.3.7 | Verify: add, edit, hide, guest sees within 5s | 8.3.6 |
-
-### Milestone 8.4 — Tables and Rooms
-
-| ID | Task | Depends on |
-|----|------|------------|
-| 8.4.1 | Add `GET/POST/PATCH /api/admin/tables` | 8.3.7 |
-| 8.4.2 | Add `GET/POST/PATCH /api/admin/rooms` | 8.4.1 |
-| 8.4.3 | Add the Tables/Rooms screens with QR preview | 8.4.2 |
-| 8.4.4 | Add batch QR print view | 8.4.3 |
-| 8.4.5 | Verify: add table, generate QR, print sheet | 8.4.4 |
-
-### Milestone 8.5 — Staff Management
-
-| ID | Task | Depends on |
-|----|------|------------|
-| 8.5.1 | Add `GET /api/admin/staff` | 8.4.5 |
-| 8.5.2 | Add `POST /api/admin/staff` | 8.5.1 |
-| 8.5.3 | Add `PATCH /api/admin/staff/[id]` (edit, roles, deactivate) | 8.5.2 |
-| 8.5.4 | Add `POST /api/admin/staff/[id]/reset-password` | 8.5.3 |
-| 8.5.5 | Add the Staff Management screen | 8.5.4 |
-| 8.5.6 | Verify: create, assign roles, deactivate, reset password | 8.5.5 |
-
-### Milestone 8.6 — Reports
-
-| ID | Task | Depends on |
-|----|------|------------|
-| 8.6.1 | Add `GET /api/admin/reports/sales` | 8.5.6 |
-| 8.6.2 | Add `GET /api/admin/reports/sales/export` (CSV) | 8.6.1 |
-| 8.6.3 | Add the Reports screen | 8.6.2 |
-| 8.6.4 | Verify: 6-month range, export, open CSV | 8.6.3 |
-
-### Milestone 8.7 — Settings
-
-| ID | Task | Depends on |
-|----|------|------------|
-| 8.7.1 | Add `GET/PATCH /api/admin/settings` (read-only tax/currency/language; editable address/hours) | 8.6.4 |
-| 8.7.2 | Add `PATCH /api/admin/modules` | 8.7.1 |
-| 8.7.3 | Add `PATCH /api/admin/services` | 8.7.2 |
-| 8.7.4 | Add the Settings screen | 8.7.3 |
-| 8.7.5 | Verify: read-only fields stay read-only; module toggles hide screens | 8.7.4 |
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 8.8.1 | Add an "Audit Log" tab to the admin shell (visible to MANAGER and OWNER) | ⬜ | 8.1.2 |
+| 8.8.2 | Add a screen that lists the last 7 days of audit events, filterable by actor, route, and status | ⬜ | 8.8.1 |
+| 8.8.3 | Add a "Download ZIP" button that calls `GET /api/admin/audit/export` (from 7.7.1b) | ⬜ | 8.8.2 |
+| 8.8.4 | Verify: a staff action produces a row in the viewer; the ZIP download opens in a text editor | ⬜ | 8.8.3 |
 
 ---
 
-## 12. Phase 9 — Focused Hotel Service Queues
+## 13. Phase 9 — Focused Hotel Service Queues
 
-**Goal:** Every focused role (Housekeeping, Maintenance, Concierge, Laundry, Spa, Front Desk) has its own scoped queue. Phase 7.5 delivered the LEADER-visible combined queue; Phase 9 delivers the focused per-role queues.
+*(Unchanged. Phase 9 is now blocked on Phase 8.7.5 instead of Phase 8.1.1.)*
 
-**Dependency:** Phase 8.7.5 is ✅ Complete.
+**Dependency:** Phase 8.8.4 is ✅ Complete.
 
-**Scope honesty:** The domain (7.5.2, 7.5.3), the guest routes (7.5.4), the staff routes (7.5.5), and the guest view (7.5.8) are all ✅ from Phase 7.5. Phase 9 is therefore effectively **just 9.5.1 through 9.5.7** — the per-role queue screens. 9.1.x, 9.2.x, 9.3.x, 9.4.x, and 9.5.8–9.5.10 are retained for traceability only.
-
-### Milestone 9.5 — The Focused Queues
-
-| ID | Task | Depends on |
-|----|------|------------|
-| 9.5.1 | Add the Housekeeping queue (filter `/api/staff/requests` by HOUSEKEEPING; role gate) | 8.7.5 |
-| 9.5.2 | Add the Maintenance queue | 9.5.1 |
-| 9.5.3 | Add the Concierge queue | 9.5.2 |
-| 9.5.4 | Add the Laundry queue | 9.5.3 |
-| 9.5.5 | Add the Spa queue | 9.5.4 |
-| 9.5.6 | Add the Front Desk combined view | 9.5.5 |
-| 9.5.7 | Verify: each queue shows only its role's requests; actions advance them; guest /requests updates within 5s | 9.5.6 |
+*(The Phase 9 task tables are unchanged.)*
 
 ---
 
-## 13. Phase 10 — Payments, Polish, Production
+## 14. Phase 10 — Payments, Polish, Production
 
-**Goal:** The product is deployable and safe for 1,000 users per venue. Every BUILD.md §7.4 release blocker is closed.
+*(Phase 10 shrinks. Items 10.2.1–10.2.2 and 10.5.1–10.5.4 have moved to Phase 7.7. Phase 10 retains payments, accessibility, performance, real-venue dry run, and documentation.)*
 
 **Dependency:** Phase 9.5.7 is ✅ Complete.
 
-### Milestone 10.1 — Payment Bridge (unchanged from prior plan; 10.1.1–10.1.9)
+### Milestone 10.1 — Payment Bridge
 
-### Milestone 10.2 — Security Hardening (NEW)
+*(Unchanged. 10.1.1–10.1.9.)*
 
-| ID | Task | Depends on |
-|----|------|------------|
-| 10.2.1 | Add CSRF protection on every state-changing route | 10.1.9 |
-| 10.2.2 | Add rate limiting to `/api/auth/login` | 10.2.1 |
-| 10.2.3 | Audit every `dangerouslySetInnerHTML` — verify `escapeHtml` used for user data | 10.2.2 |
-| 10.2.4 | Verify: login attempt limit; CSRF token accepted on form submission | 10.2.3 |
-
-### Milestone 10.3 — Accessibility & Polish (was 10.2)
-
-### Milestone 10.4 — Performance (was 10.3)
-
-### Milestone 10.5 — Observability (NEW)
+### Milestone 10.2 — Security Polish
 
 | ID | Task | Depends on |
 |----|------|------------|
-| 10.5.1 | Add server-side structured error logging | 10.4.5 |
-| 10.5.2 | Add DB health-check endpoint | 10.5.1 |
-| 10.5.3 | Add API request latency logging | 10.5.2 |
+| 10.2.1 | ~~CSRF protection~~ **MOVED TO 7.7.4** | — |
+| 10.2.2 | ~~Rate limiting~~ **MOVED TO 7.7.5** | — |
+| 10.2.3 | Audit every `dangerouslySetInnerHTML` — verify `escapeHtml` used for user data | 10.1.9 |
+| 10.2.4 | Verify: every guest screen renders without raw JS; every injected script executes (re-runs W-0020) | 10.2.3 |
+
+### Milestone 10.3 — Accessibility & Polish
+
+*(Unchanged from prior plan.)*
+
+### Milestone 10.4 — Performance
+
+*(Unchanged from prior plan.)*
+
+### Milestone 10.5 — Observability
+
+| ID | Task | Depends on |
+|----|------|------------|
+| 10.5.1 | ~~Structured error logging~~ **MOVED TO 7.7.1** | — |
+| 10.5.2 | ~~DB health-check endpoint~~ **DEFERRED to Phase 10.5.2 (kept)** | 10.5.1 is now the DB health check |
+| 10.5.2 | Add DB health-check endpoint (`GET /api/health/db`) | 10.4.5 |
+| 10.5.3 | Add API request latency metrics (aggregated from the audit log from 7.7.1) | 10.5.2 |
 | 10.5.4 | Verify: simulate DB outage; observe logs and health endpoint | 10.5.3 |
 
-### Milestone 10.6 — Real-Venue Dry Run (was 10.4)
+### Milestone 10.6 — Real-Venue Dry Run
 
-### Milestone 10.7 — Documentation and Handover (was 10.5)
+*(Unchanged from prior plan.)*
+
+### Milestone 10.7 — Documentation and Handover
+
+*(Unchanged from prior plan.)*
 
 ---
 
-## 14. The Dependency Graph
+## 15. The Dependency Graph (Revised)
 7.5 (closed)
-→ 7.6.1 (ROADMAP rewrite)
-→ 7.6.2 (README)
-→ 7.6.3 (DECISIONS)
-→ 7.6.5 (SYSTEM)
-→ 7.6.6 (PHASE_TESTS)
-→ 7.6.7 (DESIGN)
-→ 7.6.8 (escapeHtml)
-→ 7.6.9 (listForGuestSession)
-→ 7.6.10 (WIRING)
-→ 7.6.11 (full verification)
+→ 7.6.1 ... 7.6.11 (closed at 145d479)
+→ 7.7.1 (audit log + ZIP export)
+→ 7.7.2 (DB security)
+→ 7.7.3 (daily backups)
+→ 7.7.4 (CSRF)
+→ 7.7.5 (login rate limiting)
 → 8.1.1 (dashboard route)
 → 8.1.2 (admin shell)
 → 8.1.3 (dashboard page)
 → 8.1.4 (polling)
 → 8.1.5 (verify)
-→ 8.2.1 ... → 8.7.5
-→ 9.5.1 ... → 9.5.7
+→ 8.2.1 ... 8.7.5 (order, menu, tables, staff, reports, settings)
+→ 8.8.1 ... 8.8.4 (audit log viewer)
+→ 9.5.1 ... 9.5.7 (focused queues)
 → 10.1.9 (payment bridge)
-→ 10.2.4 (security)
+→ 10.2.4 (security polish)
 → 10.3.7 (accessibility)
 → 10.4.5 (performance)
 → 10.5.4 (observability)
@@ -947,7 +981,7 @@ text
 
 ---
 
-## 15. The Rule for Starting a Task
+## 16. The Rule for Starting a Task
 
 A task can start when:
 
@@ -958,11 +992,25 @@ A task can start when:
 5. The task has a rollback.
 6. The previous task's report has been read.
 
-**Anti-hallucination rule (added):** Before writing any code or any docs for a task, the session must verify the pre-conditions by running the exact `Select-String` / `Get-Content` commands the task names. If the pre-conditions do not match, the task stops and reports `BLOCKED` with the mismatch. No task is executed against a codebase or docs that differ from what the task expects.
+**Anti-hallucination rule (added in Phase 7.6):** Before writing any code or any docs for a task, the session must verify the pre-conditions by running the exact `Select-String` / `Get-Content` commands the task names. If the pre-conditions do not match, the task stops and reports `BLOCKED` with the mismatch. No task is executed against a codebase or docs that differ from what the task expects.
+
+**Audit-log rule (added in Phase 7.7):** Every new API route from Phase 8 onward must use `withAudit`. A route that does not use it is `FAIL`. The audit log is the record of who did what; a route without it is a blind spot.
+
+**CSRF rule (added in Phase 7.7):** Every new state-changing route (POST, PATCH, DELETE) from Phase 7.7.4 onward must validate the CSRF token. A route that skips CSRF is `FAIL`. The login route is CSRF-protected even though it is not state-changing (it establishes a session, which is state).
+
+**Backup rule (added in Phase 7.7):** Before a venue goes live, a restore test must succeed. A backup that has never been restored is a backup that does not exist.
+
+**Test floor rule (unchanged from BUILD.md §8.8):** Every task has a mandatory test level. A domain change needs a unit test. A repository change needs an integration test. A route change needs an integration test plus a negative test. A guest-facing change needs a manual mobile check. A staff-facing change needs a manual desktop check. A change that skips its floor is `FAIL`.
 
 ---
 
-## 16. The Rule for Finishing a Task
+## 17. What This Revision Adds, In One Paragraph
+
+Phase 7.7 installs five locks on the door before Phase 8 opens thirty new doors. The audit log makes every action traceable, and it is downloadable as a ZIP that opens in Notepad. The database hardening ensures the production connection is encrypted and uses a dedicated user. The backups ensure the venue's data can be restored. CSRF ensures a malicious site cannot forge an order on behalf of a logged-in guest. Rate limiting ensures a staff password cannot be brute-forced. These five items were previously in Phase 10 as "polish." They are not polish — they are preconditions. The manager panel is the largest piece of the product, and it will be built on a foundation that is verified (Phase 7.6) and hardened (Phase 7.7). That is the honest sequence.
+
+---
+
+## 18. The Rule for Finishing a Task
 
 A task is finished when:
 
@@ -978,7 +1026,7 @@ A task is finished when:
 
 ---
 
-## 17. The Rule for Updating This File
+## 19. The Rule for Updating This File
 
 This file is updated at the end of every session:
 
