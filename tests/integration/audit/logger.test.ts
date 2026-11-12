@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { readFileSync, rmSync, existsSync, mkdtempSync } from "node:fs";
+import { readFileSync, rmSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -120,9 +120,20 @@ describe("Audit logger — file-based JSON-lines (7.7.1)", () => {
     expect(readFileSync(file2, "utf8").trim().length > 0).toBe(true);
   });
 
-  it("does not throw when the audit directory cannot be created", () => {
-    // Force an impossible directory: a path that starts with a NUL byte.
-    process.env["AUDIT_LOG_DIR"] = "\u0000impossible";
+  it("does not throw when the audit directory cannot be created (uses a regular file as the path)", () => {
+    // The failure path is mkdirSync failing. To exercise it portably, we point
+    // AUDIT_LOG_DIR at a path whose parent component is a REGULAR FILE, not a
+    // directory. mkdirSync's recursive mode then fails with ENOTDIR or EEXIST
+    // on both Windows and Linux, and the catch in writeAudit is entered.
+    //
+    // We build the path so that:
+    //   - `testDir`          — a real directory (from mkdtempSync in beforeEach)
+    //   - `blockerFile`      — a regular file inside testDir
+    //   - `${blockerFile}/x` — a path under a regular file (impossible to mkdir)
+    const blockerFile = join(testDir, "blocker");
+    writeFileSync(blockerFile, "not a directory", "utf8");
+    process.env["AUDIT_LOG_DIR"] = join(blockerFile, "x");
+
     const event: AuditEvent = {
       timestamp: new Date("2026-11-12T10:00:00.000Z").toISOString(),
       actorType: "anonymous",
@@ -136,15 +147,38 @@ describe("Audit logger — file-based JSON-lines (7.7.1)", () => {
       ip: null,
     };
 
+    // The bug in 7.7.1 was that this test used a NUL byte, which truncated to
+    // "" on Windows (so auditDir() fell back to DEFAULT_AUDIT_DIR and mkdirSync
+    // SUCCEEDED, writing into ./logs/audit/). The blocker-file approach fails
+    // mkdirSync deterministically on every OS without ever touching the repo's
+    // logs/ directory.
     expect(() => writeAudit(event)).not.toThrow();
   });
 
-  it("actorFromSession returns the staff actor when the resolver returns one", async () => {
-    const actor = await actorFromSession(async () => ({
-      actorId: "staff-1",
-      actorRole: "MANAGER",
-      venueId: "venue-1",
-    }));
+  it("falls back to DEFAULT_AUDIT_DIR when AUDIT_LOG_DIR is empty", () => {
+    // The default-dir fallback is a real contract of auditDir(): an empty env
+    // var means "use logs/audit". 7.7.1's broken test proved this accidentally
+    // (by NUL-truncating to ""). This test proves it deliberately, WITHOUT
+    // writing into the repo — because in this test we run inside a tmpdir
+    // and only assert the fallback path computation, not a real disk write.
+    process.env["AUDIT_LOG_DIR"] = "";
+
+    // auditFilePath uses auditDir() internally. We compute the path and
+    // assert it is the default (relative to CWD). We do NOT call writeAudit,
+    // because that would create ./logs/audit/ in the repo.
+    const path = auditFilePath(new Date("2026-11-12T10:00:00.000Z"));
+    expect(path.endsWith(join("logs", "audit", "2026-11-12.jsonl"))).toBe(true);
+  });
+
+  it("actorFromSession returns the staff actor when resolveStaff returns one", async () => {
+    const actor = await actorFromSession({
+      resolveStaff: async () => ({
+        actorId: "staff-1",
+        actorRole: "MANAGER",
+        venueId: "venue-1",
+      }),
+      resolveGuest: async () => null,
+    });
     expect(actor).toEqual({
       actorType: "staff",
       actorId: "staff-1",
@@ -153,13 +187,52 @@ describe("Audit logger — file-based JSON-lines (7.7.1)", () => {
     });
   });
 
-  it("actorFromSession returns the anonymous actor when the resolver returns null", async () => {
-    const actor = await actorFromSession(async () => null);
+  it("actorFromSession returns the guest actor when only resolveGuest returns one", async () => {
+    const actor = await actorFromSession({
+      resolveStaff: async () => null,
+      resolveGuest: async () => ({
+        actorId: "guest-session-1",
+        venueId: "venue-1",
+      }),
+    });
+    expect(actor).toEqual({
+      actorType: "guest",
+      actorId: "guest-session-1",
+      actorRole: null,
+      venueId: "venue-1",
+    });
+  });
+
+  it("actorFromSession returns anonymous when both resolvers return null", async () => {
+    const actor = await actorFromSession({
+      resolveStaff: async () => null,
+      resolveGuest: async () => null,
+    });
     expect(actor).toEqual({
       actorType: "anonymous",
       actorId: null,
       actorRole: null,
       venueId: null,
+    });
+  });
+
+  it("actorFromSession prefers staff over guest when both resolvers return one", async () => {
+    const actor = await actorFromSession({
+      resolveStaff: async () => ({
+        actorId: "staff-1",
+        actorRole: "MANAGER",
+        venueId: "venue-1",
+      }),
+      resolveGuest: async () => ({
+        actorId: "guest-session-1",
+        venueId: "venue-1",
+      }),
+    });
+    expect(actor).toEqual({
+      actorType: "staff",
+      actorId: "staff-1",
+      actorRole: "MANAGER",
+      venueId: "venue-1",
     });
   });
 });

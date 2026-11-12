@@ -145,41 +145,66 @@ export function writeAudit(event: AuditEvent): void {
 }
 
 /**
- * Extracts the actor from whatever session the request carries.
+ * The two session resolvers `actorFromSession` needs. Both are supplied by
+ * `with-audit.ts` (7.7.1a), which imports the real cookie accessors. This
+ * keeps `logger.ts` dependency-free (no `next/headers`, no Prisma).
  *
- * Resolution order (first match wins):
- *   1. staff session  — `getSessionCookie()` + `validateSession(db, token)`
- *   2. guest session  — the guest cookie (7.7.1 does NOT resolve guest sessions;
- *                       the guest cookie carries `venueId` and a session id in
- *                       the same JSON shape as staff sessions, so the wrapper
- *                       in 7.7.1a resolves both with one helper).
- *   3. anonymous      — no cookie, or a cookie that failed validation
- *
- * This session (7.7.1) ships `actorFromSession` with only the staff branch
- * and the anonymous fallback. The guest branch is added in 7.7.1a when the
- * `withAudit` wrapper exists to call it. `actorFromSession` is exported now
- * because `logger.ts` is the natural home for it and 7.7.1a will simply
- * extend the switch — not create a new helper.
- *
- * Phase 7.7.1 is a file-based logger. Phase 8's routes are all staff routes,
- * so the guest branch will not be exercised until guest endpoints are
- * wrapped (out of scope for Phase 7.7 and Phase 8). The branch is present
- * for symmetry with the audit line's `actorType` union.
+ * Either resolver may return `null` — "this request carries no session of
+ * that kind". `actorFromSession` tries staff first, then guest, then falls
+ * back to anonymous. That ordering matches the audit line's intent: if a
+ * request carries both cookies (unusual but not impossible), the staff
+ * session is the actor of record.
  */
-export async function actorFromSession(
-  resolveStaff: () => Promise<{
+export interface ActorResolvers {
+  readonly resolveStaff: () => Promise<{
     actorId: string;
     actorRole: string;
     venueId: string;
-  } | null>
+  } | null>;
+  readonly resolveGuest: () => Promise<{
+    actorId: string;
+    venueId: string;
+  } | null>;
+}
+
+/**
+ * Extracts the actor from whatever session the request carries.
+ *
+ * Resolution order (first non-null wins):
+ *   1. staff session  — validated via `validateSession(db, token)`
+ *   2. guest session  — validated via the guest cookie + session lookup
+ *   3. anonymous      — no cookie, or a cookie that failed validation
+ *
+ * 7.7.1 shipped only the staff + anonymous branches. 7.7.1a adds the guest
+ * branch. The function's input shape changed from a single resolver callback
+ * to an `ActorResolvers` object because the wrapper now needs to distinguish
+ * two cookie kinds. The wrapper is the only caller, so this is not a port
+ * break — it is the wrapper's own concern, exposed for testability.
+ *
+ * The guest branch is present but Phase 8's routes are all staff routes, so
+ * it will not be exercised until guest endpoints are wrapped (out of scope
+ * for Phase 7.7 and Phase 8). The integration test in 7.7.1a's file proves
+ * the branch works using a synthetic resolver.
+ */
+export async function actorFromSession(
+  resolvers: ActorResolvers
 ): Promise<AuditActor> {
-  const staff = await resolveStaff();
+  const staff = await resolvers.resolveStaff();
   if (staff) {
     return {
       actorType: "staff",
       actorId: staff.actorId,
       actorRole: staff.actorRole,
       venueId: staff.venueId,
+    };
+  }
+  const guest = await resolvers.resolveGuest();
+  if (guest) {
+    return {
+      actorType: "guest",
+      actorId: guest.actorId,
+      actorRole: null,
+      venueId: guest.venueId,
     };
   }
   return {
