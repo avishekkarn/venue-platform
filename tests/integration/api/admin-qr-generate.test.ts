@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import { mkdtempSync, existsSync, readFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { POST, setTestDbClient } from "@/../app/api/admin/qr/generate/route";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
@@ -17,12 +20,25 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
 
 describe("POST /api/admin/qr/generate Integration Tests", () => {
+  let auditDir: string;
+  const originalAuditLogDir = process.env["AUDIT_LOG_DIR"];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    auditDir = mkdtempSync(join(tmpdir(), "qr-generate-audit-test-"));
+    process.env["AUDIT_LOG_DIR"] = auditDir;
   });
 
   afterEach(() => {
     setTestDbClient(null);
+    if (existsSync(auditDir)) {
+      rmSync(auditDir, { recursive: true, force: true });
+    }
+    if (originalAuditLogDir === undefined) {
+      delete process.env["AUDIT_LOG_DIR"];
+    } else {
+      process.env["AUDIT_LOG_DIR"] = originalAuditLogDir;
+    }
   });
 
   it("creates an active QR token for a TABLE (201)", async () => {
@@ -603,6 +619,92 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
       });
       expect(rows).toHaveLength(1);
       expect(rows[0]!.venueId).toBe(venueResult.value.id);
+    });
+  });
+
+  it("writes exactly one JSONL audit line per request via withAudit", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      // Fresh audit dir so no prior test's line can pollute this assertion.
+      const auditDir = mkdtempSync(join(tmpdir(), "audit-qr-generate-test-"));
+      process.env["AUDIT_LOG_DIR"] = auditDir;
+      try {
+        const venueRepo = createPrismaVenueRepository(tx);
+        const staffRepo = createPrismaStaffRepository(tx);
+        const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+        const venueResult = await venueRepo.create({
+          name: "Juniper House",
+          slug: venueSlug,
+          taxRate: "0.0825",
+        });
+        expect(venueResult.ok).toBe(true);
+        if (!venueResult.ok) return;
+
+        const table = await tx.table.create({
+          data: { venueId: venueResult.value.id, number: "201" },
+        });
+
+        const staffResult = await staffRepo.create({
+          venueId: venueResult.value.id,
+          name: "Alice Manager",
+          username: "alice_audit_qr_gen",
+          passwordHash: await hashPassword("password123"),
+          roles: [StaffRole.MANAGER],
+        });
+        expect(staffResult.ok).toBe(true);
+        if (!staffResult.ok) return;
+
+        const session = await createSession(tx, staffResult.value.id);
+        vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+        const request = new NextRequest(
+          "http://localhost/api/admin/qr/generate",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              placeType: "TABLE",
+              tableId: table.id,
+            }),
+          }
+        );
+
+        const response = await POST(request);
+        expect(response.status).toBe(201);
+
+        // The audit line must exist for today's UTC date.
+        const today = new Date();
+        const stamp =
+          `${today.getUTCFullYear()}` +
+          `-${String(today.getUTCMonth() + 1).padStart(2, "0")}` +
+          `-${String(today.getUTCDate()).padStart(2, "0")}`;
+        const auditFile = join(auditDir, `${stamp}.jsonl`);
+        expect(existsSync(auditFile)).toBe(true);
+
+        const lines = readFileSync(auditFile, "utf8")
+          .split("\n")
+          .filter((l) => l.length > 0);
+        expect(lines).toHaveLength(1);
+        const parsed = JSON.parse(lines[0] as string) as {
+          actorType: string;
+          actorId: string | null;
+          route: string;
+          method: string;
+          status: number;
+        };
+        expect(parsed.actorType).toBe("staff");
+        expect(parsed.actorId).toBe(staffResult.value.id);
+        expect(parsed.route).toBe("/api/admin/qr/generate");
+        expect(parsed.method).toBe("POST");
+        expect(parsed.status).toBe(201);
+      } finally {
+        delete process.env["AUDIT_LOG_DIR"];
+        if (existsSync(auditDir)) {
+          rmSync(auditDir, { recursive: true, force: true });
+        }
+      }
     });
   });
 });

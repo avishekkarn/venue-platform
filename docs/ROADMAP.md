@@ -793,7 +793,7 @@ Phase 7.5 is closed. The Room loop is now 1:1 aligned with the Table loop. The g
 | 7.7.1 | Add a structured request-level audit log with a **downloadable ZIP** of the log files | ✅ | 7.6.11 |
 | 7.7.1a | Add the `withAudit` route wrapper | ✅ | 7.7.1 |
 | 7.7.1b | Add the ZIP download endpoint at `GET /api/admin/audit/export` (admin-only, role-gated) | ✅ | 7.7.1a |
-| 7.7.1c | Apply `withAudit` to the gold-standard route (`POST /api/admin/qr/generate`) as proof; document the migration pattern for Phase 8 | ⬜ | 7.7.1b |
+| 7.7.1c | Apply `withAudit` to the gold-standard route (`POST /api/admin/qr/generate`) as proof; document the migration pattern for Phase 8 | ✅ | 7.7.1b |
 | 7.7.1d | Verify: a route call produces a log line; the ZIP download returns a valid ZIP with today's log file | ⬜ | 7.7.1c |
 
 **Details:**

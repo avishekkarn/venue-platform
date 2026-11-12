@@ -138,6 +138,59 @@ These rules apply to every file in the API layer.
 
 *Traces to:* SYSTEM.md §5 (the Result contract), SYSTEM.md §12 (the API surface), SYSTEM.md §9.7 (the idempotency contract), D-4.1 (frozen prices), D-4.4 (frozen tax), D-4.12 (the idempotency key).
 
+### 6.11 — The `withAudit` route pattern (Phase 7.7.1c, W-0021)
+
+**Every new API route from Phase 8 onward must be wrapped with `withAudit`.** A route that does not use it is a blind spot in the audit trail; a task whose route lacks it is `FAIL`, not `PASS`.
+
+**The wrapper's signature:**
+
+```typescript
+withAudit(
+  resolvers: ActorResolvers,
+  meta: AuditMeta,
+  handler: AuditedRouteHandler
+): AuditedRouteHandler
+```
+
+What each argument is:
+
+- `resolvers` — an object with two async methods: `resolveStaff()` returns `{ actorId, actorRole, venueId } | null`, and `resolveGuest()` returns `{ actorId, venueId } | null`. The wrapper tries staff first, then guest, then anonymous. The route file constructs the resolvers; the wrapper never imports the auth or DB layers itself.
+- `meta` — an object `{ route: string, method: string }`. `route` is the exact string Next.js would report for the route (e.g. `"/api/admin/qr/generate"`). `method` is the HTTP verb. Both are used verbatim in the audit line.
+- `handler` — the route's actual handler, `(request: NextRequest) => Promise<NextResponse>`.
+
+The wrapper's contract:
+
+1. Records the start time.
+2. Resolves the actor via `actorFromSession(resolvers)`.
+3. Calls the handler.
+4. If the handler throws, logs the error via `console.error` and returns a standard `INTERNAL` 500 envelope (matching SYSTEM.md §16.3).
+5. Records the end time and computes `latencyMs`.
+6. Writes one audit line via `writeAudit({ timestamp, actorType, actorId, actorRole, venueId, route, method, status, latencyMs, ip })`. `writeAudit` never throws (see `logger.ts`'s catch). A failing write is logged once to `console.error` and swallowed.
+7. Returns the handler's response unchanged.
+
+What "unchanged" means: the wrapper does not touch `request.json()`, does not touch `request.body`, does not touch the response's body or headers. It reads `response.status` (for the audit line) but does not modify the response. Every existing integration test for a wrapped route must still pass with its original assertions — if any test must be modified to pass, the wrapper was applied incorrectly.
+
+The two resolver helpers, and when to use `async () => null`:
+
+- A staff-only admin route sets `resolveGuest: async () => null`. The route's audience is staff; a guest cookie would be noise. Return `null` — the wrapper logs `actorType: "anonymous"` if no staff actor is resolved.
+- A guest-facing route sets `resolveStaff: async () => null` (same reason, mirrored) and implements `resolveGuest` to read the guest cookie and validate the session.
+- A route where both make sense (e.g., a public route that behaves differently for staff and guests) implements both. The wrapper's `actorFromSession` tries staff first — that is intentional.
+
+The double-read:
+
+The wrapper calls `resolveStaff()` (and possibly `resolveGuest()`) once. The route's handler then does its own session + role checks inside its body. Both run. This is deliberate: the wrapper's read is for audit; the handler's read is for authorization. Two responsibilities, two reads. If a future session finds this costly on a hot path, the optimization is a specific performance task, not a session-level workaround.
+
+The `AuditedRouteHandler` type — and dynamic routes:
+
+The type is `(request: NextRequest) => Promise<NextResponse>`. It does not carry a `context` for dynamic routes (e.g. `staff/[id]/reset-password`). When Phase 8 needs to wrap a dynamic route, it introduces a variant (e.g. `withAuditedDynamicRoute`) — a new export in `with-audit.ts`, a new decision record if warranted, a new test. The current wrapper covers the non-dynamic case only.
+
+The reference implementations:
+
+- `app/api/admin/audit/export/route.ts` (7.7.1b) — the export route, wrapped.
+- `app/api/admin/qr/generate/route.ts` (7.7.1c) — the gold-standard admin route, wrapped. This is the template Phase 8 copies.
+
+*Traces to:* ROADMAP.md §11 (Milestone 7.7.1c), WIRING.md W-0021, SYSTEM.md §15.1 (what is trusted), SYSTEM.md §16.3 (programming errors), D-3.13 (the `setTestDbClient` pattern).
+
 ---
 
 ## 7. Coding Standards — Money, Tenancy, and Security

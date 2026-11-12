@@ -11,6 +11,12 @@ import { StaffState } from "@/domain/auth/staff.repository";
 import { generateToken } from "@/domain/qr/generate-token";
 import { PlaceType, type GenerateTokenInput } from "@/domain/qr/qr-token.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
+import {
+  withAudit,
+  type AuditedRouteHandler,
+  type AuditMeta,
+} from "@/infrastructure/audit/with-audit";
+import type { ActorResolvers } from "@/infrastructure/audit/logger";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -20,7 +26,7 @@ export function setTestDbClient(client: DbClient | null): void {
   testDbClient = client;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
   const db = testDbClient ?? prisma;
 
   // 1. Session check
@@ -199,4 +205,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 }
   );
-}
+};
+
+const meta: AuditMeta = {
+  route: "/api/admin/qr/generate",
+  method: "POST",
+};
+
+const resolvers: ActorResolvers = {
+  resolveStaff: async () => {
+    const db = testDbClient ?? prisma;
+    const token = await getSessionCookie();
+    if (!token) return null;
+    const session = await validateSession(db, token);
+    if (!session) return null;
+    const venueRepo = createPrismaVenueRepository(db);
+    const venueResult = await venueRepo.findBySlug(
+      process.env["VENUE_SLUG"] ?? "juniper-house"
+    );
+    if (!venueResult.ok) return null;
+    const staffRepo = createPrismaStaffRepository(db);
+    const staffResult = await staffRepo.findById(
+      venueResult.value.id,
+      session.staffMemberId
+    );
+    if (!staffResult.ok) return null;
+    const staff = staffResult.value;
+    if (staff.state === StaffState.DEACTIVATED) return null;
+    return {
+      actorId: staff.id,
+      actorRole: staff.roles[0] ?? "UNKNOWN",
+      venueId: venueResult.value.id,
+    };
+  },
+  resolveGuest: async () => {
+    // The admin QR generate route is staff-only; a guest cookie is not
+    // meaningful here. Return null — the wrapper logs `anonymous` if no
+    // staff actor is resolved. If a future session ever needs a guest
+    // actor for a route like this, it will add the guest session repo
+    // lookup here.
+    return null;
+  },
+};
+
+export const POST = withAudit(resolvers, meta, routeHandler);
