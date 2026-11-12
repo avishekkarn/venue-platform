@@ -23,6 +23,9 @@ yarn-error.log*
 # Audit logs (Phase 7.7.1 — runtime JSON-lines, never committed)
 logs/
 
+# Backups (Phase 7.7.3 — runtime .sql.gz dumps, never committed)
+backups/
+
 # Editor and OS
 .DS_Store
 Thumbs.db
