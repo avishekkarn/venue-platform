@@ -20,6 +20,9 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Audit logs (Phase 7.7.1 — runtime JSON-lines, never committed)
+logs/
+
 # Editor and OS
 .DS_Store
 Thumbs.db
