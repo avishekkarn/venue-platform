@@ -12,6 +12,8 @@ import {
 } from "@/infrastructure/auth/session";
 import { setSessionCookie } from "@/infrastructure/auth/cookies";
 import { DomainErrorCode } from "@/domain/shared/result";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
+import type { AuditedRouteHandler } from "@/infrastructure/audit/with-audit";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -56,9 +58,9 @@ async function getVenueId(client: DbClient): Promise<string | null> {
   return null;
 }
 
-export async function POST(
+const loginHandler: AuditedRouteHandler = async (
   request: NextRequest
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Parse and validate body
@@ -155,4 +157,7 @@ export async function POST(
     },
     { status: 200 }
   );
-}
+};
+
+export const POST = withCsrf(loginHandler);
+

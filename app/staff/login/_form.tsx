@@ -59,9 +59,15 @@ export function LoginForm(): JSX.Element {
     var username = (form.querySelector('input[name=username]') || {}).value || '';
     var password = (form.querySelector('input[name=password]') || {}).value || '';
 
+    function readCsrfToken() {
+      var m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : '';
+    }
+    var csrfToken = readCsrfToken();
+
     fetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       body: JSON.stringify({ username: username, password: password }),
     })
     .then(function(res) { return res.json().then(function(b) { return { ok: res.ok, body: b }; }); })

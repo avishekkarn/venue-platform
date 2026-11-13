@@ -14,6 +14,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
+
 describe("POST /api/auth/login Route Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,7 +62,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
 
       const request = new NextRequest("http://localhost:3000/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           username: "alice_login_test",
           password: "password123",
@@ -58,6 +70,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
       });
 
       setTestDbClient(tx);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
       const response = await POST(request);
       expect(response.status).toBe(200);
 
@@ -102,7 +115,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
 
       const request = new NextRequest("http://localhost:3000/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           username: "bob_login_test",
           password: "wrongpassword",
@@ -110,6 +123,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
       });
 
       setTestDbClient(tx);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
       const response = await POST(request);
       expect(response.status).toBe(401);
 
@@ -122,9 +136,11 @@ describe("POST /api/auth/login Route Integration Tests", () => {
   });
 
   it("rejects request with missing password field with VALIDATION_FAILED (400)", async () => {
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
     const request = new NextRequest("http://localhost:3000/api/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
       body: JSON.stringify({
         username: "alice",
       }),
@@ -137,6 +153,30 @@ describe("POST /api/auth/login Route Integration Tests", () => {
     expect(json.error).toBeDefined();
     expect(json.error.code).toBe("VALIDATION_FAILED");
     expect(json.error.message).toBe("username and password are required");
+    expect(setSessionCookie).not.toHaveBeenCalled();
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    // No valid credentials needed — the CSRF check runs before any body
+    // parse or password verification.
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+    const request = new NextRequest("http://localhost:3000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "any-username",
+        password: "any-password",
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(403);
+
+    const json = await response.json();
+    expect(json.error).toBeDefined();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
     expect(setSessionCookie).not.toHaveBeenCalled();
   });
 });
