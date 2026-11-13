@@ -51,28 +51,58 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
-import type { AuditedRouteHandler } from "@/infrastructure/audit/with-audit";
 import { getCsrfCookie, CSRF_HEADER_NAME } from "@/infrastructure/csrf/cookies";
 import { safeCompareCsrfTokens } from "@/infrastructure/csrf/token";
 import { DomainErrorCode } from "@/domain/shared/result";
 
 /**
- * The wrapper. Returns a handler with the same signature as the input.
+ * The shape the wrapper accepts and returns. It is a two-argument handler:
  *
- * The type is `AuditedRouteHandler` — the same `(request) => Promise<NextResponse>`
- * shape as the withAudit wrapper — so the two compose. A route that uses
- * both is written as `export const POST = withAudit(resolvers, meta, withCsrf(routeHandler))`
- * or `export const POST = withAudit(resolvers, meta, routeHandler)` where
- * `routeHandler = withCsrf(innerHandler)`. Either spelling produces the
- * same composition; the route file's style decides.
+ *   (request, context) => Promise<NextResponse>
  *
- * The `audit` import is type-only; the wrapper does not depend on
- * audit code at runtime. The type alias is the contract that lets the
- * two wrappers compose.
+ * `TContext` is the route's context type. For a **non-dynamic** route
+ * (e.g. `POST /api/guest/orders`), the route handler takes one argument
+ * and `TContext` is `unknown` — the second argument is unused and
+ * `undefined` at runtime. For a **dynamic** route (e.g.
+ * `POST /api/staff/orders/[id]/approve`), the route handler takes two
+ * arguments (`(request, context: { params: Promise<{ id: string }> })`),
+ * and `TContext` is that exact object type.
+ *
+ * The wrapper is generic over `TContext` so both kinds of route are
+ * wrappable without changing the route's handler signature. A caller
+ * whose handler is `(request, context) => ...` gets a wrapped handler
+ * of the same shape. A caller whose handler is `(request) => ...` gets
+ * a wrapped handler whose second parameter is `unknown` and unused
+ * (which is compatible with Next.js's one-argument invocation).
+ *
+ * This is the same shape as Next.js's own route handler overloads:
+ * non-dynamic handlers accept one argument; dynamic handlers accept two.
+ * The wrapper preserves whichever the caller supplies.
+ *
+ * The `withAudit` composition still works. `withAudit` is itself
+ * one-argument (`(request) => ...`), so:
+ *
+ *   withAudit(resolvers, meta, withCsrf(innerHandler))
+ *
+ * where `innerHandler` is the dynamic-or-non-dynamic route handler.
+ * The audit sees the CSRF wrapper's response (403 or the handler's
+ * status). The 7.7.4a test file proves the composition.
+ *
+ * Reference: DECISIONS.md D-20.1, ROADMAP.md §11 (Task 7.7.4a and
+ * 7.7.4c.B.PRE), BUILD.md §6 (API routes).
  */
-export function withCsrf(handler: AuditedRouteHandler): AuditedRouteHandler {
+export function withCsrf(
+  handler: (request: NextRequest) => Promise<NextResponse>
+): (request: NextRequest) => Promise<NextResponse>;
+export function withCsrf<TContext>(
+  handler: (request: NextRequest, context: TContext) => Promise<NextResponse>
+): (request: NextRequest, context: TContext) => Promise<NextResponse>;
+export function withCsrf(
+  handler: (request: NextRequest, context?: unknown) => Promise<NextResponse>
+): (request: NextRequest, context?: unknown) => Promise<NextResponse> {
   return async function csrfProtectedHandler(
-    request: NextRequest
+    request: NextRequest,
+    context?: unknown
   ): Promise<NextResponse> {
     const cookieToken = await getCsrfCookie();
     const headerToken = request.headers.get(CSRF_HEADER_NAME);
@@ -89,6 +119,6 @@ export function withCsrf(handler: AuditedRouteHandler): AuditedRouteHandler {
       );
     }
 
-    return handler(request);
+    return handler(request, context);
   };
 }
