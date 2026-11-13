@@ -21,7 +21,18 @@ vi.mock("@/infrastructure/guest/cookies", () => ({
   clearGuestCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 function setTestDbClient(client: Parameters<typeof setTestDbClientForOrdersRoute>[0]): void {
   setTestDbClientForOrdersRoute(client);
@@ -111,11 +122,12 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const idempotencyKey = "22222222-2222-4222-8222-222222222222";
       const request = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey,
           items: [
@@ -196,11 +208,12 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       // Missing idempotency key
       const req1 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           items: [{ menuItemId: "some-item", quantity: 1 }],
         }),
@@ -215,7 +228,7 @@ describe("POST /api/guest/orders Integration Tests", () => {
       // Malformed idempotency key (not UUID)
       const req2 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "not-a-uuid-1234",
           items: [{ menuItemId: "some-item", quantity: 1 }],
@@ -237,12 +250,14 @@ describe("POST /api/guest/orders Integration Tests", () => {
     await withTransaction(async (tx) => {
       setTestDbClient(tx);
 
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
       // 1. Missing cookie
       vi.mocked(getGuestCookie).mockResolvedValue(null);
 
       const req1 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "44444444-4444-4444-8444-444444444444",
           items: [{ menuItemId: "item-1", quantity: 1 }],
@@ -259,7 +274,7 @@ describe("POST /api/guest/orders Integration Tests", () => {
 
       const req2 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "44444444-4444-4444-8444-444444444444",
           items: [{ menuItemId: "item-1", quantity: 1 }],
@@ -315,11 +330,12 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       // Client attempts to spoof venue, table, price ($0.01), subtotal, tax, and total
       const spoofedRequest = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           venueId: "fake-venue-id-attack",
           tableId: "fake-table-id-attack",
@@ -397,6 +413,7 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const idempotencyKey = "99999999-9999-4999-8999-999999999999";
       const payload = {
@@ -407,7 +424,7 @@ describe("POST /api/guest/orders Integration Tests", () => {
       // First call
       const req1 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify(payload),
       });
       const res1 = await POST(req1);
@@ -418,7 +435,7 @@ describe("POST /api/guest/orders Integration Tests", () => {
       // Second call with same idempotencyKey
       const req2 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify(payload),
       });
       const res2 = await POST(req2);
@@ -475,11 +492,12 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const idempotencyKey = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
       const request = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey,
           items: [{ menuItemId: pastry.id, quantity: 1 }],
@@ -494,6 +512,74 @@ describe("POST /api/guest/orders Integration Tests", () => {
       expect(json.data.placeType).toBe("COUNTER");
       expect(json.data.counterId).toBe(counter.id);
       expect(json.data.pickupName).toBe("Ramesh");
+    });
+  });
+
+  it("Rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      const venue = await tx.venue.create({
+        data: {
+          name: "CSRF Reject Venue",
+          slug: `csrf-reject-venue-${Date.now()}`,
+          taxRate: "0.1000",
+        },
+      });
+
+      const table = await tx.table.create({
+        data: { venueId: venue.id, number: "T-CSRF" },
+      });
+
+      const category = await tx.menuCategory.create({
+        data: { venueId: venue.id, name: "CSRF Menu", sortOrder: 1 },
+      });
+
+      const item = await tx.menuItem.create({
+        data: {
+          venueId: venue.id,
+          categoryId: category.id,
+          name: "CSRF Test Item",
+          price: "10.00",
+          state: MenuItemState.AVAILABLE,
+          sortOrder: 1,
+        },
+      });
+
+      const sessionResult = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.TABLE,
+        placeId: table.id,
+      });
+      expect(sessionResult.ok).toBe(true);
+      if (!sessionResult.ok) return;
+      const guestSession = sessionResult.value;
+
+      vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+      // Deliberately omit the X-CSRF-Token header. The withCsrf wrapper
+      // must reject with 403 before the handler runs, so createOrder is
+      // never called and no order is created.
+      const request = new NextRequest("http://localhost/api/guest/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          items: [{ menuItemId: item.id, quantity: 1 }],
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(403);
+      const json = await response.json();
+      expect(json.error.code).toBe(DomainErrorCode.FORBIDDEN);
+      expect(json.error.message).toBe("CSRF token missing or invalid");
+
+      // Prove the handler did not run: no order was written.
+      const count = await tx.order.count({ where: { venueId: venue.id } });
+      expect(count).toBe(0);
     });
   });
 });
@@ -560,11 +646,12 @@ describe("GET /api/guest/orders/[id] Integration Tests (Task 5.6.2)", () => {
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       // Create an order via POST
       const postReq = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "12345678-1234-4234-8234-1234567890ab",
           items: [
@@ -697,10 +784,11 @@ describe("GET /api/guest/orders/[id] Integration Tests (Task 5.6.2)", () => {
       const sessionA = sessionResultA.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const postReq = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
           items: [{ menuItemId: item.id, quantity: 1 }],
@@ -807,10 +895,11 @@ describe("GET /api/guest/orders Integration Tests (Task 5.6.3)", () => {
       const sessionA = sessionResultA.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const postReqA1 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "11111111-aaaa-4aaa-8aaa-111111111111",
           items: [{ menuItemId: snack.id, quantity: 1 }],
@@ -823,7 +912,7 @@ describe("GET /api/guest/orders Integration Tests (Task 5.6.3)", () => {
 
       const postReqA2 = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "22222222-aaaa-4aaa-8aaa-222222222222",
           items: [{ menuItemId: snack.id, quantity: 2 }],
@@ -845,10 +934,11 @@ describe("GET /api/guest/orders Integration Tests (Task 5.6.3)", () => {
       const sessionB = sessionResultB.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(sessionB.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const postReqB = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "33333333-bbbb-4bbb-8bbb-333333333333",
           items: [{ menuItemId: snack.id, quantity: 3 }],
@@ -990,11 +1080,12 @@ describe("Milestone 5.6 Verification — Complete Guest Order Flow and Envelope 
       const guestSession = sessionResult.value;
 
       vi.mocked(getGuestCookie).mockResolvedValue(guestSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       // --- STEP A: POST /api/guest/orders (Place Order) ---
       const postReq = new NextRequest("http://localhost/api/guest/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           idempotencyKey: "44444444-cccc-4ccc-8ccc-444444444444",
           items: [

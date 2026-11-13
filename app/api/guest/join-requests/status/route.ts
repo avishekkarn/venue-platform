@@ -2,6 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaJoinRequestRepository } from "@/infrastructure/db/repositories/join-request.repo";
 import { DomainErrorCode } from "@/domain/shared/result";
+import {
+  CSRF_COOKIE_NAME,
+  CSRF_MAX_AGE_SECONDS,
+} from "@/infrastructure/csrf/cookies";
+import { generateCsrfToken } from "@/infrastructure/csrf/token";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const searchParams = request.nextUrl.searchParams;
@@ -59,6 +64,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 30,
+      });
+      response.cookies.set(CSRF_COOKIE_NAME, generateCsrfToken(), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: CSRF_MAX_AGE_SECONDS,
       });
     }
   }

@@ -14,6 +14,10 @@ import {
 } from "@/domain/orders/create-order";
 import { PlaceType } from "@/domain/orders/order.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
+import {
+  withCsrf,
+} from "@/infrastructure/csrf/with-csrf";
+import type { AuditedRouteHandler } from "@/infrastructure/audit/with-audit";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -47,7 +51,9 @@ function domainErrorToStatus(code: DomainErrorCode): number {
   }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const postHandler: AuditedRouteHandler = async (
+  request: NextRequest
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Session check: token from guest session cookie
@@ -252,7 +258,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({ data: result.value }, { status: 201 });
-}
+};
+
+export const POST = withCsrf(postHandler);
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const db = testDbClient ?? prisma;
