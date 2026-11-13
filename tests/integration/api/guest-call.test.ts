@@ -19,11 +19,23 @@ vi.mock("@/infrastructure/guest/cookies", () => ({
   clearGuestCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 describe("POST /api/guest/call Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
   });
 
   afterEach(() => {
@@ -67,7 +79,10 @@ describe("POST /api/guest/call Integration Tests", () => {
       // 3. POST /api/guest/call with type: "WAITER"
       const req = new NextRequest("http://localhost/api/guest/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({ type: "WAITER" }),
       });
 
@@ -148,7 +163,10 @@ describe("POST /api/guest/call Integration Tests", () => {
       // 4. POST /api/guest/call with type: "BILL" and orderId
       const req = new NextRequest("http://localhost/api/guest/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           type: "BILL",
           orderId: order.id,
@@ -182,7 +200,10 @@ describe("POST /api/guest/call Integration Tests", () => {
 
     const req = new NextRequest("http://localhost/api/guest/call", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": "test-csrf-token",
+      },
       body: JSON.stringify({ type: "WAITER" }),
     });
 
@@ -225,7 +246,10 @@ describe("POST /api/guest/call Integration Tests", () => {
       // Invalid type
       const reqInvalid = new NextRequest("http://localhost/api/guest/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({ type: "SOMETHING_ELSE" }),
       });
       const resInvalid = await POST(reqInvalid);
@@ -236,7 +260,10 @@ describe("POST /api/guest/call Integration Tests", () => {
       // Missing type
       const reqMissing = new NextRequest("http://localhost/api/guest/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({}),
       });
       const resMissing = await POST(reqMissing);
@@ -296,7 +323,10 @@ describe("POST /api/guest/call Integration Tests", () => {
       // Tampered body attempting to write request for foreignVenue and foreignTable
       const req = new NextRequest("http://localhost/api/guest/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           type: "WAITER",
           venueId: foreignVenue.id,
@@ -378,7 +408,10 @@ describe("POST /api/guest/call Integration Tests", () => {
 
       const req = new NextRequest("http://localhost/api/guest/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           type: "BILL",
           orderId: orderB.id,
@@ -391,5 +424,17 @@ describe("POST /api/guest/call Integration Tests", () => {
       expect(json.error.code).toBe(DomainErrorCode.VALIDATION_FAILED);
       expect(json.error.message).toContain("Order does not belong to session");
     });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+    const request = new NextRequest("http://localhost/api/guest/call", {
+      method: "POST",
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(403);
+    const json = await response.json();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
   });
 });

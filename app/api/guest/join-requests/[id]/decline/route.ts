@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 import { prisma } from "@/infrastructure/db/client";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
@@ -6,10 +7,10 @@ import { createPrismaGuestSessionRepository } from "@/infrastructure/db/reposito
 import { createPrismaJoinRequestRepository } from "@/infrastructure/db/repositories/join-request.repo";
 import { DomainErrorCode } from "@/domain/shared/result";
 
-export async function POST(
+const postHandler = async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const cookie = await getGuestCookie();
   if (!cookie) {
     return NextResponse.json(
@@ -76,5 +77,7 @@ export async function POST(
   }
 
   return NextResponse.json({ data: updated.value }, { status: 200 });
-}
+};
+
+export const POST = withCsrf(postHandler);
 

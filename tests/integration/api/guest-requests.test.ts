@@ -30,7 +30,18 @@ vi.mock("@/infrastructure/guest/cookies", () => ({
   clearGuestCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 function setTestDbClient(
   client: Parameters<typeof setRequestsDbClient>[0]
@@ -43,6 +54,7 @@ function setTestDbClient(
 describe("Guest Service Requests Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
   });
 
   afterEach(() => {
@@ -86,7 +98,10 @@ describe("Guest Service Requests Integration Tests", () => {
       // 3. POST /api/guest/requests
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           details: { note: "Extra towels please", towelsCount: 2 },
@@ -130,7 +145,10 @@ describe("Guest Service Requests Integration Tests", () => {
 
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
         }),
@@ -177,7 +195,10 @@ describe("Guest Service Requests Integration Tests", () => {
 
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: "NON_EXISTENT_SERVICE",
         }),
@@ -233,7 +254,10 @@ describe("Guest Service Requests Integration Tests", () => {
       // Attempt to spoof placeId/roomId and venueId
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           roomId: spoofedRoom.id,
@@ -304,7 +328,10 @@ describe("Guest Service Requests Integration Tests", () => {
       vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
       const reqA1 = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({ serviceType: HotelService.HOUSEKEEPING }),
       });
       const resA1 = await postRequest(reqA1);
@@ -313,7 +340,10 @@ describe("Guest Service Requests Integration Tests", () => {
 
       const reqA2 = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({ serviceType: HotelService.LAUNDRY }),
       });
       const resA2 = await postRequest(reqA2);
@@ -324,7 +354,10 @@ describe("Guest Service Requests Integration Tests", () => {
       vi.mocked(getGuestCookie).mockResolvedValue(sessionB.token);
       const reqB1 = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({ serviceType: HotelService.MAINTENANCE }),
       });
       const resB1 = await postRequest(reqB1);
@@ -385,7 +418,10 @@ describe("Guest Service Requests Integration Tests", () => {
       // Create request in SUBMITTED state
       const createReq = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           details: { note: "Initial note" },
@@ -401,7 +437,10 @@ describe("Guest Service Requests Integration Tests", () => {
         `http://localhost/api/guest/requests/${requestId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
           body: JSON.stringify({
             details: { note: "Updated note", extraPillows: 3 },
           }),
@@ -461,7 +500,10 @@ describe("Guest Service Requests Integration Tests", () => {
       // Create request in SUBMITTED state
       const createReq = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           details: { note: "Initial" },
@@ -486,7 +528,10 @@ describe("Guest Service Requests Integration Tests", () => {
         `http://localhost/api/guest/requests/${requestId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
           body: JSON.stringify({
             details: { note: "Late change attempt" },
           }),
@@ -532,7 +577,10 @@ describe("Guest Service Requests Integration Tests", () => {
       // Create request in SUBMITTED state
       const createReq = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           details: { note: "Please clean room" },
@@ -548,7 +596,10 @@ describe("Guest Service Requests Integration Tests", () => {
         `http://localhost/api/guest/requests/${requestId}/cancel`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
           body: JSON.stringify({
             reason: "Guest changed mind",
           }),
@@ -612,7 +663,10 @@ describe("Guest Service Requests Integration Tests", () => {
       // 3. POST /api/guest/requests
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           details: { note: "Fresh towels" },
@@ -679,7 +733,10 @@ describe("Guest Service Requests Integration Tests", () => {
       vi.mocked(getGuestCookie).mockResolvedValue(sessionA.token);
       const reqA = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.HOUSEKEEPING,
           details: { note: "Session A request" },
@@ -692,7 +749,10 @@ describe("Guest Service Requests Integration Tests", () => {
       vi.mocked(getGuestCookie).mockResolvedValue(sessionB.token);
       const reqB = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: HotelService.MAINTENANCE,
           details: { note: "Session B request" },
@@ -714,6 +774,18 @@ describe("Guest Service Requests Integration Tests", () => {
       expect(getJson.data[0].guestSessionId).toBe(sessionA.id);
       expect(getJson.data[0].serviceType).toBe(HotelService.HOUSEKEEPING);
     });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+    const request = new NextRequest("http://localhost/api/guest/requests", {
+      method: "POST",
+    });
+    const response = await postRequest(request);
+    expect(response.status).toBe(403);
+    const json = await response.json();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
   });
 });
 

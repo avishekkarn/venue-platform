@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 import { prisma } from "@/infrastructure/db/client";
 import { DomainErrorCode } from "@/domain/shared/result";
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const postHandler = async (
+  request: NextRequest
+): Promise<NextResponse> => {
   try {
     const body = (await request.json()) as {
       sessionId?: unknown;
@@ -87,5 +90,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 400 }
     );
   }
-}
+};
+
+export const POST = withCsrf(postHandler);
 

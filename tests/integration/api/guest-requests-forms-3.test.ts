@@ -17,7 +17,18 @@ vi.mock("@/infrastructure/guest/cookies", () => ({
   clearGuestCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 /**
  * Guest Request Forms Part 3 Integration Tests.
@@ -32,6 +43,7 @@ import { getGuestCookie } from "@/infrastructure/guest/cookies";
 describe("Guest Request Forms Part 3 Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
   });
 
   afterEach(() => {
@@ -71,7 +83,10 @@ describe("Guest Request Forms Part 3 Integration Tests", () => {
 
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: "LATE_CHECKOUT",
           details: {
@@ -127,7 +142,10 @@ describe("Guest Request Forms Part 3 Integration Tests", () => {
 
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: "WAKE_UP_CALL",
           details: {
@@ -181,7 +199,10 @@ describe("Guest Request Forms Part 3 Integration Tests", () => {
 
       const req = new NextRequest("http://localhost/api/guest/requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+        },
         body: JSON.stringify({
           serviceType: "DO_NOT_DISTURB",
           details: {
@@ -202,6 +223,18 @@ describe("Guest Request Forms Part 3 Integration Tests", () => {
       expect(json.data.details.state).toBe("On");
       expect(json.data.details.notes).toBe("Sleeping in after late arrival");
     });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+    const request = new NextRequest("http://localhost/api/guest/requests", {
+      method: "POST",
+    });
+    const response = await postRequest(request);
+    expect(response.status).toBe(403);
+    const json = await response.json();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
   });
 });
 

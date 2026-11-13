@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 import { type PrismaClient, type Prisma } from "@prisma/client";
 import { prisma } from "@/infrastructure/db/client";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
@@ -41,10 +42,10 @@ function domainErrorToStatus(code: DomainErrorCode): number {
   }
 }
 
-export async function POST(
+const postHandler = async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Session check: token from guest session cookie
@@ -193,5 +194,7 @@ export async function POST(
   }
 
   return NextResponse.json({ data: cancelResult.value }, { status: 200 });
-}
+};
+
+export const POST = withCsrf(postHandler);
 
