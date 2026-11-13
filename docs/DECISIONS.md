@@ -2422,6 +2422,43 @@ The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.c
 
 ---
 
+## 20. Security Defenses
+
+### D-20.1 — CSRF protection uses the double-submit cookie pattern with an opaque random token
+
+**Decision:** Every state-changing API route (POST, PATCH, DELETE) is protected against CSRF with the double-submit cookie pattern:
+
+- A `csrf_token` cookie is set on the first GET of any page that establishes a session (the QR landing redirect for guests, the login page for staff) and on every request that refreshes the session. It is set on the `NextResponse` object, not through the `cookies()` read-only context — the same discipline D-19.2 names for the join-approval cookie.
+- The cookie is **not** HttpOnly (the client must read it to echo it back in the `X-CSRF-Token` header), is `SameSite=Lax` (a cross-site form POST does not send the cookie), is `Secure` in production, and has the same lifetime as the session cookie.
+- The token value is `crypto.randomUUID()` — 122 bits of entropy, opaque, not HMAC-signed.
+- Every state-changing request must include an `X-CSRF-Token` header (or a `csrf_token` form field) whose value equals the cookie's value. The route compares them with `crypto.timingSafeEqual` on the byte form.
+- A request whose header/body token is missing, malformed, or unequal to the cookie's value returns 403 with the standard `{"error":{"code":"FORBIDDEN",...}}` envelope.
+
+**Context:** BUILD.md §7.4 names CSRF protection as mandatory for state-changing endpoints. Phase 7.7 moves it ahead of Phase 8, so the manager panel's 30 new admin routes are built on a foundation where every state-changing route already requires the token. The double-submit cookie is the pattern the roadmap specifies; it is the pattern Next.js documents as recommended for stateless APIs; and it requires no server-side secret store (the cookie's own value, sent back by the client, is the proof).
+
+**Alternatives considered:**
+
+- **HMAC-signed token in the cookie** — rejected. `SESSION_SECRET` is declared in `.env.local.example` but unused in code: the pre-read (Group A, A4) confirmed zero matches for `SESSION_SECRET`, `createHmac`, or `crypto.randomBytes` in `src/` or `app/`. Introducing HMAC would require wiring `SESSION_SECRET` into a signing path, adding a new env-var contract, and adding a secret to rotate. The `randomUUID` + `timingSafeEqual` design provides the same guarantee (a cross-site attacker cannot read the cookie's value and cannot guess 122 bits of entropy) with no secret.
+- **Origin/Referer header check** — rejected. Some browsers strip `Referer` on cross-origin navigation, and `Origin` is not sent on all same-origin requests. It is an unreliable signal.
+- **SameSite=Strict on the session cookies** — rejected. SameSite=Strict breaks the QR landing flow (a guest scanning a QR code arrives from another app's browser, and a `SameSite=Strict` cookie is not sent on that first navigation). The session cookies are `SameSite=Lax`, which is why the double-submit pattern is required in addition.
+- **Middleware-based CSRF enforcement** — rejected. `middleware.ts`'s matcher is `["/staff/:path*", "/kitchen/:path*", "/admin/:path*"]`; it does not run for `/api/*`. Extending the matcher to `/api/*` would add a hop to every API request and still require per-route introspection to distinguish state-changing from read-only routes. The per-route `withCsrf` wrapper (session 7.7.4a) is the correct design.
+- **Rotating the token on every request** — rejected. Rotating per-request breaks concurrent tabs. The token is rotated on session change (both `venue_*` and `csrf_token` cookies are cleared and reissued together), which is what the roadmap's "rotated on each session" means.
+
+**Consequences:**
+
+- `src/infrastructure/csrf/cookies.ts` provides `setCsrfCookie`, `getCsrfCookie`, `clearCsrfCookie`, `CSRF_COOKIE_NAME`, `CSRF_HEADER_NAME`, and `CSRF_MAX_AGE_SECONDS`. It mirrors the existing `src/infrastructure/auth/cookies.ts` and `src/infrastructure/guest/cookies.ts`.
+- `src/infrastructure/csrf/token.ts` provides `generateCsrfToken()` (returns `crypto.randomUUID()`), `safeCompareCsrfTokens(a, b)` (constant-time comparison; returns false on null/undefined/length mismatch).
+- `src/infrastructure/csrf/with-csrf.ts` (Phase 7.7.4a) will provide `withCsrf(handler)` — a higher-order wrapper that reads the `X-CSRF-Token` header (or `csrf_token` form field), reads the `csrf_token` cookie, compares, and either calls the handler or returns 403. It composes with `withAudit` as `withAudit(withCsrf(handler))`: the audit sees the 403, which is the intended behaviour (a CSRF rejection is an auditable event).
+- Every state-changing route in the 25-route inventory (pre-read Group B, B1) is wrapped by Phase 7.7.4c's commit. The 25 routes are: 3 admin (`menu/items/[id]/state`, `qr/[id]/revoke`, `qr/generate`), 2 auth (`login`, `logout`), 9 guest (`call`, `join-requests/[id]/approve`, `join-requests/[id]/decline`, `join-requests/recover`, `join-requests`, `orders`, `requests/[id]/cancel`, `requests/[id]` (PATCH), `requests`), 2 kitchen (`orders/[id]/ready`, `orders/[id]/start`), and 9 staff (`orders/[id]/{approve,cancel,complete,deliver}`, `requests/[id]/{advance,cancel,decline}`, `rooms/[id]/checkout`, `tables/[id]/close`).
+- The guest cookie issuance in `app/(guest)/qr/[token]/route.ts` and `app/api/guest/join-requests/status/route.ts` will set `csrf_token` in the same `NextResponse` that sets `venue_guest`. The staff issuance in `app/api/auth/login/route.ts` will set `csrf_token` in the same response that calls `setSessionCookie`. Both are D-19.2's discipline: `response.cookies.set(...)`, not `document.cookie`, not `cookies()`.
+- The three staff-facing login pages (`/admin/login`, `/staff/login`, `/kitchen/login`) will set the `csrf_token` cookie on GET so a first-time visitor can POST credentials. The pre-read shows the middleware matches `/staff/:path*`, `/kitchen/:path*`, `/admin/:path*` — the middleware can set the cookie on any staff-facing GET; the login page's GET is the natural place. **This is Phase 7.7.4c's work.**
+
+**What would make us revisit:** If the product ever exposes state-changing routes on a domain where the CSRF cookie cannot be set (e.g., a cross-origin embed), the pattern would need an alternative. Today, every route is same-origin, so this is not a concern.
+
+**Traces to:** BUILD.md §7.4 (Security), SYSTEM.md §15 (Security Boundaries), SYSTEM.md §12.7 (API rules), ROADMAP.md §11 (Task 7.7.4), D-19.2 (server-side `Set-Cookie` discipline), D-3.9 (the strongest-available-correctness choice precedent).
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
 **Total decisions:** 104
