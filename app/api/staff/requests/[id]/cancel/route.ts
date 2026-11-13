@@ -10,6 +10,7 @@ import { canAccess } from "@/domain/auth/can-access";
 import { StaffRole, StaffState } from "@/domain/auth/staff.repository";
 import { cancelRequest } from "@/domain/requests/cancel-request";
 import { DomainErrorCode } from "@/domain/shared/result";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -26,10 +27,10 @@ function hasRequestAccess(roles: readonly StaffRole[]): boolean {
   return canAccess(roles, "front-desk");
 }
 
-export async function POST(
+const postHandler = async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Session check: active staff session cookie
@@ -158,5 +159,7 @@ export async function POST(
   }
 
   return NextResponse.json({ data: result.value }, { status: 200 });
-}
+};
+
+export const POST = withCsrf(postHandler);
 

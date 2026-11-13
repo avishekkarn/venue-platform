@@ -43,7 +43,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 describe("Staff Orders & Place Action API Routes Integration Tests", () => {
   beforeEach(() => {
@@ -260,10 +271,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/orders/${order.id}/approve`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_APPROVE(request, {
@@ -322,10 +337,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/orders/${order.id}/approve`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_APPROVE(request, {
@@ -383,10 +402,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/orders/${order.id}/deliver`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_DELIVER(request, {
@@ -445,10 +468,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/orders/${order.id}/deliver`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_DELIVER(request, {
@@ -506,10 +533,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/orders/${order.id}/complete`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_COMPLETE(request, {
@@ -570,13 +601,17 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/orders/${order.id}/cancel`,
           {
             method: "POST",
             body: JSON.stringify({ reason: "Item out of stock" }),
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": "test-csrf-token",
+            },
           }
         );
 
@@ -617,6 +652,7 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const fakeOrderId = "11111111-1111-1111-1111-111111111111";
         const request = new NextRequest(
@@ -624,7 +660,10 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
           {
             method: "POST",
             body: JSON.stringify({ reason: "  " }),
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": "test-csrf-token",
+            },
           }
         );
 
@@ -679,10 +718,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/tables/${table.id}/close`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_CLOSE_TABLE(request, {
@@ -738,10 +781,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/tables/${table.id}/close`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_CLOSE_TABLE(request, {
@@ -794,10 +841,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/rooms/${room.id}/checkout`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_CHECKOUT_ROOM(request, {
@@ -851,10 +902,14 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/rooms/${room.id}/checkout`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_CHECKOUT_ROOM(request, {
@@ -863,5 +918,22 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
         expect(response.status).toBe(403);
       });
     });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    vi.mocked(getSessionCookie).mockResolvedValue("any-token");
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+    const someOrderId = "11111111-2222-3333-4444-555555555555";
+    const request = new NextRequest(
+      `http://localhost/api/staff/orders/${someOrderId}/approve`,
+      { method: "POST" }
+    );
+    const response = await POST_APPROVE(request, {
+      params: Promise.resolve({ id: someOrderId }),
+    });
+    expect(response.status).toBe(403);
+    const json = await response.json();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
   });
 });

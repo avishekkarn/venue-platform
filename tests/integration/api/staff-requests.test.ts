@@ -37,7 +37,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 function setTestDbClient(
   client: Parameters<typeof setTestDbClientRequests>[0]
@@ -255,6 +266,7 @@ describe("Staff Service Requests Integration Tests", () => {
 
       const session = await createSession(tx, staff.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const room = await tx.room.create({
         data: { venueId: venue.id, number: "R-ADV" },
@@ -274,7 +286,10 @@ describe("Staff Service Requests Integration Tests", () => {
         `http://localhost/api/staff/requests/${requestId}/advance`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "test-csrf-token",
+          },
           body: JSON.stringify({ toState: RequestState.ACKNOWLEDGED }),
         }
       );
@@ -324,6 +339,7 @@ describe("Staff Service Requests Integration Tests", () => {
 
       const session = await createSession(tx, staff.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const room = await tx.room.create({
         data: { venueId: venue.id, number: "R-INV" },
@@ -357,7 +373,10 @@ describe("Staff Service Requests Integration Tests", () => {
         `http://localhost/api/staff/requests/${requestId}/advance`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "test-csrf-token",
+          },
           body: JSON.stringify({ toState: RequestState.ACKNOWLEDGED }),
         }
       );
@@ -403,6 +422,7 @@ describe("Staff Service Requests Integration Tests", () => {
 
       const session = await createSession(tx, staff.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const room = await tx.room.create({
         data: { venueId: venue.id, number: "R-CAN" },
@@ -429,7 +449,10 @@ describe("Staff Service Requests Integration Tests", () => {
         `http://localhost/api/staff/requests/${requestId}/cancel`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "test-csrf-token",
+          },
           body: JSON.stringify({ reason: "guest left" }),
         }
       );
@@ -481,6 +504,7 @@ describe("Staff Service Requests Integration Tests", () => {
 
       const session = await createSession(tx, staff.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const room = await tx.room.create({
         data: { venueId: venue.id, number: "R-DEC" },
@@ -500,7 +524,10 @@ describe("Staff Service Requests Integration Tests", () => {
         `http://localhost/api/staff/requests/${requestId}/decline`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "test-csrf-token",
+          },
           body: JSON.stringify({ reason: "sold out" }),
         }
       );
@@ -552,6 +579,7 @@ describe("Staff Service Requests Integration Tests", () => {
 
       const session = await createSession(tx, staff.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const room = await tx.room.create({
         data: { venueId: venue.id, number: "R-DEC400" },
@@ -571,7 +599,10 @@ describe("Staff Service Requests Integration Tests", () => {
         `http://localhost/api/staff/requests/${requestId}/decline`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "test-csrf-token",
+          },
           body: JSON.stringify({ reason: " " }),
         }
       );
@@ -753,6 +784,27 @@ describe("Staff Service Requests Integration Tests", () => {
       expect(json.data).toHaveLength(1);
       expect(json.data[0].guestSessionId).toBe(sessionA.id);
     });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    vi.mocked(getSessionCookie).mockResolvedValue("any-token");
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+    const someRequestId = "11111111-2222-3333-4444-555555555555";
+    const request = new NextRequest(
+      `http://localhost/api/staff/requests/${someRequestId}/advance`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toState: RequestState.ACKNOWLEDGED }),
+      }
+    );
+    const response = await POST_ADVANCE(request, {
+      params: Promise.resolve({ id: someRequestId }),
+    });
+    expect(response.status).toBe(403);
+    const json = await response.json();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
   });
 });
 

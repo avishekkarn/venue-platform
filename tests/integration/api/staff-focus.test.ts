@@ -23,7 +23,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 describe("Staff Focus & LEADER Behaviour Integration Tests", () => {
   beforeEach(() => {
@@ -206,10 +217,14 @@ describe("Staff Focus & LEADER Behaviour Integration Tests", () => {
 
         const session = await createSession(tx, staff.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/rooms/${room.id}/checkout`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_CHECKOUT_ROOM(request, {
@@ -278,10 +293,14 @@ describe("Staff Focus & LEADER Behaviour Integration Tests", () => {
 
         const session = await createSession(tx, staff.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           `http://localhost/api/staff/rooms/${room.id}/checkout`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "X-CSRF-Token": "test-csrf-token" },
+          }
         );
 
         const response = await POST_CHECKOUT_ROOM(request, {
