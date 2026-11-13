@@ -30,6 +30,14 @@ export function JoinRequestScript(): JSX.Element {
   var BANNER_ID = 'host-join-request-banner';
   var inFlightAction = false;
 
+  function getCsrfToken() {
+    // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
+    // Server source of truth: src/infrastructure/csrf/cookies.ts
+    // Cookie name is 'csrf_token'; header name is 'X-CSRF-Token'.
+    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
   function removeBanner() {
     var b = document.getElementById(BANNER_ID);
     if (b && b.parentNode) b.parentNode.removeChild(b);
@@ -40,7 +48,10 @@ export function JoinRequestScript(): JSX.Element {
     inFlightAction = true;
     fetch('/api/guest/join-requests/' + encodeURIComponent(requestId) + '/' + action, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+      }
     })
     .then(function() {
       inFlightAction = false;
