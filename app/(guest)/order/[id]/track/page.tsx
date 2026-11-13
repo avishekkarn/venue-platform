@@ -391,6 +391,14 @@ export default async function TrackOrderPage({
   var orderId = ${JSON.stringify(urlOrder.id)};
   var inFlight = false;
 
+  function getCsrfToken() {
+    // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
+    // Server source of truth: src/infrastructure/csrf/cookies.ts
+    // Cookie name is 'csrf_token'; header name is 'X-CSRF-Token'.
+    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
   function showStatus(text, isError) {
     if (!statusMsg) return;
     statusMsg.textContent = text;
@@ -412,6 +420,7 @@ export default async function TrackOrderPage({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
       },
       body: JSON.stringify({
         type: type,
