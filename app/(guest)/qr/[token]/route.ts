@@ -94,11 +94,21 @@ export async function GET(
         return NextResponse.redirect(`${baseUrl}${destinationPath}`);
       }
 
-      return NextResponse.redirect(
+      const occupiedResponse = NextResponse.redirect(
         `${baseUrl}/qr/occupied?token=${encodeURIComponent(
           token
         )}&sessionId=${encodeURIComponent(activeSession.id)}`
       );
+      if (!request.cookies.get(CSRF_COOKIE_NAME)?.value) {
+        occupiedResponse.cookies.set(CSRF_COOKIE_NAME, generateCsrfToken(), {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: CSRF_MAX_AGE_SECONDS,
+        });
+      }
+      return occupiedResponse;
     }
   }
 
