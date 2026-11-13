@@ -10,7 +10,8 @@ import {
   createSession,
   invalidateAllSessions,
 } from "@/infrastructure/auth/session";
-import { setSessionCookie } from "@/infrastructure/auth/cookies";
+// The session cookie helper is no longer imported — the cookie is now set on the
+// NextResponse directly (same discipline as csrf_token, D-19.2).
 import { DomainErrorCode } from "@/domain/shared/result";
 import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 import {
@@ -23,6 +24,7 @@ import {
   recordFailedAttempt,
   clearFailedAttempts,
 } from "@/infrastructure/auth/rate-limiter";
+import { getLandingRouteForRoles } from "@/lib/auth/landing-route";
 import type { AuditedRouteHandler } from "@/infrastructure/audit/with-audit";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -170,8 +172,11 @@ const loginHandler: AuditedRouteHandler = async (
     );
   }
 
-  // 5. Set cookie
-  await setSessionCookie(result.value.sessionToken);
+  // 5. Successful login — clear the rate-limit counter.
+  //    The session cookie is set on the NextResponse below, not via
+  //    cookies().set(), because cookies().set() silently fails in a
+  //    Route Handler when the NextResponse is created after it
+  //    (D-19.2 discipline; the csrf_token cookie uses the same shape).
   clearFailedAttempts(ip);
 
   // 6. Compute allowedAreas
@@ -185,6 +190,7 @@ const loginHandler: AuditedRouteHandler = async (
   //    /admin) has it. cookies().set(...) in the login page's Server
   //    Component is unreliable in Next.js App Router; response.cookies.set
   //    is guaranteed.
+  const landingRoute = getLandingRouteForRoles(result.value.staff.roles);
   const response = NextResponse.json(
     {
       data: {
@@ -195,10 +201,19 @@ const loginHandler: AuditedRouteHandler = async (
           roles: result.value.staff.roles,
         },
         allowedAreas,
+        landingRoute,
       },
     },
     { status: 200 }
   );
+
+  response.cookies.set("venue_staff", result.value.sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30, // 30 days — matches the pre-fix session cookie config
+  });
 
   response.cookies.set(CSRF_COOKIE_NAME, generateCsrfToken(), {
     httpOnly: false,

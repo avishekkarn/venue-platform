@@ -1,111 +1,151 @@
 "use client";
 
-import type { JSX } from "react";
+import type { JSX, FormEvent } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+/** The server's success response: the staff member's allowed areas and landing route. */
+interface LoginResponse {
+  data: {
+    staff: {
+      id: string;
+      name: string;
+      username: string;
+      roles: string[];
+    };
+    allowedAreas: string[];
+    landingRoute: string;
+  };
+}
+
+/** The server's error response: the standard envelope. */
+interface LoginErrorResponse {
+  error: {
+    code: string;
+    message: string;
+  };
+}
+
+function getCsrfToken(): string {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  return match && match[1] ? decodeURIComponent(match[1]) : "";
+}
+
 export function LoginForm(): JSX.Element {
-  return (
-    <>
-      <form id="login-form" noValidate className="flex flex-col gap-6">
-        <Input
-          id="username"
-          name="username"
-          type="text"
-          autoComplete="username"
-          required
-          label="Username"
-        />
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          label="Password"
-        />
-        <p
-          id="login-error"
-          role="alert"
-          style={{ display: "none" }}
-          className="text-[13px] leading-[18px] text-status-cancelled"
-        />
-        <Button id="login-submit" type="submit" variant="primary" size="md">
-          Sign In
-        </Button>
-      </form>
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-(function() {
-  var form = document.getElementById('login-form');
-  var errEl = document.getElementById('login-error');
-  var btn = document.getElementById('login-submit');
-  if (!form || !btn) return;
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
 
-  function showError(msg) {
-    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
-    btn.removeAttribute('disabled');
-    btn.textContent = 'Sign In';
+    try {
+      const csrfToken = getCsrfToken();
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const body = (await response.json()) as LoginResponse | LoginErrorResponse;
+
+      if (!response.ok) {
+        const errorBody = body as LoginErrorResponse;
+        if (errorBody.error?.code === "RATE_LIMITED") {
+          setError(
+            errorBody.error.message ||
+              "Too many login attempts. Please try again later."
+          );
+        } else {
+          setError("Incorrect username or password.");
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      const successBody = body as LoginResponse;
+      if (
+        !successBody.data ||
+        !Array.isArray(successBody.data.allowedAreas) ||
+        successBody.data.allowedAreas.length === 0
+      ) {
+        setError("No area available for this account.");
+        setSubmitting(false);
+        return;
+      }
+
+      const target = successBody.data.landingRoute;
+      if (typeof target !== "string" || !target.startsWith("/")) {
+        setError("No area available for this account.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Hard navigation. The session and csrf_token cookies were set on
+      // the login response. A hard navigation (not soft router push) forces
+      // the browser to commit those cookies to the jar before the next
+      // request, so the middleware sees the new session. Soft navigation
+      // fires an RSC fetch too fast and reads the previous session's
+      // cookie, causing the "logged in as X but landed on Y's page" bug
+      // (7.7.5b.FIX.2 — Phase 7.7.5 manual verification, 2026-11-14).
+      window.location.href = target;
+    } catch {
+      setError("Network error. Please try again.");
+      setSubmitting(false);
+    }
   }
 
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (errEl) errEl.style.display = 'none';
-    btn.setAttribute('disabled', 'true');
-    btn.textContent = 'Signing in...';
-
-    var username = (form.querySelector('input[name=username]') || {}).value || '';
-    var password = (form.querySelector('input[name=password]') || {}).value || '';
-
-    function readCsrfToken() {
-      var m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
-      return m ? decodeURIComponent(m[1]) : '';
-    }
-    var csrfToken = readCsrfToken();
-
-    fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-      body: JSON.stringify({ username: username, password: password }),
-    })
-    .then(function(res) { return res.json().then(function(b) { return { ok: res.ok, body: b }; }); })
-    .then(function(r) {
-      if (!r.ok && r.body && r.body.error && r.body.error.code === 'RATE_LIMITED') {
-        showError(r.body.error.message || 'Too many login attempts. Please try again later.');
-        return;
-      }
-      if (!r.ok || !r.body || !r.body.data || !Array.isArray(r.body.data.allowedAreas)) {
-        showError('Incorrect username or password.');
-        return;
-      }
-      var areas = r.body.data.allowedAreas;
-      var map = {
-        'admin': '/admin',
-        'kitchen': '/kitchen',
-        'table-service': '/staff/table',
-        'room-service': '/staff/room',
-        'housekeeping': '/staff/housekeeping',
-        'maintenance': '/staff/maintenance',
-        'concierge': '/staff/concierge',
-        'laundry': '/staff/laundry',
-        'spa': '/staff/spa',
-        'front-desk': '/staff/front-desk',
-      };
-      var first = areas[0];
-      var target = map[first];
-      if (!target) { showError('No area available for this account.'); return; }
-      
-      // Hard reload to ensure cookies are applied before middleware runs
-      window.location.href = target;
-    })
-    .catch(function() { showError('Network error. Please try again.'); });
-  });
-})();
-`,
-        }}
+  return (
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="flex flex-col gap-6"
+    >
+      <Input
+        id="username"
+        name="username"
+        type="text"
+        autoComplete="username"
+        required
+        label="Username"
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
+        disabled={submitting}
       />
-    </>
+      <Input
+        id="password"
+        name="password"
+        type="password"
+        autoComplete="current-password"
+        required
+        label="Password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        disabled={submitting}
+      />
+      {error ? (
+        <p
+          role="alert"
+          className="text-[13px] leading-[18px] text-status-cancelled"
+        >
+          {error}
+        </p>
+      ) : null}
+      <Button
+        type="submit"
+        variant="primary"
+        size="md"
+        disabled={submitting}
+      >
+        {submitting ? "Signing in..." : "Sign In"}
+      </Button>
+    </form>
   );
 }

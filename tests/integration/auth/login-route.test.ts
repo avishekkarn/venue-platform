@@ -5,14 +5,7 @@ import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/or
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { StaffRole } from "@/domain/auth/staff.repository";
 import { hashPassword } from "@/infrastructure/auth/password";
-import { setSessionCookie } from "@/infrastructure/auth/cookies";
 import { withTransaction } from "../setup";
-
-vi.mock("@/infrastructure/auth/cookies", () => ({
-  setSessionCookie: vi.fn().mockResolvedValue(undefined),
-  getSessionCookie: vi.fn().mockResolvedValue(null),
-  clearSessionCookie: vi.fn().mockResolvedValue(undefined),
-}));
 
 vi.mock("@/infrastructure/csrf/cookies", async () => {
   const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
@@ -84,9 +77,58 @@ describe("POST /api/auth/login Route Integration Tests", () => {
       expect(Array.isArray(json.data.allowedAreas)).toBe(true);
       expect(json.data.allowedAreas.length).toBeGreaterThan(0);
       expect(json.data.allowedAreas).toContain("admin");
+      expect(json.data.landingRoute).toBe("/admin");
 
-      expect(setSessionCookie).toHaveBeenCalledTimes(1);
-      expect(setSessionCookie).toHaveBeenCalledWith(expect.any(String));
+      const setCookie = response.headers.get("set-cookie") ?? "";
+      expect(setCookie).toMatch(/venue_staff=[^;]+/);
+      expect(setCookie).toMatch(/HttpOnly/i);
+      expect(setCookie).toMatch(/SameSite=Lax/i);
+    });
+  });
+
+  it("authenticates staff member with TABLE_SERVICE and LEADER roles and returns /staff landingRoute (200)", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({
+        name: "Juniper House",
+        slug: venueSlug,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+
+      const hashedPassword = await hashPassword("password123");
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id,
+        name: "Charlie Leader",
+        username: "charlie_login_test",
+        passwordHash: hashedPassword,
+        roles: [StaffRole.TABLE_SERVICE, StaffRole.LEADER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+
+      const request = new NextRequest("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
+        body: JSON.stringify({
+          username: "charlie_login_test",
+          password: "password123",
+        }),
+      });
+
+      setTestDbClient(tx);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+
+      const json = await response.json();
+      expect(json.data).toBeDefined();
+      expect(json.data.staff.username).toBe("charlie_login_test");
+      expect(json.data.landingRoute).toBe("/staff");
     });
   });
 
@@ -133,7 +175,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
       expect(json.error).toBeDefined();
       expect(json.error.code).toBe("UNAUTHORIZED");
       expect(json.error.message).toBe("Incorrect username or password");
-      expect(setSessionCookie).not.toHaveBeenCalled();
+      expect(response.headers.get("set-cookie")).toBeNull();
     });
   });
 
@@ -155,7 +197,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
     expect(json.error).toBeDefined();
     expect(json.error.code).toBe("VALIDATION_FAILED");
     expect(json.error.message).toBe("username and password are required");
-    expect(setSessionCookie).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).toBeNull();
   });
 
   it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
@@ -179,7 +221,7 @@ describe("POST /api/auth/login Route Integration Tests", () => {
     expect(json.error).toBeDefined();
     expect(json.error.code).toBe("FORBIDDEN");
     expect(json.error.message).toBe("CSRF token missing or invalid");
-    expect(setSessionCookie).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).toBeNull();
   });
 
   it("rate limit: 5 failed logins from the same IP, the 6th returns 429 RATE_LIMITED", async () => {
