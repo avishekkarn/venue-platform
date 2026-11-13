@@ -19,8 +19,35 @@ export function setTestDbClient(client: DbClient | null): void {
   testDbClient = client;
 }
 
+/**
+ * Any staff member with a hospitality area can call the requests queue.
+ * The fine-grained filtering (which service types they see) happens in the
+ * `visibleAreas.includes(serviceTypeToArea[r.serviceType])` filter below.
+ *
+ * - LEADER / MANAGER / OWNER: all services (via canAccess → true for all areas).
+ * - FRONT_DESK: all services (front-desk canAccess grants the area; the
+ *   filter narrows to room-facing services, plus table service via
+ *   visibleAreasFor(FRONT_DESK) which includes "table-service" for
+ *   call-waiter / request-bill).
+ * - ROOM_SERVICE: all services (visibleAreasFor includes room-service,
+ *   which is the area for ROOM_SERVICE_FOOD; the filter passes it).
+ * - HOUSEKEEPING: only HOUSEKEEPING requests (visibleAreasFor returns
+ *   ["housekeeping"]; the filter narrows to that service type).
+ * - MAINTENANCE / CONCIERGE / LAUNDRY / SPA: their respective service.
+ * - TABLE_SERVICE: call-waiter / request-bill (visibleAreasFor includes
+ *   "table-service", mapped to those two service types).
+ * - CHEF: not allowed (returns false; 403).
+ */
 function hasRequestAccess(roles: readonly StaffRole[]): boolean {
-  return canAccess(roles, "front-desk");
+  return (
+    canAccess(roles, "front-desk") ||
+    canAccess(roles, "housekeeping") ||
+    canAccess(roles, "maintenance") ||
+    canAccess(roles, "concierge") ||
+    canAccess(roles, "laundry") ||
+    canAccess(roles, "spa") ||
+    canAccess(roles, "room-service")
+  );
 }
 
 export async function GET(_request: NextRequest): Promise<NextResponse> {

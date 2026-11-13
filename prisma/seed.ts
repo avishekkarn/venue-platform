@@ -672,9 +672,11 @@ export async function seedStaff(venueId: string): Promise<void> {
   const staffDefs: Array<{ name: string; username: string; roles: StaffRole[] }> = [
     { name: "Alice Manager", username: "alice", roles: [StaffRole.MANAGER] },
     { name: "Bob Chef", username: "bob", roles: [StaffRole.CHEF] },
-    { name: "Charlie Server", username: "charlie", roles: [StaffRole.TABLE_SERVICE, StaffRole.LEADER] },
+    { name: "Charlie Server", username: "charlie", roles: [StaffRole.LEADER] },
     { name: "Diana Housekeeper", username: "diana", roles: [StaffRole.HOUSEKEEPING] },
     { name: "Eve Front Desk", username: "eve", roles: [StaffRole.FRONT_DESK] },
+    { name: "Frank Room Service", username: "frank", roles: [StaffRole.ROOM_SERVICE] },
+    { name: "Grace Table Service", username: "grace", roles: [StaffRole.TABLE_SERVICE] },
   ];
 
   for (const def of staffDefs) {

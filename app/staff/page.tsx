@@ -8,7 +8,7 @@ import { createPrismaTableRepository } from "@/infrastructure/db/repositories/ta
 import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
 import { getAuthenticatedStaff } from "@/lib/auth/validate-session";
-import { canAccess, visibleAreasFor, type Area } from "@/domain/auth/can-access";
+import { visibleAreasFor, type Area } from "@/domain/auth/can-access";
 import { OrderState, PlaceType, type Order } from "@/domain/orders/order.repository";
 import {
   RequestState,
@@ -264,10 +264,21 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   const visibleAreas = visibleAreasFor(staff.roles);
 
-  const hasAccess =
-    canAccess(staff.roles, "table-service") ||
-    canAccess(staff.roles, "room-service") ||
-    canAccess(staff.roles, "front-desk");
+  // A staff member sees the "Requests" tab if their role maps to any of the
+  // request-handling areas. TABLE_SERVICE (grace) is intentionally excluded
+  // from the Requests tab — table service handles CALL_WAITER and REQUEST_BILL
+  // via the orders queue, not a separate requests queue. (The API still
+  // allows the caller; the UI is the source of truth for what is shown.)
+  const canSeeRequests =
+    visibleAreas.includes("front-desk") ||
+    visibleAreas.includes("housekeeping") ||
+    visibleAreas.includes("maintenance") ||
+    visibleAreas.includes("concierge") ||
+    visibleAreas.includes("laundry") ||
+    visibleAreas.includes("spa") ||
+    visibleAreas.includes("room-service");
+
+  const hasAccess = visibleAreas.some((area) => area !== "admin" && area !== "kitchen");
 
   if (!hasAccess) {
     redirect("/forbidden");
@@ -303,9 +314,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     readyRes,
     deliveredRes,
     completedRes,
-    submittedReqs,
-    acknowledgedReqs,
-    inProgressReqs,
+    requestsRes,
   ] = await Promise.all([
     tableRepo.listForVenue(venue.id),
     roomRepo.listForVenue(venue.id),
@@ -317,9 +326,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     orderRepo.listForVenue(venue.id, { state: OrderState.READY }),
     orderRepo.listForVenue(venue.id, { state: OrderState.DELIVERED }),
     orderRepo.listForVenue(venue.id, { state: OrderState.COMPLETED }),
-    requestRepo.listForVenue(venue.id, { state: RequestState.SUBMITTED }),
-    requestRepo.listForVenue(venue.id, { state: RequestState.ACKNOWLEDGED }),
-    requestRepo.listForVenue(venue.id, { state: RequestState.IN_PROGRESS }),
+    requestRepo.listForVenue(venue.id),
   ]);
 
   const activeTableIds = new Set<string>();
@@ -398,37 +405,72 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     placeNumber: resolvePlace(o, tableMap, roomMap).number,
   }));
 
-  const filteredOrders = enrichedOrders.filter((o) => {
-    if (o.placeType === PlaceType.TABLE) return visibleAreas.includes("table-service");
-    if (o.placeType === PlaceType.ROOM) return visibleAreas.includes("room-service") || visibleAreas.includes("front-desk");
-    if (o.placeType === PlaceType.COUNTER) return visibleAreas.includes("front-desk");
-    return false;
-  });
+  // Split orders by placeType and apply visibleAreas filter
+  const canSeeTableOrders = visibleAreas.includes("table-service");
+  const canSeeRoomOrders =
+    visibleAreas.includes("room-service") || visibleAreas.includes("front-desk");
 
-  const activeOrdersCount = filteredOrders.filter(
+  const tableOrders = canSeeTableOrders
+    ? enrichedOrders.filter((o) => o.placeType === PlaceType.TABLE)
+    : [];
+  const roomOrders = canSeeRoomOrders
+    ? enrichedOrders.filter(
+        (o) =>
+          o.placeType === PlaceType.ROOM ||
+          (o.placeType === PlaceType.COUNTER && visibleAreas.includes("front-desk"))
+      )
+    : [];
+
+  const activeTableOrdersCount = tableOrders.filter(
+    (o) => o.state !== OrderState.COMPLETED && o.state !== OrderState.CANCELLED
+  ).length;
+  const activeRoomOrdersCount = roomOrders.filter(
     (o) => o.state !== OrderState.COMPLETED && o.state !== OrderState.CANCELLED
   ).length;
 
-  const requests: ServiceRequest[] = [
-    ...(submittedReqs.ok ? submittedReqs.value : []),
-    ...(acknowledgedReqs.ok ? acknowledgedReqs.value : []),
-    ...(inProgressReqs.ok ? inProgressReqs.value : []),
-  ].filter((r) => {
-    const serviceToArea: Record<HotelService, Area> = {
-      ROOM_SERVICE_FOOD: "room-service",
-      HOUSEKEEPING: "housekeeping",
-      MAINTENANCE: "maintenance",
-      CONCIERGE: "concierge",
-      LAUNDRY: "laundry",
-      SPA: "spa",
-      LATE_CHECKOUT: "front-desk",
-      WAKE_UP_CALL: "front-desk",
-      DO_NOT_DISTURB: "front-desk",
-      CALL_WAITER: "table-service",
-      REQUEST_BILL: "table-service",
-    };
-    return visibleAreas.includes(serviceToArea[r.serviceType]);
+  const serviceToArea: Record<HotelService, Area> = {
+    ROOM_SERVICE_FOOD: "room-service",
+    HOUSEKEEPING: "housekeeping",
+    MAINTENANCE: "maintenance",
+    CONCIERGE: "concierge",
+    LAUNDRY: "laundry",
+    SPA: "spa",
+    LATE_CHECKOUT: "front-desk",
+    WAKE_UP_CALL: "front-desk",
+    DO_NOT_DISTURB: "front-desk",
+    CALL_WAITER: "table-service",
+    REQUEST_BILL: "table-service",
+  };
+
+  const requests: ServiceRequest[] = (requestsRes.ok ? requestsRes.value : []).filter((r) => {
+    const isActive =
+      r.state === RequestState.SUBMITTED ||
+      r.state === RequestState.ACKNOWLEDGED ||
+      r.state === RequestState.IN_PROGRESS;
+    return isActive && visibleAreas.includes(serviceToArea[r.serviceType]);
   });
+
+  const showTableOrders = visibleAreas.includes("table-service");
+  const showRoomOrders =
+    visibleAreas.includes("room-service") || visibleAreas.includes("front-desk");
+  const showTableMap = visibleAreas.includes("table-service");
+  const showRoomMap =
+    visibleAreas.includes("room-service") ||
+    visibleAreas.includes("front-desk") ||
+    visibleAreas.includes("housekeeping") ||
+    visibleAreas.includes("maintenance");
+
+  const defaultActiveTab = showTableOrders
+    ? "table-orders"
+    : showRoomOrders
+      ? "room-orders"
+      : showTableMap
+        ? "table-map"
+        : showRoomMap
+          ? "room-map"
+          : canSeeRequests
+            ? "requests"
+            : "table-orders";
 
   const SCRIPT = `
 (function() {
@@ -438,7 +480,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   var ROOMS = ` + JSON.stringify(rooms.map((r) => ({ id: r.id, number: r.number }))) + `;
   var CAN_CLOSE = ` + JSON.stringify(canClose) + `;
   var CAN_CHECKOUT = ` + JSON.stringify(canCheckout) + `;
-  var CAN_REQUESTS = ` + JSON.stringify(visibleAreas.includes("front-desk")) + `;
+  var CAN_REQUESTS = ` + JSON.stringify(canSeeRequests) + `;
   var SERVICE_LABELS = ` + JSON.stringify(SERVICE_LABELS) + `;
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
@@ -447,7 +489,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
     // Server source of truth: src/infrastructure/csrf/cookies.ts
     // Cookie name is 'csrf_token'; header name is 'X-CSRF-Token'.
-    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    var match = document.cookie.match(/(?:^|;\\s*)csrf_token=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : '';
   }
 
@@ -566,15 +608,17 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     '</article>';
   }
 
-  function renderOrderQueue(orders) {
-    var container = document.getElementById('orders-container');
+  function renderOrderQueue(orders, containerId) {
+    var container = document.getElementById(containerId);
     if (!container) return;
     if (orders.length === 0) {
-      container.innerHTML = '<div id="order-empty" class="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle"><p class="text-[18px] font-medium">No active orders.</p></div>';
+      var emptyMsg = containerId === 'table-orders-container' ? 'No active table orders.' : 'No active room orders.';
+      container.innerHTML = '<div class="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle"><p class="text-[18px] font-medium">' + emptyMsg + '</p></div>';
       return;
     }
-    container.innerHTML = '<div id="order-queue" class="flex flex-col gap-3"></div>';
-    var queue = document.getElementById('order-queue');
+    var queueId = containerId === 'table-orders-container' ? 'table-order-queue' : 'room-order-queue';
+    container.innerHTML = '<div id="' + queueId + '" class="flex flex-col gap-3"></div>';
+    var queue = document.getElementById(queueId);
     for (var i = 0; i < orders.length; i++) {
       queue.insertAdjacentHTML('beforeend', orderRowHtml(orders[i]));
     }
@@ -696,25 +740,24 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   function poll() {
     var orderFetch = fetch('/api/staff/orders', { credentials: 'same-origin' })
-      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+      .then(function(r) { if (!r.ok) return { data: [] }; return r.json(); })
+      .catch(function() { return { data: [] }; });
 
-    var requestFetch = CAN_REQUESTS
-      ? fetch('/api/staff/requests', { credentials: 'same-origin' })
-          .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-          .catch(function() { return { data: [] }; })
-      : Promise.resolve({ data: [] });
+    var requestFetch = fetch('/api/staff/requests', { credentials: 'same-origin' })
+      .then(function(r) { if (!r.ok) return { data: [] }; return r.json(); })
+      .catch(function() { return { data: [] }; });
 
     Promise.all([orderFetch, requestFetch])
       .then(function(responses) {
         var ordersBody = responses[0];
         var requestsBody = responses[1];
-        var orders = ordersBody.data || [];
+        var allOrders = ordersBody.data || [];
         if (ordersBody.activeTableIds) {
           currentActiveTableIds = ordersBody.activeTableIds;
         } else {
           var activeFromOrders = [];
-          for (var k = 0; k < orders.length; k++) {
-            var ord = orders[k];
+          for (var k = 0; k < allOrders.length; k++) {
+            var ord = allOrders[k];
             if (ord.state !== 'COMPLETED' && ord.state !== 'CANCELLED' && ord.tableId) {
               if (activeFromOrders.indexOf(ord.tableId) === -1) {
                 activeFromOrders.push(ord.tableId);
@@ -723,11 +766,33 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
           }
           currentActiveTableIds = activeFromOrders;
         }
-        renderOrderQueue(orders);
+
+        var tableOrders = [];
+        var roomOrders = [];
+        for (var j = 0; j < allOrders.length; j++) {
+          if (allOrders[j].placeType === 'TABLE') {
+            tableOrders.push(allOrders[j]);
+          } else if (allOrders[j].placeType === 'ROOM' || allOrders[j].placeType === 'COUNTER') {
+            roomOrders.push(allOrders[j]);
+          }
+        }
+
+        renderOrderQueue(tableOrders, 'table-orders-container');
+        renderOrderQueue(roomOrders, 'room-orders-container');
         renderTableMap();
         renderRoomMap();
+
         var requests = requestsBody.data || [];
         renderRequests(requests);
+
+        var tableTab = document.querySelector('[data-tab="table-orders"]');
+        if (tableTab) {
+          tableTab.textContent = 'Table Orders (' + tableOrders.length + ')';
+        }
+        var roomTab = document.querySelector('[data-tab="room-orders"]');
+        if (roomTab) {
+          roomTab.textContent = 'Room Orders (' + roomOrders.length + ')';
+        }
         var reqTab = document.querySelector('[data-tab="requests"]');
         if (reqTab) {
           reqTab.textContent = 'Requests (' + requests.length + ')';
@@ -862,20 +927,20 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   document.getElementById('staff-tab-nav').addEventListener('click', function(e) {
     var tab = e.target.closest('[data-tab]');
     if (!tab) return;
-    var name = tab.getAttribute('data-tab');
-    var tabEls = document.querySelectorAll('[data-tab]');
+    var target = tab.getAttribute('data-tab');
+    var tabEls = document.querySelectorAll('#staff-tab-nav [data-tab]');
     for (var i = 0; i < tabEls.length; i++) {
       tabEls[i].className = 'pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer';
     }
     tab.className = 'pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer';
-    var ordersEl = document.getElementById('orders-container');
-    if (ordersEl) ordersEl.style.display = name === 'orders' ? 'flex' : 'none';
-    var tableMapEl = document.getElementById('table-map');
-    if (tableMapEl) tableMapEl.style.display = name === 'map' ? 'grid' : 'none';
-    var roomMapEl = document.getElementById('room-map');
-    if (roomMapEl) roomMapEl.style.display = name === 'rooms' ? 'grid' : 'none';
-    var requestsEl = document.getElementById('requests-container');
-    if (requestsEl) requestsEl.style.display = name === 'requests' ? 'flex' : 'none';
+
+    var containers = ['table-orders-container', 'room-orders-container', 'table-map', 'room-map', 'requests-container'];
+    for (var i = 0; i < containers.length; i++) {
+      var el = document.getElementById(containers[i]);
+      if (el) el.style.display = 'none';
+    }
+    var activeEl = document.getElementById(target + '-container') || document.getElementById(target);
+    if (activeEl) activeEl.style.display = (target === 'table-map' || target === 'room-map') ? 'grid' : 'flex';
   });
 
   document.addEventListener('click', function(e) {
@@ -913,56 +978,132 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
         <LogoutButton />
       </header>
 
-      <nav id="staff-tab-nav" className="flex items-center gap-6 border-b border-staff-border-subtle px-6 pt-3 bg-staff-surface-raised">
-        <button data-tab="orders" className="pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer">
-          Orders ({activeOrdersCount})
-        </button>
-        {visibleAreas.includes("table-service") && (
-          <button data-tab="map" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
+      <nav id="staff-tab-nav" className="flex items-center gap-6 border-b border-staff-border-subtle px-6 pt-3 bg-staff-surface-raised overflow-x-auto">
+        {showTableOrders && (
+          <button
+            data-tab="table-orders"
+            className={
+              defaultActiveTab === "table-orders"
+                ? "pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer"
+                : "pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer"
+            }
+          >
+            Table Orders ({activeTableOrdersCount})
+          </button>
+        )}
+        {showRoomOrders && (
+          <button
+            data-tab="room-orders"
+            className={
+              defaultActiveTab === "room-orders"
+                ? "pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer"
+                : "pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer"
+            }
+          >
+            Room Orders ({activeRoomOrdersCount})
+          </button>
+        )}
+        {showTableMap && (
+          <button
+            data-tab="table-map"
+            className={
+              defaultActiveTab === "table-map"
+                ? "pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer"
+                : "pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer"
+            }
+          >
             Table Map ({tables.length})
           </button>
         )}
-        {(visibleAreas.includes("room-service") || visibleAreas.includes("front-desk")) && (
-          <button data-tab="rooms" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
+        {showRoomMap && (
+          <button
+            data-tab="room-map"
+            className={
+              defaultActiveTab === "room-map"
+                ? "pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer"
+                : "pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer"
+            }
+          >
             Room Map ({rooms.length})
           </button>
         )}
-        {visibleAreas.includes("front-desk") && (
-          <button data-tab="requests" className="pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer">
+        {canSeeRequests && (
+          <button
+            data-tab="requests"
+            className={
+              defaultActiveTab === "requests"
+                ? "pb-3 text-sm font-semibold text-staff-text-primary border-b-2 border-staff-brand cursor-pointer"
+                : "pb-3 text-sm font-medium text-staff-text-muted hover:text-staff-text-primary cursor-pointer"
+            }
+          >
             Requests ({requests.length})
           </button>
         )}
       </nav>
 
       <section className="flex-1 p-4 md:p-6 max-w-5xl w-full mx-auto">
-        <div id="orders-container" className="flex flex-col gap-3">
-          {filteredOrders.length === 0 ? (
-            <div id="order-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
-              <p className="text-[18px] font-medium">No active orders.</p>
+        <div
+          id="table-orders-container"
+          className="flex flex-col gap-3"
+          style={{ display: defaultActiveTab === "table-orders" ? "flex" : "none" }}
+        >
+          {tableOrders.length === 0 ? (
+            <div id="table-order-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
+              <p className="text-[18px] font-medium">No active table orders.</p>
             </div>
           ) : (
-            <div id="order-queue" className="flex flex-col gap-3">
-              {filteredOrders.map((o) => (
+            <div id="table-order-queue" className="flex flex-col gap-3">
+              {tableOrders.map((o) => (
                 <OrderRow key={o.id} order={o} />
               ))}
             </div>
           )}
         </div>
 
-        <div id="table-map" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" style={{ display: "none" }}>
+        <div
+          id="room-orders-container"
+          className="flex flex-col gap-3"
+          style={{ display: defaultActiveTab === "room-orders" ? "flex" : "none" }}
+        >
+          {roomOrders.length === 0 ? (
+            <div id="room-order-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
+              <p className="text-[18px] font-medium">No active room orders.</p>
+            </div>
+          ) : (
+            <div id="room-order-queue" className="flex flex-col gap-3">
+              {roomOrders.map((o) => (
+                <OrderRow key={o.id} order={o} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div
+          id="table-map"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+          style={{ display: defaultActiveTab === "table-map" ? "grid" : "none" }}
+        >
           {tables.map((t) => (
             <TableCard key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} canClose={canClose} />
           ))}
         </div>
 
-        <div id="room-map" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" style={{ display: "none" }}>
+        <div
+          id="room-map"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+          style={{ display: defaultActiveTab === "room-map" ? "grid" : "none" }}
+        >
           {rooms.map((r) => (
             <RoomCard key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} canCheckout={canCheckout} />
           ))}
         </div>
 
-        {visibleAreas.includes("front-desk") && (
-          <div id="requests-container" className="flex flex-col gap-3" style={{ display: "none" }}>
+        {canSeeRequests && (
+          <div
+            id="requests-container"
+            className="flex flex-col gap-3"
+            style={{ display: defaultActiveTab === "requests" ? "flex" : "none" }}
+          >
             {requests.length === 0 ? (
               <div id="request-empty" className="text-center p-8 bg-staff-surface-raised rounded-xl border border-dashed border-staff-border-subtle">
                 <p className="text-[18px] font-medium">No active requests.</p>
