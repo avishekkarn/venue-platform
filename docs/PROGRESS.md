@@ -135,14 +135,64 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0224 | 2026-11-13 | Milestone 7.7.3 closed: automated daily backups | PASS | Milestone 7.7.3 | §5.3 |
 | ENTRY-0225 | 2026-11-13 | Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (Part A; Part B deferred) | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
+| ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
 
-Next entry number: 0227
+Next entry number: 0228
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0227 — 2026-11-14 — Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access (PASS)
+
+**Status:** PASS
+
+**Task:** Milestone 7.7.5 — Login Rate Limiting, plus the follow-up fixes surfaced during the browser verification (7.7.5b.FIX.3 and 7.7.5b.FIX.4).
+
+**Summary:** Milestone 7.7.5 closed. `POST /api/auth/login` is now rate-limited (5 failed attempts per 15 minutes per IP, in-memory, `RATE_LIMITED` 429 with an honest minute count). The milestone's browser verification surfaced three real defects that were invisible to the test suite: (a) `cookies().set()` in the route handler silently failed, so a second login did not overwrite the previous staff cookie; (b) the login forms used `<script dangerouslySetInnerHTML>` inside a Client Component, which React strips — the form default-submitted and the RLS/Cookie race showed the previous session; (c) the client picked `allowedAreas[0]` as the landing route, which sent a LEADER to `/kitchen` because `"kitchen"` is the second element of `ALL_AREAS` and LEADER grants every area. All three are fixed. In addition, the staff dashboard's request API and tab render were made role-aware so that focused staff see only their queues, and the seed now has focused test accounts (`frank` = ROOM_SERVICE, `grace` = TABLE_SERVICE). The seven browser logins (`frank`, `diana`, `grace`, `eve`, `charlie`, `alice`, `bob`) all landed at their correct routes with their correct tabs.
+
+**The resolution:**
+- `c393ac0` — 7.7.5a: the rate-limiter helper (`src/infrastructure/auth/rate-limiter.ts`) with six unit tests. 5 attempts / 15 minutes, failed-attempts-only, fixed window, per-IP, `resetRateLimiter()` for tests.
+- `b65a2d8` — 7.7.5b: the route integration (check at top of `loginHandler`, `recordFailedAttempt` on 401, `clearFailedAttempts` on success) + three new integration tests + the four-line `RATE_LIMITED` branch in all three login forms.
+- `c9654af` — 7.7.5b.FIX.3: `getLandingRouteForRoles` (server-computed), `venue_staff` set on the `NextResponse` (not `cookies().set()`), and the three login forms rewritten as React Client Components using `onSubmit` + `useState` + `window.location.href`.
+- `a09d832` — 7.7.5b.FIX.4: the request API auth loosened to accept every hospitality role (filtered by `serviceTypeToArea`), the tab render role-aware (`canSeeRequests`), and the seed additions (`frank`, `grace`).
+
+**Baselines at close:**
+- tsc `--noEmit`: 0 errors
+- test:unit: 40 files, 279/279
+- test:integration: 43 files, 304/304
+- build: 40 routes
+
+**Browser verification (2026-11-14, the seven logins):**
+- `frank` / `password123` → `/staff` → tabs Room Orders, Room Map, Requests (only ROOM_SERVICE_FOOD requests in Requests).
+- `diana` / `password123` → `/staff` → tabs Room Map, Requests (only HOUSEKEEPING requests).
+- `grace` / `password123` → `/staff` → tabs Table Orders, Table Map (no Requests, no Room Map).
+- `eve` / `password123` → `/staff` → tabs Room Orders, Room Map, Requests (all request types).
+- `charlie` / `password123` → `/staff` → tabs Table Orders, Room Orders, Table Map, Room Map, Requests. Header: `Logged in as Charlie Server (LEADER)`.
+- `alice` / `password123` → `/admin` (admin dashboard).
+- `bob` / `password123` → `/kitchen` (kitchen screen).
+- Rate limit: 5 failed `charlie` logins then 1 correct → 429 on the 6th with "Too many login attempts. Try again in 15 minutes." (or "1 minute" — the honest number from `retryAfterMs`).
+- Guest flow unchanged: table QR → place order → Grace's Table Orders; room QR → housekeeping request → Diana's Requests; room food order → Frank's Room Orders and Requests.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | The CSRF/landing/rate-limit fixes implement existing decisions (D-20.1, D-18.1, D-18.2, D-3.13); no new record | No change |
+| SYSTEM.md | No | The API and routes are unchanged; the rate limiter is infrastructure (documented in the file header) | No change |
+| BUILD.md | No | §7.4 already names rate limiting as a release blocker; no new build rule | No change |
+| ROADMAP.md | Yes | 7.7.5, 7.7.5a, 7.7.5b → ✅ | Updated in this commit |
+| PROGRESS.md | Yes | This entry | Updated in this commit |
+| WIRING.md | No | W-0023 (distributed rate limiter for multi-instance) remains DEFERRED, as designed. W-0024 (login CSRF-only, no audit) was discharged in `70986c4`. No new cross-task obligation was created by 7.7.5. | No change |
+
+**Contradiction Check:** None found. The login route stays `withCsrf(loginHandler)` (no `withAudit`) per D-20.1. The rate limiter counts failed attempts only; a 400 or a 403 does not count. The landing route is computed on the server via the same `getLandingRouteForRoles` used by the login page's "already logged in" redirect, so the two cannot drift. The `ALL_AREAS[0]` heuristic is removed from the client entirely.
+
+**Next:** Phase 8.1.1 — `GET /api/admin/dashboard` (with `withAudit`, discharging W-0021).
+
+**Awaiting Human Verification:** NO
 
 ### ENTRY-0226 — 2026-11-13 — Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification (PASS)
 
@@ -727,10 +777,13 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Milestone 7.7.4 (CSRF on all 25 state-changing routes) is **fully closed** at commit `084414c` ("Phase 7.7.4 closed: CSRF enforcement verified (Parts A, B, and 7.7.4c.D client/cookie wiring)"). The 25-route audit passes; the browser Part B check passed; the client sends `X-CSRF-Token` from the `csrf_token` cookie on every guest, staff, kitchen, and admin fetch. Baselines: tsc 0, unit 273/273 (39 files), integration 300/300 (43 files), build 40 routes. The next milestone is **Phase 7.7.5 — Login Rate Limiting** (tasks 7.7.5a → 7.7.5b → 7.7.5b verify → closure).
+**Current status:** Phase 7.7 (Production Readiness Prerequisites) is **fully closed** at `a09d832`. Milestone 7.7.4 (CSRF) closed at `084414c`; the docs reconciliation landed at `70986c4`; Milestone 7.7.5 (Login Rate Limiting) closed across `c393ac0` (helper + 6 unit tests), `b65a2d8` (route integration + 3 integration tests + 429 UX in the three login forms), `c9654af` (the follow-up fix: server-computed `landingRoute`, `venue_staff` on `NextResponse`, React `onSubmit` with hard navigation), and `a09d832` (the follow-up fix: role-aware request API, role-aware tabs, focused seed staff `frank`/`grace`). Baselines: `tsc` 0, `unit` 40 files / 279 tests, `integration` 43 files / 304 tests, `build` 40 routes. The next task is **Phase 8.1.1 — `GET /api/admin/dashboard`** (with `withAudit`, discharging W-0021).
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
+- Login rate limiting is closed: 5 failed attempts / 15 minutes per IP, in-memory, RATE_LIMITED 429. The helper is src/infrastructure/auth/rate-limiter.ts. The route is withCsrf(loginHandler) (no withAudit, D-20.1). The resetRateLimiter() is in beforeEach of tests/integration/auth/login-route.test.ts. A 400 (VALIDATION_FAILED) does NOT count against the limit; only a 401 (UNAUTHORIZED) does.
+- The login landing is server-computed: getLandingRouteForRoles(roles) returns /admin (OWNER/MANAGER), /kitchen (CHEF), /staff (every other role). The client never picks allowedAreas[0]. The login form uses window.location.href (hard navigation) — never router.push — so the cookie jar commits before the next request. The venue_staff cookie is set on the NextResponse (not cookies().set()), because cookies().set() silently fails in a route handler when the response is created after it.
+- The staff dashboard is role-aware. A LEADER sees all five tabs (Table Orders, Room Orders, Table Map, Room Map, Requests). A ROOM_SERVICE staff member sees Room Orders / Room Map / Requests (only ROOM_SERVICE_FOOD). A HOUSEKEEPING staff member sees Room Map / Requests (only HOUSEKEEPING). A TABLE_SERVICE staff member sees Table Orders / Table Map (no Requests). A FRONT_DESK staff member sees Room Orders / Room Map / Requests (all types). The seed has frank (ROOM_SERVICE), grace (TABLE_SERVICE), diana (HOUSEKEEPING), eve (FRONT_DESK) to exercise each view.
 - The backup and restore scripts live in `scripts/`; the operator manual is `scripts/README.md`; the operational spec is `docs/SYSTEM.md §18.5` (Phase 7.7.3). W-0022's script-half is satisfied; scheduling-half is Phase 10.6.1.
 - The `.ps1` scripts require PowerShell 7 (`pwsh`), not Windows PowerShell 5.1: PS5.1's pipeline exit-code propagation is unreliable, so a failed `pg_dump` piped into a successful `gzip` would exit zero under 5.1.
 - `gunzip` on Windows is a shell-script wrapper, not an `.exe`; use `gzip -d -c` / `gzip -dc` in pipelines (Phase 7.7.3.B's fix).
@@ -746,6 +799,8 @@ Updated at the end of every session.
 - The three new process obligations: W-0018, W-0019, W-0020.
 - The three open code obligations: W-0002, W-0003, W-0004 (all discharged in Phase 8.1.2), W-0005 (Phase 8.3.4).
 - The deferred follow-ups: F-0002 (line endings), F-0003 (empty tax-rate stub), F-0004 (admin-menu.test.ts still `(0 test)`, filled in Phase 8.3.1).
+- **W-0025 (OPEN, Phase 8 foundation):** The `withAudit` wrapper must populate the `ip` field from `x-forwarded-for` (first segment) → `x-real-ip` → `"unknown"`. It is `null` today. Every Phase 8 audit line MUST carry a real IP. This discharges on Phase 8.1.1 (the first wrapped admin route after 7.7.1c) — a 5-line change to `src/infrastructure/audit/with-audit.ts` (add the header read + pass `ip` to `writeAudit`). The rate limiter's IP derivation (src/infrastructure/auth/rate-limiter.ts) is the reference.
+- **W-0026 (OPEN, Phase 10.7):** Audit log rotation. The `logs/audit/` directory grows by one file per UTC day, forever. The Phase 10.7 deployment task adds a pruner that deletes `.jsonl` files older than 30 days, matching the backup retention (D-8.5). The backup script (`scripts/backup-daily.ps1` / `.sh`) is the reference pattern.
 
 ## 8. How the File Evolves
 

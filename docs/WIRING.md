@@ -31,6 +31,26 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
+### W-0026 — OPEN — Audit log rotation (30-day retention)
+
+- **Originated:** Phase 7.7.5 closure (PROGRESS ENTRY-0227, 2026-11-14).
+- **Obligation:** The `logs/audit/` directory grows by one `.jsonl` file per UTC day, forever. A production venue running for years accumulates thousands of files on the app server's disk. The Phase 10.7 deployment task must add a pruner that deletes `.jsonl` files older than 30 days, matching the backup retention (D-8.5). The pruner runs on the same OS scheduler as the backups (Task Scheduler on Windows, cron on Linux). Log files are excluded from `git status` via `.gitignore` (already the case; no change needed there).
+- **Files and call site:** `scripts/rotate-audit.ps1` (new) and `scripts/rotate-audit.sh` (new), mirroring `scripts/backup-daily.*`. `scripts/README.md` gains a "Rotation" section. `docs/SYSTEM.md §18.5` gains a paragraph naming the rotation alongside the backup. `docs/DEPLOYMENT.md` (Phase 10.7) schedules both.
+- **Satisfied by:** Phase 10.7 (Documentation and Handover), where the deployment task installs the rotation on the venue's server. It is not a Phase 8 deliverable — Phase 8 adds the audit log; Phase 10.7 keeps it bounded.
+- **Depends on:** D-8.5, the backup scripts (`scripts/backup-daily.*`), `.gitignore` (logs/ already ignored).
+- **Verification:** After 31 days of daily writes, `logs/audit/` holds exactly 30 files. A test on a throwaway directory proves the pruner.
+- **Status:** OPEN
+
+### W-0025 — OPEN — `withAudit` must populate the `ip` field from request headers
+
+- **Originated:** Phase 7.7.5 closure (PROGRESS ENTRY-0227, 2026-11-14).
+- **Obligation:** The `withAudit` wrapper currently writes `ip: null` on every audit line. In production, a missing IP makes the audit trail forensic-blind. `withAudit` must read `x-forwarded-for` (first segment, trimmed) → `x-real-ip` → `"unknown"` and pass the result to `writeAudit` as the `ip` field. The derivation matches the login rate limiter (`src/infrastructure/auth/rate-limiter.ts`), so a request's audit line and its rate-limit key name the same source.
+- **Files and call site:** `src/infrastructure/audit/with-audit.ts` (the `withAudit` wrapper; add the header read and pass `ip` to `writeAudit`). `src/infrastructure/audit/logger.ts` (already accepts `ip: string | null`; no change). `tests/integration/audit/with-audit.test.ts` (add one test: a request with `x-forwarded-for: 203.0.113.42` produces a line with `ip: "203.0.113.42"`).
+- **Satisfied by:** The first Phase 8 admin route after 7.7.1c. Concretely: Task 8.1.1 (`GET /api/admin/dashboard`, the first Phase 8 route) discharges W-0025 by making the wrapper populate `ip` before the dashboard is wired.
+- **Depends on:** W-0021, BUILD.md §6.11, D-20.1, the login rate limiter's IP derivation (`src/infrastructure/auth/rate-limiter.ts`).
+- **Verification:** A wrapped route's audit line carries `ip: "<real-IP>"` (not `null`). The `audit/export` ZIP contains the IP. A test proves it (the `with-audit.test.ts` addition).
+- **Status:** OPEN
+
 ### W-0021 — OPEN — Every Phase 8 API route must use `withAudit`
 
 - **Originated:** Phase 7.7 amendment (PROGRESS ENTRY-0221).

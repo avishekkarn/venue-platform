@@ -849,9 +849,11 @@ text
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 7.7.5 | Add rate limiting to `/api/auth/login` | ⬜ | 7.7.4d |
-| 7.7.5a | Add an in-memory rate limiter (per-IP, 5 attempts per 15 minutes, exponential backoff) | ⬜ | 7.7.5 |
-| 7.7.5b | Verify: 6 failed logins from the same IP within 15 minutes returns 429 on the 6th | ⬜ | 7.7.5a |
+| 7.7.5 | Add rate limiting to `/api/auth/login` | ✅ | 7.7.4d |
+| 7.7.5a | Add an in-memory rate limiter (per-IP, 5 attempts per 15 minutes, exponential backoff) | ✅ | 7.7.5 |
+| 7.7.5b | Verify: 6 failed logins from the same IP within 15 minutes returns 429 on the 6th | ✅ | 7.7.5a |
+
+*(Phase 7.7.5 closed at `a09d832`. The 7.7.5b verification required three follow-up FIX commits — `c9654af` (server-computed landingRoute, hard-navigate on success, set `venue_staff` on `NextResponse`), `a09d832` (granular request-API auth, role-aware tabs, focused seed staff `frank`/`grace`), and the earlier `b65a2d8` (the rate-limit route integration and 429 UX). The browser gate: `frank`→Room Orders/Room Map/Requests, `diana`→Room Map/Requests, `grace`→Table Orders/Table Map, `eve`→Room Orders/Room Map/Requests, `charlie`→all five tabs, `alice`→`/admin`, `bob`→`/kitchen`. All seven confirmed. Follow-up: W-0025 (populate the audit IP) and W-0026 (audit log rotation) opened at the 7.7.5 closure as Phase 8 foundation obligations. See WIRING.md §2.)*
 
 **Details:**
 - For the first version (one venue per installation, D-10.1), an in-memory limiter is sufficient. It is reset on process restart, which is acceptable for a single-venue deployment.
@@ -870,6 +872,14 @@ text
 **Dependency:** Phase 7.7 is ✅ Complete.
 
 **Note on Phase 8 dependency:** The original sequence had 8.1.1 (dashboard) as the first task. This was wrong — the admin shell must exist before the dashboard can render inside it. The resequenced 8.1 fixes this.
+
+**Foundation inheritance (Phase 8 onward):** Every Phase 8 route, without exception, is built on the foundation closed in Phase 7.7:
+- **`withAudit` is mandatory** (W-0021). Every route under `app/api/admin/` uses `withAudit(resolvers, meta, handler)`. A route that omits it is `FAIL`. `qr/generate` is the reference (BUILD.md §6.11).
+- **CSRF is enforced** on every state-changing route (already live for the 25-route inventory, D-20.1). New admin routes use `withCsrf(handler)` on the inner handler.
+- **IP is populated in every audit line** (W-0025). The `withAudit` wrapper derives `ip` from `x-forwarded-for` (first segment) → `x-real-ip` → `"unknown"`, matching the login rate limiter's derivation. A line with `ip: null` is a FAIL from Phase 8 onward.
+- **Log rotation is scheduled** (W-0026, Phase 10.7). The `logs/audit/` directory is pruned at 30 days, matching the backup retention (D-8.5). No line grows unbounded.
+
+These obligations are not Phase 8 deliverables — they are Phase 8 **preconditions**. Every task's acceptance criteria includes "the route uses `withAudit`" and "the audit line carries a real IP."
 
 *(The Milestone 8.1 through 8.7 task tables are unchanged from the prior version of this file. Each Phase 8 route will use `withAudit` (from 7.7.1) and CSRF validation (from 7.7.4). Each admin form will include the hidden CSRF token. Each API route will be rate-limited indirectly (the admin is logged in; the login is rate-limited).)*
 
