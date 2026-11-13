@@ -443,6 +443,14 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
 
+  function getCsrfToken() {
+    // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
+    // Server source of truth: src/infrastructure/csrf/cookies.ts
+    // Cookie name is 'csrf_token'; header name is 'X-CSRF-Token'.
+    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -747,8 +755,15 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     } else {
       url = '/api/staff/orders/' + encodeURIComponent(orderId) + '/' + encodeURIComponent(action);
     }
-    var opts = { method: 'POST', credentials: 'same-origin' };
-    if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = body; }
+    var opts = {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': getCsrfToken() },
+    };
+    if (body) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = body;
+    }
     fetch(url, opts)
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function() { showToast('Done'); poll(); })
@@ -757,7 +772,11 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   function handleCloseTable(tableId, tableNum) {
     if (!window.confirm('Close Table ' + tableNum + '?')) return;
-    fetch('/api/staff/tables/' + encodeURIComponent(tableId) + '/close', { method: 'POST', credentials: 'same-origin' })
+    fetch('/api/staff/tables/' + encodeURIComponent(tableId) + '/close', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': getCsrfToken() },
+    })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function() { showToast('Table closed'); poll(); })
       .catch(function(err) { showToast('Error: ' + err.message); });
@@ -765,7 +784,11 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   function handleCheckoutRoom(roomId, roomNum) {
     if (!window.confirm('Checkout Room ' + roomNum + '?')) return;
-    fetch('/api/staff/rooms/' + encodeURIComponent(roomId) + '/checkout', { method: 'POST', credentials: 'same-origin' })
+    fetch('/api/staff/rooms/' + encodeURIComponent(roomId) + '/checkout', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': getCsrfToken() },
+    })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function() { showToast('Room checked out'); poll(); })
       .catch(function(err) { showToast('Error: ' + err.message); });
@@ -778,7 +801,10 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     fetch('/api/staff/requests/' + encodeURIComponent(requestId) + '/advance', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+      },
       body: JSON.stringify({ toState: toState }),
     })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -795,7 +821,10 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     fetch('/api/staff/requests/' + encodeURIComponent(requestId) + '/cancel', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+      },
       body: JSON.stringify({ reason: reason }),
     })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -812,7 +841,10 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     fetch('/api/staff/requests/' + encodeURIComponent(requestId) + '/decline', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+      },
       body: JSON.stringify({ reason: reason }),
     })
       .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })

@@ -13,6 +13,11 @@ import {
 import { setSessionCookie } from "@/infrastructure/auth/cookies";
 import { DomainErrorCode } from "@/domain/shared/result";
 import { withCsrf } from "@/infrastructure/csrf/with-csrf";
+import {
+  CSRF_COOKIE_NAME,
+  CSRF_MAX_AGE_SECONDS,
+} from "@/infrastructure/csrf/cookies";
+import { generateCsrfToken } from "@/infrastructure/csrf/token";
 import type { AuditedRouteHandler } from "@/infrastructure/audit/with-audit";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -142,8 +147,13 @@ const loginHandler: AuditedRouteHandler = async (
     canAccess(result.value.staff.roles, area)
   );
 
-  // 7. Return success envelope
-  return NextResponse.json(
+  // 7. Return success envelope AND set csrf_token on the response.
+  //    The csrf_token must be set on the same response that carries the
+  //    session, so the next page (the redirect to /staff or /kitchen or
+  //    /admin) has it. cookies().set(...) in the login page's Server
+  //    Component is unreliable in Next.js App Router; response.cookies.set
+  //    is guaranteed.
+  const response = NextResponse.json(
     {
       data: {
         staff: {
@@ -157,6 +167,16 @@ const loginHandler: AuditedRouteHandler = async (
     },
     { status: 200 }
   );
+
+  response.cookies.set(CSRF_COOKIE_NAME, generateCsrfToken(), {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: CSRF_MAX_AGE_SECONDS,
+  });
+
+  return response;
 };
 
 export const POST = withCsrf(loginHandler);

@@ -235,6 +235,15 @@ export default async function KitchenPage(): Promise<JSX.Element> {
           __html: `
 (function() {
   var currentFilter = 'all';
+
+  function getCsrfToken() {
+    // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
+    // Server source of truth: src/infrastructure/csrf/cookies.ts
+    // Cookie name is 'csrf_token'; header name is 'X-CSRF-Token'.
+    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
   document.addEventListener('click', function(event) {
     var el = event.target;
     if (el.hasAttribute && el.hasAttribute('data-filter')) {
@@ -719,12 +728,18 @@ export default async function KitchenPage(): Promise<JSX.Element> {
     if (action === 'complete') {
       fetchPromise = fetch('/api/staff/orders/' + encodeURIComponent(orderId) + '/deliver', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken(),
+        }
       }).then(function(delivRes) {
         if (delivRes.ok || delivRes.status === 409) {
           return fetch('/api/staff/orders/' + encodeURIComponent(orderId) + '/complete', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': getCsrfToken(),
+            }
           });
         }
         return delivRes;
@@ -732,7 +747,10 @@ export default async function KitchenPage(): Promise<JSX.Element> {
     } else {
       fetchPromise = fetch('/api/kitchen/orders/' + encodeURIComponent(orderId) + '/' + action, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken(),
+        }
       });
     }
 

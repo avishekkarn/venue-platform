@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getCsrfToken } from "@/lib/csrf-client";
 
 interface RevokeDialogProps {
   readonly tokenId: string;
@@ -35,6 +36,7 @@ export function RevokeDialog({
     try {
       const response = await fetch(`/api/admin/qr/${tokenId}/revoke`, {
         method: "POST",
+        headers: { "X-CSRF-Token": getCsrfToken() },
       });
 
       const json: unknown = await response.json();

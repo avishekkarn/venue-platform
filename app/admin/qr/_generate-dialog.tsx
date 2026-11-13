@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getCsrfToken } from "@/lib/csrf-client";
 import type { PlacesByType } from "./_types";
 
 type PlaceTypeKey = "TABLE" | "ROOM" | "COUNTER";
@@ -66,7 +67,10 @@ export function GenerateDialog({
 
       const response = await fetch("/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": getCsrfToken(),
+        },
         body: JSON.stringify(payload),
       });
 
