@@ -175,6 +175,17 @@ Status: SUPERSEDED.
 
 *(Newest first. Each entry was moved here from §2 with the PROGRESS entry that proved it satisfied, per Rule 1.)*
 
+### W-0024 — DISCHARGED — Login is CSRF-protected but not audited (D-20.1 exception)
+
+- **Originated:** Phase 7.7.4 (PROGRESS ENTRY-0225 and ENTRY-0226).
+- **Obligation:** `POST /api/auth/login` must be CSRF-protected (it establishes the session, which is state) but must **not** be wrapped with `withAudit`, because the request arrives before any session exists to resolve an audit actor. The handler is `withCsrf(loginHandler)`; the wrapper is `withCsrf` only. This is the one exception to W-0021's "every state-changing route uses withAudit".
+- **Files and call site:** `app/api/auth/login/route.ts`, the `export const POST = withCsrf(loginHandler);` line.
+- **Satisfied by:** Task 7.7.4b (the route was wrapped), verified in Task 7.7.4d (Part A: the 25-route audit includes the login route; Part B: the browser check confirmed a login without the header 403s, and a login with the header succeeds).
+- **Depends on:** DECISIONS.md D-20.1, BUILD.md §7.4, SYSTEM.md §15.
+- **Verification:** PROGRESS ENTRY-0226 (Part B verification) and `tests/integration/api/csrf-25-route.test.ts` (the login route's 403 test).
+- **Status:** DISCHARGED
+- **Discharged by:** PROGRESS ENTRY-0226.
+
 ### W-0017 — DISCHARGED — Staff request queue UI
 
 - **Originated:** Task 7.5.14-pre (PROGRESS ENTRY-0218).

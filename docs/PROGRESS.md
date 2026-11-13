@@ -727,10 +727,10 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Milestone 7.7.4 (CSRF on all 25 state-changing routes) is implemented and automated-verified at afe922a (7.7.4d Part A). The 25-route audit test (tests/integration/api/csrf-25-route.test.ts) passes. Baselines: tsc 0, unit 273/273 (39 files), integration 300/300 (43 files), build 40 routes. Part B — the 11-flow manual mobile check — is the milestone gate and is deferred to the next session. After Part B passes, the milestone closes and Phase 7.7.5 (login rate limiting) begins.
+**Current status:** Milestone 7.7.4 (CSRF on all 25 state-changing routes) is **fully closed** at commit `084414c` ("Phase 7.7.4 closed: CSRF enforcement verified (Parts A, B, and 7.7.4c.D client/cookie wiring)"). The 25-route audit passes; the browser Part B check passed; the client sends `X-CSRF-Token` from the `csrf_token` cookie on every guest, staff, kitchen, and admin fetch. Baselines: tsc 0, unit 273/273 (39 files), integration 300/300 (43 files), build 40 routes. The next milestone is **Phase 7.7.5 — Login Rate Limiting** (tasks 7.7.5a → 7.7.5b → 7.7.5b verify → closure).
 
 **Key facts for a new session:**
-- 7.7.4's CSRF is live on all 25 state-changing routes. Every route has withCsrf. The composition on qr/generate is withAudit(resolvers, meta, withCsrf(routeHandler)) — audit-outer, CSRF-inner, so a 403 is audited. The login route is withCsrf(loginHandler) without withAudit (the D-20.1 exception). The client sends X-CSRF-Token from the csrf_token cookie in 9 fetch sites (c.C.PRE) and 1 join-script handleAction fetch. Part B (manual mobile check) is the pending gate.
+- 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
 - The backup and restore scripts live in `scripts/`; the operator manual is `scripts/README.md`; the operational spec is `docs/SYSTEM.md §18.5` (Phase 7.7.3). W-0022's script-half is satisfied; scheduling-half is Phase 10.6.1.
 - The `.ps1` scripts require PowerShell 7 (`pwsh`), not Windows PowerShell 5.1: PS5.1's pipeline exit-code propagation is unreliable, so a failed `pg_dump` piped into a successful `gzip` would exit zero under 5.1.
 - `gunzip` on Windows is a shell-script wrapper, not an `.exe`; use `gzip -d -c` / `gzip -dc` in pipelines (Phase 7.7.3.B's fix).
