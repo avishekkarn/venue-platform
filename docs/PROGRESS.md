@@ -134,14 +134,56 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0223 | 2026-11-12 | Milestone 7.7.2 closed: database security hardening | PASS | Milestone 7.7.2 | §5.3 |
 | ENTRY-0224 | 2026-11-13 | Milestone 7.7.3 closed: automated daily backups | PASS | Milestone 7.7.3 | §5.3 |
 | ENTRY-0225 | 2026-11-13 | Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (Part A; Part B deferred) | PASS | Milestone 7.7.4 | §5.3 |
+| ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
 
-Next entry number: 0226
+Next entry number: 0227
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0226 — 2026-11-13 — Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification (PASS)
+
+**Status:** PASS
+
+**Task:** Milestone 7.7.4 — CSRF protection. This entry records the completion of Part B (the manual mobile/browser check) and the resolution of the client-side bugs discovered during that check (7.7.4c.D.1 through D.4.FIX).
+
+**Summary:** CSRF protection is now fully verified end-to-end. The server correctly rejects all 25 state-changing routes without an X-CSRF-Token header (proven by the csrf-25-route.test.ts audit and per-route integration tests). The client correctly sends the header across all guest, staff, kitchen, and admin surfaces (proven by the user's manual testing and DevTools observation). The gap identified in Part B — where staff actions 403'd because the csrf_token cookie was missing or the client fetch omitted the header — was resolved by wiring the header into all 15 staff/kitchen/admin fetches, setting the cookie on the login response and middleware (using Edge-compatible crypto.randomUUID()), and removing the dead cookies().set() blocks from the login pages.
+
+**The resolution:**
+- 7.7.4c.D.1: QR occupied redirect sets the cookie.
+- 7.7.4c.D.2: Guest cart, join-request, and call fetches send the header.
+- 7.7.4c.D.3: Staff/kitchen/admin fetches send the header.
+- 7.7.4c.D.4: Login route and middleware set the cookie.
+- 7.7.4c.D.4.FIX: Middleware uses Web Crypto (crypto.randomUUID()) to avoid Edge node:crypto crashes.
+
+**Baselines:**
+- tsc --noEmit: 0 errors
+- test:unit: 39 files, 273/273
+- test:integration: 43 files, 300/300
+- build: 40 routes
+
+**Manual Verification (Part B):**
+- The guest can join a table/room and the host can approve.
+- The staff can approve/deliver/complete orders, and acknowledge/complete requests.
+- The kitchen can start/ready/complete tickets.
+- The admin can toggle menu items and generate/revoke QR codes.
+- The 25-route audit proves all routes return 403 without the header.
+- DevTools confirmed the client sends the matching csrf_token UUID in the X-CSRF-Token header.
+
+**Document Impact:**
+
+| Document | Affected? | Action |
+|---|---|---|
+| ROADMAP.md | Yes | 7.7.4d updated to ✅ |
+| PROGRESS.md | Yes | This entry |
+| WIRING.md | Yes | W-0024 discharged (login is CSRF-protected but not audited, verified in browser) |
+
+**Next:** Phase 7.7.5 — Login rate limiting.
+
+**Awaiting Human Verification:** NO
 
 ### ENTRY-0225 — 2026-11-13 — Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (PASS, Part A; Part B deferred)
 
