@@ -72,6 +72,10 @@ export function LoginForm(): JSX.Element {
     })
     .then(function(res) { return res.json().then(function(b) { return { ok: res.ok, body: b }; }); })
     .then(function(r) {
+      if (!r.ok && r.body && r.body.error && r.body.error.code === 'RATE_LIMITED') {
+        showError(r.body.error.message || 'Too many login attempts. Please try again later.');
+        return;
+      }
       if (!r.ok || !r.body || !r.body.data || !Array.isArray(r.body.data.allowedAreas)) {
         showError('Incorrect username or password.');
         return;

@@ -25,10 +25,12 @@ vi.mock("@/infrastructure/csrf/cookies", async () => {
 });
 
 import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
+import { resetRateLimiter } from "@/infrastructure/auth/rate-limiter";
 
 describe("POST /api/auth/login Route Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimiter();
   });
 
   afterEach(() => {
@@ -178,5 +180,170 @@ describe("POST /api/auth/login Route Integration Tests", () => {
     expect(json.error.code).toBe("FORBIDDEN");
     expect(json.error.message).toBe("CSRF token missing or invalid");
     expect(setSessionCookie).not.toHaveBeenCalled();
+  });
+
+  it("rate limit: 5 failed logins from the same IP, the 6th returns 429 RATE_LIMITED", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({
+        name: "Juniper House",
+        slug: venueSlug,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const hashedPassword = await hashPassword("password123");
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id,
+        name: "Rate Limit Staff",
+        username: "ratelimit1",
+        passwordHash: hashedPassword,
+        roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      setTestDbClient(tx);
+
+      vi.mocked(getCsrfCookie).mockResolvedValue("csrf-abc-123");
+
+      const makeReq = (password: string): NextRequest =>
+        new NextRequest("http://localhost/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "csrf-abc-123",
+            "x-forwarded-for": "203.0.113.42",
+          },
+          body: JSON.stringify({ username: "ratelimit1", password }),
+        });
+
+      for (let i = 0; i < 5; i++) {
+        const res = await POST(makeReq("wrong-password"));
+        expect(res.status).toBe(401);
+      }
+      const sixth = await POST(makeReq("wrong-password"));
+      expect(sixth.status).toBe(429);
+      const sixthBody = (await sixth.json()) as {
+        error?: { code?: string; message?: string };
+      };
+      expect(sixthBody.error?.code).toBe("RATE_LIMITED");
+      expect(typeof sixthBody.error?.message).toBe("string");
+      const message = sixthBody.error?.message ?? "";
+      expect(message).toContain("minute");
+      expect(/\d/.test(message)).toBe(true);
+    });
+  });
+
+  it("rate limit: a successful login clears the failed-attempt counter", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({
+        name: "Juniper House",
+        slug: venueSlug,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const hashedPassword = await hashPassword("password123");
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id,
+        name: "Rate Limit Staff 2",
+        username: "ratelimit2",
+        passwordHash: hashedPassword,
+        roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      setTestDbClient(tx);
+
+      vi.mocked(getCsrfCookie).mockResolvedValue("csrf-abc-123");
+
+      const makeReq = (password: string): NextRequest =>
+        new NextRequest("http://localhost/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "csrf-abc-123",
+            "x-forwarded-for": "203.0.113.43",
+          },
+          body: JSON.stringify({ username: "ratelimit2", password }),
+        });
+
+      // 4 failed attempts.
+      for (let i = 0; i < 4; i++) {
+        const res = await POST(makeReq("wrong-password"));
+        expect(res.status).toBe(401);
+      }
+      // A successful login clears the bucket.
+      const success = await POST(makeReq("password123"));
+      expect(success.status).toBe(200);
+      // 5 more failed attempts after the success: all 401, not 429.
+      for (let i = 0; i < 5; i++) {
+        const res = await POST(makeReq("wrong-password"));
+        expect(res.status).toBe(401);
+      }
+    });
+  });
+
+  it("rate limit: a 400 VALIDATION_FAILED does not count against the limit", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({
+        name: "Juniper House",
+        slug: venueSlug,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const hashedPassword = await hashPassword("password123");
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id,
+        name: "Rate Limit Staff 3",
+        username: "ratelimit3",
+        passwordHash: hashedPassword,
+        roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      setTestDbClient(tx);
+
+      vi.mocked(getCsrfCookie).mockResolvedValue("csrf-abc-123");
+
+      const makeBadBody = (): NextRequest =>
+        new NextRequest("http://localhost/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "csrf-abc-123",
+            "x-forwarded-for": "203.0.113.44",
+          },
+          body: JSON.stringify({ username: "ratelimit3" }),
+        });
+
+      // 10 requests with a missing password field: each 400, none counts.
+      for (let i = 0; i < 10; i++) {
+        const res = await POST(makeBadBody());
+        expect(res.status).toBe(400);
+      }
+      // The limiter is still at 0 for this IP; a 401 is reachable, not a 429.
+      const makeWrongPassword = (): NextRequest =>
+        new NextRequest("http://localhost/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "csrf-abc-123",
+            "x-forwarded-for": "203.0.113.44",
+          },
+          body: JSON.stringify({ username: "ratelimit3", password: "wrong" }),
+        });
+      const first = await POST(makeWrongPassword());
+      expect(first.status).toBe(401);
+    });
   });
 });

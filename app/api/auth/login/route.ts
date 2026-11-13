@@ -18,6 +18,11 @@ import {
   CSRF_MAX_AGE_SECONDS,
 } from "@/infrastructure/csrf/cookies";
 import { generateCsrfToken } from "@/infrastructure/csrf/token";
+import {
+  checkRateLimit,
+  recordFailedAttempt,
+  clearFailedAttempts,
+} from "@/infrastructure/auth/rate-limiter";
 import type { AuditedRouteHandler } from "@/infrastructure/audit/with-audit";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -67,6 +72,29 @@ const loginHandler: AuditedRouteHandler = async (
   request: NextRequest
 ): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
+
+  // 0. Rate limit (Phase 7.7.5b). Runs INSIDE withCsrf — a request
+  //    without a CSRF token is rejected at 403 before this point, so
+  //    the limiter only sees requests that already passed the CSRF
+  //    check. The limiter counts failed credential attempts only; a
+  //    successful login clears the counter.
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ip = forwarded
+    ? forwarded.split(",")[0]?.trim() || "unknown"
+    : request.headers.get("x-real-ip") ?? "unknown";
+  const rateCheck = checkRateLimit(ip);
+  if (!rateCheck.allowed) {
+    const retryMinutes = Math.max(1, Math.ceil(rateCheck.retryAfterMs / 60000));
+    return NextResponse.json(
+      {
+        error: {
+          code: DomainErrorCode.RATE_LIMITED,
+          message: `Too many login attempts. Try again in ${retryMinutes} minute${retryMinutes === 1 ? "" : "s"}.`,
+        },
+      },
+      { status: 429 }
+    );
+  }
 
   // 1. Parse and validate body
   let body: unknown;
@@ -127,6 +155,9 @@ const loginHandler: AuditedRouteHandler = async (
 
   // 4. Map failure
   if (!result.ok) {
+    if (result.error.code === DomainErrorCode.UNAUTHORIZED) {
+      recordFailedAttempt(ip);
+    }
     const status =
       result.error.code === DomainErrorCode.UNAUTHORIZED
         ? 401
@@ -141,6 +172,7 @@ const loginHandler: AuditedRouteHandler = async (
 
   // 5. Set cookie
   await setSessionCookie(result.value.sessionToken);
+  clearFailedAttempts(ip);
 
   // 6. Compute allowedAreas
   const allowedAreas = ALL_AREAS.filter((area) =>
