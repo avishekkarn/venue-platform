@@ -17,7 +17,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 describe("POST /api/admin/qr/generate Integration Tests", () => {
   let auditDir: string;
@@ -76,10 +87,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
           tableId: table.id,
@@ -143,10 +155,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "ROOM",
           roomId: room.id,
@@ -202,10 +215,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "COUNTER",
           counterId: counter.id,
@@ -255,10 +269,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "INVALID",
           tableId: "some-id",
@@ -301,10 +316,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
           roomId: "some-room-id",
@@ -347,10 +363,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
         }),
@@ -392,10 +409,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: "{invalid",
       });
 
@@ -413,10 +431,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
       setTestDbClient(tx);
 
       vi.mocked(getSessionCookie).mockResolvedValue(null);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
           tableId: "some-id",
@@ -437,10 +456,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
       setTestDbClient(tx);
 
       vi.mocked(getSessionCookie).mockResolvedValue("non-existent-session-token");
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
           tableId: "some-id",
@@ -487,10 +507,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
           tableId: "some-id",
@@ -534,10 +555,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           placeType: "TABLE",
           tableId: "some-id",
@@ -596,10 +618,11 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost/api/admin/qr/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
         body: JSON.stringify({
           venueId: otherVenueResult.value.id, // Attacker attempts to forge venueId
           placeType: "TABLE",
@@ -658,12 +681,13 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
 
         const session = await createSession(tx, staffResult.value.id);
         vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
         const request = new NextRequest(
           "http://localhost/api/admin/qr/generate",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
             body: JSON.stringify({
               placeType: "TABLE",
               tableId: table.id,
@@ -699,6 +723,93 @@ describe("POST /api/admin/qr/generate Integration Tests", () => {
         expect(parsed.route).toBe("/api/admin/qr/generate");
         expect(parsed.method).toBe("POST");
         expect(parsed.status).toBe(201);
+      } finally {
+        delete process.env["AUDIT_LOG_DIR"];
+        if (existsSync(auditDir)) {
+          rmSync(auditDir, { recursive: true, force: true });
+        }
+      }
+    });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN and logs the 403 to the audit trail (CSRF enforcement + withAudit composition)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      // Fresh audit dir so no other test's lines can pollute this assertion.
+      const auditDir = mkdtempSync(join(tmpdir(), "audit-csrf-reject-test-"));
+      process.env["AUDIT_LOG_DIR"] = auditDir;
+      try {
+        const venueRepo = createPrismaVenueRepository(tx);
+        const staffRepo = createPrismaStaffRepository(tx);
+        const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+        const venueResult = await venueRepo.create({
+          name: "Juniper House",
+          slug: venueSlug,
+          taxRate: "0.0825",
+        });
+        expect(venueResult.ok).toBe(true);
+        if (!venueResult.ok) return;
+
+        const staffResult = await staffRepo.create({
+          venueId: venueResult.value.id,
+          name: "Alice Manager",
+          username: "alice_csrf_reject_qr_gen",
+          passwordHash: await hashPassword("password123"),
+          roles: [StaffRole.MANAGER],
+        });
+        expect(staffResult.ok).toBe(true);
+        if (!staffResult.ok) return;
+
+        const session = await createSession(tx, staffResult.value.id);
+        vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+        vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+        // POST without the X-CSRF-Token header.
+        const request = new NextRequest(
+          "http://localhost/api/admin/qr/generate",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              placeType: "TABLE",
+              tableId: "some-table-id",
+            }),
+          }
+        );
+
+        const response = await POST(request);
+        expect(response.status).toBe(403);
+        const json = await response.json();
+        expect(json.error.code).toBe("FORBIDDEN");
+        expect(json.error.message).toBe("CSRF token missing or invalid");
+
+        // Prove the composition order: withAudit sees the 403 and logs it.
+        const today = new Date();
+        const stamp =
+          `${today.getUTCFullYear()}` +
+          `-${String(today.getUTCMonth() + 1).padStart(2, "0")}` +
+          `-${String(today.getUTCDate()).padStart(2, "0")}`;
+        const auditFile = join(auditDir, `${stamp}.jsonl`);
+        expect(existsSync(auditFile)).toBe(true);
+
+        const lines = readFileSync(auditFile, "utf8")
+          .split("\n")
+          .filter((l) => l.length > 0);
+        expect(lines).toHaveLength(1);
+        const parsed = JSON.parse(lines[0] as string) as {
+          route: string;
+          method: string;
+          status: number;
+          actorType: string;
+          actorId: string | null;
+        };
+        expect(parsed.route).toBe("/api/admin/qr/generate");
+        expect(parsed.method).toBe("POST");
+        expect(parsed.status).toBe(403);
+        expect(parsed.actorType).toBe("staff");
+        expect(parsed.actorId).toBe(staffResult.value.id);
       } finally {
         delete process.env["AUDIT_LOG_DIR"];
         if (existsSync(auditDir)) {

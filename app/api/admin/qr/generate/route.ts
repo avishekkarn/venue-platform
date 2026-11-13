@@ -17,6 +17,7 @@ import {
   type AuditMeta,
 } from "@/infrastructure/audit/with-audit";
 import type { ActorResolvers } from "@/infrastructure/audit/logger";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -248,4 +249,4 @@ const resolvers: ActorResolvers = {
   },
 };
 
-export const POST = withAudit(resolvers, meta, routeHandler);
+export const POST = withAudit(resolvers, meta, withCsrf(routeHandler));

@@ -23,8 +23,19 @@ vi.mock("@/infrastructure/guest/cookies", () => ({
   clearGuestCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 describe("GET /api/admin/audit/export Integration Tests", () => {
   let auditDir: string;
@@ -34,6 +45,7 @@ describe("GET /api/admin/audit/export Integration Tests", () => {
     auditDir = mkdtempSync(join(tmpdir(), "audit-export-test-"));
     process.env["AUDIT_LOG_DIR"] = auditDir;
     vi.mocked(getGuestCookie).mockResolvedValue(null);
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
   });
 
   afterEach(() => {
@@ -290,7 +302,10 @@ describe("GET /api/admin/audit/export Integration Tests", () => {
           "http://localhost/api/admin/qr/generate",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": "test-csrf-token",
+            },
             body: JSON.stringify({
               placeType: "TABLE",
               tableId: table.id,
@@ -388,7 +403,10 @@ describe("GET /api/admin/audit/export Integration Tests", () => {
           "http://localhost/api/admin/qr/generate",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": "test-csrf-token",
+            },
             body: JSON.stringify({ placeType: "TABLE", tableId: "dummy-table-id" }),
           }
         );

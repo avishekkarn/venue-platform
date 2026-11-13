@@ -13,6 +13,7 @@ import { revokeToken } from "@/domain/qr/revoke-token";
 import { invalidateSessionsForPlace } from "@/domain/guest/guest-session.service";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -25,10 +26,10 @@ export function setTestDbClient(client: DbClient | null): void {
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function POST(
+const postHandler = async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Session check
@@ -173,4 +174,6 @@ export async function POST(
     },
     { status: 200 }
   );
-}
+};
+
+export const POST = withCsrf(postHandler);

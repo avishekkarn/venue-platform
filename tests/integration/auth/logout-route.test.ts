@@ -15,6 +15,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
+
 describe("POST /api/auth/logout Route Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,9 +63,11 @@ describe("POST /api/auth/logout Route Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost:3000/api/auth/logout", {
         method: "POST",
+        headers: { "X-CSRF-Token": "test-csrf-token" },
       });
 
       setTestDbClient(tx);
@@ -74,9 +88,11 @@ describe("POST /api/auth/logout Route Integration Tests", () => {
 
   it("handles request with no cookie: clears cookie and returns success (200)", async () => {
     vi.mocked(getSessionCookie).mockResolvedValue(null);
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
     const request = new NextRequest("http://localhost:3000/api/auth/logout", {
       method: "POST",
+      headers: { "X-CSRF-Token": "test-csrf-token" },
     });
 
     const response = await POST(request);
@@ -90,9 +106,11 @@ describe("POST /api/auth/logout Route Integration Tests", () => {
   it("handles request with invalid token: clears cookie and returns success (200)", async () => {
     await withTransaction(async (tx) => {
       vi.mocked(getSessionCookie).mockResolvedValue("non-existent-token-12345");
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest("http://localhost:3000/api/auth/logout", {
         method: "POST",
+        headers: { "X-CSRF-Token": "test-csrf-token" },
       });
 
       setTestDbClient(tx);
@@ -103,5 +121,21 @@ describe("POST /api/auth/logout Route Integration Tests", () => {
       expect(json).toEqual({ data: { success: true } });
       expect(clearSessionCookie).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    vi.mocked(getSessionCookie).mockResolvedValue("any-token");
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+    const request = new NextRequest("http://localhost:3000/api/auth/logout", {
+      method: "POST",
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(403);
+    const json = await response.json();
+    expect(json.error.code).toBe("FORBIDDEN");
+    expect(json.error.message).toBe("CSRF token missing or invalid");
+    expect(clearSessionCookie).not.toHaveBeenCalled();
   });
 });

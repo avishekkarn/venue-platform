@@ -10,6 +10,7 @@ import { canAccess } from "@/domain/auth/can-access";
 import { StaffState } from "@/domain/auth/staff.repository";
 import { markOrderReady } from "@/domain/orders/actions";
 import { DomainErrorCode } from "@/domain/shared/result";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -22,10 +23,10 @@ export function setTestDbClient(client: DbClient | null): void {
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function POST(
+const postHandler = async (
   _request: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Session check: active staff session cookie
@@ -121,5 +122,7 @@ export async function POST(
   }
 
   return NextResponse.json({ data: result.value }, { status: 200 });
-}
+};
+
+export const POST = withCsrf(postHandler);
 

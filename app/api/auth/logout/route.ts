@@ -4,6 +4,7 @@ import { prisma } from "@/infrastructure/db/client";
 import { logout } from "@/domain/auth/logout";
 import { getSessionCookie, clearSessionCookie } from "@/infrastructure/auth/cookies";
 import { deleteSession, validateSession } from "@/infrastructure/auth/session";
+import { withCsrf } from "@/infrastructure/csrf/with-csrf";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -13,9 +14,9 @@ export function setTestDbClient(client: DbClient | null): void {
   testDbClient = client;
 }
 
-export async function POST(
+const postHandler = async (
   _request: NextRequest
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const db = testDbClient ?? prisma;
 
   // 1. Read cookie
@@ -45,4 +46,6 @@ export async function POST(
 
   // 4. Return success envelope
   return NextResponse.json({ data: { success: true } }, { status: 200 });
-}
+};
+
+export const POST = withCsrf(postHandler);

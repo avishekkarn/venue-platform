@@ -14,7 +14,18 @@ vi.mock("@/infrastructure/auth/cookies", () => ({
   clearSessionCookie: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/csrf/cookies", async () => {
+  const actual = await vi.importActual<typeof import("@/infrastructure/csrf/cookies")>(
+    "@/infrastructure/csrf/cookies"
+  );
+  return {
+    ...actual,
+    getCsrfCookie: vi.fn(),
+  };
+});
+
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
+import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 
 describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
   beforeEach(() => {
@@ -69,10 +80,14 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${qrToken.id}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -148,10 +163,14 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const sessionA = await createSession(tx, staffA.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(sessionA.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${tokenB.id}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -200,10 +219,14 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest(
         "http://localhost/api/admin/qr/not-a-uuid/revoke",
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -245,11 +268,15 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const unknownId = "11111111-2222-3333-4444-555555555555";
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${unknownId}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -308,10 +335,14 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${qrToken.id}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -330,11 +361,15 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
       setTestDbClient(tx);
 
       vi.mocked(getSessionCookie).mockResolvedValue(null);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const someId = "11111111-2222-3333-4444-555555555555";
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${someId}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -353,11 +388,15 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
       setTestDbClient(tx);
 
       vi.mocked(getSessionCookie).mockResolvedValue("non-existent-session-token");
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const someId = "11111111-2222-3333-4444-555555555555";
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${someId}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -406,11 +445,15 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const someId = "11111111-2222-3333-4444-555555555555";
       const request = new NextRequest(
         `http://localhost/api/admin/qr/${someId}/revoke`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
       );
 
       const response = await POST(request, {
@@ -452,6 +495,33 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
 
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+      const someId = "11111111-2222-3333-4444-555555555555";
+      const request = new NextRequest(
+        `http://localhost/api/admin/qr/${someId}/revoke`,
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": "test-csrf-token" },
+        }
+      );
+
+      const response = await POST(request, {
+        params: Promise.resolve({ id: someId }),
+      });
+      expect(response.status).toBe(403);
+
+      const json = await response.json();
+      expect(json.error.code).toBe("FORBIDDEN");
+      expect(json.error.message).toBe("Insufficient permissions");
+    });
+  });
+
+  it("rejects POST without X-CSRF-Token header with 403 FORBIDDEN (CSRF enforcement)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      vi.mocked(getSessionCookie).mockResolvedValue("any-token");
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
 
       const someId = "11111111-2222-3333-4444-555555555555";
       const request = new NextRequest(
@@ -463,10 +533,9 @@ describe("POST /api/admin/qr/[id]/revoke Integration Tests", () => {
         params: Promise.resolve({ id: someId }),
       });
       expect(response.status).toBe(403);
-
       const json = await response.json();
       expect(json.error.code).toBe("FORBIDDEN");
-      expect(json.error.message).toBe("Insufficient permissions");
+      expect(json.error.message).toBe("CSRF token missing or invalid");
     });
   });
 });
