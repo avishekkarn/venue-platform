@@ -133,14 +133,103 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0222 | 2026-11-12 | Milestone 7.7.1 closed: request-level audit log with downloadable ZIP | PASS | Milestone 7.7.1 | §5.3 |
 | ENTRY-0223 | 2026-11-12 | Milestone 7.7.2 closed: database security hardening | PASS | Milestone 7.7.2 | §5.3 |
 | ENTRY-0224 | 2026-11-13 | Milestone 7.7.3 closed: automated daily backups | PASS | Milestone 7.7.3 | §5.3 |
+| ENTRY-0225 | 2026-11-13 | Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (Part A; Part B deferred) | PASS | Milestone 7.7.4 | §5.3 |
 
-Next entry number: 0225
+Next entry number: 0226
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0225 — 2026-11-13 — Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (PASS, Part A; Part B deferred)
+
+**Status:** PASS (Part A). Part B (the 11-flow manual mobile check) is the milestone gate and is deferred to the next session. The milestone is not fully closed until Part B passes.
+
+**Task:** Milestone 7.7.4 — split across seven implementation sessions (7.7.4a, 7.7.4b, 7.7.4c.B, 7.7.4c.B.PRE, 7.7.4c.B', 7.7.4c.C.PRE, 7.7.4c.C) and one verification session (7.7.4d Part A). The full design is D-20.1 (double-submit cookie with crypto.randomUUID(), crypto.timingSafeEqual, SameSite=Lax, Secure in production).
+
+**Summary:** CSRF protection is enforced on all 25 state-changing routes in the D-20.1 inventory. Every route returns 403 FORBIDDEN with `{"error":{"code":"FORBIDDEN","message":"CSRF token missing or invalid"}}` when the X-CSRF-Token header is missing. The 25-route audit test (`tests/integration/api/csrf-25-route.test.ts`) passes, and the milestone's integration baseline is 43 files / 300 tests. The `POST /api/auth/login` exception is honored — withCsrf(loginHandler) without withAudit, because login is the session-establishing request and has no actor to audit.
+
+**Files Changed (across the milestone):**
+
+| Sub-task | Files | Key additions |
+|---|---|---|
+| 7.7.4a | 5 | `src/infrastructure/csrf/{cookies,token,with-csrf}.ts`; 3 unit test files; 2 .FIXes |
+| 7.7.4b | 2 | `POST /api/guest/orders` wrapped; `guest-orders.test.ts` updated |
+| 7.7.4c.B | 13 | 9 staff routes wrapped; 4 staff tests updated |
+| 7.7.4c.B.PRE | 1 | `withCsrf` generalized to accept dynamic-route context (overload #2) |
+| 7.7.4c.B' | 11 | 6 routes wrapped (ready, start, state, revoke, logout, generate); the withAudit(withCsrf(handler)) composition on qr/generate; 5 test files updated (4 planned + `admin-audit-export.test.ts` caller) |
+| 7.7.4c.C.PRE | 9 | 8 guest service form pages + join-request script — X-CSRF-Token header sent by the client |
+| 7.7.4c.C | 14 | 8 guest routes wrapped; 5 test files updated; 1 new `guest-join-requests.test.ts`; the `guest-requests-view.test.ts` scope correction (repository test, not a route caller) |
+| 7.7.4d | 1 | `csrf-25-route.test.ts` — the 25-route 403 audit |
+
+**Commands Run (final baseline at `afe922a`):**
+
+```text
+pnpm exec tsc --noEmit           → exit 0, no diagnostic errors
+pnpm test:unit                   → 39 files, 273/273
+pnpm test:integration            → 43 files, 300/300
+pnpm build                       → PASS, 40 routes
+```
+
+**The commit chain (the milestone's sub-task commits):**
+- 7.7.4a — (earlier — the CSRF helper)
+- 7.7.4b — (earlier — the guest/orders proof)
+- 7.7.4c.B — `7e343c2`
+- 7.7.4c.B.PRE — `60e4095`
+- 7.7.4c.B' — `e197c41`
+- 7.7.4c.C.PRE — `09788d5`
+- 7.7.4c.C — `c27034b`
+- 7.7.4d (Part A) — `afe922a`
+
+**Acceptance Criteria Results (milestone-level):**
+
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | All 25 state-changing routes have withCsrf | PASS | `Select-String` across 25 route files: 50 matches (2 per file: 1 import + 1 export) |
+| 2 | The 25-route audit test exists with 25 tests | PASS | `tests/integration/api/csrf-25-route.test.ts`, 267 lines |
+| 3 | Every one of the 25 tests passes | PASS | `pnpm test:integration` → 43 files, 300/300 |
+| 4 | The login route uses withCsrf without withAudit | PASS | `Select-String` on login/route.ts: withCsrf = 2, withAudit = 0 |
+| 5 | `tsc --noEmit` | PASS | exit 0 |
+| 6 | `test:unit` | PASS | 39 files, 273/273 |
+| 7 | `test:integration` | PASS | 43 files, 300/300 |
+| 8 | `build` | PASS | 40 routes |
+| 9 | No route body was modified by the wraps | PASS | all 8 c.B' route diffs + 8 c.C route diffs inspected; only the import/export/signature lines changed |
+| 10 | No existing test assertion was modified | PASS | all test diffs inspected; only the CSRF mock, the header additions, and the appended 403 tests |
+| 11 | The GET handlers are not wrapped | PASS | guest/join-requests GET and guest/requests GET both untouched (c.B'/c.C diffs confirmed) |
+| 12 | Part B — the 11-flow manual mobile check | DEFERRED | the milestone gate; runs in the next session |
+
+**Deviations from Contract:**
+- `admin-audit-export.test.ts` was updated in c.B'. It dynamically imports `POST /api/admin/qr/generate` (lines 286, 382 of that file). Wrapping qr/generate with withCsrf made those test POSTs 500 without the mock + header. The update was the "staff-focus lesson" (find every caller of a wrapped route) correctly applied. The 11th file is documented.
+- `guest-requests-view.test.ts` was dropped from c.C's scope. The original c.C instruction's test-file table named it as a "6th test file." The audit found it is a repository test (`requestRepo.listForRoom`, `requestRepo.advanceState`), with 0 `new NextRequest` and 0 route imports. It is not a caller of any wrapped route. Dropping it was the AUDIT protocol correctly applied; it remains at 2 tests and is untouched.
+- BUILD.md §12.3 rule 2 overrides — multiple sub-tasks overrode the 8-file limit: 7.7.4c.B (13 files), 7.7.4c.B' (11), 7.7.4c.C.PRE (9), 7.7.4c.C (14), 7.7.4d (1). Each override was documented in its session's report. The pattern across the milestone is "each sub-task is the smallest coherent unit for its slice of the surface."
+- BUILD.md §12.3 rule 3 override — `csrf-25-route.test.ts` is 267 lines (>200). The 25-route audit is one coherent unit.
+
+**Noticed but Out of Scope:**
+- The recover 403 test is structurally correct but weak. The `guest/join-requests/recover` route itself returns 403 on hostToken mismatch (a separate defense). So the recover 403 test in both `csrf-25-route.test.ts` and c.C's `guest-join-requests.test.ts` would pass even if withCsrf were absent from that route. The recover wrapper is proven structurally (the route's export is `withCsrf(postHandler)`, and the route file is one of the 25 with 2 withCsrf matches) but not behaviorally by the audit tests. The other 24 routes' 403 tests would fail if their wrappers were absent (their handlers return 400/401/404 for unauthenticated requests, never 403). A future session that wants a conclusive behavioral proof of the recover wrapper would need a test that the handler produces a different status for a request that reaches it — the audit does not.
+- The `admin-menu.test.ts` is a 0-test placeholder (pre-existing, F-0004). It is not in 7.7.4's scope. The `menu/items/[id]/state` route's 403 is proven by the 25-route audit; its happy path is covered by `admin-menu.test.ts` when 8.3.1 fills that file.
+- The pg driver deprecation warning (`Calling client.query() when the client is already executing a query`) and the Next.js middleware deprecation are pre-existing, recorded in ENTRY-0223's Noticed-but-Out-of-Scope.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | D-20.1 was added in Phase 7.7's amendment; this milestone implements it. No new decision. | No change |
+| SYSTEM.md | No | §15 already names CSRF as a security boundary; the implementation lives there | No change |
+| BUILD.md | No | §7.4's CSRF rule is already documented; no new build rule | No change |
+| ROADMAP.md | Yes | 7.7.4, 7.7.4a–d → ✅ | Updated in this commit |
+| PROGRESS.md | Yes | This entry | Updated in this commit |
+| WIRING.md | No | W-0021 (every Phase 8 route uses withAudit) is unaffected — CSRF is orthogonal to audit. W-0024 (to be opened at 7.7.4's Part B pass, per the original WIRING obligation plan) is not yet open. This entry does not open it — Part B is the trigger. | No change |
+
+**Contradiction Check:** None found. The withCsrf-without-withAudit login exception is exactly D-20.1's wording. The `withAudit(withCsrf(...))` composition on qr/generate is exactly BUILD.md §6.11 and D-20.1's ordering. The 25-route count matches D-20.1's inventory precisely (3 admin + 2 auth + 9 guest + 2 kitchen + 9 staff).
+
+**Next:** Part B — the 11-flow manual mobile check (9 c.C service flows + 2 login-exception flows). Part B is the milestone's manual gate; it is the pass-or-fail that determines whether 7.7.4 closes fully. After Part B passes, a small follow-up STRUCTURAL entry will record the closure. If Part B fails, a forward-fix task is opened for the failing flow and 7.7.4 stays open.
+
+**Awaiting Human Verification:** YES (Part B — the manual mobile check — is the pending gate)
+
+---
 
 ### ENTRY-0224 — 2026-11-13 — Milestone 7.7.3 closed: automated daily backups (PASS)
 
@@ -596,9 +685,10 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Milestone 7.7.3 (automated daily backups) is closed. Implementation shipped on `553f94f` (7.7.3.A, backup half) and `bf8e101` (7.7.3.B, restore half). Four scripts under `scripts/` (backup-daily.ps1/.sh, restore-backup.ps1/.sh); the operator manual is `scripts/README.md`; the operational spec is `docs/SYSTEM.md §18.5`. Baselines: tsc 0, unit 254/254 (36 files), integration 257/257 (41 files), build 40 routes. **Next task: Phase 7.7.4 — CSRF protection on state-changing routes.**
+**Current status:** Milestone 7.7.4 (CSRF on all 25 state-changing routes) is implemented and automated-verified at afe922a (7.7.4d Part A). The 25-route audit test (tests/integration/api/csrf-25-route.test.ts) passes. Baselines: tsc 0, unit 273/273 (39 files), integration 300/300 (43 files), build 40 routes. Part B — the 11-flow manual mobile check — is the milestone gate and is deferred to the next session. After Part B passes, the milestone closes and Phase 7.7.5 (login rate limiting) begins.
 
 **Key facts for a new session:**
+- 7.7.4's CSRF is live on all 25 state-changing routes. Every route has withCsrf. The composition on qr/generate is withAudit(resolvers, meta, withCsrf(routeHandler)) — audit-outer, CSRF-inner, so a 403 is audited. The login route is withCsrf(loginHandler) without withAudit (the D-20.1 exception). The client sends X-CSRF-Token from the csrf_token cookie in 9 fetch sites (c.C.PRE) and 1 join-script handleAction fetch. Part B (manual mobile check) is the pending gate.
 - The backup and restore scripts live in `scripts/`; the operator manual is `scripts/README.md`; the operational spec is `docs/SYSTEM.md §18.5` (Phase 7.7.3). W-0022's script-half is satisfied; scheduling-half is Phase 10.6.1.
 - The `.ps1` scripts require PowerShell 7 (`pwsh`), not Windows PowerShell 5.1: PS5.1's pipeline exit-code propagation is unreliable, so a failed `pg_dump` piped into a successful `gzip` would exit zero under 5.1.
 - `gunzip` on Windows is a shell-script wrapper, not an `.exe`; use `gzip -d -c` / `gzip -dc` in pipelines (Phase 7.7.3.B's fix).

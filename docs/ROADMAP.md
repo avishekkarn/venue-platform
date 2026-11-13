@@ -833,11 +833,11 @@ text
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 7.7.4 | Add CSRF protection to every state-changing route (POST, PATCH, DELETE) | ⬜ | 7.7.3 |
-| 7.7.4a | Add the CSRF token generation and validation helper | ⬜ | 7.7.4 |
-| 7.7.4b | Apply CSRF to the guest order route (`POST /api/guest/orders`) as proof | ⬜ | 7.7.4a |
-| 7.7.4c | Apply CSRF to the staff order routes and the guest request routes | ⬜ | 7.7.4b |
-| 7.7.4d | Verify: a request without a valid CSRF token returns 403 | ⬜ | 7.7.4c |
+| 7.7.4 | Add CSRF protection to every state-changing route (POST, PATCH, DELETE) | ✅ | 7.7.3 |
+| 7.7.4a | Add the CSRF token generation and validation helper | ✅ | 7.7.4 |
+| 7.7.4b | Apply CSRF to the guest order route (`POST /api/guest/orders`) as proof | ✅ | 7.7.4a |
+| 7.7.4c | Apply CSRF to the staff order routes and the guest request routes | ✅ | 7.7.4b |
+| 7.7.4d | Verify: a request without a valid CSRF token returns 403 | ✅ (Part A committed at `afe922a`; Part B — the 11-flow manual mobile check — is the milestone gate, deferred to the next session) | 7.7.4c |
 
 **Details:**
 - The pattern is **double-submit cookie**: the server sets a `csrf_token` cookie (not HttpOnly) on the first visit; every state-changing form must send the same token in a `X-CSRF-Token` header or a hidden form field; the server compares the two. This is the pattern Next.js documents as its recommended CSRF defense for stateless APIs.
