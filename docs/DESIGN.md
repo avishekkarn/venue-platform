@@ -1449,7 +1449,7 @@ An admin's day on this screen looks like:
 
 ### 4.10.5 The Dashboard
 
-- Top row: five `MetricTile`s — Orders Waiting, In Kitchen, Ready, Revenue Today, Orders Today.
+- Top row: six `MetricTile`s — Orders Waiting, In Kitchen, Ready, Revenue Today, Orders Today, Service Requests Open.
 - Below: two columns. Left column: recent active orders (5 rows from `OrderQueueRow`). Right column: recent service requests (5 rows from `RequestQueueRow`).
 - Below that: a compact "Menu item status" section with the toggle-per-item design described in §4.10.2.
 

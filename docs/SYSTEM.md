@@ -764,6 +764,7 @@ The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, 
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| GET | `/api/admin/dashboard` | Read the venue's six live dashboard metrics: `{ ordersWaiting, inKitchen, ready, revenueToday, ordersToday, requestsOpen }` |
 | GET, POST, PATCH, DELETE | `/api/admin/menu/categories` | Manage categories |
 | GET, POST, PATCH, DELETE | `/api/admin/menu/items` | Manage menu items |
 | POST | `/api/admin/menu/items/[id]/state` | Change a menu item's state |
