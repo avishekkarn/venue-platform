@@ -137,14 +137,43 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
 | ENTRY-0228 | 2026-11-15 | D-9.7 superseded: the admin shell carries the single sign-out | STRUCTURAL | Milestone 8.1 | §5.3 |
+| ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0229
+Next entry number: 0230
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0229 — 2026-11-15 — 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page)
+
+**Status:** STRUCTURAL
+
+**Task:** Phase 8.1.3 (Add the dashboard page) was split into two tasks: 8.1.3.A (Build shared `TableMapCell` and `RoomMapCell`; rewire `/staff` to use them) and 8.1.3.B (Add the dashboard page).
+
+**Summary:** The staff dashboard's table and room maps are currently inline JSX in `app/staff/page.tsx` — the `<TableCard>` and `<RoomCard>` components are defined in that file, and the polling script's `tableCardHtml` and `roomCardHtml` string renderers produce the same markup on the client side. The reserved `TableMapCell` and `RoomMapCell` stubs (`src/components/staff/table-map-cell.tsx`, `src/components/staff/room-map-cell.tsx`) were never populated. The dashboard page (8.1.3) needs the maps too. Rather than duplicate the cell markup in the dashboard, the two reserved stubs are populated with components that mirror the inline `<TableCard>` / `<RoomCard>` exactly (same props, same data attributes, same badges, same buttons, same `data-action` shape). The `/staff` page's inline components are replaced by the shared cells; the polling script's string renderers are unchanged (they produce identical markup). The dashboard page (8.1.3.B) then renders the shared cells in a `<TableMapCell>` / `<RoomMapCell>` grid without duplicating the markup.
+
+**Why this is a separate task, not a sub-edit of 8.1.3:** BUILD.md §12.3 rule 6 forbids combining a structural refactor (extracting the shared components) with a behavioural change (adding the dashboard page). The two are distinct concerns: 8.1.3.A is "move the cells to shared components and prove `/staff` still works"; 8.1.3.B is "build the dashboard page that uses them." The `/staff` rewire is the risk point — it must not break the live, polling map. Separating it isolates that risk from the dashboard's page changes.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change; the shared-cell pattern is an implementation detail | No change |
+| SYSTEM.md | No | No shape change | No change |
+| BUILD.md | No | No method change | No change |
+| ROADMAP.md | Yes | 8.1.3 → 8.1.3.A + 8.1.3.B; 8.1.4's dependency updated | Updated in this commit |
+| PROGRESS.md | Yes | This entry + §5.2 ledger row | Updated in this commit |
+| WIRING.md | No | No obligation created or discharged | No change |
+
+**Contradiction Check:** None found. The shared cells use the same markup as the inline components; the `/staff` behavior is unchanged; the dashboard page (8.1.3.B) will use them.
+
+**Next:** Phase 8.1.3.B — Add the dashboard page.
+
+**Awaiting Human Verification:** YES
 
 ### ENTRY-0228 — 2026-11-15 — D-9.7 superseded: the admin shell carries the single sign-out
 

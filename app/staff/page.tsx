@@ -18,6 +18,8 @@ import {
 import { type Table } from "@/domain/organization/table.repository";
 import { type Room } from "@/domain/organization/room.repository";
 import { RequestQueueRow, SERVICE_LABELS } from "@/components/staff/request-queue-row";
+import { TableMapCell } from "@/components/staff/table-map-cell";
+import { RoomMapCell } from "@/components/staff/room-map-cell";
 import { LogoutButton } from "./_logout-button";
 
 interface EnrichedOrder extends Order {
@@ -155,105 +157,6 @@ function OrderRow({ order }: { order: EnrichedOrder }): JSX.Element {
   );
 }
 
-function TableCard({
-  table,
-  isOccupied,
-  canClose = true,
-}: {
-  table: Table;
-  isOccupied: boolean;
-  canClose?: boolean;
-}): JSX.Element {
-  return (
-    <article
-      data-table-id={table.id}
-      data-table-number={table.number}
-      data-table-status={isOccupied ? "OCCUPIED" : "FREE"}
-      className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div className="text-[28px] font-bold">{table.number}</div>
-          <div className="text-[11px] uppercase text-staff-text-muted">Table</div>
-        </div>
-        {isOccupied ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-            Occupied
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-            Free
-          </span>
-        )}
-      </div>
-      <div className="pt-2 border-t border-staff-border-subtle">
-        {isOccupied && canClose ? (
-          <button
-            type="button"
-            data-action="close-table"
-            data-table-id={table.id}
-            data-table-number={table.number}
-            className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full"
-          >
-            Close Table
-          </button>
-        ) : (
-          <span className="text-xs text-staff-text-muted">—</span>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function RoomCard({
-  room,
-  isOccupied,
-  canCheckout = true,
-}: {
-  room: Room;
-  isOccupied: boolean;
-  canCheckout?: boolean;
-}): JSX.Element {
-  return (
-    <article
-      data-room-id={room.id}
-      data-room-number={room.number}
-      data-room-status={isOccupied ? "OCCUPIED" : "FREE"}
-      className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div className="text-[28px] font-bold">{room.number}</div>
-          <div className="text-[11px] uppercase text-staff-text-muted">Room</div>
-        </div>
-        {isOccupied ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-            Occupied
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-            Vacant
-          </span>
-        )}
-      </div>
-      <div className="pt-2 border-t border-staff-border-subtle">
-        {isOccupied && canCheckout ? (
-          <button
-            type="button"
-            data-action="checkout-room"
-            data-room-id={room.id}
-            data-room-number={room.number}
-            className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full"
-          >
-            Checkout Room
-          </button>
-        ) : (
-          <span className="text-xs text-staff-text-muted">—</span>
-        )}
-      </div>
-    </article>
-  );
-}
 
 export default async function StaffDashboardPage(): Promise<JSX.Element> {
   // 1. Session and role check
@@ -1084,7 +987,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
           style={{ display: defaultActiveTab === "table-map" ? "grid" : "none" }}
         >
           {tables.map((t) => (
-            <TableCard key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} canClose={canClose} />
+            <TableMapCell key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} canClose={canClose} />
           ))}
         </div>
 
@@ -1094,7 +997,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
           style={{ display: defaultActiveTab === "room-map" ? "grid" : "none" }}
         >
           {rooms.map((r) => (
-            <RoomCard key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} canCheckout={canCheckout} />
+            <RoomMapCell key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} canCheckout={canCheckout} />
           ))}
         </div>
 

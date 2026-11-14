@@ -889,8 +889,9 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 |----|------|--------|------------|
 | 8.1.1 | Add `GET /api/admin/dashboard` route (uses `withAudit`) | ✅ | 7.7.5 |
 | 8.1.2 | Add the admin shell layout (sidebar, header, sign-out) — retires D-9.7 per-page buttons; discharges W-0002 | ✅ | 8.1.1 |
-| 8.1.3 | Add the dashboard page (metric tiles + active orders list + recent requests) | ⬜ | 8.1.2 |
-| 8.1.4 | Add 5s polling on the dashboard | ⬜ | 8.1.3 |
+| 8.1.3.A | Build shared `TableMapCell` and `RoomMapCell`; rewire `/staff` to use them | ✅ | 8.1.2 |
+| 8.1.3.B | Add the dashboard page (metric tiles + active orders list + recent requests) | ⬜ | 8.1.3.A |
+| 8.1.4 | Add 5s polling on the dashboard | ⬜ | 8.1.3.B |
 | 8.1.5 | Verify: metrics update as orders move (manual desktop at 1440×900) | ⬜ | 8.1.4 |
 
 *(Milestones 8.2 through 8.7 are unchanged; each task now inherits the audit/CSRF/rate-limit pattern.)*
