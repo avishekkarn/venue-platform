@@ -67,15 +67,15 @@ At the end of every phase:
 
 ## 4. The Numbers
 
-These are the counts as of the current state (2026-11-10, Phase 7.6):
+These are the counts as of the current state (2026-11-14, Phase 8.0.0):
 
-- **Documents:** 8 canonical files (PRODUCT, DECISIONS, SYSTEM, BUILD, ROADMAP, PROGRESS, DESIGN, PHASE_TESTS) + README
+- **Documents:** 9 canonical files (PRODUCT, DECISIONS, SYSTEM, BUILD, ROADMAP, PROGRESS, DESIGN, PHASE_TESTS, WIRING) + README
 - **Decisions:** 104, across 17 categories (see `DECISIONS.md` Appendix)
-- **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed), Phase 7.6 (foundation hardening, closed), and Phase 7.7 (production readiness prerequisites, in progress)
+- **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed), Phase 7.6 (foundation hardening, closed), Phase 7.7 (production readiness prerequisites, closed), and Phase 8.0.0 (docs-code alignment, in progress)
 - **Unit tests passing:** 279 (40 files)
-- **Integration tests passing:** 304 (43 files)
+- **Integration tests passing:** 306 (43 files)
 - **Production routes:** 40
-- **Current phase:** Phase 8 — The Manager Panel (Phase 7.7 is closed; Task 8.1.1 is next)
+- **Current milestone:** Phase 8.0.0 — Alignment (Phase 7.7 is closed; Phase 8.0.0 is in progress; Phase 8.1.1 starts after 8.0.0 closes)
 
 ---
 
@@ -87,7 +87,8 @@ As of the last session:
 
 - **Phase 7.5** (Room Service & Frontend Convergence) is **closed**. The guest request loop is 1:1 aligned with the order loop. Polling uses vanilla-JS DOM replacement on the guest tracking surfaces (`/order/[id]/track`, `/requests`, and the join banner) — see D-19.1. The join-approval cookie is set server-side via `NextResponse` — see D-19.2.
 - **Phase 7.6** (Foundation Hardening) is **closed** (commit `145d479`). All eleven tasks plus two FIX commits are on `origin/main`. The foundation is verified end-to-end. See PROGRESS ENTRY-0220.
-- **Phase 7.7** (Production Readiness Prerequisites) is **fully closed**. Milestone 7.7.4 (CSRF on all 25 state-changing routes) closed at `084414c`; the docs reconciliation at `70986c4`; Milestone 7.7.5 (Login Rate Limiting) closed at `a09d832` (`c393ac0` helper + unit tests; `b65a2d8` route + integration tests + 429 UX; `c9654af` landing-route + cookie + React-form fix; `a09d832` role-aware request API and tabs + focused seed staff). Baselines: `tsc` 0, `unit` 279/279, `integration` 304/304, `build` 40 routes.
-- **Phase 8** (The Manager Panel) is the current phase. Task 8.1.1 (`GET /api/admin/dashboard`, with `withAudit`) is the first task.
-- **Phase 8 foundation inheritance:** Every Phase 8 route uses `withAudit` (W-0021), CSRF (D-20.1), and populates the audit `ip` (W-0025). The audit log is rotated at 30 days (W-0026, Phase 10.7). These are preconditions, not deliverables — a Phase 8 task that omits any of them is `FAIL`.
-- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 279/279, `test:integration` 304/304, `build` 40 routes.
+- **Phase 7.7** (Production Readiness Prerequisites) is **fully closed**. Milestone 7.7.4 (CSRF on all 25 state-changing routes) closed at `084414c`; the docs reconciliation at `70986c4`; Milestone 7.7.5 (Login Rate Limiting) closed at `a09d832` (`c393ac0` helper + unit tests; `b65a2d8` route + integration tests + 429 UX; `c9654af` landing-route + cookie + React-form fix; `a09d832` role-aware request API and tabs + focused seed staff).
+- **Phase 8.0.0** (Docs-Code Alignment) is **in progress**. W-0025 was discharged at `7d7bc2e` (the audit `ip` is populated; two tests prove it). The service enum was reconciled at `2d93cf0` (SYSTEM.md §10.4, eleven values). The dashboard metric count was reconciled at `4966548` (DESIGN.md §4.10.5 six metrics, SYSTEM.md §12.5 dashboard row). `.env` files and BUILD.md §9.3 corrected at `8080723` and `4edc6fc`. Two tasks remain (README correction — this task; W-0026 + W-0027 obligations), plus the 8.0.0 gate.
+- **Phase 8** (The Manager Panel) follows Phase 8.0.0. Task 8.1.1 (`GET /api/admin/dashboard`, with `withAudit`) is the first task, and it starts only after the 8.0.0 gate (8.0.0.8) passes.
+- **Phase 8 foundation inheritance:** Every Phase 8 route uses `withAudit` (W-0021) and CSRF (D-20.1); the audit `ip` is populated (W-0025 was discharged at `7d7bc2e`). The audit log is rotated at 30 days (W-0026, Phase 10.7). These are preconditions, not deliverables — a Phase 8 task that omits any of them is `FAIL`.
+- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 279/279, `test:integration` 306/306, `build` 40 routes.
