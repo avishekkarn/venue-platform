@@ -236,6 +236,44 @@ describe("OrderRepository Integration Tests", () => {
     }
   });
 
+  it("Case 6b: listForVenueOnDate returns only orders placed on the given UTC day", async () => {
+    const venue = await createFixtureVenue("c6b");
+    const orderRepo = createPrismaOrderRepository(prisma);
+
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+
+    const o1 = await orderRepo.create(
+      makeOrderInput(venue.id, `key-c6b-1-${Date.now()}`)
+    );
+    const o2 = await orderRepo.create(
+      makeOrderInput(venue.id, `key-c6b-2-${Date.now()}`)
+    );
+    expect(o1.ok).toBe(true);
+    expect(o2.ok).toBe(true);
+
+    if (o1.ok && o2.ok) {
+      await prisma.order.update({
+        where: { id: o2.value.id },
+        data: { placedAt: yesterday },
+      });
+    }
+
+    const todayOrders = await orderRepo.listForVenueOnDate(venue.id, today);
+    expect(todayOrders.ok).toBe(true);
+    if (todayOrders.ok) {
+      expect(todayOrders.value).toHaveLength(1);
+      if (o1.ok) expect(todayOrders.value[0]?.id).toBe(o1.value.id);
+    }
+
+    const yesterdayOrders = await orderRepo.listForVenueOnDate(venue.id, yesterday);
+    expect(yesterdayOrders.ok).toBe(true);
+    if (yesterdayOrders.ok) {
+      expect(yesterdayOrders.value).toHaveLength(1);
+      if (o2.ok) expect(yesterdayOrders.value[0]?.id).toBe(o2.value.id);
+    }
+  });
+
   it("Case 7: listForVenue returns ok([]) for venue with no orders", async () => {
     const venue = await createFixtureVenue("c7");
     const orderRepo = createPrismaOrderRepository(prisma);

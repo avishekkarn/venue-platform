@@ -108,6 +108,7 @@ describe("createOrder domain function", () => {
         fail(DomainErrorCode.NOT_FOUND, "Order not found")
       ),
       listForVenue: vi.fn(),
+      listForVenueOnDate: vi.fn(),
       listForGuestSession: vi.fn(),
       advanceState: vi.fn(),
       cancel: vi.fn(),

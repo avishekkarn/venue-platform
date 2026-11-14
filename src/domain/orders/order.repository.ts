@@ -133,6 +133,10 @@ export interface OrderRepository {
     venueId: string,
     filter?: OrderFilter
   ): Promise<Result<Order[]>>;
+  listForVenueOnDate(
+    venueId: string,
+    day: Date
+  ): Promise<Result<Order[]>>;
   listForGuestSession(
     venueId: string,
     guestSessionId: string

@@ -291,6 +291,39 @@ export function createPrismaOrderRepository(client: DbClient): OrderRepository {
       }
     },
 
+    listForVenueOnDate: async (
+      venueId: string,
+      day: Date
+    ): Promise<Result<Order[]>> => {
+      try {
+        const dayStart = new Date(
+          Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate())
+        );
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+        const rawOrders = await client.order.findMany({
+          where: {
+            venueId,
+            placedAt: {
+              gte: dayStart,
+              lt: dayEnd,
+            },
+          },
+          include: ORDER_INCLUDE,
+          orderBy: { placedAt: "asc" },
+        });
+
+        return ok(rawOrders.map(mapOrder));
+      } catch (error) {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          error instanceof Error
+            ? error.message
+            : "Failed to list orders for venue on date"
+        );
+      }
+    },
+
     listForGuestSession: async (
       venueId: string,
       guestSessionId: string

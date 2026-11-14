@@ -276,6 +276,36 @@ export function createPrismaServiceRequestRepository(
       }
     },
 
+    listOpenForVenue: async (
+      venueId: string
+    ): Promise<Result<ServiceRequest[]>> => {
+      try {
+        const rawList = await client.serviceRequest.findMany({
+          where: {
+            venueId,
+            state: {
+              in: [
+                PrismaRequestState.SUBMITTED,
+                PrismaRequestState.ACKNOWLEDGED,
+                PrismaRequestState.IN_PROGRESS,
+              ],
+            },
+          },
+          include: REQUEST_INCLUDE,
+          orderBy: { submittedAt: "asc" },
+        });
+
+        return ok(rawList.map(mapServiceRequest));
+      } catch (error) {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          error instanceof Error
+            ? error.message
+            : "Failed to list open service requests for venue"
+        );
+      }
+    },
+
     listForRoom: async (
       venueId: string,
       roomId: string

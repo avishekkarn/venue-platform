@@ -50,6 +50,7 @@ describe("advanceRequest domain function", () => {
       }),
       findById: vi.fn(),
       listForVenue: vi.fn().mockResolvedValue(ok([])),
+      listOpenForVenue: vi.fn().mockResolvedValue(ok([])),
       listForRoom: vi.fn().mockResolvedValue(ok([])),
       listForTable: vi.fn().mockResolvedValue(ok([])),
       listForCounter: vi.fn().mockResolvedValue(ok([])),

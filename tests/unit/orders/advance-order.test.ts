@@ -54,6 +54,7 @@ describe("advanceOrder domain function", () => {
         throw new Error("findByIdempotencyKey is not used by advanceOrder");
       }),
       listForVenue: vi.fn().mockResolvedValue(ok([])),
+      listForVenueOnDate: vi.fn().mockResolvedValue(ok([])),
       listForGuestSession: vi.fn().mockResolvedValue(ok([])),
       advanceState: vi.fn(),
       cancel: vi.fn().mockImplementation(() => {

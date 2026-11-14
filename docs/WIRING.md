@@ -39,7 +39,7 @@
 - **Satisfied by:** Task 8.1.1 (the first Phase 8 admin route after the 8.0.0 gate). The dashboard route is the natural first consumer.
 - **Depends on:** W-0021, BUILD.md §6.11, D-10.2, SYSTEM.md §15.4.
 - **Verification:** `Select-String -Path 'src/infrastructure/config/venue.ts' -Pattern 'export function getVenueSlug'` returns 1. `Select-String -Path 'app/api/admin/qr/generate/route.ts' -Pattern 'getVenueSlug'` returns ≥1. `Select-String -Path 'app/api/admin/audit/export/route.ts' -Pattern 'getVenueSlug'` returns ≥1. The unit test passes (2/2). The four baselines stay green.
-- **Status:** OPEN
+- **Status:** DISCHARGED (2026-11-14, commit PENDING_8_1_1)
 
 ### W-0026 — OPEN — Audit log rotation (30-day retention)
 

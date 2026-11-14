@@ -122,6 +122,9 @@ export interface ServiceRequestRepository {
     venueId: string,
     filter?: RequestFilter
   ): Promise<Result<ServiceRequest[]>>;
+  listOpenForVenue(
+    venueId: string
+  ): Promise<Result<ServiceRequest[]>>;
   listForRoom(
     venueId: string,
     roomId: string

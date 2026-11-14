@@ -59,6 +59,7 @@ describe("kitchen order actions (approveOrder, startPreparingOrder, markOrderRea
         throw new Error("findByIdempotencyKey is not used by action functions");
       }),
       listForVenue: vi.fn().mockResolvedValue(ok([])),
+      listForVenueOnDate: vi.fn().mockResolvedValue(ok([])),
       listForGuestSession: vi.fn().mockResolvedValue(ok([])),
       advanceState: vi.fn(),
       cancel: vi.fn().mockImplementation(() => {

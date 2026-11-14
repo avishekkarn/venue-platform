@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 8.1.1 | Add `GET /api/admin/dashboard` route (uses `withAudit`) | ⬜ | 7.7.5 |
+| 8.1.1 | Add `GET /api/admin/dashboard` route (uses `withAudit`) | ✅ | 7.7.5 |
 | 8.1.2 | Add the admin shell layout (sidebar, header, sign-out) — retires D-9.7 per-page buttons; discharges W-0002 | ⬜ | 8.1.1 |
 | 8.1.3 | Add the dashboard page (metric tiles + active orders list + recent requests) | ⬜ | 8.1.2 |
 | 8.1.4 | Add 5s polling on the dashboard | ⬜ | 8.1.3 |

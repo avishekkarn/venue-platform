@@ -18,6 +18,7 @@ import {
 } from "@/infrastructure/audit/with-audit";
 import type { ActorResolvers } from "@/infrastructure/audit/logger";
 import { withCsrf } from "@/infrastructure/csrf/with-csrf";
+import { getVenueSlug } from "@/infrastructure/config/venue";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -49,9 +50,7 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
 
   // 2. Resolve venue
   const venueRepo = createPrismaVenueRepository(db);
-  const venueResult = await venueRepo.findBySlug(
-    process.env["VENUE_SLUG"] ?? "juniper-house"
-  );
+  const venueResult = await venueRepo.findBySlug(getVenueSlug());
   if (!venueResult.ok) {
     return NextResponse.json(
       { error: { code: DomainErrorCode.INTERNAL, message: "Venue not configured" } },
@@ -221,9 +220,7 @@ const resolvers: ActorResolvers = {
     const session = await validateSession(db, token);
     if (!session) return null;
     const venueRepo = createPrismaVenueRepository(db);
-    const venueResult = await venueRepo.findBySlug(
-      process.env["VENUE_SLUG"] ?? "juniper-house"
-    );
+    const venueResult = await venueRepo.findBySlug(getVenueSlug());
     if (!venueResult.ok) return null;
     const staffRepo = createPrismaStaffRepository(db);
     const staffResult = await staffRepo.findById(

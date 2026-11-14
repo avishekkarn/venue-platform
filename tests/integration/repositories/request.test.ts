@@ -131,6 +131,60 @@ describe("ServiceRequestRepository Integration Tests", () => {
     });
   });
 
+  it("Case 3b: listOpenForVenue returns only non-terminal requests", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+
+      const venueResult = await venueRepo.create({
+        name: "Open Requests Venue",
+        slug: `req-venue-${Date.now()}-c3b`,
+        taxRate: "0.1000",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const submitted = await requestRepo.create({
+        venueId,
+        serviceType: HotelService.HOUSEKEEPING,
+      });
+      const acknowledged = await requestRepo.create({
+        venueId,
+        serviceType: HotelService.MAINTENANCE,
+      });
+      const cancelled = await requestRepo.create({
+        venueId,
+        serviceType: HotelService.CONCIERGE,
+      });
+      expect(submitted.ok).toBe(true);
+      expect(acknowledged.ok).toBe(true);
+      expect(cancelled.ok).toBe(true);
+      if (!submitted.ok || !acknowledged.ok || !cancelled.ok) return;
+
+      await requestRepo.advanceState({
+        venueId,
+        requestId: acknowledged.value.id,
+        toState: RequestState.ACKNOWLEDGED,
+      });
+      await requestRepo.cancel({
+        venueId,
+        requestId: cancelled.value.id,
+        reason: "test cancel",
+      });
+
+      const open = await requestRepo.listOpenForVenue(venueId);
+      expect(open.ok).toBe(true);
+      if (open.ok) {
+        expect(open.value).toHaveLength(2);
+        const ids = open.value.map((r) => r.id);
+        expect(ids).toContain(submitted.value.id);
+        expect(ids).toContain(acknowledged.value.id);
+        expect(ids).not.toContain(cancelled.value.id);
+      }
+    });
+  });
+
   it("Case 4: listForVenue with serviceType: HOUSEKEEPING returns only housekeeping requests", async () => {
     await withTransaction(async (tx) => {
       const venueRepo = createPrismaVenueRepository(tx);
