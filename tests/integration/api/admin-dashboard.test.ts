@@ -6,6 +6,13 @@ import { tmpdir } from "node:os";
 import { GET, setTestDbClient } from "@/../app/api/admin/dashboard/route";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
+import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
+import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
+import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
+import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
+import { PlaceType } from "@/domain/orders/order.repository";
+import { HotelService } from "@/domain/requests/request.repository";
+import { TableState } from "@/domain/organization/table.repository";
 import { createSession } from "@/infrastructure/auth/session";
 import { StaffRole } from "@/domain/auth/staff.repository";
 import { hashPassword } from "@/infrastructure/auth/password";
@@ -223,6 +230,162 @@ describe("GET /api/admin/dashboard Integration Tests (Task 8.1.1)", () => {
       expect(line["actorType"]).toBe("staff");
       expect(line["actorRole"]).toBe("MANAGER");
       expect(line["ip"]).toBe("203.0.113.42");
+    });
+  });
+
+  it("returns the expanded 8.1.4 fields with correct shapes", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({ name: "Juniper House", slug: venueSlug, taxRate: "0.0825" });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id, name: "Alice Manager", username: "alice_dash_exp",
+        passwordHash: await hashPassword("password123"), roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const session = await createSession(tx, staffResult.value.id);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      const request = new NextRequest("http://localhost/api/admin/dashboard", { method: "GET" });
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(Array.isArray(json.data.recentTableOrders)).toBe(true);
+      expect(Array.isArray(json.data.recentRoomOrders)).toBe(true);
+      expect(Array.isArray(json.data.recentRoomRequests)).toBe(true);
+      expect(Array.isArray(json.data.tables)).toBe(true);
+      expect(Array.isArray(json.data.rooms)).toBe(true);
+      expect(Array.isArray(json.data.activeTableIds)).toBe(true);
+      expect(Array.isArray(json.data.activeRoomIds)).toBe(true);
+    });
+  });
+
+  it("caps recent lists at 5 and sorts table/room orders desc by placedAt", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const orderRepo = createPrismaOrderRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({ name: "Juniper House", slug: venueSlug, taxRate: "0.0825" });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id, name: "Alice Manager", username: "alice_dash_sort",
+        passwordHash: await hashPassword("password123"), roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const session = await createSession(tx, staffResult.value.id);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      // Create 6 active TABLE orders (idempotency keys are unique per order).
+      for (let i = 0; i < 6; i++) {
+        const r = await orderRepo.create({
+          venueId: venueResult.value.id,
+          idempotencyKey: `test-key-sort-${i}`,
+          placeType: PlaceType.TABLE,
+          tableId: null,
+          subtotal: "10.00", taxRate: "0.0825", taxAmount: "0.83", total: "10.83",
+          items: [{ itemName: "Test Item " + i, itemPrice: "10.00", quantity: 1, lineTotal: "10.00" }],
+        });
+        expect(r.ok).toBe(true);
+      }
+
+      const request = new NextRequest("http://localhost/api/admin/dashboard", { method: "GET" });
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(json.data.recentTableOrders.length).toBe(5);
+      // Descending by placedAt: every adjacent pair must satisfy a >= b.
+      for (let i = 1; i < json.data.recentTableOrders.length; i++) {
+        const prev = new Date(json.data.recentTableOrders[i - 1].placedAt).getTime();
+        const cur = new Date(json.data.recentTableOrders[i].placedAt).getTime();
+        expect(prev).toBeGreaterThanOrEqual(cur);
+      }
+    });
+  });
+
+  it("excludes CALL_WAITER and REQUEST_BILL from recentRoomRequests", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const requestRepo = createPrismaServiceRequestRepository(tx);
+      const roomRepo = createPrismaRoomRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({ name: "Juniper House", slug: venueSlug, taxRate: "0.0825" });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const roomResult = await roomRepo.create(venueResult.value.id, { number: "999" });
+      expect(roomResult.ok).toBe(true);
+      if (!roomResult.ok) return;
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id, name: "Alice Manager", username: "alice_dash_req",
+        passwordHash: await hashPassword("password123"), roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const session = await createSession(tx, staffResult.value.id);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      // Three room requests: HOUSEKEEPING (kept), CALL_WAITER (excluded), REQUEST_BILL (excluded).
+      for (const type of [HotelService.HOUSEKEEPING, HotelService.CALL_WAITER, HotelService.REQUEST_BILL]) {
+        const r = await requestRepo.create({
+          venueId: venueResult.value.id,
+          placeType: PlaceType.ROOM,
+          roomId: roomResult.value.id,
+          serviceType: type,
+          details: { note: "test" },
+        });
+        expect(r.ok).toBe(true);
+      }
+
+      const request = new NextRequest("http://localhost/api/admin/dashboard", { method: "GET" });
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      const types = json.data.recentRoomRequests.map((r: { serviceType: string }) => r.serviceType);
+      expect(types).toContain("HOUSEKEEPING");
+      expect(types).not.toContain("CALL_WAITER");
+      expect(types).not.toContain("REQUEST_BILL");
+    });
+  });
+
+  it("includes tables with OCCUPIED state in activeTableIds", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const tableRepo = createPrismaTableRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+      const venueResult = await venueRepo.create({ name: "Juniper House", slug: venueSlug, taxRate: "0.0825" });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+
+      const tableResult = await tableRepo.create(venueResult.value.id, { number: "12", state: TableState.OCCUPIED });
+      expect(tableResult.ok).toBe(true);
+      if (!tableResult.ok) return;
+
+      const staffResult = await staffRepo.create({
+        venueId: venueResult.value.id, name: "Alice Manager", username: "alice_dash_occ",
+        passwordHash: await hashPassword("password123"), roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const session = await createSession(tx, staffResult.value.id);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      const request = new NextRequest("http://localhost/api/admin/dashboard", { method: "GET" });
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(json.data.activeTableIds).toContain(tableResult.value.id);
     });
   });
 });

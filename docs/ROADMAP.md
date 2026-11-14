@@ -883,28 +883,142 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 *(The Milestone 8.1 through 8.7 task tables are unchanged from the prior version of this file. Each Phase 8 route will use `withAudit` (from 7.7.1) and CSRF validation (from 7.7.4). Each admin form will include the hidden CSRF token. Each API route will be rate-limited indirectly (the admin is logged in; the login is rate-limited).)*
 
+## 12. Phase 8 — The Manager Panel
+
+**Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
+
+**Status:** 🟨 In progress. Milestone 8.1 is closed except for 8.1.5 (the acceptance test). 7.7.6 discharged; 8.1.1, 8.1.2, 8.1.3.A, 8.1.3.B, 8.1.4 closed at `53e0d91..(this commit)`.
+
+**Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
+
+**Foundation inheritance (Phase 8 onward):** Every Phase 8 route, without exception, is built on the foundation closed in Phase 7.7:
+- **`withAudit` is mandatory** (W-0021). Every route under `app/api/admin/` uses `withAudit(resolvers, meta, handler)`. A route that omits it is `FAIL`. `qr/generate` is the reference (BUILD.md §6.11).
+- **CSRF is enforced** on every state-changing route (already live for the 25-route inventory, D-20.1). New admin POST/PATCH/DELETE routes use `withCsrf(handler)` on the inner handler. GET routes are exempt.
+- **Role enforcement at the route** (Benchmark 4): `canAccess(staff.roles, "admin")` at the top of the handler. `LEADER` is 403 (D-18.2). The audit `resolveStaff()` call is separate from the handler's own `validateSession()` — the double-read is deliberate (BUILD.md §6.11).
+- **Venue scoping** (Benchmark 5): every read and write filters by `venueId`, resolved from the session (never from the client). Cross-venue reads return `NOT_FOUND` (SYSTEM.md §15.4, D-10.2).
+- **IP is populated in every audit line** (W-0025). The `withAudit` wrapper derives `ip` from `x-forwarded-for` (first segment) → `x-real-ip` → `"unknown"`. The rate limiter's IP derivation is the reference. A line with `ip: null` (other than a localhost direct request with neither header) is a `FAIL`.
+- **Log rotation is scheduled** (W-0026, Phase 10.7.6). The `logs/audit/` directory is pruned at 30 days, matching the backup retention (D-8.5).
+- **`setTestDbClient` on every DB-touching route** (D-3.13, Benchmark 8). Integration tests inject the transaction client; no test writes to the dev database.
+- **Money is a decimal string on the wire** (BUILD.md §7.1, Benchmark 6). Every `subtotal`, `taxRate`, `taxAmount`, `total`, item price, modifier price. The client never computes.
+- **Every domain function returns `Result<T>`** (SYSTEM.md §5, Benchmark 7). No throws for expected failures.
+- **No `any`, no `@ts-ignore`, no `!`** (BUILD.md §2, Benchmark 9).
+
+These are Phase 8 **preconditions**, not deliverables. Every task's acceptance criteria includes "the route uses `withAudit`" and "the audit line carries a real IP."
+
 ### Milestone 8.1 — Dashboard
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 8.1.1 | Add `GET /api/admin/dashboard` route (uses `withAudit`) | ✅ | 7.7.5 |
-| 8.1.2 | Add the admin shell layout (sidebar, header, sign-out) — retires D-9.7 per-page buttons; discharges W-0002 | ✅ | 8.1.1 |
-| 8.1.3.A | Build shared `TableMapCell` and `RoomMapCell`; rewire `/staff` to use them | ✅ | 8.1.2 |
-| 8.1.3.B | Add the dashboard page (metric tiles + active orders list + recent requests) | ✅ | 8.1.3.A |
-| 8.1.4 | Add 5s polling on the dashboard | ⬜ | 8.1.3.B |
-| 8.1.5 | Verify: metrics update as orders move (manual desktop at 1440×900) | ⬜ | 8.1.4 |
+| **7.7.6** | **The QR scan route sets the place state to OCCUPIED** (table/room). Discharges the state-consistency gap; a precondition for 8.4's Rooms / Tables screens and for the dashboard's revenueToday metric to be trustworthy. One file (`app/(guest)/qr/[token]/route.ts`) + two integration tests. | ✅  | 7.7.5 |
+| **8.0.1** | **Build `src/infrastructure/config/venue.ts` with `getVenueSlug()` and `getVenueId()`.** Discharges **W-0027**. Rewire `qr/generate` and `audit/export` to use `getVenueSlug()` instead of `process.env["VENUE_SLUG"] ?? "juniper-house"`. Two unit tests, two route edits. This is the last pre-dashboard hygiene. |  🟨  | 7.7.6 |
+| **8.1.1** | **Add `GET /api/admin/dashboard` route** with `withAudit`. The route reads six metrics: `ordersWaiting`, `inKitchen`, `ready`, `revenueToday`, `ordersToday`, `requestsOpen`. Two new repository methods (`listForVenueOnDate`, `listOpenForVenue`) with integration tests. Four route tests (auth 401, role 403 for LEADER, 200 with empty data, 200 with populated data). Uses `getVenueSlug()`. Discharges nothing at this task (W-0025 was already populated at 7.7.1c; the audit line carries a real IP). | ✅  | 8.0.1 |
+| **8.1.2** | **Add the admin shell layout** (`app/admin/layout.tsx`): sidebar with the ten navigation items (Dashboard, Active Orders, Completed Orders, Menu, Tables, Rooms, QR Codes, Staff, Reports, Settings, Audit Log), 56px header bar with the venue name + operator name + theme toggle + sign-out. **Retires D-9.7** per-page sign-out buttons. Discharges **W-0002** (the `app/admin/qr/_logout-button.tsx` file is deleted; its call sites import from the shell). | ✅  | 8.1.1 |
+| **8.1.3** | **Add the dashboard page** (`app/admin/dashboard/page.tsx`): six metric tiles (per DESIGN.md §4.10.5), the recent-orders list (five rows from `OrderQueueRow`), the recent-requests list (five rows from `RequestQueueRow`), and the menu-item status section (the toggle-per-item from DESIGN.md §4.10.2). Server-rendered first paint; client-side polling fills the tiles. | ✅  | 8.1.2 |
+| **8.1.4** | **Add 5s polling on the dashboard** — vanilla-JS `innerHTML` replacement (D-19.1), the same discipline as `/requests` and `/order/[id]/track`. Polls `GET /api/admin/dashboard`; updates each tile's number in place; updates the recent-orders list; updates the recent-requests list. No React `useState`. | ✅  | 8.1.3 |
+| **8.1.5** | **Verify: the metrics update as orders move.** Place a live order from a phone (`/dev/qr` → menu → place). Watch `ordersWaiting` increment within 5 seconds. Approve from the staff page; watch `ordersWaiting` drop and `inKitchen` rise. Manual desktop at 1440×900. The milestone's acceptance test. | ⬜ | 8.1.4 |
 
-*(Milestones 8.2 through 8.7 are unchanged; each task now inherits the audit/CSRF/rate-limit pattern.)*
+*(8.1.3 was split into 8.1.3.A (shared map cells; /staff rewire) and 8.1.3.B (dashboard page). Both closed. 8.1.4 was followed by 8.1.4.FIX (occupancy from Table.state, <script async>) and 8.1.4.FIX.2 (delete the unauthorized Client Component, restore the Server Component script). The sub-fixes are not separate ROADMAP tasks; they are the 8.1.4 row's content. 8.0.1 is partial: getVenueSlug() is live and W-0027 is discharged at 4d2a45e; getVenueId() is not implemented and is a follow-up.)*
+
+*(8.0.0 was a pre-Phase-8 hygiene series: `8.0.0.1` — `getVenueSlug` pre-read; `8.0.0.2` — `getVenueSlug` implementation; `8.0.0.3` — `getVenueSlug` callers; `8.0.0.4` — audit logger test baseline; `8.0.0.5` — audit test isolation; `8.0.0.6` — `pg@8.x` deprecation check; `8.0.0.7` — `admin-menu.test.ts` stub. The pre-Phase-8 hygiene closed at `620ebc3`; that series is now folded into 7.7.6 + 8.0.1 + the `pg@9` W-0008 obligation.)*
+
+*(7.7.6 is inserted before 8.0.1 because the state consistency is a prerequisite for the Admin panel's state columns and the dashboard's `revenueToday` metric, which sums completed orders whose place-state was set correctly at scan time. Without 7.7.6, the dashboard's revenueToday is correct but the Rooms / Tables screens' "Occupied / Vacant" labels are wrong; and any future report that joins on `Room.state` would be wrong. The fix is small; the fix is the precondition.)*
+
+### Milestone 8.2 — Order Management
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.2.1** | **Add `GET /api/admin/orders`** with filters (`state`, `dateFrom`, `dateTo`). Wraps `withAudit`. Returns `{ data: Order[] }` with money as decimal strings. Four route tests (401, 403 for LEADER, 200 empty, 200 populated with filter). | ⬜ | 8.1.5 |
+| **8.2.2** | **Add the Active Orders tab** (`app/admin/orders/active/page.tsx`): a full-width table from `OrderQueueRow`, columns Order ID / Place / Items summary / Status / Elapsed / Action. Clicking a row opens a right-side detail panel with the full order (items, states, history, notes). The right-panel slides in over 200ms (DESIGN.md §4.10.14). | ⬜ | 8.2.1 |
+| **8.2.3** | **Add the Completed Orders tab** (`app/admin/orders/completed/page.tsx`) with a date-range filter (Today / Yesterday / This Week / This Month / Custom, up to 6 months per D-12.1). Same table, read-only detail panel. | ⬜ | 8.2.1 |
+| **8.2.4** | **Add `GET /api/admin/orders/export`** (CSV). The CSV's columns match the visible table; money cells are quoted strings (`"10.99"`, `"0.00"`); the export respects the same filters as 8.2.1. Wraps `withAudit`. One route test (200; the CSV opens in a spreadsheet). | ⬜ | 8.2.3 |
+| **8.2.5** | **Verify:** filter by a 6-month range, export the CSV, open it in Excel / Google Sheets. The filtered row count matches the table's; the daily totals (summed) match the DB. Manual desktop at 1440×900. The milestone's acceptance test. | ⬜ | 8.2.4 |
+
+### Milestone 8.3 — Menu Management
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.3.1** | **Add the menu list screen** (`app/admin/menu/page.tsx`): full-width table grouped by category, columns Name / Category / Price / State / Actions (Edit, Toggle availability, Hide). **Fills `tests/integration/api/admin-menu.test.ts`** (currently `(0 test)`, F-0004). | ⬜ | 8.2.5 |
+| **8.3.2** | **Add `POST /api/admin/menu/items`** (withAudit + withCsrf). Body: name, description, photo (optional), price (decimal string), categoryId, state (default AVAILABLE). Returns `{ data: MenuItem }`. Four route tests (401, 403 for LEADER, 400 for missing fields, 201 with valid body). | ⬜ | 8.3.1 |
+| **8.3.3** | **Add `PATCH /api/admin/menu/items/[id]`** (withAudit + withCsrf). **The first dynamic route in Phase 8** — introduces the `withAuditedDynamicRoute<TParams>` variant in `with-audit.ts` (a new export + a new type + one test in `with-audit.test.ts` that proves the context passes through). The existing `withAudit` is unchanged; `qr/generate` and `audit/export` are untouched. Body: the partial menu-item shape. Returns `{ data: MenuItem }`. Four route tests. | ⬜ | 8.3.2 |
+| **8.3.4** | **Add the HIDDEN state to the existing toggle** (discharges **W-0005**). The toggle now has three states: AVAILABLE ↔ UNAVAILABLE ↔ HIDDEN. The admin UI's "Hide" action (the menu list's row action) changes the state to HIDDEN via `POST /api/admin/menu/items/[id]/state`. Existing `POST /api/admin/menu/items/[id]/state` (from 5.8.1) is unchanged; the admin form gains the third-state option. Three route tests (all three states). | ⬜ | 8.3.3 |
+| **8.3.5** | **Add category management CRUD** (`GET` / `POST` / `PATCH` / `DELETE` at `/api/admin/menu/categories`). All withAudit + withCsrf. The category rename must not orphan items (the items keep their `categoryId`; the category's `name` changes). Four route tests. | ⬜ | 8.3.4 |
+| **8.3.6** | **Add modifier group / option CRUD** (`POST` / `PATCH` / `DELETE` at `/api/admin/menu/modifiers` and `/api/admin/menu/modifiers/[id]`). All withAudit + withCsrf. The modifier's own price is a decimal string on the wire. Four route tests. | ⬜ | 8.3.5 |
+| **8.3.7** | **Verify:** add an item, edit it, hide it (HIDDEN), verify the guest menu sees it greyed-out/unavailable/hidden within 5 seconds (the guest polling from Phase 5.8 is live). Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.3.6 |
+
+*(8.3.3 is the one structural addition Phase 8 makes to a Phase 7.7 file. The variant is additive — `withAudit` unchanged, `withAuditedDynamicRoute` new. The existing two reference routes and their tests are untouched. The variant's own test proves the context is passed through. This is the only Phase 8 task that touches `src/infrastructure/audit/with-audit.ts`.)*
+
+### Milestone 8.4 — Tables and Rooms
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.4.1** | **Add `GET` / `POST` / `PATCH /api/admin/tables`**. All withAudit + withCsrf. `GET` returns the venue's tables. `POST` creates (number, state default FREE). `PATCH` updates (number, state) and — if the table has an active session — the state change is rejected with `CONFLICT` (the operator must close the table first, per the 7.7.6 state-consistency discipline). Four route tests. | ⬜ | 8.3.7 |
+| **8.4.2** | **Add `GET` / `POST` / `PATCH /api/admin/rooms`**. Same shape as 8.4.1 for rooms (state default VACANT; same CONFLICT guard). Four route tests. | ⬜ | 8.4.1 |
+| **8.4.3** | **Add the Tables/Rooms screens** (`app/admin/tables/page.tsx`, `app/admin/rooms/page.tsx`): a grid of `QrCodeCard`s, each with the number, the state, the QR preview, and two actions (Print QR, Revoke QR). The "Add Table" / "Add Room" form opens in the right panel. | ⬜ | 8.4.2 |
+| **8.4.4** | **Add the batch QR print view** (`app/admin/qr/print/batch/page.tsx`): a Server Component that fetches the venue's tables and rooms, renders their QRs in a printable grid, and offers a "Print" button. This is a Server Component read, not an API route, so no `withAudit` (the read is not state-changing). | ⬜ | 8.4.3 |
+| **8.4.5** | **Verify:** add a table, generate its QR, print a sheet, scan on a phone. The scan lands on the guest menu; the table appears in the admin's Rooms / Tables grid as Occupied (7.7.6's fix). Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.4.4 |
+
+### Milestone 8.5 — Staff Management
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.5.1** | **Add `GET /api/admin/staff`** (withAudit). Returns `{ data: StaffMember[] }` with `id`, `name`, `username`, `roles`, `state`, `lastLoginAt`. No password hashes. Four route tests. | ⬜ | 8.4.5 |
+| **8.5.2** | **Add `POST /api/admin/staff`** (withAudit + withCsrf). Body: name, username, password (hashed via `hashPassword`, **never** returned), roles (the `StaffRole` array). Returns `{ data: StaffMember }` with the roles. Four route tests (401, 403 for LEADER, 400 for missing fields, 201 with valid body). | ⬜ | 8.5.1 |
+| **8.5.3** | **Add `PATCH /api/admin/staff/[id]`** (withAudit + withCsrf). Body: name, roles, state (ACTIVE / DEACTIVATED). **Does not accept a password** (8.5.4 handles resets). Deactivating a staff member does not delete their historical actions (D-3.7). Four route tests. | ⬜ | 8.5.2 |
+| **8.5.4** | **Add `POST /api/admin/staff/[id]/reset-password`** (withAudit + withCsrf). The second dynamic route (uses the 8.3.3 `withAuditedDynamicRoute` variant). Body: the new password. The route: (1) `hashPassword(newPassword)` (D-3.9); (2) `invalidateAllSessions(db, staffMemberId)` (D-3.3); (3) return `{ data: { success: true } }` — **never** the new password. Discharges **W-0003** (the `app/staff/_logout-button.tsx` file is retired as the shell's header carries sign-out) and **W-0004** (the `app/kitchen/_logout-button.tsx` file is retired). Four route tests. | ⬜ | 8.5.3 |
+| **8.5.5** | **Add the Staff Management screen** (`app/admin/staff/page.tsx`): a table of staff with name, username, roles, last login, state. Row actions: Edit, Reset Password, Deactivate. "Add Staff" opens the right panel. | ⬜ | 8.5.4 |
+| **8.5.6** | **Verify:** create a staff member, assign roles, deactivate, reset the password; log in as them, then reset from admin (the session is invalidated on reset — the staff member is logged out). Manual desktop. The milestone's acceptance test. | ⬜ | 8.5.5 |
+
+*(8.5.4 is the most security-sensitive route in Phase 8. The route returns no plaintext, ever. The `hashPassword` call is the same as the seed and the login route. The `invalidateAllSessions` call is the same as the login route's on password change. The audit line names the actor and the target staff member.)*
+
+### Milestone 8.6 — Reports
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.6.1** | **Add `GET /api/admin/reports/sales`** (withAudit). Query params: `dateFrom`, `dateTo` (up to 6 months per D-12.1). Returns `{ data: { dailyTotals: { date, revenue, orderCount }[], topItems: { itemName, quantity, revenue }[], byCategory: { categoryName, revenue }[] } }`. All money as decimal strings. Four route tests. | ⬜ | 8.5.6 |
+| **8.6.2** | **Add `GET /api/admin/reports/sales/export`** (CSV, withAudit). The CSV has three sheets? No — CSV is one sheet. The export is a zip of three CSVs? No — Phase 8 ships one CSV per report type, and the export endpoint is scoped to one type at a time via `?type=daily|items|categories`. The daily CSV is the default. Four route tests. | ⬜ | 8.6.1 |
+| **8.6.3** | **Add the Reports screen** (`app/admin/reports/page.tsx`): a date range picker at the top, a line chart of daily revenue in `--staff-accent`, a bar chart of orders per day, a table of top-selling items, and three "Export CSV" buttons (daily / items / categories). | ⬜ | 8.6.2 |
+| **8.6.4** | **Verify:** a 6-month range, export the daily CSV, open it; the daily totals sum to the same sum from `SELECT SUM(total) FROM orders WHERE placed_at BETWEEN ...`. Manual desktop. The milestone's acceptance test. | ⬜ | 8.6.3 |
+
+### Milestone 8.7 — Settings
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.7.1** | **Add `GET` / `PATCH /api/admin/settings`** (withAudit; PATCH + withCsrf). `GET` returns the venue's settings: address, contact, hours (editable), taxRate / currency / language (read-only). `PATCH` accepts only address, contact, hours. **Rejects writes to taxRate / currency / language with `VALIDATION_FAILED`** — those are developer settings (D-9.6). Four route tests. | ⬜ | 8.6.4 |
+| **8.7.2** | **Add `PATCH /api/admin/modules`** (withAudit + withCsrf). Body: the module toggles. The operator can turn off a module the developer enabled; the operator cannot turn on a module the developer did not enable (D-9.6). A request that tries to enable a disabled module returns `FORBIDDEN`. Four route tests. | ⬜ | 8.7.1 |
+| **8.7.3** | **Add `PATCH /api/admin/services`** (withAudit + withCsrf). Same as 8.7.2 for services. Four route tests. | ⬜ | 8.7.2 |
+| **8.7.4** | **Add the Settings screen** (`app/admin/settings/page.tsx`): the venue's address / contact / hours (editable form), the read-only taxRate / currency / language (rendered without input controls), the module toggles, the service toggles. No Branding tab. No payment-provider configuration. | ⬜ | 8.7.3 |
+| **8.7.5** | **Verify:** the read-only tax rate stays read-only (a PATCH including `taxRate` returns 400); a module toggle hides the Rooms tab (and the room-related guest cards); a service toggle hides the Laundry card on the guest service catalog. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.7.4 |
 
 ### Milestone 8.8 — Audit Log Viewer
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 8.8.1 | Add an "Audit Log" tab to the admin shell (visible to MANAGER and OWNER) | ⬜ | 8.1.2 |
-| 8.8.2 | Add a screen that lists the last 7 days of audit events, filterable by actor, route, and status | ⬜ | 8.8.1 |
-| 8.8.3 | Add a "Download ZIP" button that calls `GET /api/admin/audit/export` (from 7.7.1b) | ⬜ | 8.8.2 |
-| 8.8.4 | Verify: a staff action produces a row in the viewer; the ZIP download opens in a text editor | ⬜ | 8.8.3 |
+| **8.8.1** | **Add the "Audit Log" tab to the admin shell** (visible to MANAGER / OWNER only; LEADER gets 403 at the page level, defense-in-depth over the route's own guard). A new nav item in the sidebar. | ⬜ | 8.7.5 |
+| **8.8.2** | **Add the audit log list screen** (`app/admin/audit/page.tsx`): a table of the last 7 days, filterable by actor (staff / guest / anonymous), route, and status. Each row: timestamp, actorType, actorId, route, method, status, latency, ip. The list is read from `GET /api/admin/audit/export`? No — 8.8.3's ZIP is the download. The list reads from a new `GET /api/admin/audit/list?since=7d` route (withAudit) that returns the JSON lines in a paginated envelope. Four route tests. | ⬜ | 8.8.1 |
+| **8.8.3** | **Add a "Download ZIP" button** on the audit list screen, hitting `GET /api/admin/audit/export` (the 7.7.1b route). The ZIP opens in any text editor. | ⬜ | 8.8.2 |
+| **8.8.4** | **Verify:** a staff action (e.g., a menu-item toggle, a table close) produces a row in the audit list within one poll; the ZIP download opens in a text editor and contains the row. Manual desktop. The milestone's acceptance test. | ⬜ | 8.8.3 |
 
+---
+
+### Phase 8 Acceptance (from PHASE_TESTS.md §10)
+
+The manager logs in, sees the six live metrics, watches them update as orders move, filters active orders by date, exports CSV, adds a menu item, toggles its state (Available → Unavailable → Hidden → Available), adds a table with a QR, adds a staff member with a role, resets their password, deactivates them, generates a sales report, exports it, toggles a module off (Rooms disappear), toggles a service off (Laundry disappears), and confirms the read-only fields stay read-only and the Branding tab stays absent. **Sixteen steps, all proven, at 1440×900.**
+
+### WIRING obligations at Phase 8's close
+
+- **W-0002, W-0003, W-0004** — discharged at 8.1.2, 8.5.4, 8.5.4 (the per-page sign-out buttons retire as the admin shell carries the sign-out).
+- **W-0005** — discharged at 8.3.4 (the HIDDEN state in the admin toggle).
+- **W-0021** — still OPEN, discharged route-by-route. Every Phase 8 route's report names the obligation.
+- **W-0025** — discharged at 7.7.1c's implementation (IP is populated in `with-audit.ts`). 8.1.1 verifies the first audit line carries a real IP.
+- **W-0026** — still OPEN, scheduled for Phase 10.7.6 (log rotation).
+- **W-0027** — discharged at 8.0.1 (the `getVenueSlug()` helper; the two existing routes rewired).
+
+### The four baselines at Phase 8's close
+
+- `pnpm exec tsc --noEmit`: 0 errors.
+- `pnpm test:unit`: higher than 279 (8.0.1 adds 2; 8.3.1 fills F-0004).
+- `pnpm test:integration`: higher than 306 (8.1.1 adds 4; 8.2–8.8 add route tests).
+- `pnpm build`: 41+ routes (each new `page.tsx` is a route; each new API route is a route).
 ---
 
 ## 13. Phase 9 — Focused Hotel Service Queues

@@ -32,6 +32,14 @@ import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/or
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
 import { createPrismaServiceRequestRepository } from "@/infrastructure/db/repositories/request.repo";
+import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
+import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
+import { OrderState, PlaceType } from "@/domain/orders/order.repository";
+import { HotelService } from "@/domain/requests/request.repository";
+import { TableState } from "@/domain/organization/table.repository";
+import { RoomState } from "@/domain/organization/room.repository";
+import type { Order } from "@/domain/orders/order.repository";
+import type { ServiceRequest } from "@/domain/requests/request.repository";
 import { getSessionCookie } from "@/infrastructure/auth/cookies";
 import { validateSession } from "@/infrastructure/auth/session";
 import { getVenueSlug } from "@/infrastructure/config/venue";
@@ -141,6 +149,67 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
   const todayOrders = todayOrdersResult.value;
   const openRequests = openRequestsResult.value;
 
+  // --- 8.1.4: the six sections' data (mirrors the page's server-side
+  //     render at app/admin/(shell)/page.tsx so the poll's innerHTML
+  //     replacement is visually identical). ---
+  const tablesRepo = createPrismaTableRepository(db);
+  const roomsRepo = createPrismaRoomRepository(db);
+  const tablesResult = await tablesRepo.listForVenue(venue.id);
+  const roomsResult = await roomsRepo.listForVenue(venue.id);
+  if (!tablesResult.ok || !roomsResult.ok) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.INTERNAL, message: "Failed to read tables or rooms" } },
+      { status: 500 }
+    );
+  }
+  const tables = tablesResult.value;
+  const rooms = roomsResult.value;
+
+  const tableNumberById = new Map<string, string>();
+  for (const t of tables) tableNumberById.set(t.id, t.number);
+  const roomNumberById = new Map<string, string>();
+  for (const r of rooms) roomNumberById.set(r.id, r.number);
+
+  const ACTIVE_STATES: readonly OrderState[] = [
+    OrderState.PLACED,
+    OrderState.APPROVED,
+    OrderState.PREPARING,
+    OrderState.READY,
+  ];
+  const activeOrders = allOrders.filter((o) => ACTIVE_STATES.includes(o.state));
+
+  const recentTableOrders = activeOrders
+    .filter((o) => o.placeType === PlaceType.TABLE)
+    .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime())
+    .slice(0, 5);
+
+  const recentRoomOrders = activeOrders
+    .filter((o) => o.placeType === PlaceType.ROOM)
+    .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime())
+    .slice(0, 5);
+
+  const EXCLUDED_REQUEST_TYPES: readonly HotelService[] = [
+    HotelService.CALL_WAITER,
+    HotelService.REQUEST_BILL,
+  ];
+  const recentRoomRequests = openRequests
+    .filter(
+      (r) =>
+        r.placeType === PlaceType.ROOM &&
+        !EXCLUDED_REQUEST_TYPES.includes(r.serviceType)
+    )
+    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+    .slice(0, 5);
+
+  const activeTableIds = new Set<string>();
+  const activeRoomIds = new Set<string>();
+  for (const t of tables) {
+    if (t.state === TableState.OCCUPIED) activeTableIds.add(t.id);
+  }
+  for (const r of rooms) {
+    if (r.state === RoomState.OCCUPIED) activeRoomIds.add(r.id);
+  }
+
   let ordersWaiting = 0;
   let inKitchen = 0;
   let ready = 0;
@@ -158,16 +227,52 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
   }
   const revenueTodayString = revenueToday.toFixed(2);
 
-  // 5. Return success envelope
+  // Serialize each order/request to plain JSON. Dates → ISO strings;
+  // enums → their string values (already strings); money → strings.
+  // The poll's string builders read this shape.
+  const serializeOrder = (o: Order) => ({
+    id: o.id,
+    state: o.state,
+    placeType: o.placeType,
+    tableId: o.tableId,
+    roomId: o.roomId,
+    pickupName: o.pickupName,
+    placedAt: o.placedAt.toISOString(),
+    items: o.items.map((it) => ({
+      itemName: it.itemName,
+      quantity: it.quantity,
+    })),
+  });
+
+  const serializeRequest = (r: ServiceRequest) => ({
+    id: r.id,
+    state: r.state,
+    serviceType: r.serviceType,
+    placeType: r.placeType ?? null,
+    roomId: r.roomId,
+    tableId: r.tableId ?? null,
+    submittedAt: r.submittedAt.toISOString(),
+    details: r.details,
+  });
+
   return NextResponse.json(
     {
       data: {
+        // Existing six (unchanged)
         ordersWaiting,
         inKitchen,
         ready,
         revenueToday: revenueTodayString,
         ordersToday: todayOrders.length,
         requestsOpen: openRequests.length,
+        // 8.1.4 — the six sections' data
+        recentTableOrders: recentTableOrders.map(serializeOrder),
+        recentRoomOrders: recentRoomOrders.map(serializeOrder),
+        recentRoomRequests: recentRoomRequests.map(serializeRequest),
+        tables: tables.map((t) => ({ id: t.id, number: t.number, state: t.state })),
+        rooms: rooms.map((r) => ({ id: r.id, number: r.number, state: r.state })),
+        activeTableIds: [...activeTableIds],
+        activeRoomIds: [...activeRoomIds],
       },
     },
     { status: 200 }

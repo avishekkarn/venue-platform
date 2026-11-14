@@ -11,6 +11,8 @@ import type { Order } from "@/domain/orders/order.repository";
 import type { ServiceRequest } from "@/domain/requests/request.repository";
 import type { Table } from "@/domain/organization/table.repository";
 import type { Room } from "@/domain/organization/room.repository";
+import { TableState } from "@/domain/organization/table.repository";
+import { RoomState } from "@/domain/organization/room.repository";
 import { MetricTile } from "@/components/staff/metric-tile";
 import { OrderQueueRow } from "@/components/staff/order-queue-row";
 import { RequestQueueRow } from "@/components/staff/request-queue-row";
@@ -162,9 +164,11 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
   // --- Occupancy sets (active order/session per place) ---
   const activeTableIds = new Set<string>();
   const activeRoomIds = new Set<string>();
-  for (const o of activeOrders) {
-    if (o.tableId) activeTableIds.add(o.tableId);
-    if (o.roomId) activeRoomIds.add(o.roomId);
+  for (const t of tables) {
+    if (t.state === TableState.OCCUPIED) activeTableIds.add(t.id);
+  }
+  for (const r of rooms) {
+    if (r.state === RoomState.OCCUPIED) activeRoomIds.add(r.id);
   }
 
   // --- Elapsed-time helper (short human format) ---
@@ -214,7 +218,14 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
   }
 
   return (
-    <section className="flex flex-col gap-6">
+    <>
+      <script
+        async
+        dangerouslySetInnerHTML={{
+          __html: DASHBOARD_SCRIPT,
+        }}
+      />
+      <section className="flex flex-col gap-6">
       {/* --- 1. Six metric tiles --- */}
       <section id="dashboard-metrics" aria-label="Live metrics">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -350,5 +361,241 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
         </div>
       </section>
     </section>
-  );
+  </>
+);
 }
+
+const DASHBOARD_SCRIPT = `
+(function() {
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function elapsedLabel(iso) {
+    var ms = Date.now() - new Date(iso).getTime();
+    if (ms < 60000) return '< 1m';
+    var minutes = Math.floor(ms / 60000);
+    if (minutes < 60) return minutes + 'm';
+    var hours = Math.floor(minutes / 60);
+    var remMin = minutes % 60;
+    if (hours < 24) return remMin > 0 ? hours + 'h ' + remMin + 'm' : hours + 'h';
+    var days = Math.floor(hours / 24);
+    var remHours = hours % 24;
+    return remHours > 0 ? days + 'd ' + remHours + 'h' : days + 'd';
+  }
+
+  function serviceLabel(type) {
+    var map = {
+      ROOM_SERVICE_FOOD: 'Room Service', HOUSEKEEPING: 'Housekeeping', MAINTENANCE: 'Maintenance',
+      CONCIERGE: 'Concierge', LAUNDRY: 'Laundry', SPA: 'Spa', LATE_CHECKOUT: 'Late Checkout',
+      WAKE_UP_CALL: 'Wake-up Call', DO_NOT_DISTURB: 'Do Not Disturb',
+      CALL_WAITER: 'Call Waiter', REQUEST_BILL: 'Request Bill'
+    };
+    return map[type] || type;
+  }
+
+  function readOnlyStatusLabel(state) {
+    var map = { SUBMITTED:'Submitted', ACKNOWLEDGED:'Acknowledged', IN_PROGRESS:'In progress',
+                COMPLETED:'Completed', CANCELLED:'Cancelled', DECLINED:'Declined' };
+    return map[state] || '\\u2014';
+  }
+
+  function orderBadge(state) {
+    var base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
+    if (state === 'PLACED') return base + ' bg-amber-100 text-amber-800';
+    if (state === 'APPROVED') return base + ' bg-purple-100 text-purple-800';
+    if (state === 'PREPARING') return base + ' bg-sky-100 text-sky-800';
+    if (state === 'READY') return base + ' bg-status-ready-bg text-status-ready';
+    if (state === 'DELIVERED' || state === 'COMPLETED') return base + ' bg-status-done-bg text-status-done';
+    if (state === 'CANCELLED') return base + ' bg-status-cancelled-bg text-status-cancelled';
+    return base;
+  }
+
+  function requestBadge(state) {
+    var base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
+    if (state === 'SUBMITTED') return base + ' bg-amber-100 text-amber-800';
+    if (state === 'ACKNOWLEDGED') return base + ' bg-purple-100 text-purple-800';
+    if (state === 'IN_PROGRESS') return base + ' bg-sky-100 text-sky-800';
+    if (state === 'COMPLETED') return base + ' bg-status-done-bg text-status-done';
+    return base + ' bg-status-cancelled-bg text-status-cancelled';
+  }
+
+  function renderMetrics(d) {
+    var el = document.getElementById('dashboard-metrics');
+    if (!el) return;
+    var items = [
+      ['Orders Waiting', d.ordersWaiting], ['In Kitchen', d.inKitchen], ['Ready', d.ready],
+      ['Revenue Today', d.revenueToday], ['Orders Today', d.ordersToday], ['Requests Open', d.requestsOpen]
+    ];
+    var html = '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">';
+    for (var i = 0; i < items.length; i++) {
+      html += '<div class="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-4 flex flex-col gap-1">' +
+        '<span class="text-[12px] leading-[16px] font-medium text-staff-text-muted uppercase tracking-wide">' + escapeHtml(items[i][0]) + '</span>' +
+        '<span class="text-[28px] leading-[36px] font-semibold text-staff-text-primary">' + escapeHtml(String(items[i][1])) + '</span>' +
+      '</div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
+  function renderOrderRow(o) {
+    var placeLabel, placeTypeLabel;
+    if (o.placeType === 'TABLE') { placeLabel = o.tableNumber || '\\u2014'; placeTypeLabel = 'Table'; }
+    else if (o.placeType === 'ROOM') { placeLabel = o.roomNumber || '\\u2014'; placeTypeLabel = 'Room'; }
+    else { placeLabel = o.pickupName || '\\u2014'; placeTypeLabel = 'Counter'; }
+    var items = (o.items && o.items.length) ? o.items.map(function(it){ return it.quantity + '\\u00d7 ' + it.itemName; }).join(', ') : 'No items';
+    var id = String(o.id).slice(0, 8).toUpperCase();
+    return '<article data-order-id="' + escapeHtml(o.id) + '" data-order-state="' + escapeHtml(o.state) + '" data-place-label="' + escapeHtml(placeLabel) + '" class="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">' +
+      '<div class="flex items-center gap-4 min-w-0">' +
+        '<div class="w-16 h-16 rounded-lg bg-staff-surface flex flex-col items-center justify-center border border-staff-border-subtle shrink-0">' +
+          '<span class="text-[11px] font-semibold text-staff-text-muted uppercase">' + escapeHtml(placeTypeLabel) + '</span>' +
+          '<span class="text-[20px] font-bold text-staff-text-primary">' + escapeHtml(placeLabel) + '</span>' +
+        '</div>' +
+        '<div class="min-w-0">' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<span class="font-semibold text-staff-text-primary">#' + escapeHtml(id) + '</span>' +
+            '<span class="' + orderBadge(o.state) + '">' + escapeHtml(o.state) + '</span>' +
+            '<span class="text-xs font-mono text-staff-text-muted">' + escapeHtml(elapsedLabel(o.placedAt)) + '</span>' +
+          '</div>' +
+          '<p class="text-sm text-staff-text-secondary mt-0.5 max-w-md line-clamp-2">' + escapeHtml(items) + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex items-center gap-2 self-end md:self-auto shrink-0"><span class="text-sm text-staff-text-muted">\\u2014</span></div>' +
+    '</article>';
+  }
+
+  function renderOrderList(orders, containerId, emptyMsg) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (!orders || orders.length === 0) {
+      el.innerHTML = '<p class="text-sm text-staff-text-muted py-6 text-center border border-staff-border-subtle rounded-xl">' + escapeHtml(emptyMsg) + '</p>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < orders.length; i++) html += renderOrderRow(orders[i]);
+    el.innerHTML = html;
+  }
+
+  function renderRequestRow(r) {
+    var placeNumber = r.roomNumber || '\\u2014';
+    var placeTypeLabel = r.placeType === 'ROOM' ? 'Room' : (r.placeType === 'TABLE' ? 'Table' : 'Counter');
+    var id = String(r.id).slice(0, 8).toUpperCase();
+    var details = r.details && typeof r.details === 'object' ? (function(){
+      var parts = [];
+      for (var k in r.details) {
+        var v = r.details[k];
+        if (v === null || v === undefined || v === '') continue;
+        parts.push(k + ': ' + (Array.isArray(v) ? v.join(', ') : v));
+      }
+      return parts.join(' \\u00b7 ');
+    })() : '';
+    return '<article data-request-id="' + escapeHtml(r.id) + '" data-request-state="' + escapeHtml(r.state) + '" data-place-number="' + escapeHtml(placeNumber) + '" class="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 rounded-lg bg-staff-surface flex flex-col items-center justify-center border border-staff-border-subtle shrink-0">' +
+          '<span class="text-[11px] font-semibold text-staff-text-muted uppercase">' + escapeHtml(placeTypeLabel) + '</span>' +
+          '<span class="text-[20px] font-bold text-staff-text-primary">' + escapeHtml(placeNumber) + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<span class="font-semibold text-staff-text-primary">#' + escapeHtml(id) + '</span>' +
+            '<span class="text-sm font-medium text-staff-text-secondary">' + escapeHtml(serviceLabel(r.serviceType)) + '</span>' +
+            '<span class="' + requestBadge(r.state) + '">' + escapeHtml(r.state) + '</span>' +
+            '<span class="text-xs font-mono text-staff-text-muted">' + escapeHtml(elapsedLabel(r.submittedAt)) + '</span>' +
+          '</div>' +
+          (details ? '<p class="text-sm text-staff-text-secondary mt-0.5 max-w-md line-clamp-2">' + escapeHtml(details) + '</p>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="flex items-center gap-2 self-end md:self-auto shrink-0"><span class="text-sm font-medium text-staff-text-muted">' + escapeHtml(readOnlyStatusLabel(r.state)) + '</span></div>' +
+    '</article>';
+  }
+
+  function renderRequestList(requests) {
+    var el = document.getElementById('dashboard-room-requests');
+    if (!el) return;
+    if (!requests || requests.length === 0) {
+      el.innerHTML = '<p class="text-sm text-staff-text-muted py-6 text-center border border-staff-border-subtle rounded-xl">No open room requests.</p>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < requests.length; i++) html += renderRequestRow(requests[i]);
+    el.innerHTML = html;
+  }
+
+  function renderTableMap(tables, activeIds) {
+    var el = document.getElementById('dashboard-table-map');
+    if (!el) return;
+    var html = '';
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      var occ = activeIds.indexOf(t.id) !== -1;
+      var badge = occ
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>'
+        : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Free</span>';
+      html += '<article data-table-id="' + escapeHtml(t.id) + '" data-table-number="' + escapeHtml(t.number) + '" data-table-status="' + (occ ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+        '<div class="flex items-center justify-between gap-2">' +
+          '<div><div class="text-[28px] font-bold">' + escapeHtml(t.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Table</div></div>' +
+          badge +
+        '</div>' +
+        '<div class="pt-2 border-t border-staff-border-subtle"><span class="text-xs text-staff-text-muted">\\u2014</span></div>' +
+      '</article>';
+    }
+    el.innerHTML = html;
+  }
+
+  function renderRoomMap(rooms, activeIds) {
+    var el = document.getElementById('dashboard-room-map');
+    if (!el) return;
+    var html = '';
+    for (var i = 0; i < rooms.length; i++) {
+      var r = rooms[i];
+      var occ = activeIds.indexOf(r.id) !== -1;
+      var badge = occ
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>'
+        : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Vacant</span>';
+      html += '<article data-room-id="' + escapeHtml(r.id) + '" data-room-number="' + escapeHtml(r.number) + '" data-room-status="' + (occ ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+        '<div class="flex items-center justify-between gap-2">' +
+          '<div><div class="text-[28px] font-bold">' + escapeHtml(r.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Room</div></div>' +
+          badge +
+        '</div>' +
+        '<div class="pt-2 border-t border-staff-border-subtle"><span class="text-xs text-staff-text-muted">\\u2014</span></div>' +
+      '</article>';
+    }
+    el.innerHTML = html;
+  }
+
+  function sortByNumber(arr) {
+    return arr.slice().sort(function(a, b) {
+      var an = Number(a.number), bn = Number(b.number);
+      if (isNaN(an) || isNaN(bn)) return String(a.number).localeCompare(String(b.number));
+      return an - bn;
+    });
+  }
+
+  function poll() {
+    if (document.visibilityState !== 'visible') return;
+    fetch('/api/admin/dashboard', { credentials: 'same-origin' })
+      .then(function(res) { if (!res.ok) return null; return res.json(); })
+      .then(function(json) {
+        if (!json || !json.data) return;
+        var d = json.data;
+        var tById = {}; for (var i = 0; i < d.tables.length; i++) tById[d.tables[i].id] = d.tables[i].number;
+        var rById = {}; for (var j = 0; j < d.rooms.length; j++) rById[d.rooms[j].id] = d.rooms[j].number;
+        for (var a = 0; a < d.recentTableOrders.length; a++) d.recentTableOrders[a].tableNumber = tById[d.recentTableOrders[a].tableId] || null;
+        for (var b = 0; b < d.recentRoomOrders.length; b++) d.recentRoomOrders[b].roomNumber = rById[d.recentRoomOrders[b].roomId] || null;
+        for (var c = 0; c < d.recentRoomRequests.length; c++) d.recentRoomRequests[c].roomNumber = rById[d.recentRoomRequests[c].roomId] || null;
+
+        renderMetrics(d);
+        renderOrderList(d.recentTableOrders, 'dashboard-table-orders', 'No active table orders.');
+        renderOrderList(d.recentRoomOrders, 'dashboard-room-orders', 'No active room orders.');
+        renderRequestList(d.recentRoomRequests);
+        renderTableMap(sortByNumber(d.tables), d.activeTableIds);
+        renderRoomMap(sortByNumber(d.rooms), d.activeRoomIds);
+      })
+      .catch(function() {});
+  }
+
+  setInterval(poll, 5000);
+  poll();
+})();
+`;

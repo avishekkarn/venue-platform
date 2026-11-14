@@ -5,6 +5,10 @@ import { createGuestSession } from "@/domain/guest/guest-session.service";
 import { createPrismaQrTokenRepository } from "@/infrastructure/db/repositories/qr-token.repo";
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
+import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
+import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
+import { TableState } from "@/domain/organization/table.repository";
+import { RoomState } from "@/domain/organization/room.repository";
 import { prisma } from "@/infrastructure/db/client";
 import {
   CSRF_COOKIE_NAME,
@@ -130,6 +134,20 @@ export async function GET(
       venueId: venue.value.id,
     });
     return NextResponse.redirect(`${baseUrl}/qr/inactive`);
+  }
+
+  if (resolved.value.placeType === PlaceType.TABLE) {
+    const tableRepo = createPrismaTableRepository(prisma);
+    const setResult = await tableRepo.setStatus(venue.value.id, placeId, TableState.OCCUPIED);
+    if (!setResult.ok) {
+      console.error("[qr-landing] set table OCCUPIED failed", { code: setResult.error.code, tableId: placeId });
+    }
+  } else if (resolved.value.placeType === PlaceType.ROOM) {
+    const roomRepo = createPrismaRoomRepository(prisma);
+    const setResult = await roomRepo.setStatus(venue.value.id, placeId, RoomState.OCCUPIED);
+    if (!setResult.ok) {
+      console.error("[qr-landing] set room OCCUPIED failed", { code: setResult.error.code, roomId: placeId });
+    }
   }
 
   // f. Redirect by place type per SYSTEM.md §8.3 using absolute baseUrl
