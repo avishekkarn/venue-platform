@@ -961,6 +961,8 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 *(Unchanged from prior plan.)*
 
+**W-0026** — Audit log rotation (30-day retention). The Phase 10.7 deployment task installs the pruner (see `docs/WIRING.md` §2 W-0026). The reference implementation mirrors `scripts/backup-daily.*`. Dependency: `10.6.1` (the real-venue dry run that schedules both the backups and the rotation).
+
 ---
 
 ## 15. The Dependency Graph (Revised)

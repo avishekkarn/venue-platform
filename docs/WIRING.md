@@ -31,12 +31,22 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
+### W-0027 — OPEN — `src/infrastructure/config/venue.ts` must exist and export `getVenueSlug()`
+
+- **Originated:** Phase 8.0.0.4 pre-read (2026-11-14). The file `src/infrastructure/config/venue.ts` exists but is empty. Two admin routes — `app/api/admin/qr/generate/route.ts` and `app/api/admin/audit/export/route.ts` — read the venue's slug via `process.env["VENUE_SLUG"] ?? "juniper-house"` directly. The `?? "juniper-house"` fallback is a data-isolation footgun at production scale (D-10.2, SYSTEM.md §15.4): a mis-set `VENUE_SLUG` on a production deployment silently reads the seed venue's data. The dashboard route (8.1.1) will inherit the same pattern if the helper does not exist first.
+- **Obligation:** Create `src/infrastructure/config/venue.ts` exporting `getVenueSlug(): string`, which reads `process.env["VENUE_SLUG"]` and **throws** if it is unset (no fallback). Update `app/api/admin/qr/generate/route.ts` and `app/api/admin/audit/export/route.ts` to call `getVenueSlug()` instead of `process.env["VENUE_SLUG"] ?? "juniper-house"`. The dashboard route (Task 8.1.1) calls `getVenueSlug()` from the start. Add a unit test at `tests/unit/infrastructure/config/venue.test.ts`: `getVenueSlug()` throws when `VENUE_SLUG` is unset; returns the value when it is set.
+- **Files and call site:** `src/infrastructure/config/venue.ts` (new, ~15 lines). `app/api/admin/qr/generate/route.ts` (two `process.env["VENUE_SLUG"] ?? "juniper-house"` reads → `getVenueSlug()`). `app/api/admin/audit/export/route.ts` (same). `tests/unit/infrastructure/config/venue.test.ts` (new, two tests).
+- **Satisfied by:** Task 8.1.1 (the first Phase 8 admin route after the 8.0.0 gate). The dashboard route is the natural first consumer.
+- **Depends on:** W-0021, BUILD.md §6.11, D-10.2, SYSTEM.md §15.4.
+- **Verification:** `Select-String -Path 'src/infrastructure/config/venue.ts' -Pattern 'export function getVenueSlug'` returns 1. `Select-String -Path 'app/api/admin/qr/generate/route.ts' -Pattern 'getVenueSlug'` returns ≥1. `Select-String -Path 'app/api/admin/audit/export/route.ts' -Pattern 'getVenueSlug'` returns ≥1. The unit test passes (2/2). The four baselines stay green.
+- **Status:** OPEN
+
 ### W-0026 — OPEN — Audit log rotation (30-day retention)
 
 - **Originated:** Phase 7.7.5 closure (PROGRESS ENTRY-0227, 2026-11-14).
 - **Obligation:** The `logs/audit/` directory grows by one `.jsonl` file per UTC day, forever. A production venue running for years accumulates thousands of files on the app server's disk. The Phase 10.7 deployment task must add a pruner that deletes `.jsonl` files older than 30 days, matching the backup retention (D-8.5). The pruner runs on the same OS scheduler as the backups (Task Scheduler on Windows, cron on Linux). Log files are excluded from `git status` via `.gitignore` (already the case; no change needed there).
 - **Files and call site:** `scripts/rotate-audit.ps1` (new) and `scripts/rotate-audit.sh` (new), mirroring `scripts/backup-daily.*`. `scripts/README.md` gains a "Rotation" section. `docs/SYSTEM.md §18.5` gains a paragraph naming the rotation alongside the backup. `docs/DEPLOYMENT.md` (Phase 10.7) schedules both.
-- **Satisfied by:** Phase 10.7 (Documentation and Handover), where the deployment task installs the rotation on the venue's server. It is not a Phase 8 deliverable — Phase 8 adds the audit log; Phase 10.7 keeps it bounded.
+- **Satisfied by:** Task 10.7.6 (the W-0026 row indocs/ROADMAP.md§14 Milestone 10.7). The Phase 10.7 deployment task installs the rotation on the venue's server. It is not a Phase 8 deliverable — Phase 8 adds the audit log; Phase 10.7 keeps it bounded.
 - **Depends on:** D-8.5, the backup scripts (`scripts/backup-daily.*`), `.gitignore` (logs/ already ignored).
 - **Verification:** After 31 days of daily writes, `logs/audit/` holds exactly 30 files. A test on a throwaway directory proves the pruner.
 - **Status:** OPEN
@@ -49,7 +59,7 @@
 - **Satisfied by:** Discharged by `src/infrastructure/audit/with-audit.ts` (`extractClientIp` reads `x-forwarded-for` first segment → `x-real-ip` → `null`; `writeAudit` receives the value as `ip`). Verified by the two new tests in `tests/integration/audit/with-audit.test.ts` (2026-11-14, Phase 8.0.0.1).
 - **Depends on:** W-0021, BUILD.md §6.11, D-20.1, the login rate limiter's IP derivation (`src/infrastructure/auth/rate-limiter.ts`).
 - **Verification:** A wrapped route's audit line carries `ip: "<real-IP>"` when a forwarded header is present, and `ip: null` otherwise. The `audit/export` ZIP contains the value. Two tests prove it (the `with-audit.test.ts` additions).
-- **Status:** DISCHARGED (2026-11-14, commit PENDING_8_0_0_1)
+- **Status:** DISCHARGED (2026-11-14, commit 7d7bc2e)
 
 ### W-0021 — OPEN — Every Phase 8 API route must use `withAudit`
 
