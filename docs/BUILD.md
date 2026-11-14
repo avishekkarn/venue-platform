@@ -342,13 +342,21 @@ The three levels of tests are defined in §8.1. The table below says which level
 
 ### 9.3 The environment variables
 
-The local environment file contains:
+The local environment file contains six variables. One is a secret; the other five are non-secret configuration and are safe to commit in an example file.
 
-- The database URL.
-- The session secret.
-- Any other secret the product needs.
+**Secrets (never committed):**
 
-No secret is committed to the repository. The example file contains placeholder values, not real ones.
+- `SESSION_SECRET` — the secret used to sign session cookies. Generate it with `openssl rand -base64 32`. Rotating it invalidates every active staff session (D-3.3); rotate only during a planned maintenance window.
+
+**Non-secret configuration:**
+
+- `DATABASE_URL` — the PostgreSQL connection string. The format is the standard PostgreSQL connection string: `postgresql://USER:PASSWORD@HOST:PORT/DATABASE`. In production, `sslmode=require` is mandatory and the user is the dedicated `venue_prod` role (see `docs/SYSTEM.md` §15.4.1 and the production template `.env.production.example`).
+- `TEST_DATABASE_URL` — the separate database the integration tests run against. `tests/integration/setup.ts` migrates and rolls back against this database, never against `DATABASE_URL`. Development and test only.
+- `VENUE_SLUG` — the venue's slug. The seed creates the venue with the slug `"juniper-house"` (`prisma/seed.ts`, `SEED_VENUE.slug`); a real venue sets its own slug at onboarding. Every admin route resolves "the venue" via this slug. In production, a wrong value means every admin route reads a different venue's data than the one the operator sees (a D-10.2 cross-venue isolation failure), so `VENUE_SLUG` must match the venue's actual slug.
+- `AUDIT_LOG_DIR` — the directory for the request-level JSON-lines audit log (Phase 7.7.1). One file per UTC day. Default: `logs/audit`. The integration tests override it to a temporary directory so the real `logs/audit/` is never touched.
+- `DB_POOL_MAX` — the `pg.Pool` connection limit. Production only. Default: 20, which matches the 20-staff ceiling in D-15.4. A malformed value falls back to 20 with a one-time server-side log.
+
+No secret is committed to the repository. `.env.local` is gitignored; `.env.local.example`, `.env.example`, and `.env.production.example` are committed and contain placeholder values only. The developer's real `.env.local` and the venue's server-side production `.env` are never committed.
 
 ### 9.4 The seed
 
