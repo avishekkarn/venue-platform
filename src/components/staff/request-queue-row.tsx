@@ -9,6 +9,18 @@ export interface RequestQueueRowProps {
   readonly request: ServiceRequest;
   readonly placeNumber: string;
   readonly placeTypeLabel: string; // "Room" | "Table" | "Counter"
+  readonly elapsedLabel?: string;
+  /**
+   * When true, the row renders the request's current state as a text
+   * label (`Submitted`, `Acknowledged`, `In progress`, `Completed`,
+   * `Cancelled`, `Declined`) instead of the action buttons.
+   *
+   * The dashboard passes `readOnly={true}` — it is a read-only preview.
+   * The `/staff` page omits it (or passes `false`) — the buttons render
+   * exactly as before, with the same `data-action` attributes and event
+   * delegation.
+   */
+  readonly readOnly?: boolean;
 }
 
 export const SERVICE_LABELS: Record<HotelService, string> = {
@@ -39,10 +51,31 @@ function formatDetailsSummary(details?: ServiceRequestDetails): string {
   return parts.join(" · ");
 }
 
+function readOnlyStatusLabel(state: RequestState): string {
+  switch (state) {
+    case RequestState.SUBMITTED:
+      return "Submitted";
+    case RequestState.ACKNOWLEDGED:
+      return "Acknowledged";
+    case RequestState.IN_PROGRESS:
+      return "In progress";
+    case RequestState.COMPLETED:
+      return "Completed";
+    case RequestState.CANCELLED:
+      return "Cancelled";
+    case RequestState.DECLINED:
+      return "Declined";
+    default:
+      return "—";
+  }
+}
+
 export function RequestQueueRow({
   request,
   placeNumber,
   placeTypeLabel,
+  elapsedLabel,
+  readOnly = false,
 }: RequestQueueRowProps): JSX.Element {
   const serviceLabel =
     SERVICE_LABELS[request.serviceType] ?? request.serviceType;
@@ -80,7 +113,7 @@ export function RequestQueueRow({
           </span>
         </div>
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-staff-text-primary">
               #{request.id.slice(0, 8).toUpperCase()}
             </span>
@@ -88,6 +121,11 @@ export function RequestQueueRow({
               {serviceLabel}
             </span>
             <span className={badgeClass}>{request.state}</span>
+            {elapsedLabel ? (
+              <span className="text-xs font-mono text-staff-text-muted">
+                {elapsedLabel}
+              </span>
+            ) : null}
           </div>
           {detailsSummary ? (
             <p className="text-sm text-staff-text-secondary mt-0.5 max-w-md line-clamp-2">
@@ -98,97 +136,105 @@ export function RequestQueueRow({
       </div>
 
       <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-        {request.state === RequestState.SUBMITTED && (
+        {readOnly ? (
+          <span className="text-sm font-medium text-staff-text-muted">
+            {readOnlyStatusLabel(request.state)}
+          </span>
+        ) : (
           <>
-            <button
-              type="button"
-              data-action="request-decline"
-              data-request-id={request.id}
-              data-request-service={request.serviceType}
-              className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 cursor-pointer"
-            >
-              Decline
-            </button>
-            <button
-              type="button"
-              data-action="request-cancel"
-              data-request-id={request.id}
-              data-request-service={request.serviceType}
-              className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              data-action="request-advance"
-              data-request-id={request.id}
-              data-to-state="ACKNOWLEDGED"
-              className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer"
-            >
-              Acknowledge
-            </button>
-          </>
-        )}
+            {request.state === RequestState.SUBMITTED && (
+              <>
+                <button
+                  type="button"
+                  data-action="request-decline"
+                  data-request-id={request.id}
+                  data-request-service={request.serviceType}
+                  className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 cursor-pointer"
+                >
+                  Decline
+                </button>
+                <button
+                  type="button"
+                  data-action="request-cancel"
+                  data-request-id={request.id}
+                  data-request-service={request.serviceType}
+                  className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  data-action="request-advance"
+                  data-request-id={request.id}
+                  data-to-state="ACKNOWLEDGED"
+                  className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer"
+                >
+                  Acknowledge
+                </button>
+              </>
+            )}
 
-        {request.state === RequestState.ACKNOWLEDGED && (
-          <>
-            <button
-              type="button"
-              data-action="request-decline"
-              data-request-id={request.id}
-              data-request-service={request.serviceType}
-              className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 cursor-pointer"
-            >
-              Decline
-            </button>
-            <button
-              type="button"
-              data-action="request-cancel"
-              data-request-id={request.id}
-              data-request-service={request.serviceType}
-              className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              data-action="request-advance"
-              data-request-id={request.id}
-              data-to-state="IN_PROGRESS"
-              className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer"
-            >
-              Start
-            </button>
-          </>
-        )}
+            {request.state === RequestState.ACKNOWLEDGED && (
+              <>
+                <button
+                  type="button"
+                  data-action="request-decline"
+                  data-request-id={request.id}
+                  data-request-service={request.serviceType}
+                  className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 cursor-pointer"
+                >
+                  Decline
+                </button>
+                <button
+                  type="button"
+                  data-action="request-cancel"
+                  data-request-id={request.id}
+                  data-request-service={request.serviceType}
+                  className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  data-action="request-advance"
+                  data-request-id={request.id}
+                  data-to-state="IN_PROGRESS"
+                  className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 cursor-pointer"
+                >
+                  Start
+                </button>
+              </>
+            )}
 
-        {request.state === RequestState.IN_PROGRESS && (
-          <>
-            <button
-              type="button"
-              data-action="request-cancel"
-              data-request-id={request.id}
-              data-request-service={request.serviceType}
-              className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              data-action="request-advance"
-              data-request-id={request.id}
-              data-to-state="COMPLETED"
-              className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-emerald-600 text-white hover:brightness-95 cursor-pointer"
-            >
-              Complete
-            </button>
-          </>
-        )}
+            {request.state === RequestState.IN_PROGRESS && (
+              <>
+                <button
+                  type="button"
+                  data-action="request-cancel"
+                  data-request-id={request.id}
+                  data-request-service={request.serviceType}
+                  className="inline-flex items-center justify-center rounded-md px-3 h-10 text-sm font-medium text-status-cancelled hover:bg-red-50 border border-status-cancelled/30 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  data-action="request-advance"
+                  data-request-id={request.id}
+                  data-to-state="COMPLETED"
+                  className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-emerald-600 text-white hover:brightness-95 cursor-pointer"
+                >
+                  Complete
+                </button>
+              </>
+            )}
 
-        {(request.state === RequestState.COMPLETED ||
-          request.state === RequestState.CANCELLED ||
-          request.state === RequestState.DECLINED) && (
-          <span className="text-sm text-staff-text-muted">—</span>
+            {(request.state === RequestState.COMPLETED ||
+              request.state === RequestState.CANCELLED ||
+              request.state === RequestState.DECLINED) && (
+              <span className="text-sm text-staff-text-muted">—</span>
+            )}
+          </>
         )}
       </div>
     </article>
