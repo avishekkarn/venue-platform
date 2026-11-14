@@ -58,12 +58,16 @@ describe("withAudit — the wrapper (7.7.1a)", () => {
   function makeRequest(
     url: string,
     method: string = "POST",
-    body?: unknown
+    body?: unknown,
+    headers?: Record<string, string>
   ): NextRequest {
     const init: ConstructorParameters<typeof NextRequest>[1] = { method };
     if (body !== undefined) {
       init.headers = { "Content-Type": "application/json" };
       init.body = JSON.stringify(body);
+    }
+    if (headers !== undefined) {
+      init.headers = { ...(init.headers as Record<string, string> | undefined), ...headers };
     }
     return new NextRequest(url, init);
   }
@@ -265,6 +269,59 @@ describe("withAudit — the wrapper (7.7.1a)", () => {
 
     await wrapped(makeRequest("http://localhost/api/test/synthetic"));
     expect(guestCalls).toBe(0);
+  });
+
+  it("populates ip from x-forwarded-for when present (W-0025)", async () => {
+    const handler: AuditedRouteHandler = async () =>
+      NextResponse.json({ data: {} }, { status: 200 });
+
+    const wrapped = withAudit(
+      {
+        resolveStaff: async () => null,
+        resolveGuest: async () => null,
+      },
+      { route: "/api/test/synthetic", method: "POST" },
+      handler
+    );
+
+    await wrapped(
+      makeRequest(
+        "http://localhost/api/test/synthetic",
+        "POST",
+        undefined,
+        { "x-forwarded-for": "203.0.113.42, 10.0.0.1" }
+      )
+    );
+
+    const lines = readLines();
+    expect(lines).toHaveLength(1);
+    const line = lines[0];
+    expect(line).toBeDefined();
+    if (!line) return;
+    expect(line.ip).toBe("203.0.113.42");
+  });
+
+  it("records ip: null when neither x-forwarded-for nor x-real-ip is present (W-0025)", async () => {
+    const handler: AuditedRouteHandler = async () =>
+      NextResponse.json({ data: {} }, { status: 200 });
+
+    const wrapped = withAudit(
+      {
+        resolveStaff: async () => null,
+        resolveGuest: async () => null,
+      },
+      { route: "/api/test/synthetic", method: "POST" },
+      handler
+    );
+
+    await wrapped(makeRequest("http://localhost/api/test/synthetic"));
+
+    const lines = readLines();
+    expect(lines).toHaveLength(1);
+    const line = lines[0];
+    expect(line).toBeDefined();
+    if (!line) return;
+    expect(line.ip).toBeNull();
   });
 });
 

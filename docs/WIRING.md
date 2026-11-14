@@ -41,15 +41,15 @@
 - **Verification:** After 31 days of daily writes, `logs/audit/` holds exactly 30 files. A test on a throwaway directory proves the pruner.
 - **Status:** OPEN
 
-### W-0025 — OPEN — `withAudit` must populate the `ip` field from request headers
+### W-0025 — DISCHARGED — `withAudit` must populate the `ip` field from request headers
 
 - **Originated:** Phase 7.7.5 closure (PROGRESS ENTRY-0227, 2026-11-14).
-- **Obligation:** The `withAudit` wrapper currently writes `ip: null` on every audit line. In production, a missing IP makes the audit trail forensic-blind. `withAudit` must read `x-forwarded-for` (first segment, trimmed) → `x-real-ip` → `"unknown"` and pass the result to `writeAudit` as the `ip` field. The derivation matches the login rate limiter (`src/infrastructure/auth/rate-limiter.ts`), so a request's audit line and its rate-limit key name the same source.
-- **Files and call site:** `src/infrastructure/audit/with-audit.ts` (the `withAudit` wrapper; add the header read and pass `ip` to `writeAudit`). `src/infrastructure/audit/logger.ts` (already accepts `ip: string | null`; no change). `tests/integration/audit/with-audit.test.ts` (add one test: a request with `x-forwarded-for: 203.0.113.42` produces a line with `ip: "203.0.113.42"`).
-- **Satisfied by:** The first Phase 8 admin route after 7.7.1c. Concretely: Task 8.1.1 (`GET /api/admin/dashboard`, the first Phase 8 route) discharges W-0025 by making the wrapper populate `ip` before the dashboard is wired.
+- **Obligation:** The `withAudit` wrapper populates the audit `ip` field from `x-forwarded-for` (first segment, trimmed) → `x-real-ip` → `null`. It was implemented in Phase 7.7.1a (`src/infrastructure/audit/with-audit.ts`, `extractClientIp` at line 149, called at line 129). The audit log records `null` for the no-header case — an honest "we don't know" — not `"unknown"`. `"unknown"` is the rate limiter's bucket key for headerless requests (a rate-limit concern, not an audit concern). The audit log has no bucket; `null` is the correct value for the field. The two name the same header source; only their fallbacks differ, for the reason just stated.
+- **Files and call site:** `src/infrastructure/audit/with-audit.ts` (the `withAudit` wrapper; add the header read and pass `ip` to `writeAudit`). `src/infrastructure/audit/logger.ts` (already accepts `ip: string | null`; no change). `tests/integration/audit/with-audit.test.ts` (add two tests: a request with `x-forwarded-for: 203.0.113.42, 10.0.0.1` produces `ip: "203.0.113.42"`; a request with no forwarded header produces `ip: null`).
+- **Satisfied by:** Discharged by `src/infrastructure/audit/with-audit.ts` (`extractClientIp` reads `x-forwarded-for` first segment → `x-real-ip` → `null`; `writeAudit` receives the value as `ip`). Verified by the two new tests in `tests/integration/audit/with-audit.test.ts` (2026-11-14, Phase 8.0.0.1).
 - **Depends on:** W-0021, BUILD.md §6.11, D-20.1, the login rate limiter's IP derivation (`src/infrastructure/auth/rate-limiter.ts`).
-- **Verification:** A wrapped route's audit line carries `ip: "<real-IP>"` (not `null`). The `audit/export` ZIP contains the IP. A test proves it (the `with-audit.test.ts` addition).
-- **Status:** OPEN
+- **Verification:** A wrapped route's audit line carries `ip: "<real-IP>"` when a forwarded header is present, and `ip: null` otherwise. The `audit/export` ZIP contains the value. Two tests prove it (the `with-audit.test.ts` additions).
+- **Status:** DISCHARGED (2026-11-14, commit PENDING_8_0_0_1)
 
 ### W-0021 — OPEN — Every Phase 8 API route must use `withAudit`
 
