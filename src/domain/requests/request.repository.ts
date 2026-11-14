@@ -5,9 +5,12 @@
  * - Pure domain interface and types; zero @prisma/client imports.
  * - Module is requests (SYSTEM.md §4).
  * - RequestState domain enum: SUBMITTED, ACKNOWLEDGED, IN_PROGRESS, COMPLETED, CANCELLED, DECLINED.
- * - HotelService domain enum (nine services per SYSTEM.md §10.4):
+ * - HotelService domain enum (eleven values per SYSTEM.md §10.4: the nine
+ *   hotel services — ROOM_SERVICE_FOOD, HOUSEKEEPING, MAINTENANCE,
+ *   CONCIERGE, LAUNDRY, SPA, LATE_CHECKOUT, WAKE_UP_CALL, DO_NOT_DISTURB —
+ *   plus the two table/counter actions CALL_WAITER and REQUEST_BILL):
  *   ROOM_SERVICE_FOOD, HOUSEKEEPING, MAINTENANCE, CONCIERGE, LAUNDRY, SPA,
- *   LATE_CHECKOUT, WAKE_UP_CALL, DO_NOT_DISTURB.
+ *   LATE_CHECKOUT, WAKE_UP_CALL, DO_NOT_DISTURB, CALL_WAITER, REQUEST_BILL.
  * - details is a domain shape (ServiceRequestDetails), not any.
  * - Methods: create, findById, listForVenue, listForRoom, advanceState, cancel, decline, updateDetails.
  *

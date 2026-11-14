@@ -619,7 +619,7 @@ A guest can edit or cancel a request only while it is in the `Submitted` state (
 
 ### 10.4 The details per service
 
-A service request has a common shape (venue, room, service type, status, history) and a set of service-specific details. The details are stored with the request. The service type is an enum: housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb.
+A service request has a common shape (venue, room, service type, status, history) and a set of service-specific details. The details are stored with the request. The service type is an enum with eleven values: room service food, housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb, call waiter, request bill. The first nine are the hotel services a venue can toggle on or off (SYSTEM.md §11.1). The last two — CALL_WAITER and REQUEST_BILL — are the table and counter actions from Phase 5.7.0A (the "Call a waiter" and "Request the bill" buttons in the guest flow); they live in the same enum because they share the same service-request table, but they are not hotel-catalog services and are not toggleable.
 
 ### 10.5 The parallel tracks
 
