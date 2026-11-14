@@ -1,6 +1,5 @@
 import type { JSX } from "react";
 import { requireRole } from "@/lib/auth/require-role";
-import { LogoutButton } from "./_logout-button";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
 import { MenuItemState } from "@/domain/menu/menu.repository";
@@ -13,7 +12,7 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
   const items = itemsResult.ok ? itemsResult.value : [];
 
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-start p-6 bg-staff-surface">
+    <section className="flex flex-col items-center justify-start">
       <div className="w-full max-w-2xl flex flex-col items-center text-center gap-6">
         <header className="flex flex-col gap-2">
           <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
@@ -107,8 +106,6 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
             </ul>
           )}
         </section>
-
-        <LogoutButton />
       </div>
 
       <script
@@ -160,6 +157,6 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
 `,
         }}
       />
-    </main>
+    </section>
   );
 }

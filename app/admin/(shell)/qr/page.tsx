@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogoutButton } from "./_logout-button";
 import { GenerateButton } from "./_generate-button";
 import { RevokeButton } from "./_revoke-button";
 import { PrintButton } from "./_print-button";
@@ -35,7 +34,7 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
 
   if (!venue.ok) {
     return (
-      <main className="min-h-dvh p-6 bg-staff-surface">
+      <section>
         <div className="max-w-6xl mx-auto flex flex-col gap-6">
           <header className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
@@ -43,13 +42,12 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
                 QR Codes
               </h1>
             </div>
-            <LogoutButton />
           </header>
           <p className="text-[14px] leading-[20px] text-staff-text-muted">
             Could not load venue.
           </p>
         </div>
-      </main>
+      </section>
     );
   }
 
@@ -81,7 +79,7 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
 
   if (!tokensResult.ok) {
     return (
-      <main className="min-h-dvh p-6 bg-staff-surface">
+      <section>
         <div className="max-w-6xl mx-auto flex flex-col gap-6">
           <header className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
@@ -94,20 +92,19 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
             </div>
             <div className="flex items-center gap-2">
               <GenerateButton placesByType={placesByType} />
-              <LogoutButton />
             </div>
           </header>
           <p className="text-[14px] leading-[20px] text-staff-text-muted">
             Could not load QR codes.
           </p>
         </div>
-      </main>
+      </section>
     );
   }
 
   if (tokensResult.value.length === 0) {
     return (
-      <main className="min-h-dvh p-6 bg-staff-surface">
+      <section>
         <div className="max-w-6xl mx-auto flex flex-col gap-6">
           <header className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
@@ -120,14 +117,13 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
             </div>
             <div className="flex items-center gap-2">
               <GenerateButton placesByType={placesByType} />
-              <LogoutButton />
             </div>
           </header>
           <p className="text-[14px] leading-[20px] text-staff-text-muted">
             No QR codes yet.
           </p>
         </div>
-      </main>
+      </section>
     );
   }
 
@@ -160,7 +156,7 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
   }
 
   return (
-    <main className="min-h-dvh p-6 bg-staff-surface">
+    <section>
       <div className="max-w-6xl mx-auto flex flex-col gap-6">
         <header className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
@@ -173,7 +169,6 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
           </div>
           <div className="flex items-center gap-2">
             <GenerateButton placesByType={placesByType} />
-            <LogoutButton />
           </div>
         </header>
 
@@ -229,6 +224,6 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
           </Table>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

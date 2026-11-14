@@ -1,4 +1,4 @@
-﻿# WIRING.md — The Cross-Task Wiring Ledger
+# WIRING.md — The Cross-Task Wiring Ledger
 
 **Version:** 1.0
 **Status:** Approved
@@ -194,10 +194,10 @@ Status: SUPERSEDED.
 - **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
 - **Obligation:** Remove `app/admin/_logout-button.tsx` and consolidate into the shared shell logout component when the admin shell is built.
 - **Files and call site:** `app/admin/_logout-button.tsx`, `app/admin/page.tsx`, `app/admin/qr/page.tsx`.
-- **Satisfied by:** Task 8.1.1 (Admin Dashboard Shell) / Stage 4 Foundation Refactor.
+- **Satisfied by:** Task 8.1.2 (Admin Shell Layout). The shell's header carries the single CSRF-safe sign-out; the two per-page buttons are deleted. Verified by the shell's presence on /admin and /admin/qr and the sign-out's 200 in the audit log.
 - **Depends on:** DESIGN.md §4.15.3, SYSTEM.md §3, BUILD.md §4.
 - **Verification:** `app/admin/_logout-button.tsx` removed; admin pages import shared logout button; `tsc --noEmit` clean.
-- **Status:** OPEN
+- **Status:** DISCHARGED (2026-11-15, commit PENDING_8_1_2)
 
 ---
 

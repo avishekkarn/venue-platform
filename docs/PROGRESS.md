@@ -145,6 +145,34 @@ New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
 
+### ENTRY-0228 — 2026-11-15 — D-9.7 superseded: the admin shell carries the single sign-out
+
+**Status:** STRUCTURAL
+
+**Task:** Phase 8.1.2 — Add the admin shell layout (sidebar, header, sign-out). This entry records the D-9.7 supersession that 8.1.2 triggers.
+
+**Summary:** D-9.7 established an interim per-page sign-out button on every authenticated admin page until the admin shell exists. The shell now exists at `app/admin/layout.tsx`. The two per-page `_logout-button.tsx` files are deleted (`app/admin/_logout-button.tsx`, `app/admin/qr/_logout-button.tsx`). The single sign-out lives in the shell's header (`app/admin/_sign-out.tsx`), and every admin page inherits it. D-9.7's own "What would make us revisit" clause names "The construction of the admin shell in Phase 8" as the intended expiry; that moment is now. D-9.7 is not edited retroactively (DECISIONS.md is append-only); this entry records the supersession.
+
+**Note on the /admin/qr button's CSRF regression:** the deleted `app/admin/qr/_logout-button.tsx` omitted the X-CSRF-Token header. Sign-out from /admin/qr has silently 403'd server-side since D-20.1's CSRF enforcement landed at 7.7.4 (the client cleared the cookie and redirected, so the user believed they had signed out). The shell's sign-out sends the header; the regression is closed.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | D-9.7 is not edited retroactively; the supersession is recorded here | No change |
+| SYSTEM.md | No | No shape change | No change |
+| BUILD.md | No | No method change | No change |
+| ROADMAP.md | Yes | 8.1.2 → ✅ | Updated in this commit |
+| PROGRESS.md | Yes | This entry | Updated in this commit |
+| WIRING.md | Yes | W-0002 → DISCHARGED | Updated in this commit |
+
+**Contradiction Check:** None found. The shell's sign-out uses `window.location.href` (D-19.2's discipline) and `X-CSRF-Token` (D-20.1). The shell lives inside `data-world="staff"` (D-9.2) and uses only staff tokens (DESIGN.md §4.10.15).
+
+**Next:** Phase 8.1.3 — Add the dashboard page (metric tiles + active orders list + recent requests).
+
+**Awaiting Human Verification:** YES
+
 ### ENTRY-0227 — 2026-11-14 — Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access (PASS)
 
 **Status:** PASS
