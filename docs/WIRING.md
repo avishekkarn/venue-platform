@@ -197,7 +197,7 @@ Status: SUPERSEDED.
 - **Satisfied by:** Task 8.1.2 (Admin Shell Layout). The shell's header carries the single CSRF-safe sign-out; the two per-page buttons are deleted. Verified by the shell's presence on /admin and /admin/qr and the sign-out's 200 in the audit log.
 - **Depends on:** DESIGN.md §4.15.3, SYSTEM.md §3, BUILD.md §4.
 - **Verification:** `app/admin/_logout-button.tsx` removed; admin pages import shared logout button; `tsc --noEmit` clean.
-- **Status:** DISCHARGED (2026-11-15, commit <8.1.2 SHA>)
+- **Status:** DISCHARGED (2026-11-15, commit 26647d4)
 
 ---
 

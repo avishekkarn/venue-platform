@@ -136,8 +136,9 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0225 | 2026-11-13 | Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (Part A; Part B deferred) | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
+| ENTRY-0228 | 2026-11-15 | D-9.7 superseded: the admin shell carries the single sign-out | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0228
+Next entry number: 0229
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
