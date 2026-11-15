@@ -41,7 +41,7 @@ export const SEED_VENUE: CreateVenueInput = {
   brandColor: "#626542",
   welcomeMessage: "Everything you need is on this page.",
   language: "en",
-  currency: "USD",
+  currency: "NPR",
   taxRate: "0.1300",
   isActive: true,
   modules: ["TABLE", "ROOM", "COUNTER"],
@@ -100,6 +100,35 @@ export async function seedVenue(): Promise<{
     console.log(
       `Venue already exists: ${existingResult.value.slug} (id: ${existingResult.value.id})`
     );
+
+    // Re-sync the developer-managed venue configuration. The seed is the
+    // source of truth for the venue's configuration (D-9.6); the currency
+    // is one of those fields. When the seed's SEED_VENUE.currency changes
+    // (e.g., "USD" -> "NPR"), the existing row must be updated on the
+    // next seed run. Without this, the row keeps its original value.
+    //
+    // The direct prisma.venue.update is deliberate: the seed is the
+    // only writer of the venue's configuration today. When Phase 8.7
+    // adds the runtime update path (PATCH /api/admin/settings ->
+    // venueRepo.update), this call is refactored to use the port.
+    // See DECISIONS.md D-9.6, BUILD.md §9.4 (the seed is idempotent).
+    try {
+      await prisma.venue.update({
+        where: { slug: SEED_VENUE.slug },
+        data: { currency: SEED_VENUE.currency },
+      });
+      console.log(
+        `Venue currency re-synced: ${SEED_VENUE.slug} -> ${SEED_VENUE.currency}`
+      );
+    } catch (error) {
+      console.error(
+        `Failed to re-sync venue currency: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      throw error;
+    }
+
     const counterId = existingResult.value.counter?.id;
     if (!counterId) {
       throw new Error(`Venue ${existingResult.value.slug} has no counter`);
