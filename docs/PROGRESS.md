@@ -137,15 +137,75 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
 | ENTRY-0228 | 2026-11-15 | D-9.7 superseded: the admin shell carries the single sign-out | STRUCTURAL | Milestone 8.1 | §5.3 |
+| ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0230
+Next entry number: 0231
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0230 — 2026-11-15 — Milestone 8.1 closed: Dashboard with live venue state and 5s polling
+
+**Status:** PASS
+
+**Task:** Milestone 8.1 — 7.7.6, 8.1.1, 8.1.2, 8.1.3.A, 8.1.3.B, 8.1.4, 8.1.5 (and the in-session fixes 8.1.4.FIX, 8.1.4.FIX.2, 8.1.5.FIX, 8.1.5.FIX.2, 8.1.5.FIX.3).
+
+**Summary:** Milestone 8.1 is closed. The admin dashboard at `/admin` renders six live metric tiles, two order lists (recent table / room orders), one request list (recent room requests), and two maps (tables / rooms), all read-only. The dashboard polls every 5 seconds via a vanilla-JS `<script async dangerouslySetInnerHTML>` (D-19.1), gated on `document.visibilityState === 'visible'`. The route `GET /api/admin/dashboard` is `withAudit`-wrapped (W-0021) and derives occupancy from `Table.state` / `Room.state` (7.7.6's source of truth). The `/staff` page polls the same way with the same derivation (8.1.5.FIX.2). The 7.7.6 fix (QR scan sets the place state to OCCUPIED) is live and verified. The admin shell (8.1.2) retires the per-page sign-out buttons and carries the single sign-out.
+
+**The task breakdown:**
+- 7.7.6 — `app/(guest)/qr/[token]/route.ts` sets `TableState.OCCUPIED` / `RoomState.OCCUPIED` on successful guest session creation.
+- 8.1.1 — `GET /api/admin/dashboard` (`withAudit`); four integration tests.
+- 8.1.2 — `app/admin/(shell)/layout.tsx` (sidebar, header, sign-out); D-9.7 superseded; W-0002 discharged.
+- 8.1.3.A — `TableMapCell` / `RoomMapCell` extracted; `/staff` rewired.
+- 8.1.3.B — `app/admin/(shell)/page.tsx` (six sections, read-only, sorted maps).
+- 8.1.4 — polling script + route expansion.
+- 8.1.4.FIX / 8.1.4.FIX.2 — occupancy derived from `Table.state` / `Room.state`; `<script async>` for React 19; unauthorized `_dashboard-client.tsx` deleted.
+- 8.1.5.FIX / 8.1.5.FIX.2 — staff poll reads `activeRoomIds`; route and page derive occupancy from `Table.state` / `Room.state`; `visibilityState` gate added.
+- 8.1.5.FIX.3 — corrected the `hasOrderAccess` omission in `6c5c968`: the commit's message claimed HOUSEKEEPING/MAINTENANCE were admitted; the code was not changed. 8.1.5.FIX.3 makes the claim true (`09a22cb`) and proves it with the three tests (`derives activeTableIds from Table.state`, `allows HOUSEKEEPING`, `allows MAINTENANCE`). The `6c5c968` commit-message overclaim is recorded here per BUILD.md §15.8 and PROGRESS.md §1 Rule 1.
+- 8.1.5 — the milestone acceptance test: the dashboard's six metrics update as orders move (manual desktop at 1440×900).
+
+**Baselines at close:**
+- `pnpm exec tsc --noEmit`: 0 errors
+- `pnpm test:unit`: 41 files / 282 tests
+- `pnpm test:integration`: 44 files / 319 tests
+- `pnpm build`: 41 routes
+
+**Manual verification (the runtime proof):**
+- The admin dashboard's metrics update within 5s of a state change (order placed, approved, prepared, ready, delivered, completed, table closed).
+- The staff dashboard's Room Map reflects `Room.state` changes from Prisma Studio within 5s, without a refresh.
+- The poll gates on `document.visibilityState === 'visible'`.
+- The audit log's `GET /api/admin/dashboard` lines carry a real IP (W-0025's population is proven).
+- No React hydration errors on either page.
+
+**The audit-gap decision:** The guest QR scan route and the staff/kitchen action routes are **not** `withAudit`-wrapped. Phase 8 admin routes are (W-0021); the guest and staff action routes are deferred to Phase 10 (audit sweep). This is a deliberate scope decision, not an oversight.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change | No change |
+| SYSTEM.md | No | No shape change | No change |
+| BUILD.md | No | No method change | No change |
+| ROADMAP.md | Yes | 7.7.6, 8.1.1, 8.1.2, 8.1.3.A, 8.1.3.B, 8.1.4, 8.1.5 → ✅ | Updated in this commit |
+| PROGRESS.md | Yes | This entry | Updated in this commit |
+| README.md | Yes | §4 numbers: 306 → 319, 279 → 282, 40 → 41 routes; §5 current state | Updated in this commit |
+| WIRING.md | No | W-0021 remains OPEN (route-by-route; Phase 8 admin routes through 8.1.4 are wrapped; 8.8's Audit Log Viewer is the last one). W-0002 is DISCHARGED (8.1.2). No status change. | No change |
+| PHASE_TESTS.md | Yes | Milestone 8.1's acceptance is §10 Steps 1–3 (the full §10 is Phase 8's gate at 8.8's close) | Updated in this commit |
+
+**Contradiction Check:** None found. The 7.7.6 fix is consistent with D-2.3 (close-table frees the table) and the staff page's close-table action. The dashboard poll's `escapeHtml` is applied to all user data. No `<script>` inside a Client Component (the `<Script strategy="afterInteractive">` on `/staff` is a Next.js wrapper rendered by the Server Component; it is not stripped). No `useState` for polling. No `router.refresh`. No `window.location.reload`. The `6c5c968` commit claimed a code change that was not present; 8.1.5.FIX.3 corrects it; this entry records the correction (append-only; the original commit is not amended).
+
+**Noticed but Out of Scope:** `GET /api/staff/orders` and `GET /api/staff/requests` are not `withAudit`-wrapped (the same Phase 10 deferral). The `admin-menu.test.ts` is still `(0 test)` (F-0004; filled in 8.3.1). The `middleware → proxy` deprecation is a Phase 10 concern. The `6c5c968` commit's overclaim is corrected by `09a22cb`; the old commit remains on `origin/main` (no force-push).
+
+**Next:** Phase 8.2 — Order Management (8.2.1: `GET /api/admin/orders` with filters).
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0229 — 2026-11-15 — 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page)
 

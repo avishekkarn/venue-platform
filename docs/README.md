@@ -72,10 +72,10 @@ These are the counts as of the current state (2026-11-14, Phase 8.0.0):
 - **Documents:** 9 canonical files (PRODUCT, DECISIONS, SYSTEM, BUILD, ROADMAP, PROGRESS, DESIGN, PHASE_TESTS, WIRING) + README
 - **Decisions:** 104, across 17 categories (see `DECISIONS.md` Appendix)
 - **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed), Phase 7.6 (foundation hardening, closed), Phase 7.7 (production readiness prerequisites, closed), and Phase 8.0.0 (docs-code alignment, in progress)
-- **Unit tests passing:** 279 (40 files)
-- **Integration tests passing:** 306 (43 files)
-- **Production routes:** 40
-- **Current milestone:** Phase 8.0.0 — Alignment (Phase 7.7 is closed; Phase 8.0.0 is in progress; Phase 8.1.1 starts after 8.0.0 closes)
+- **Unit tests passing:** 282 (41 files)
+- **Integration tests passing:** 319 (44 files)
+- **Production routes:** 41
+- **Current milestone:** Phase 8.2 — Order Management (Phase 8.1 closed at `09a22cb`; Phase 8.2.1 is next)
 
 ---
 
@@ -83,12 +83,10 @@ These are the counts as of the current state (2026-11-14, Phase 8.0.0):
 
 See the top of `PROGRESS.md` §7 (The Current State Snapshot). That snapshot is updated at the end of every session and is the single source of truth for what phase, milestone, and task the project is on.
 
-As of the last session:
+As of the last session (2026-11-15, commit `09a22cb`):
 
-- **Phase 7.5** (Room Service & Frontend Convergence) is **closed**. The guest request loop is 1:1 aligned with the order loop. Polling uses vanilla-JS DOM replacement on the guest tracking surfaces (`/order/[id]/track`, `/requests`, and the join banner) — see D-19.1. The join-approval cookie is set server-side via `NextResponse` — see D-19.2.
-- **Phase 7.6** (Foundation Hardening) is **closed** (commit `145d479`). All eleven tasks plus two FIX commits are on `origin/main`. The foundation is verified end-to-end. See PROGRESS ENTRY-0220.
-- **Phase 7.7** (Production Readiness Prerequisites) is **fully closed**. Milestone 7.7.4 (CSRF on all 25 state-changing routes) closed at `084414c`; the docs reconciliation at `70986c4`; Milestone 7.7.5 (Login Rate Limiting) closed at `a09d832` (`c393ac0` helper + unit tests; `b65a2d8` route + integration tests + 429 UX; `c9654af` landing-route + cookie + React-form fix; `a09d832` role-aware request API and tabs + focused seed staff).
-- **Phase 8.0.0** (Docs-Code Alignment) is **in progress**. W-0025 was discharged at `7d7bc2e` (the audit `ip` is populated; two tests prove it). The service enum was reconciled at `2d93cf0` (SYSTEM.md §10.4, eleven values). The dashboard metric count was reconciled at `4966548` (DESIGN.md §4.10.5 six metrics, SYSTEM.md §12.5 dashboard row). `.env` files and BUILD.md §9.3 corrected at `8080723` and `4edc6fc`. Two tasks remain (README correction — this task; W-0026 + W-0027 obligations), plus the 8.0.0 gate.
-- **Phase 8** (The Manager Panel) follows Phase 8.0.0. Task 8.1.1 (`GET /api/admin/dashboard`, with `withAudit`) is the first task, and it starts only after the 8.0.0 gate (8.0.0.8) passes.
-- **Phase 8 foundation inheritance:** Every Phase 8 route uses `withAudit` (W-0021) and CSRF (D-20.1); the audit `ip` is populated (W-0025 was discharged at `7d7bc2e`). The audit log is rotated at 30 days (W-0026, Phase 10.7). These are preconditions, not deliverables — a Phase 8 task that omits any of them is `FAIL`.
-- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 279/279, `test:integration` 306/306, `build` 40 routes.
+- **Phase 7.7** (Production Readiness Prerequisites) is **fully closed** at `a09d832`.
+- **Phase 8.0.0** (Docs-Code Alignment) is **fully closed** at `620ebc3`.
+- **Phase 8.1** (Dashboard) is **✅ closed**. Milestone 8.1: 7.7.6, 8.1.1, 8.1.2, 8.1.3.A, 8.1.3.B, 8.1.4, 8.1.5 all ✅. The admin dashboard at `/admin` renders six live metric tiles, two order lists, one request list, and two maps. The dashboard polls every 5s via a vanilla-JS `<script async>` gated on `visibilityState` (D-19.1). The route is `withAudit`-wrapped (W-0021) and derives occupancy from `Table.state` / `Room.state` (7.7.6). The `/staff` page polls the same way with the same derivation (8.1.5.FIX.2 / FIX.3).
+- **Phase 8.2** (Order Management) is **next**: 8.2.1 is `GET /api/admin/orders` with filters.
+- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 282/282, `test:integration` 319/319, `build` 41 routes.
