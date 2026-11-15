@@ -20,10 +20,16 @@ export function setTestDbClient(client: DbClient | null): void {
 }
 
 function hasOrderAccess(roles: readonly StaffRole[]): boolean {
+  // HOUSEKEEPING and MAINTENANCE need to read the Room Map (the only
+  // surface showing room occupancy), so they must be admitted here.
+  // Without this, the /staff poll 403's on the first tick and wipes
+  // the Room Map. 8.1.5.FIX.3.
   return (
     canAccess(roles, "table-service") ||
     canAccess(roles, "room-service") ||
-    canAccess(roles, "front-desk")
+    canAccess(roles, "front-desk") ||
+    canAccess(roles, "housekeeping") ||
+    canAccess(roles, "maintenance")
   );
 }
 

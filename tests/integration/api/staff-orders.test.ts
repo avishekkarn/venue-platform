@@ -936,4 +936,133 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
     expect(json.error.code).toBe("FORBIDDEN");
     expect(json.error.message).toBe("CSRF token missing or invalid");
   });
+
+  describe("GET /api/staff/orders — occupancy derivation (8.1.5.FIX.2)", () => {
+    it("derives activeTableIds from Table.state, not from guest sessions", async () => {
+      await withTransaction(async (tx) => {
+        setTestDbClientOrders(tx);
+
+        const venueRepo = createPrismaVenueRepository(tx);
+        const staffRepo = createPrismaStaffRepository(tx);
+        const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+        const venueResult = await venueRepo.create({
+          name: "Juniper House",
+          slug: venueSlug,
+          taxRate: "0.1000",
+        });
+        if (!venueResult.ok) return;
+        const venue = venueResult.value;
+
+        const occupiedTable = await tx.table.create({
+          data: { venueId: venue.id, number: "T-OCC", state: "OCCUPIED" },
+        });
+        const freeTable = await tx.table.create({
+          data: { venueId: venue.id, number: "T-FREE", state: "FREE" },
+        });
+        const occupiedRoom = await tx.room.create({
+          data: { venueId: venue.id, number: "R-OCC", state: "OCCUPIED" },
+        });
+        const vacantRoom = await tx.room.create({
+          data: { venueId: venue.id, number: "R-VAC", state: "VACANT" },
+        });
+
+        const staffResult = await staffRepo.create({
+          venueId: venue.id,
+          name: "Alice Waiter",
+          username: `alice_state_${Date.now()}`,
+          passwordHash: await hashPassword("password123"),
+          roles: [StaffRole.TABLE_SERVICE],
+        });
+        if (!staffResult.ok) return;
+
+        const session = await createSession(tx, staffResult.value.id);
+        vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+        const request = new NextRequest("http://localhost/api/staff/orders", {
+          method: "GET",
+        });
+        const response = await GET_ORDERS(request);
+        expect(response.status).toBe(200);
+        const json = await response.json();
+
+        expect(json.activeTableIds).toContain(occupiedTable.id);
+        expect(json.activeTableIds).not.toContain(freeTable.id);
+        expect(json.activeRoomIds).toContain(occupiedRoom.id);
+        expect(json.activeRoomIds).not.toContain(vacantRoom.id);
+      });
+    });
+
+    it("allows HOUSEKEEPING role to read the orders route (200)", async () => {
+      await withTransaction(async (tx) => {
+        setTestDbClientOrders(tx);
+
+        const venueRepo = createPrismaVenueRepository(tx);
+        const staffRepo = createPrismaStaffRepository(tx);
+        const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+        const venueResult = await venueRepo.create({
+          name: "Juniper House",
+          slug: venueSlug,
+          taxRate: "0.1000",
+        });
+        if (!venueResult.ok) return;
+        const venue = venueResult.value;
+
+        const staffResult = await staffRepo.create({
+          venueId: venue.id,
+          name: "Diana Housekeeping",
+          username: `diana_hk_${Date.now()}`,
+          passwordHash: await hashPassword("password123"),
+          roles: [StaffRole.HOUSEKEEPING],
+        });
+        if (!staffResult.ok) return;
+
+        const session = await createSession(tx, staffResult.value.id);
+        vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+        const request = new NextRequest("http://localhost/api/staff/orders", {
+          method: "GET",
+        });
+        const response = await GET_ORDERS(request);
+        expect(response.status).toBe(200);
+      });
+    });
+
+    it("allows MAINTENANCE role to read the orders route (200)", async () => {
+      await withTransaction(async (tx) => {
+        setTestDbClientOrders(tx);
+
+        const venueRepo = createPrismaVenueRepository(tx);
+        const staffRepo = createPrismaStaffRepository(tx);
+        const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+        const venueResult = await venueRepo.create({
+          name: "Juniper House",
+          slug: venueSlug,
+          taxRate: "0.1000",
+        });
+        if (!venueResult.ok) return;
+        const venue = venueResult.value;
+
+        const staffResult = await staffRepo.create({
+          venueId: venue.id,
+          name: "Max Maintenance",
+          username: `max_mnt_${Date.now()}`,
+          passwordHash: await hashPassword("password123"),
+          roles: [StaffRole.MAINTENANCE],
+        });
+        if (!staffResult.ok) return;
+
+        const session = await createSession(tx, staffResult.value.id);
+        vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+        const request = new NextRequest("http://localhost/api/staff/orders", {
+          method: "GET",
+        });
+        const response = await GET_ORDERS(request);
+        expect(response.status).toBe(200);
+      });
+    });
+  });
 });
