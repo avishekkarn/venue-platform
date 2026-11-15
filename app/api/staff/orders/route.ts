@@ -123,21 +123,23 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     return false;
   });
 
-  // Query all active guest sessions for this venue to derive occupied places
-  const activeSessions = await db.guestSession.findMany({
-    where: {
-      venueId: venue.id,
-      endedAt: null,
-    },
-    select: { tableId: true, roomId: true },
+  // Occupancy derived from Table.state / Room.state (7.7.6 source of truth).
+  // Do NOT use guestSession here; a session might exist for a table that
+  // hasn't been marked OCCUPIED yet, or vice versa.
+  const tablesRes = await db.table.findMany({
+    where: { venueId: venue.id },
+    select: { id: true, state: true },
   });
-
-  const activeTableIds: string[] = [];
-  const activeRoomIds: string[] = [];
-  for (const s of activeSessions) {
-    if (s.tableId) activeTableIds.push(s.tableId);
-    if (s.roomId) activeRoomIds.push(s.roomId);
-  }
+  const roomsRes = await db.room.findMany({
+    where: { venueId: venue.id },
+    select: { id: true, state: true },
+  });
+  const activeTableIds: string[] = tablesRes
+    .filter((t) => t.state === "OCCUPIED")
+    .map((t) => t.id);
+  const activeRoomIds: string[] = roomsRes
+    .filter((r) => r.state === "OCCUPIED")
+    .map((r) => r.id);
 
   return NextResponse.json(
     { data: combinedOrders, activeTableIds, activeRoomIds },

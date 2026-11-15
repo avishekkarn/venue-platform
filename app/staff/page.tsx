@@ -232,11 +232,16 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     requestRepo.listForVenue(venue.id),
   ]);
 
+  const tables = tablesRes.ok ? tablesRes.value : [];
+  const rooms = roomsRes.ok ? roomsRes.value : [];
+
   const activeTableIds = new Set<string>();
   const activeRoomIds = new Set<string>();
-  for (const s of activeSessions) {
-    if (s.tableId) activeTableIds.add(s.tableId);
-    if (s.roomId) activeRoomIds.add(s.roomId);
+  for (const t of tables) {
+    if (t.state === "OCCUPIED") activeTableIds.add(t.id);
+  }
+  for (const r of rooms) {
+    if (r.state === "OCCUPIED") activeRoomIds.add(r.id);
   }
 
   // Filter completed orders to the last 4 hours
@@ -269,9 +274,6 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
       }
     }
   }
-
-  const tables = tablesRes.ok ? tablesRes.value : [];
-  const rooms = roomsRes.ok ? roomsRes.value : [];
 
   const tableMap: Record<string, string> = {};
   for (const t of tables) {
@@ -642,6 +644,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   }
 
   function poll() {
+    if (document.visibilityState !== 'visible') return;
     var orderFetch = fetch('/api/staff/orders', { credentials: 'same-origin' })
       .then(function(r) { if (!r.ok) return { data: [] }; return r.json(); })
       .catch(function() { return { data: [] }; });
@@ -668,6 +671,21 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
             }
           }
           currentActiveTableIds = activeFromOrders;
+        }
+
+        if (ordersBody.activeRoomIds) {
+          currentActiveRoomIds = ordersBody.activeRoomIds;
+        } else {
+          var activeRoomsFromOrders = [];
+          for (var m = 0; m < allOrders.length; m++) {
+            var ordR = allOrders[m];
+            if (ordR.state !== 'COMPLETED' && ordR.state !== 'CANCELLED' && ordR.roomId) {
+              if (activeRoomsFromOrders.indexOf(ordR.roomId) === -1) {
+                activeRoomsFromOrders.push(ordR.roomId);
+              }
+            }
+          }
+          currentActiveRoomIds = activeRoomsFromOrders;
         }
 
         var tableOrders = [];
