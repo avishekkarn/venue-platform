@@ -120,6 +120,8 @@ export interface CancelOrderInput {
 
 export interface OrderFilter {
   readonly state?: OrderState;
+  readonly dateFrom?: Date;
+  readonly dateTo?: Date;
 }
 
 export interface OrderRepository {

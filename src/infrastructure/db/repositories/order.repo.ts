@@ -271,13 +271,18 @@ export function createPrismaOrderRepository(client: DbClient): OrderRepository {
       filter?: OrderFilter
     ): Promise<Result<Order[]>> => {
       try {
+        const where: Prisma.OrderWhereInput = { venueId };
+        if (filter?.state) {
+          where.state = DOMAIN_TO_PRISMA_ORDER_STATE[filter.state];
+        }
+        if (filter?.dateFrom || filter?.dateTo) {
+          const range: { gte?: Date; lte?: Date } = {};
+          if (filter.dateFrom) range.gte = filter.dateFrom;
+          if (filter.dateTo) range.lte = filter.dateTo;
+          where.placedAt = range;
+        }
         const rawOrders = await client.order.findMany({
-          where: {
-            venueId,
-            ...(filter?.state
-              ? { state: DOMAIN_TO_PRISMA_ORDER_STATE[filter.state] }
-              : {}),
-          },
+          where,
           include: ORDER_INCLUDE,
           orderBy: { placedAt: "desc" },
         });
