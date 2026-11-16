@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { MenuItemRow } from "@/components/staff/menu-item-row";
 import { EditSheet } from "./_edit-sheet";
+import { CategoriesSheetTrigger } from "./_categories-sheet-trigger";
 
 /**
  * The admin menu list screen (8.3.1, 8.3.3, DESIGN.md §4.10.8).
@@ -79,6 +80,13 @@ export default async function MenuPage({
           <p className="text-sm text-staff-text-muted">
             {itemCount} item{itemCount === 1 ? "" : "s"}
           </p>
+          <CategoriesSheetTrigger
+            categories={categories.map((c) => ({
+              id: c.id,
+              name: c.name,
+              sortOrder: c.order,
+            }))}
+          />
           <button
             type="button"
             disabled
