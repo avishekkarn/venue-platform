@@ -9,6 +9,15 @@ import {
   PATCH as adminMenuCategoryPatchPATCH,
   DELETE as adminMenuCategoryDeleteDELETE,
 } from "@/../app/api/admin/menu/categories/[id]/route";
+import { POST as adminMenuCollectionsPOST } from "@/../app/api/admin/menu/collections/route";
+import {
+  PATCH as adminMenuCollectionPatchPATCH,
+  DELETE as adminMenuCollectionDeleteDELETE,
+} from "@/../app/api/admin/menu/collections/[id]/route";
+import {
+  POST as adminMenuCollectionItemsPOST,
+  DELETE as adminMenuCollectionItemsDELETE,
+} from "@/../app/api/admin/menu/collections/[id]/items/route";
 import { POST as adminQrRevokePOST } from "@/../app/api/admin/qr/[id]/revoke/route";
 import { POST as adminQrGeneratePOST } from "@/../app/api/admin/qr/generate/route";
 import { POST as loginPOST } from "@/../app/api/auth/login/route";
@@ -65,7 +74,7 @@ async function expectCsrfRejection(response: Response): Promise<void> {
   expect(json.error.message).toBe(CSRF_FORBIDDEN.message);
 }
 
-describe("CSRF enforcement on the 30-route state-changing surface (D-20.1, 7.7.4d)", () => {
+describe("CSRF enforcement on the 35-route state-changing surface (D-20.1, 7.7.4d)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
@@ -315,6 +324,45 @@ describe("CSRF enforcement on the 30-route state-changing surface (D-20.1, 7.7.4
     const id = "11111111-2222-3333-4444-555555555555";
     const req = new NextRequest(`http://localhost/api/admin/menu/categories/${id}`, { method: "DELETE" });
     const res = await adminMenuCategoryDeleteDELETE(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 31
+  it("admin/menu/collections rejects without X-CSRF-Token", async () => {
+    const req = new NextRequest("http://localhost/api/admin/menu/collections", { method: "POST" });
+    const res = await adminMenuCollectionsPOST(req);
+    await expectCsrfRejection(res);
+  });
+
+  // 32
+  it("admin/menu/collections/[id] PATCH rejects without X-CSRF-Token", async () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const req = new NextRequest(`http://localhost/api/admin/menu/collections/${id}`, { method: "PATCH" });
+    const res = await adminMenuCollectionPatchPATCH(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 33
+  it("admin/menu/collections/[id] DELETE rejects without X-CSRF-Token", async () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const req = new NextRequest(`http://localhost/api/admin/menu/collections/${id}`, { method: "DELETE" });
+    const res = await adminMenuCollectionDeleteDELETE(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 34
+  it("admin/menu/collections/[id]/items POST rejects without X-CSRF-Token", async () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const req = new NextRequest(`http://localhost/api/admin/menu/collections/${id}/items`, { method: "POST" });
+    const res = await adminMenuCollectionItemsPOST(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 35
+  it("admin/menu/collections/[id]/items DELETE rejects without X-CSRF-Token", async () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const req = new NextRequest(`http://localhost/api/admin/menu/collections/${id}/items`, { method: "DELETE" });
+    const res = await adminMenuCollectionItemsDELETE(req, { params: Promise.resolve({ id }) });
     await expectCsrfRejection(res);
   });
 });
