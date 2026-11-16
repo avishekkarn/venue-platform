@@ -26,6 +26,9 @@ logs/
 # Backups (Phase 7.7.3 — runtime .sql.gz dumps, never committed)
 backups/
 
+# Uploaded media (Phase 8.3.0 — runtime user-uploaded files, never committed)
+public/uploads/
+
 # Editor and OS
 .DS_Store
 Thumbs.db
