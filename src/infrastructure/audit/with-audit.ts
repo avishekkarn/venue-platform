@@ -45,12 +45,9 @@ import { actorFromSession, writeAudit, type ActorResolvers } from "./logger";
 /**
  * The shape a wrapped route handler must have. Next.js's route handlers are
  * exactly `(request: NextRequest) => Promise<NextResponse>` for non-dynamic
- * routes. Dynamic routes (`[id]`) take a second `{ params }` argument; the
- * wrapper does not pass through a `context` for dynamic routes today, so
- * Phase 8's dynamic routes (e.g. `staff/[id]/reset-password`) will use a
- * variant of this wrapper that carries `context`. That variant is out of
- * scope for 7.7.1a; it will be introduced in Phase 8 when the first dynamic
- * route is wrapped. This wrapper covers the non-dynamic case.
+ * routes. The variant `withAuditedDynamicRoute` was introduced at 8.3.0.F;
+ * it is first used by POST /api/admin/menu/items/[id]/state; the variant's test
+ * is in with-audit.test.ts. This wrapper covers the non-dynamic case.
  */
 export type AuditedRouteHandler = (
   request: NextRequest
@@ -137,6 +134,71 @@ export function withAudit(
       // returned. Nothing more to do.
     }
 
+    return response;
+  };
+}
+
+/**
+ * The dynamic-route variant of `withAudit` (D-24.1).
+ *
+ * The non-dynamic wrapper above takes a one-argument handler. A dynamic
+ * route's handler is two-argument: `(request, context: { params: Promise<TParams> })`.
+ * This variant preserves that shape — it calls the handler with both
+ * arguments, so `context.params` reaches the route — and writes the same
+ * audit line. The existing `withAudit` is unchanged.
+ *
+ * The body mirrors `withAudit` exactly: start time, `actorFromSession`,
+ * the handler call in try/catch (a throw → console.error + a 500 envelope),
+ * `writeAudit`, the response returned unchanged. The two must stay in sync;
+ * a future refactor may share the inner logic, but for now the duplication
+ * is honest and both are proven by tests.
+ *
+ * Reference: DECISIONS.md D-24.1, BUILD.md §6.11, WIRING.md W-0021.
+ * Introduced at 8.3.0.F; first used by POST /api/admin/menu/items/[id]/state.
+ */
+export type AuditedDynamicRouteHandler<TParams> = (
+  request: NextRequest,
+  context: { params: Promise<TParams> }
+) => Promise<NextResponse>;
+
+export function withAuditedDynamicRoute<TParams>(
+  resolvers: ActorResolvers,
+  meta: AuditMeta,
+  handler: AuditedDynamicRouteHandler<TParams>
+): AuditedDynamicRouteHandler<TParams> {
+  return async function auditedDynamicHandler(
+    request: NextRequest,
+    context: { params: Promise<TParams> }
+  ): Promise<NextResponse> {
+    const start = Date.now();
+    const actor = await actorFromSession(resolvers);
+
+    let response: NextResponse;
+    try {
+      response = await handler(request, context);
+    } catch (err) {
+      console.error(`[audit] ${meta.method} ${meta.route} threw`, err);
+      response = new Response(
+        JSON.stringify({
+          error: { code: "INTERNAL", message: "An unexpected error occurred" },
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ) as unknown as NextResponse;
+    }
+
+    const latencyMs = Date.now() - start;
+    writeAudit({
+      timestamp: new Date(start).toISOString(),
+      actorType: actor.actorType,
+      actorId: actor.actorId,
+      actorRole: actor.actorRole,
+      venueId: actor.venueId,
+      route: meta.route,
+      method: meta.method,
+      status: response.status,
+      latencyMs,
+      ip: extractClientIp(request),
+    });
     return response;
   };
 }

@@ -9,7 +9,9 @@ import {
 } from "@/infrastructure/audit/logger";
 import {
   withAudit,
+  withAuditedDynamicRoute,
   type AuditedRouteHandler,
+  type AuditedDynamicRouteHandler,
 } from "@/infrastructure/audit/with-audit";
 
 /**
@@ -322,6 +324,39 @@ describe("withAudit — the wrapper (7.7.1a)", () => {
     expect(line).toBeDefined();
     if (!line) return;
     expect(line.ip).toBeNull();
+  });
+
+  it("passes context.params to the dynamic handler and writes an audit line (withAuditedDynamicRoute, D-24.1)", async () => {
+    let capturedParams: { id: string } | null = null;
+    const handler: AuditedDynamicRouteHandler<{ id: string }> = async (_req, context) => {
+      capturedParams = await context.params;
+      return NextResponse.json({ data: { id: capturedParams.id } }, { status: 200 });
+    };
+    const wrapped = withAuditedDynamicRoute<{ id: string }>(
+      {
+        resolveStaff: async () => ({
+          actorId: "staff-1",
+          actorRole: "MANAGER",
+          venueId: "venue-1",
+        }),
+        resolveGuest: async () => null,
+      },
+      { route: "/api/test/synthetic/[id]", method: "POST" },
+      handler
+    );
+    const request = makeRequest("http://localhost/api/test/synthetic/item-123");
+    const response = await wrapped(request, { params: Promise.resolve({ id: "item-123" }) });
+    expect(response.status).toBe(200);
+    expect(capturedParams).toEqual({ id: "item-123" });
+    const lines = readLines();
+    expect(lines).toHaveLength(1);
+    const line = lines[0];
+    expect(line).toBeDefined();
+    if (!line) return;
+    expect(line.actorRole).toBe("MANAGER");
+    expect(line.route).toBe("/api/test/synthetic/[id]");
+    expect(line.method).toBe("POST");
+    expect(line.status).toBe(200);
   });
 });
 

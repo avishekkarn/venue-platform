@@ -2550,7 +2550,7 @@ The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.c
 
 **Decision:** The `withAudit` wrapper (BUILD.md §6.11) covers the non-dynamic routes (`(request: NextRequest) => Promise<NextResponse>`). The dynamic routes (`PATCH /api/admin/menu/items/[id]`, `PATCH /api/admin/services/items/[id]`, and any future `[id]` route) need the `context: { params: Promise<{ id: string }> }` for the Next.js dynamic params. The `with-audit.ts` file gains a **new** export `withAuditedDynamicRoute<TParams>` (a generic over the `TParams` shape, typically `{ id: string }`), which wraps a handler of the shape `(request: NextRequest, context: { params: Promise<TParams> }) => Promise<NextResponse>` and returns the same shape. The existing `withAudit` is **unchanged**; the two reference routes (`qr/generate`, `audit/export`) and their tests are untouched. The new variant's test proves the `context.params` passes through the wrapper to the handler.
 
-**Context:** BUILD.md §6.11 says the `AuditedRouteHandler` type does not carry a `context`; "When Phase 8 needs to wrap a dynamic route, it introduces a variant (e.g. `withAuditedDynamicRoute`)." Phase 8.3.3 (the `PATCH /api/admin/menu/items/[id]`) is the first such route; the 8.4.4 (the `PATCH /api/admin/services/items/[id]`) is the second. The variant is the additive, scoped change.
+**Context:** BUILD.md §6.11 says the `AuditedRouteHandler` type does not carry a `context`; "When Phase 8 needs to wrap a dynamic route, it introduces a variant (e.g. `withAuditedDynamicRoute`)." Phase 8.3.0.F (the state route, POST /api/admin/menu/items/[id]/state) is the first; 8.3.3 and 8.4.4 use the variant. The variant is the additive, scoped change.
 
 **Alternatives considered:**
 
@@ -2561,7 +2561,7 @@ The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.c
 **Consequences:**
 
 - `src/infrastructure/audit/with-audit.ts` exports `withAuditedDynamicRoute<TParams>` (a generic; a new type `AuditedDynamicRouteHandler<TParams>`; a new function). The existing `withAudit` is unchanged.
-- The 8.3.3 (`PATCH /api/admin/menu/items/[id]`) uses `withAuditedDynamicRoute<{ id: string }>(resolvers, meta, handler)`. The 8.4.4 (`PATCH /api/admin/services/items/[id]`) uses the same.
+- The variant was introduced at 8.3.0.F; 8.3.3 and 8.4.4 use it.
 - The new variant's test (`tests/integration/audit/with-audit.test.ts` gains a test) proves the `context.params` passes through and the audit line is written.
 - The existing two reference routes (`qr/generate`, `audit/export`) and their tests are untouched.
 

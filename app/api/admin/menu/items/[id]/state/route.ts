@@ -11,6 +11,11 @@ import { StaffState } from "@/domain/auth/staff.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
 import { withCsrf } from "@/infrastructure/csrf/with-csrf";
+import {
+  withAuditedDynamicRoute,
+  type AuditMeta,
+} from "@/infrastructure/audit/with-audit";
+import type { ActorResolvers } from "@/infrastructure/audit/logger";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -190,5 +195,43 @@ const postHandler = async (
   return NextResponse.json({ data: result.value }, { status: 200 });
 };
 
-export const POST = withCsrf(postHandler);
+const meta: AuditMeta = {
+  route: "/api/admin/menu/items/[id]/state",
+  method: "POST",
+};
+
+const resolvers: ActorResolvers = {
+  resolveStaff: async () => {
+    const db = testDbClient ?? prisma;
+    const token = await getSessionCookie();
+    if (!token) return null;
+    const session = await validateSession(db, token);
+    if (!session) return null;
+    const venueRepo = createPrismaVenueRepository(db);
+    const venueResult = await venueRepo.findBySlug(
+      process.env["VENUE_SLUG"] ?? "juniper-house"
+    );
+    if (!venueResult.ok) return null;
+    const staffRepo = createPrismaStaffRepository(db);
+    const staffResult = await staffRepo.findById(
+      venueResult.value.id,
+      session.staffMemberId
+    );
+    if (!staffResult.ok) return null;
+    const staff = staffResult.value;
+    if (staff.state === StaffState.DEACTIVATED) return null;
+    return {
+      actorId: staff.id,
+      actorRole: staff.roles[0] ?? "UNKNOWN",
+      venueId: venueResult.value.id,
+    };
+  },
+  resolveGuest: async () => null,
+};
+
+export const POST = withAuditedDynamicRoute<{ id: string }>(
+  resolvers,
+  meta,
+  withCsrf(postHandler)
+);
 

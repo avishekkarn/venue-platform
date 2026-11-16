@@ -65,7 +65,7 @@
 
 - **Originated:** Phase 7.7 amendment (PROGRESS ENTRY-0221).
 - **Obligation:** Every API route added in Phase 8 (dashboard, orders, menu, tables, rooms, staff, reports, settings, audit viewer) must be wrapped with `withAudit` from `src/infrastructure/audit/logger.ts`. The wrapper is introduced in Task 7.7.1a. A route that does not use `withAudit` is `FAIL` — it is a blind spot in the audit trail.
-- **Files and call site:** Every file under `app/api/admin/` that adds a route in Phase 8. The pattern is demonstrated in `app/api/admin/qr/generate/route.ts` (Task 7.7.1c).
+- **Files and call site:** Every file under `app/api/admin/` that adds a route in Phase 8. The pattern is demonstrated in `app/api/admin/qr/generate/route.ts` (Task 7.7.1c). Audited routes include `app/api/admin/menu/items/[id]/state/route.ts` (8.3.0.F — the `withAuditedDynamicRoute` variant; the first dynamic route).
 - **Satisfied by:** Every Phase 8 task's acceptance criteria includes "the route uses `withAudit`". The obligation is discharged route-by-route as Phase 8 proceeds.
 - **Depends on:** 7.7.1, BUILD.md §6.
 - **Verification:** A route call produces a row in the audit log. The audit log is downloadable via `GET /api/admin/audit/export` (Task 7.7.1b).
