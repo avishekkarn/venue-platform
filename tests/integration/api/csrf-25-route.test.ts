@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 import { POST as adminMenuItemStatePOST } from "@/../app/api/admin/menu/items/[id]/state/route";
+import { POST as adminMenuItemsPOST } from "@/../app/api/admin/menu/items/route";
 import { POST as adminQrRevokePOST } from "@/../app/api/admin/qr/[id]/revoke/route";
 import { POST as adminQrGeneratePOST } from "@/../app/api/admin/qr/generate/route";
 import { POST as loginPOST } from "@/../app/api/auth/login/route";
@@ -58,7 +59,7 @@ async function expectCsrfRejection(response: Response): Promise<void> {
   expect(json.error.message).toBe(CSRF_FORBIDDEN.message);
 }
 
-describe("CSRF enforcement on the 25-route state-changing surface (D-20.1, 7.7.4d)", () => {
+describe("CSRF enforcement on the 26-route state-changing surface (D-20.1, 7.7.4d)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
@@ -262,6 +263,17 @@ describe("CSRF enforcement on the 25-route state-changing surface (D-20.1, 7.7.4
     const id = "11111111-2222-3333-4444-555555555555";
     const req = new NextRequest(`http://localhost/api/staff/tables/${id}/close`, { method: "POST" });
     const res = await staffTableClosePOST(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 26
+  it("admin/menu/items rejects without X-CSRF-Token", async () => {
+    const req = new NextRequest("http://localhost/api/admin/menu/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "x", price: "1.00", categoryId: "11111111-2222-3333-4444-555555555555" }),
+    });
+    const res = await adminMenuItemsPOST(req);
     await expectCsrfRejection(res);
   });
 });

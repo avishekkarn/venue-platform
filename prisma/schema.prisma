@@ -386,6 +386,7 @@ model MenuItem {
   name        String
   description String?
   photoUrl    String?
+  photoBlurData String?
   price       Decimal       @db.Decimal(10, 2)
   state       MenuItemState @default(AVAILABLE)
   sortOrder   Int           @default(0)

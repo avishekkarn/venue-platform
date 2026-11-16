@@ -48,6 +48,7 @@ export interface MenuItem {
   readonly name: string;
   readonly description: string | null;
   readonly photoUrl: string | null;
+  readonly photoBlurData: string | null;
   readonly price: string;
   readonly state: MenuItemState;
   readonly sortOrder: number;
@@ -101,6 +102,7 @@ export interface MenuItemView {
   readonly name: string;
   readonly description: string | null;
   readonly photoUrl: string | null;
+  readonly photoBlurData: string | null;
   readonly price: string;
   readonly state: MenuItemState;
   readonly order: number;
@@ -126,7 +128,9 @@ export interface CreateItemInput {
   readonly name: string;
   readonly description?: string | null;
   readonly photoUrl?: string | null;
+  readonly photoBlurData?: string | null;
   readonly price: string;
+  readonly state?: MenuItemState;
   readonly sortOrder?: number;
 }
 

@@ -101,6 +101,7 @@ function mapMenuItem(raw: PrismaMenuItem): MenuItem {
     name: raw.name,
     description: raw.description,
     photoUrl: raw.photoUrl,
+    photoBlurData: raw.photoBlurData ?? null,
     price: raw.price.toFixed(2),
     state: PRISMA_TO_DOMAIN_MENU_ITEM_STATE[raw.state],
     sortOrder: raw.sortOrder,
@@ -182,6 +183,7 @@ function mapMenuItemView(
     name: raw.name,
     description: raw.description ?? null,
     photoUrl: raw.photoUrl ?? null,
+    photoBlurData: raw.photoBlurData ?? null,
     price: raw.price.toFixed(2),
     state: PRISMA_TO_DOMAIN_MENU_ITEM_STATE[raw.state],
     order: raw.sortOrder,
@@ -330,9 +332,12 @@ export function createPrismaMenuRepository(
             name: input.name,
             description: input.description ?? null,
             photoUrl: input.photoUrl ?? null,
+            photoBlurData: input.photoBlurData ?? null,
             price: input.price,
             sortOrder: input.sortOrder ?? 0,
-            state: PrismaMenuItemState.AVAILABLE,
+            state: input.state
+              ? DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state]
+              : PrismaMenuItemState.AVAILABLE,
           },
         });
 
