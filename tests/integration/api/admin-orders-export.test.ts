@@ -7,6 +7,7 @@ import { GET, setTestDbClient } from "@/../app/api/admin/orders/export/route";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
+import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
 import { OrderState, PlaceType } from "@/domain/orders/order.repository";
 import { createSession } from "@/infrastructure/auth/session";
 import { StaffRole } from "@/domain/auth/staff.repository";
@@ -67,6 +68,7 @@ describe("GET /api/admin/orders/export Integration Tests (Task 8.2.4)", () => {
       const venueRepo = createPrismaVenueRepository(tx);
       const staffRepo = createPrismaStaffRepository(tx);
       const orderRepo = createPrismaOrderRepository(tx);
+      const tableRepo = createPrismaTableRepository(tx);
       const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
 
       const venueResult = await venueRepo.create({
@@ -78,32 +80,7 @@ describe("GET /api/admin/orders/export Integration Tests (Task 8.2.4)", () => {
       if (!venueResult.ok) return;
       const venueId = venueResult.value.id;
 
-      // Seed 1 terminal order (COMPLETED) and 1 non-terminal (PLACED).
-      const terminal = await orderRepo.create({
-        venueId,
-        idempotencyKey: `idem-export-terminal-${Date.now()}`,
-        placeType: PlaceType.TABLE,
-        tableId: null,
-        subtotal: "10.00", taxRate: "0.0825", taxAmount: "0.83", total: "10.83",
-        items: [{ itemName: "Garden Salad", itemPrice: "10.00", quantity: 1, lineTotal: "10.00" }],
-      });
-      expect(terminal.ok).toBe(true);
-      if (!terminal.ok) return;
-      const adv = await orderRepo.advanceState({
-        venueId, orderId: terminal.value.id, toState: OrderState.COMPLETED,
-      });
-      expect(adv.ok).toBe(true);
-
-      const placed = await orderRepo.create({
-        venueId,
-        idempotencyKey: `idem-export-placed-${Date.now()}`,
-        placeType: PlaceType.TABLE,
-        tableId: null,
-        subtotal: "5.00", taxRate: "0.0825", taxAmount: "0.41", total: "5.41",
-        items: [{ itemName: "Soup", itemPrice: "5.00", quantity: 1, lineTotal: "5.00" }],
-      });
-      expect(placed.ok).toBe(true);
-
+      // Staff member first (so the order's history can name them).
       const staffResult = await staffRepo.create({
         venueId,
         name: "Alice Manager",
@@ -115,6 +92,41 @@ describe("GET /api/admin/orders/export Integration Tests (Task 8.2.4)", () => {
       if (!staffResult.ok) return;
       const session = await createSession(tx, staffResult.value.id);
       vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+
+      // Table (so the Place column resolves to "Table 1").
+      const table = await tx.table.create({
+        data: { venueId, number: "1" },
+      });
+
+      // Terminal order, with the staff member advancing it.
+      const terminal = await orderRepo.create({
+        venueId,
+        idempotencyKey: `idem-export-terminal-${Date.now()}`,
+        placeType: PlaceType.TABLE,
+        tableId: table.id,
+        subtotal: "10.00", taxRate: "0.0825", taxAmount: "0.83", total: "10.83",
+        items: [{ itemName: "Garden Salad", itemPrice: "10.00", quantity: 1, lineTotal: "10.00" }],
+      });
+      expect(terminal.ok).toBe(true);
+      if (!terminal.ok) return;
+      const adv = await orderRepo.advanceState({
+        venueId,
+        orderId: terminal.value.id,
+        toState: OrderState.COMPLETED,
+        staffMemberId: staffResult.value.id,
+      });
+      expect(adv.ok).toBe(true);
+
+      // A non-terminal order that the CSV must exclude.
+      const placed = await orderRepo.create({
+        venueId,
+        idempotencyKey: `idem-export-placed-${Date.now()}`,
+        placeType: PlaceType.TABLE,
+        tableId: table.id,
+        subtotal: "5.00", taxRate: "0.0825", taxAmount: "0.41", total: "5.41",
+        items: [{ itemName: "Soup", itemPrice: "5.00", quantity: 1, lineTotal: "5.00" }],
+      });
+      expect(placed.ok).toBe(true);
 
       const request = new NextRequest(
         "http://localhost/api/admin/orders/export",
@@ -130,22 +142,27 @@ describe("GET /api/admin/orders/export Integration Tests (Task 8.2.4)", () => {
       const text = await response.text();
       const lines = text.split("\n").filter((l) => l.length > 0);
 
-      // Header row.
+      // Header row (the enriched 10-column form).
       expect(lines[0]).toBe(
-        '"Order ID","Place","Place Type","Status","Placed At (UTC)","Subtotal","Tax","Total","Notes"'
+        '"Order ID","Place","Status","Items","Notes","Subtotal","Tax","Total","Placed At (UTC)","History"'
       );
 
-      // 2 body rows: the COMPLETED order + nothing for the PLACED order
-      // (the CSV is terminal only). Actually only the COMPLETED order is
-      // terminal; the PLACED is excluded. So 1 body row + 1 header = 2 lines.
+      // One body row (the terminal order; the PLACED is excluded).
       expect(lines.length).toBe(2);
 
-      // The row is the COMPLETED order; the money cells are quoted strings.
+      // The Place cell is the display label.
+      expect(lines[1]).toContain('"Table 1"');
+      // The Status is COMPLETED; the PLACED is excluded.
       expect(lines[1]).toContain('"COMPLETED"');
+      expect(lines[1]).not.toContain('"PLACED"');
+      // The Items cell is the order's contents.
+      expect(lines[1]).toContain("Garden Salad");
+      // The History cell names the staff member who advanced the order.
+      expect(lines[1]).toContain("by Alice Manager at");
+      // The money cells are quoted strings.
       expect(lines[1]).toContain('"10.00"');
       expect(lines[1]).toContain('"0.83"');
       expect(lines[1]).toContain('"10.83"');
-      expect(lines[1]).not.toContain('"PLACED"');
     });
   });
 

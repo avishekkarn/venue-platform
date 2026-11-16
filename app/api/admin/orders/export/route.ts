@@ -28,6 +28,8 @@ import { prisma } from "@/infrastructure/db/client";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
+import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
+import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
 import {
   OrderState,
   type Order,
@@ -169,19 +171,44 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
     ...(dateTo !== undefined ? { dateTo } : {}),
   };
 
-  // 5. Read
+  // 5. Read the orders, the tables/rooms (for the Place label), and the
+  //    staff (for the History column's names). All three are needed to
+  //    produce a manager-friendly CSV.
   const orderRepo = createPrismaOrderRepository(db);
-  const result = await orderRepo.listForVenue(venue.id, filter);
-  if (!result.ok) {
+  const tableRepo = createPrismaTableRepository(db);
+  const roomRepo = createPrismaRoomRepository(db);
+
+  const [ordersResult, tablesResult, roomsResult, staffListResult] =
+    await Promise.all([
+      orderRepo.listForVenue(venue.id, filter),
+      tableRepo.listForVenue(venue.id),
+      roomRepo.listForVenue(venue.id),
+      staffRepo.listForVenue(venue.id),
+    ]);
+
+  if (!ordersResult.ok) {
     return NextResponse.json(
       { error: { code: DomainErrorCode.INTERNAL, message: "Failed to read orders" } },
       { status: 500 }
     );
   }
 
+  const tableNumberById = new Map<string, string>();
+  if (tablesResult.ok) {
+    for (const t of tablesResult.value) tableNumberById.set(t.id, t.number);
+  }
+  const roomNumberById = new Map<string, string>();
+  if (roomsResult.ok) {
+    for (const r of roomsResult.value) roomNumberById.set(r.id, r.number);
+  }
+  const staffNameById = new Map<string, string>();
+  if (staffListResult.ok) {
+    for (const s of staffListResult.value) staffNameById.set(s.id, s.name);
+  }
+
   // 6. Filter to terminal states (COMPLETED + CANCELLED) — the same set
   //    the completed-orders page shows. The list is sorted newest first.
-  const terminalOrders = result.value
+  const terminalOrders = ordersResult.value
     .filter((o) => TERMINAL_STATES.includes(o.state))
     .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime());
 
@@ -189,34 +216,53 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
   const header = toCsvRow([
     "Order ID",
     "Place",
-    "Place Type",
     "Status",
-    "Placed At (UTC)",
+    "Items",
+    "Notes",
     "Subtotal",
     "Tax",
     "Total",
-    "Notes",
+    "Placed At (UTC)",
+    "History",
   ]);
 
   const lines: string[] = [header];
   for (const o of terminalOrders) {
     const place =
       o.placeType === "TABLE"
-        ? o.tableId ?? "—"
+        ? `Table ${tableNumberById.get(o.tableId ?? "") ?? o.tableId ?? "—"}`
         : o.placeType === "ROOM"
-          ? o.roomId ?? "—"
+          ? `Room ${roomNumberById.get(o.roomId ?? "") ?? o.roomId ?? "—"}`
           : o.pickupName ?? "Counter";
+
+    const itemsSummary =
+      o.items.length === 0
+        ? ""
+        : o.items
+            .map((it) => `${it.quantity}× ${it.itemName}`)
+            .join(", ");
+
+    const history = o.stateChanges
+      .map((sc) => {
+        const who = sc.staffMemberId
+          ? staffNameById.get(sc.staffMemberId) ?? "—"
+          : "—";
+        return `${sc.state} by ${who} at ${sc.occurredAt.toISOString()}`;
+      })
+      .join(" | ");
+
     lines.push(
       toCsvRow([
         o.id,
         place,
-        o.placeType,
         o.state,
-        o.placedAt.toISOString(),
+        itemsSummary,
+        o.notes ?? "",
         o.subtotal,
         o.taxAmount,
         o.total,
-        o.notes ?? "",
+        o.placedAt.toISOString(),
+        history,
       ])
     );
   }
