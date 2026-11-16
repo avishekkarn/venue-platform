@@ -20,6 +20,8 @@ describe("getMenu domain function", () => {
       listItems: vi.fn(),
       getItemWithModifiers: vi.fn(),
       createCategory: vi.fn(),
+      updateCategory: vi.fn(),
+      deleteCategory: vi.fn(),
       createItem: vi.fn(),
       updateItem: vi.fn(),
       setItemState: vi.fn(),

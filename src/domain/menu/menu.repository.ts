@@ -123,6 +123,11 @@ export interface CreateCategoryInput {
   readonly sortOrder?: number;
 }
 
+export interface UpdateCategoryInput {
+  readonly name?: string;
+  readonly sortOrder?: number;
+}
+
 export interface CreateItemInput {
   readonly venueId: string;
   readonly categoryIds: readonly string[];
@@ -173,6 +178,15 @@ export interface MenuRepository {
     itemId: string
   ): Promise<Result<MenuItemWithModifiers>>;
   createCategory(input: CreateCategoryInput): Promise<Result<MenuCategory>>;
+  updateCategory(
+    venueId: string,
+    categoryId: string,
+    input: UpdateCategoryInput
+  ): Promise<Result<MenuCategory>>;
+  deleteCategory(
+    venueId: string,
+    categoryId: string
+  ): Promise<Result<void>>;
   createItem(input: CreateItemInput): Promise<Result<MenuItem>>;
   updateItem(
     venueId: string,

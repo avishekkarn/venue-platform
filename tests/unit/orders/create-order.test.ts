@@ -126,6 +126,8 @@ describe("createOrder domain function", () => {
         return Promise.resolve(fail(DomainErrorCode.NOT_FOUND, `Item ${itemId} not found`));
       }),
       createCategory: vi.fn(),
+      updateCategory: vi.fn(),
+      deleteCategory: vi.fn(),
       createItem: vi.fn(),
       updateItem: vi.fn(),
       setItemState: vi.fn(),

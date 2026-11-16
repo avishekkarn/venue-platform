@@ -37,6 +37,7 @@ import {
   type ModifierGroupView,
   type ModifierOptionView,
   type CreateCategoryInput,
+  type UpdateCategoryInput,
   type CreateItemInput,
   type UpdateItemInput,
   type CreateModifierGroupInput,
@@ -341,6 +342,88 @@ export function createPrismaMenuRepository(
             `Category '${input.name}' violates unique constraint`
           );
         }
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
+    async updateCategory(
+      venueId: string,
+      categoryId: string,
+      input: UpdateCategoryInput
+    ): Promise<Result<MenuCategory>> {
+      try {
+        const existing = await client.menuCategory.findFirst({
+          where: { id: categoryId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Menu category with id '${categoryId}' not found in venue '${venueId}'`
+          );
+        }
+
+        const data: { name?: string; sortOrder?: number } = {};
+        if (input.name !== undefined) data.name = input.name;
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+
+        const updated = await client.menuCategory.update({
+          where: { id: categoryId },
+          data,
+        });
+
+        return ok(mapMenuCategory(updated));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Category '${input.name ?? categoryId}' violates unique constraint`
+          );
+        }
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
+    async deleteCategory(
+      venueId: string,
+      categoryId: string
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.menuCategory.findFirst({
+          where: { id: categoryId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Menu category with id '${categoryId}' not found in venue '${venueId}'`
+          );
+        }
+
+        // Join-aware delete (DESIGN.md §4.10.8): refuse if any item is
+        // assigned. The DB FK is ON DELETE CASCADE, so a bare delete would
+        // silently orphan the category from items; the application count is
+        // the contract.
+        const assignedCount = await client.menuItemCategory.count({
+          where: { categoryId, venueId },
+        });
+
+        if (assignedCount > 0) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Category '${existing.name}' has ${assignedCount} item(s); reassign or delete them first`
+          );
+        }
+
+        await client.menuCategory.delete({ where: { id: categoryId } });
+        return ok(undefined);
+      } catch {
         return fail(
           DomainErrorCode.INTERNAL,
           "Database write operation failed"
