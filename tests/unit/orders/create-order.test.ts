@@ -53,7 +53,7 @@ describe("createOrder domain function", () => {
   const fakeBurger: MenuItemWithModifiers = {
     id: "item-burger",
     venueId,
-    categoryId: "cat-mains",
+    categoryIds: ["cat-mains"],
     name: "Classic Burger",
     description: "Juicy beef burger",
     photoUrl: null,
@@ -89,7 +89,7 @@ describe("createOrder domain function", () => {
   const fakeDrink: MenuItemWithModifiers = {
     id: "item-drink",
     venueId,
-    categoryId: "cat-drinks",
+    categoryIds: ["cat-drinks"],
     name: "Sparkling Water",
     description: "Crisp sparkling water",
     photoUrl: null,

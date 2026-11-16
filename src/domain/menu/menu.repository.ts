@@ -44,7 +44,7 @@ export interface MenuCategory {
 export interface MenuItem {
   readonly id: string;
   readonly venueId: string;
-  readonly categoryId: string;
+  readonly categoryIds: readonly string[];
   readonly name: string;
   readonly description: string | null;
   readonly photoUrl: string | null;
@@ -103,6 +103,7 @@ export interface MenuItemView {
   readonly description: string | null;
   readonly photoUrl: string | null;
   readonly photoBlurData: string | null;
+  readonly categoryIds: readonly string[];
   readonly price: string;
   readonly state: MenuItemState;
   readonly order: number;
@@ -124,7 +125,7 @@ export interface CreateCategoryInput {
 
 export interface CreateItemInput {
   readonly venueId: string;
-  readonly categoryId: string;
+  readonly categoryIds: readonly string[];
   readonly name: string;
   readonly description?: string | null;
   readonly photoUrl?: string | null;
@@ -140,7 +141,7 @@ export interface UpdateItemInput {
   readonly photoUrl?: string | null;
   readonly photoBlurData?: string | null;
   readonly price?: string;
-  readonly categoryId?: string;
+  readonly categoryIds?: readonly string[];
   readonly state?: MenuItemState;
   readonly sortOrder?: number;
 }

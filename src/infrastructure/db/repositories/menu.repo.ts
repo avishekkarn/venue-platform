@@ -94,11 +94,13 @@ function mapMenuCategory(raw: PrismaMenuCategory): MenuCategory {
   };
 }
 
-function mapMenuItem(raw: PrismaMenuItem): MenuItem {
+function mapMenuItem(
+  raw: PrismaMenuItem & { categories?: { categoryId: string }[] }
+): MenuItem {
   return {
     id: raw.id,
     venueId: raw.venueId,
-    categoryId: raw.categoryId,
+    categoryIds: raw.categories ? raw.categories.map((c) => c.categoryId) : [],
     name: raw.name,
     description: raw.description,
     photoUrl: raw.photoUrl,
@@ -135,6 +137,7 @@ function mapModifierGroup(raw: PrismaModifierGroup): ModifierGroup {
 }
 
 type RawMenuItemWithModifiers = PrismaMenuItem & {
+  categories?: { categoryId: string }[];
   modifierGroups: Array<
     PrismaModifierGroup & {
       options: PrismaModifierOption[];
@@ -176,6 +179,7 @@ function mapModifierGroupView(
 
 function mapMenuItemView(
   raw: PrismaMenuItem & {
+    categories?: { categoryId: string }[];
     modifierGroups: (PrismaModifierGroup & { options: PrismaModifierOption[] })[];
   }
 ): MenuItemView {
@@ -185,6 +189,7 @@ function mapMenuItemView(
     description: raw.description ?? null,
     photoUrl: raw.photoUrl ?? null,
     photoBlurData: raw.photoBlurData ?? null,
+    categoryIds: raw.categories ? raw.categories.map((c) => c.categoryId) : [],
     price: raw.price.toFixed(2),
     state: PRISMA_TO_DOMAIN_MENU_ITEM_STATE[raw.state],
     order: raw.sortOrder,
@@ -194,16 +199,23 @@ function mapMenuItemView(
 
 function mapMenuCategoryView(
   raw: PrismaMenuCategory & {
-    items: (PrismaMenuItem & {
-      modifierGroups: (PrismaModifierGroup & { options: PrismaModifierOption[] })[];
-    })[];
+    menuItemCategories: {
+      sortOrder: number;
+      menuItem: PrismaMenuItem & {
+        categories?: { categoryId: string }[];
+        modifierGroups: (PrismaModifierGroup & { options: PrismaModifierOption[] })[];
+      };
+    }[];
   }
 ): MenuCategoryView {
   return {
     id: raw.id,
     name: raw.name,
     order: raw.sortOrder,
-    items: raw.items.map(mapMenuItemView),
+    items: raw.menuItemCategories.map((mic) => ({
+      ...mapMenuItemView(mic.menuItem),
+      order: mic.sortOrder,
+    })),
   };
 }
 
@@ -233,7 +245,15 @@ export function createPrismaMenuRepository(
     ): Promise<Result<MenuItem[]>> {
       try {
         const items = await client.menuItem.findMany({
-          where: { venueId, categoryId },
+          where: {
+            venueId,
+            categories: {
+              some: { categoryId },
+            },
+          },
+          include: {
+            categories: true,
+          },
           orderBy: { sortOrder: "asc" },
         });
 
@@ -250,6 +270,9 @@ export function createPrismaMenuRepository(
       try {
         const items = await client.menuItem.findMany({
           where: { venueId },
+          include: {
+            categories: true,
+          },
           orderBy: { sortOrder: "asc" },
         });
 
@@ -270,6 +293,7 @@ export function createPrismaMenuRepository(
         const item = await client.menuItem.findFirst({
           where: { id: itemId, venueId },
           include: {
+            categories: true,
             modifierGroups: {
               include: {
                 options: {
@@ -329,7 +353,6 @@ export function createPrismaMenuRepository(
         const item = await client.menuItem.create({
           data: {
             venueId: input.venueId,
-            categoryId: input.categoryId,
             name: input.name,
             description: input.description ?? null,
             photoUrl: input.photoUrl ?? null,
@@ -339,6 +362,16 @@ export function createPrismaMenuRepository(
             state: input.state
               ? DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state]
               : PrismaMenuItemState.AVAILABLE,
+            categories: {
+              create: input.categoryIds.map((categoryId) => ({
+                venueId: input.venueId,
+                categoryId,
+                sortOrder: input.sortOrder ?? 0,
+              })),
+            },
+          },
+          include: {
+            categories: true,
           },
         });
 
@@ -363,45 +396,76 @@ export function createPrismaMenuRepository(
       input: UpdateItemInput
     ): Promise<Result<MenuItem>> {
       try {
-        const existing = await client.menuItem.findFirst({
-          where: { id: itemId, venueId },
-        });
+        const updateInTx = async (tx: DbClient): Promise<MenuItem | null> => {
+          const existing = await tx.menuItem.findFirst({
+            where: { id: itemId, venueId },
+            include: { categories: true },
+          });
 
-        if (!existing) {
+          if (!existing) {
+            return null;
+          }
+
+          const data: {
+            name?: string;
+            description?: string | null;
+            photoUrl?: string | null;
+            photoBlurData?: string | null;
+            price?: string;
+            state?: PrismaMenuItemState;
+            sortOrder?: number;
+          } = {};
+
+          if (input.name !== undefined) data.name = input.name;
+          if (input.description !== undefined) data.description = input.description;
+          if (input.photoUrl !== undefined) data.photoUrl = input.photoUrl;
+          if (input.photoBlurData !== undefined) data.photoBlurData = input.photoBlurData;
+          if (input.price !== undefined) data.price = input.price;
+          if (input.state !== undefined) {
+            data.state = DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state];
+          }
+          if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+
+          if (input.categoryIds !== undefined) {
+            await tx.menuItemCategory.deleteMany({
+              where: { menuItemId: itemId },
+            });
+            if (input.categoryIds.length > 0) {
+              await tx.menuItemCategory.createMany({
+                data: input.categoryIds.map((categoryId) => ({
+                  venueId,
+                  menuItemId: itemId,
+                  categoryId,
+                  sortOrder: input.sortOrder ?? existing.sortOrder,
+                })),
+              });
+            }
+          }
+
+          const updated = await tx.menuItem.update({
+            where: { id: itemId },
+            data,
+            include: {
+              categories: true,
+            },
+          });
+
+          return mapMenuItem(updated);
+        };
+
+        const result =
+          "$transaction" in client && typeof client.$transaction === "function"
+            ? await client.$transaction(async (tx) => updateInTx(tx))
+            : await updateInTx(client);
+
+        if (!result) {
           return fail(
             DomainErrorCode.NOT_FOUND,
             `Menu item with id '${itemId}' not found in venue '${venueId}'`
           );
         }
 
-        const data: {
-          name?: string;
-          description?: string | null;
-          photoUrl?: string | null;
-          photoBlurData?: string | null;
-          price?: string;
-          categoryId?: string;
-          state?: PrismaMenuItemState;
-          sortOrder?: number;
-        } = {};
-
-        if (input.name !== undefined) data.name = input.name;
-        if (input.description !== undefined) data.description = input.description;
-        if (input.photoUrl !== undefined) data.photoUrl = input.photoUrl;
-        if (input.photoBlurData !== undefined) data.photoBlurData = input.photoBlurData;
-        if (input.price !== undefined) data.price = input.price;
-        if (input.categoryId !== undefined) data.categoryId = input.categoryId;
-        if (input.state !== undefined) {
-          data.state = DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state];
-        }
-        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
-
-        const updated = await client.menuItem.update({
-          where: { id: itemId },
-          data,
-        });
-
-        return ok(mapMenuItem(updated));
+        return ok(result);
       } catch (error) {
         if (isUniqueConstraintError(error)) {
           return fail(
@@ -424,6 +488,9 @@ export function createPrismaMenuRepository(
       try {
         const existing = await client.menuItem.findFirst({
           where: { id: itemId, venueId },
+          include: {
+            categories: true,
+          },
         });
 
         if (!existing) {
@@ -444,6 +511,9 @@ export function createPrismaMenuRepository(
           where: { id: itemId },
           data: {
             state: prismaTargetState,
+          },
+          include: {
+            categories: true,
           },
         });
 
@@ -511,14 +581,19 @@ export function createPrismaMenuRepository(
           where: { venueId },
           orderBy: { sortOrder: "asc" },
           include: {
-            items: {
+            menuItemCategories: {
               orderBy: { sortOrder: "asc" },
               include: {
-                modifierGroups: {
-                  orderBy: { sortOrder: "asc" },
+                menuItem: {
                   include: {
-                    options: {
+                    categories: true,
+                    modifierGroups: {
                       orderBy: { sortOrder: "asc" },
+                      include: {
+                        options: {
+                          orderBy: { sortOrder: "asc" },
+                        },
+                      },
                     },
                   },
                 },

@@ -82,7 +82,13 @@ describe("GET /api/kitchen/orders Integration Tests", () => {
       const menuItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Kitchen Burger",
           price: "15.00",
           sortOrder: 1,
@@ -468,7 +474,13 @@ describe("POST /api/kitchen/orders/[id]/start and /ready", () => {
       const menuItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Steak",
           price: "25.00",
           sortOrder: 1,
@@ -584,7 +596,13 @@ describe("POST /api/kitchen/orders/[id]/start and /ready", () => {
       const menuItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Pasta",
           price: "18.00",
           sortOrder: 1,
@@ -701,7 +719,13 @@ describe("POST /api/kitchen/orders/[id]/start and /ready", () => {
       const menuItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Salad",
           price: "12.00",
           sortOrder: 1,
@@ -809,7 +833,13 @@ describe("POST /api/kitchen/orders/[id]/start and /ready", () => {
       const menuItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Soup",
           price: "10.00",
           sortOrder: 1,
@@ -1049,7 +1079,13 @@ describe("POST /api/kitchen/orders/[id]/start and /ready", () => {
       const menuItemB = await tx.menuItem.create({
         data: {
           venueId: venueB.value.id,
-          categoryId: categoryB.id,
+          categories: {
+            create: {
+              venueId: venueB.value.id,
+              categoryId: categoryB.id,
+              sortOrder: 1,
+            },
+          },
           name: "Other Burger",
           price: "10.00",
           sortOrder: 1,

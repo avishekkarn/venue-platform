@@ -5,6 +5,7 @@ import { MenuItemState, type MenuItemView } from "@/domain/menu/menu.repository"
 describe("isOrderable domain function", () => {
   const createItem = (state: MenuItemState): MenuItemView => ({
     id: "item-1",
+    categoryIds: ["cat-1"],
     name: "Bruschetta",
     description: "Toasted bread with tomatoes",
     photoUrl: "https://example.com/bruschetta.jpg",

@@ -209,7 +209,7 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
   // 6. Create
   const created = await menuRepo.createItem({
     venueId: venue.id,
-    categoryId,
+    categoryIds: [categoryId],
     name: name.trim(),
     description: description === undefined ? null : (description as string | null),
     photoUrl: photoUrl === undefined ? null : (photoUrl as string | null),
@@ -227,7 +227,15 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
     );
   }
 
-  return NextResponse.json({ data: created.value }, { status: 201 });
+  return NextResponse.json(
+    {
+      data: {
+        ...created.value,
+        categoryId: created.value.categoryIds[0] ?? null,
+      },
+    },
+    { status: 201 }
+  );
 };
 
 const meta: AuditMeta = {

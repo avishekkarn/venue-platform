@@ -246,7 +246,7 @@ const patchHandler = async (
         { status: 400 }
       );
     }
-    (updateInput as { categoryId?: string }).categoryId = categoryId.trim();
+    (updateInput as { categoryIds?: readonly string[] }).categoryIds = [categoryId.trim()];
   }
 
   if (body["state"] !== undefined) {
@@ -277,8 +277,8 @@ const patchHandler = async (
 
   const menuRepo = createPrismaMenuRepository(db);
 
-  // 6. If categoryId provided, verify it belongs to venue (D-10.2)
-  if (updateInput.categoryId !== undefined) {
+  // 6. If categoryIds provided, verify they belong to venue (D-10.2)
+  if (updateInput.categoryIds !== undefined) {
     const categoriesResult = await menuRepo.listCategories(venue.id);
     if (!categoriesResult.ok) {
       return NextResponse.json(
@@ -286,8 +286,8 @@ const patchHandler = async (
         { status: 500 }
       );
     }
-    const categoryBelongsToVenue = categoriesResult.value.some(
-      (c) => c.id === updateInput.categoryId
+    const categoryBelongsToVenue = categoriesResult.value.some((c) =>
+      updateInput.categoryIds?.includes(c.id)
     );
     if (!categoryBelongsToVenue) {
       return NextResponse.json(
@@ -312,7 +312,15 @@ const patchHandler = async (
     );
   }
 
-  return NextResponse.json({ data: result.value }, { status: 200 });
+  return NextResponse.json(
+    {
+      data: {
+        ...result.value,
+        categoryId: result.value.categoryIds[0] ?? null,
+      },
+    },
+    { status: 200 }
+  );
 };
 
 const meta: AuditMeta = {

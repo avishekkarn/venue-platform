@@ -39,6 +39,7 @@ describe("getMenu domain function", () => {
         items: [
           {
             id: "item-1",
+            categoryIds: ["cat-1"],
             name: "Soup",
             description: "Warm soup",
             photoUrl: "https://example.com/soup.jpg",
@@ -71,6 +72,7 @@ describe("getMenu domain function", () => {
         items: [
           {
             id: "item-2",
+            categoryIds: ["cat-2"],
             name: "Steak",
             description: "Grilled sirloin",
             photoUrl: null,
@@ -126,6 +128,7 @@ describe("getMenu domain function", () => {
         items: [
           {
             id: "item-available",
+            categoryIds: ["cat-1"],
             name: "Lemonade",
             description: null,
             photoUrl: null,
@@ -137,6 +140,7 @@ describe("getMenu domain function", () => {
           },
           {
             id: "item-hidden",
+            categoryIds: ["cat-1"],
             name: "Secret Punch",
             description: null,
             photoUrl: null,
@@ -155,6 +159,7 @@ describe("getMenu domain function", () => {
         items: [
           {
             id: "item-hidden-2",
+            categoryIds: ["cat-all-hidden"],
             name: "Pumpkin Latte",
             description: null,
             photoUrl: null,
@@ -195,6 +200,7 @@ describe("getMenu domain function", () => {
         items: [
           {
             id: "item-sold-out",
+            categoryIds: ["cat-1"],
             name: "Tiramisu",
             description: "Freshly made",
             photoUrl: null,

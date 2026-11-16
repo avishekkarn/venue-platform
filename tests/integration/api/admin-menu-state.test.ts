@@ -80,7 +80,7 @@ describe("POST /api/admin/menu/items/[id]/state — audit (8.3.0.F, W-0021)", ()
       expect(categoryResult.ok).toBe(true);
       if (!categoryResult.ok) return;
       const itemResult = await menuRepo.createItem({
-        venueId, categoryId: categoryResult.value.id, name: "Soup", price: "6.50",
+        venueId, categoryIds: [categoryResult.value.id], name: "Soup", price: "6.50",
       });
       expect(itemResult.ok).toBe(true);
       if (!itemResult.ok) return;

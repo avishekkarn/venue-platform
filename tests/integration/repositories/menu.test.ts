@@ -112,7 +112,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const itemResult = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Classic Cheeseburger",
         description: "Aged cheddar and pickles",
         price: "15.00",
@@ -146,7 +146,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const itemResult = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Spaghetti Carbonara",
         price: "18.50",
       });
@@ -218,7 +218,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const itemResult = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Caesar Salad",
         price: "12.00",
       });
@@ -257,7 +257,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const itemResult = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Margherita",
         price: "14.00",
       });
@@ -308,7 +308,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const itemResult = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Latte",
         price: "5.00",
       });
@@ -368,7 +368,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const item = await menuRepo.createItem({
         venueId,
-        categoryId: cat.value.id,
+        categoryIds: [cat.value.id],
         name: "Salmon",
         price: "22.00",
       });
@@ -416,7 +416,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const item = await menuRepo.createItem({
         venueId,
-        categoryId: cat.value.id,
+        categoryIds: [cat.value.id],
         name: "Seasonal Tart",
         price: "9.50",
       });
@@ -464,7 +464,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const item = await menuRepo.createItem({
         venueId,
-        categoryId: cat.value.id,
+        categoryIds: [cat.value.id],
         name: "Roasted Nuts",
         price: "4.00",
       });
@@ -512,7 +512,7 @@ describe("MenuRepository Integration Tests", () => {
 
       const item1 = await menuRepo.createItem({
         venueId: v1.value.id,
-        categoryId: cat1.value.id,
+        categoryIds: [cat1.value.id],
         name: "V1 Bruschetta",
         price: "8.00",
       });

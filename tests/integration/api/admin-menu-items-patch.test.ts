@@ -204,7 +204,7 @@ describe("PATCH /api/admin/menu/items/[id] Route Tests (8.3.3)", () => {
 
       const createResult = await menuRepo.createItem({
         venueId,
-        categoryId,
+        categoryIds: [categoryId],
         name: "Steak Frites",
         description: "Ribeye with hand-cut fries",
         price: "28.00",

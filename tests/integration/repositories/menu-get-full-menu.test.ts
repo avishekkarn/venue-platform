@@ -33,7 +33,7 @@ describe("MenuRepository.getFullMenu Integration Tests", () => {
 
       const item1Result = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Burger",
         description: "Juicy beef patty",
         price: "14.50",
@@ -44,7 +44,7 @@ describe("MenuRepository.getFullMenu Integration Tests", () => {
 
       const item2Result = await menuRepo.createItem({
         venueId,
-        categoryId: catResult.value.id,
+        categoryIds: [catResult.value.id],
         name: "Fries",
         description: "Crispy salted fries",
         price: "5.00",
@@ -167,14 +167,14 @@ describe("MenuRepository.getFullMenu Integration Tests", () => {
       // Within category 1, insert items with order 2 and 1
       const item2 = await menuRepo.createItem({
         venueId,
-        categoryId: cat1.value.id,
+        categoryIds: [cat1.value.id],
         name: "Item Order 2",
         price: "10.00",
         sortOrder: 2,
       });
       const item1 = await menuRepo.createItem({
         venueId,
-        categoryId: cat1.value.id,
+        categoryIds: [cat1.value.id],
         name: "Item Order 1",
         price: "12.00",
         sortOrder: 1,
@@ -268,13 +268,13 @@ describe("MenuRepository.getFullMenu Integration Tests", () => {
 
       const itemA = await menuRepo.createItem({
         venueId: venueAId,
-        categoryId: catA.value.id,
+        categoryIds: [catA.value.id],
         name: "Item A",
         price: "10.00",
       });
       const itemB = await menuRepo.createItem({
         venueId: venueBId,
-        categoryId: catB.value.id,
+        categoryIds: [catB.value.id],
         name: "Item B",
         price: "20.00",
       });

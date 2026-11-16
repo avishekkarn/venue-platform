@@ -53,7 +53,7 @@ describe("The admin menu list data (8.3.1, F-0004)", () => {
 
       const availableResult = await menuRepo.createItem({
         venueId,
-        categoryId,
+        categoryIds: [categoryId],
         name: "Available Item",
         price: "6.50",
       });
@@ -62,7 +62,7 @@ describe("The admin menu list data (8.3.1, F-0004)", () => {
 
       const hiddenItemResult = await menuRepo.createItem({
         venueId,
-        categoryId,
+        categoryIds: [categoryId],
         name: "Hidden Item",
         price: "9.00",
       });
@@ -123,7 +123,7 @@ describe("The admin menu list data (8.3.1, F-0004)", () => {
       ]) {
         const itemResult = await menuRepo.createItem({
           venueId,
-          categoryId,
+          categoryIds: [categoryId],
           name: `Item ${state}`,
           price: "10.00",
         });

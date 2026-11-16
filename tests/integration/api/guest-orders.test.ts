@@ -82,7 +82,13 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const menuItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Truffle Burger",
           description: "Black truffle burger",
           price: "12.00",
@@ -312,7 +318,13 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const pizza = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Margherita Pizza",
           price: "20.00",
           state: MenuItemState.AVAILABLE,
@@ -395,7 +407,13 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const drink = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Sparkling Lemonade",
           price: "5.00",
           state: MenuItemState.AVAILABLE,
@@ -474,7 +492,13 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const pastry = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Croissant",
           price: "4.50",
           state: MenuItemState.AVAILABLE,
@@ -539,7 +563,13 @@ describe("POST /api/guest/orders Integration Tests", () => {
       const item = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "CSRF Test Item",
           price: "10.00",
           state: MenuItemState.AVAILABLE,
@@ -609,7 +639,13 @@ describe("GET /api/guest/orders/[id] Integration Tests (Task 5.6.2)", () => {
       const item = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Special Pizza",
           price: "15.00",
           state: MenuItemState.AVAILABLE,
@@ -765,7 +801,13 @@ describe("GET /api/guest/orders/[id] Integration Tests (Task 5.6.2)", () => {
       const item = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Caesar Salad",
           price: "10.00",
           state: MenuItemState.AVAILABLE,
@@ -876,7 +918,13 @@ describe("GET /api/guest/orders Integration Tests (Task 5.6.3)", () => {
       const snack = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Truffle Fries",
           price: "8.00",
           state: MenuItemState.AVAILABLE,
@@ -1040,7 +1088,13 @@ describe("Milestone 5.6 Verification — Complete Guest Order Flow and Envelope 
       const burger = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Verification Burger",
           description: "Burger for verification",
           price: "10.00",

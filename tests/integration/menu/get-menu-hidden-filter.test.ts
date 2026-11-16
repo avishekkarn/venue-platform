@@ -31,22 +31,34 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
       const availableItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Available Bruschetta",
           price: "8.50",
           state: MenuItemState.AVAILABLE,
           sortOrder: 1,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
         },
       });
 
       const hiddenItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Secret Bruschetta",
           price: "12.00",
           state: MenuItemState.HIDDEN,
           sortOrder: 2,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 2,
+            },
+          },
         },
       });
 
@@ -87,11 +99,17 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
       await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: visibleCategory.id,
           name: "Visible Soup",
           price: "6.00",
           state: MenuItemState.AVAILABLE,
           sortOrder: 1,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: visibleCategory.id,
+              sortOrder: 1,
+            },
+          },
         },
       });
 
@@ -106,11 +124,17 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
       await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: hiddenCategory.id,
           name: "Off-Menu Special",
           price: "25.00",
           state: MenuItemState.HIDDEN,
           sortOrder: 1,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: hiddenCategory.id,
+              sortOrder: 1,
+            },
+          },
         },
       });
 
@@ -147,22 +171,34 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
       await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Available Pasta",
           price: "16.00",
           state: MenuItemState.AVAILABLE,
           sortOrder: 1,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
         },
       });
 
       const hiddenItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Secret Truffle Pasta",
           price: "45.00",
           state: MenuItemState.HIDDEN,
           sortOrder: 2,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 2,
+            },
+          },
         },
       });
 
@@ -198,33 +234,51 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
       const availableItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Tiramisu",
           price: "9.00",
           state: MenuItemState.AVAILABLE,
           sortOrder: 1,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
         },
       });
 
       const unavailableItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Sold Out Gelato",
           price: "7.00",
           state: MenuItemState.UNAVAILABLE,
           sortOrder: 2,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 2,
+            },
+          },
         },
       });
 
       const hiddenItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
           name: "Secret Soufflé",
           price: "14.00",
           state: MenuItemState.HIDDEN,
           sortOrder: 3,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 3,
+            },
+          },
         },
       });
 
@@ -251,6 +305,7 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
         description: hiddenItem.description,
         photoUrl: hiddenItem.photoUrl,
         photoBlurData: null,
+        categoryIds: [category.id],
         price: "14.00",
         state: MenuItemState.HIDDEN,
         order: hiddenItem.sortOrder,

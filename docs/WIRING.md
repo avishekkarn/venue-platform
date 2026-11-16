@@ -51,15 +51,15 @@
 - **Verification:** Integration tests prove that active collections within their date range render to guests while expired or future collections are excluded; manual check at 1440×900 and mobile.
 - **Status:** OPEN
 
-### W-0028 — OPEN — MenuRepository queries (`getFullMenu`, `getMenu`, `listItemsForCategory`) must traverse `MenuItemCategory` join
+### W-0028 — DISCHARGED — MenuRepository queries (`getFullMenu`, `getMenu`, `listItemsForCategory`) must traverse `MenuItemCategory` join
 
 - **Originated:** Task 8.3.5.DOCS (D-25.1).
 - **Obligation:** The Prisma schema drops `MenuItem.categoryId` in favor of the explicit join model `MenuItemCategory(venueId, menuItemId, categoryId, sortOrder)`. All repository reads and queries (`getFullMenu`, `getMenu`, `listItemsForCategory`, `listItems`, `createItem`, `updateItem`) must be rewritten to join across `MenuItemCategory`. `MenuItem` domain entities carry `categoryIds: readonly string[]`. In `getFullMenu` and `getMenu`, multi-category items must appear under each category they are linked to.
 - **Files and call site:** `src/domain/menu/menu.repository.ts`, `src/infrastructure/db/repositories/menu.repo.ts`.
-- **Satisfied by:** Task 8.3.5b (the multi-category migration and repository update).
+- **Satisfied by:** Task 8.3.5b.A (the multi-category migration and repository update).
 - **Depends on:** D-25.1, SYSTEM.md §4, §11.1, ROADMAP.md Task 8.3.5b.
-- **Verification:** `getFullMenu` returns the item under all associated categories; unit and integration tests pass with 100% coverage of the multi-category join.
-- **Status:** OPEN
+- **Verification:** `getFullMenu` returns the item under all associated categories; unit and integration tests (`tests/integration/menu/menu-multi-category.test.ts`) pass with 100% coverage of the multi-category join.
+- **Status:** DISCHARGED (2026-11-16, Task 8.3.5b.A)
 
 ### W-0027 — OPEN — `src/infrastructure/config/venue.ts` must exist and export `getVenueSlug()`
 

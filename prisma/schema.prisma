@@ -372,35 +372,49 @@ model MenuCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  venue Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  items MenuItem[]
+  venue              Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  menuItemCategories MenuItemCategory[]
 
   @@index([venueId, sortOrder])
   @@map("menu_categories")
 }
 
 model MenuItem {
-  id          String        @id @default(uuid())
-  venueId     String
-  categoryId  String
-  name        String
-  description String?
-  photoUrl    String?
+  id            String        @id @default(uuid())
+  venueId       String
+  name          String
+  description   String?
+  photoUrl      String?
   photoBlurData String?
-  price       Decimal       @db.Decimal(10, 2)
-  state       MenuItemState @default(AVAILABLE)
-  sortOrder   Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  price         Decimal       @db.Decimal(10, 2)
+  state         MenuItemState @default(AVAILABLE)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  category       MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categories     MenuItemCategory[]
   modifierGroups ModifierGroup[]
   orderItems     OrderItem[]
 
   @@index([venueId])
-  @@index([categoryId])
   @@index([venueId, state])
   @@map("menu_items")
+}
+
+model MenuItemCategory {
+  id         String @id @default(uuid())
+  venueId    String
+  menuItemId String
+  categoryId String
+  sortOrder  Int    @default(0)
+
+  menuItem MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  category MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, categoryId])
+  @@index([venueId])
+  @@index([categoryId])
+  @@map("menu_item_categories")
 }
 
 model ModifierGroup {

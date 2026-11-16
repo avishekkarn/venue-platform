@@ -21,6 +21,7 @@ describe("getMenuItem domain function", () => {
       items: [
         {
           id: "item-1",
+          categoryIds: ["cat-1"],
           name: "Bruschetta",
           description: "Toasted bread with tomatoes",
           photoUrl: "https://example.com/bruschetta.jpg",
@@ -53,6 +54,7 @@ describe("getMenuItem domain function", () => {
       items: [
         {
           id: "item-2",
+          categoryIds: ["cat-2"],
           name: "Pasta Carbonara",
           description: "Creamy egg and pancetta",
           photoUrl: null,

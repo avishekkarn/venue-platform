@@ -56,7 +56,13 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       const burgerItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Gourmet Angus Burger",
           price: "18.50",
           state: MenuItemState.AVAILABLE,
@@ -88,7 +94,13 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       const drinkItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Artisan Soda",
           price: "5.00",
           state: MenuItemState.AVAILABLE,
@@ -231,7 +243,13 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       const item = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Quick Snack",
           price: "10.00",
           state: MenuItemState.AVAILABLE,
@@ -293,7 +311,13 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       const item = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "French Fries",
           price: "6.00",
           state: MenuItemState.AVAILABLE,
@@ -378,7 +402,13 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       const unavailableItem = await tx.menuItem.create({
         data: {
           venueId: venue.id,
-          categoryId: category.id,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
           name: "Sold-out Souffle",
           price: "12.00",
           state: MenuItemState.UNAVAILABLE,
@@ -553,7 +583,13 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       const itemA = await tx.menuItem.create({
         data: {
           venueId: venueA.id,
-          categoryId: categoryA.id,
+          categories: {
+            create: {
+              venueId: venueA.id,
+              categoryId: categoryA.id,
+              sortOrder: 1,
+            },
+          },
           name: "Alpha Special",
           price: "12.00",
           state: MenuItemState.AVAILABLE,

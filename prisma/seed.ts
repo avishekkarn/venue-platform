@@ -12,7 +12,6 @@
  * Reference: BUILD.md §9.4 (seed contents), BUILD.md §10.5 (running the seed), SYSTEM.md §11.1, D-10.1.
  */
 
-import * as dotenv from "dotenv";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaTableRepository } from "@/infrastructure/db/repositories/table.repo";
@@ -32,8 +31,7 @@ import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/st
 import { hashPassword } from "@/infrastructure/auth/password";
 import { StaffRole } from "@/domain/auth/staff.repository";
 
-// Load environment variables from .env.local for standalone seed execution
-dotenv.config({ path: ".env.local" });
+// Environment variables from .env.local are loaded via ./seed-env above
 
 export const SEED_VENUE: CreateVenueInput = {
   name: "Juniper House",
@@ -396,6 +394,9 @@ async function seedMenu(venueId: string): Promise<void> {
     { name: "Starters", sortOrder: 1 },
     { name: "Mains", sortOrder: 2 },
     { name: "Desserts", sortOrder: 3 },
+    { name: "Breakfast", sortOrder: 4 },
+    { name: "Chinese", sortOrder: 5 },
+    { name: "Tihar Special", sortOrder: 6 },
   ];
 
   const categoryIds: Record<string, string> = {};
@@ -441,135 +442,136 @@ async function seedMenu(venueId: string): Promise<void> {
   }
 
   // --- Menu items ---
-  // Read once per category, filter in memory. Do not query per item.
+  // Read existing items for the venue once.
 
   const itemDefs = [
-    // Starters
+    // Starters — Steam Momo is multi-category (Starters + Chinese + Tihar Special)
     {
-      name: "Soup of the Day",
-      description: "Chef's daily soup, served with warm bread.",
-      price: "6.50",
-      category: "Starters",
-    },
-    {
-      name: "Garden Salad",
-      description: "Mixed greens, cherry tomatoes, cucumber, house vinaigrette.",
-      price: "7.00",
-      category: "Starters",
-    },
-    {
-      name: "Bruschetta",
-      description: "Toasted sourdough, marinated tomatoes, basil, olive oil.",
+      name: "Steam Momo",
+      description: "Ten pieces, chicken or veg, with the tomato achar.",
       price: "8.00",
-      category: "Starters",
+      categories: ["Starters", "Chinese", "Tihar Special"],
+    },
+    {
+      name: "Chicken Sekuwa",
+      description: "Grilled chicken skewers, the timur pepper, the lemon.",
+      price: "9.50",
+      categories: ["Starters"],
+    },
+    {
+      name: "Aloo Tama",
+      description: "The bamboo shoot, the potato, the black-eyed pea, the tangy soup.",
+      price: "7.00",
+      categories: ["Starters"],
     },
     // Mains
     {
-      name: "Grilled Salmon",
-      description: "Atlantic salmon, seasonal vegetables, lemon butter.",
-      price: "24.00",
-      category: "Mains",
+      name: "Dal Bhat",
+      description: "The lentil soup, the steamed rice, the seasonal tarkari, the achar.",
+      price: "12.00",
+      categories: ["Mains", "Tihar Special"],
     },
     {
-      name: "Ribeye Steak",
-      description: "300g ribeye, roasted potatoes, red wine jus.",
-      price: "32.00",
-      category: "Mains",
+      name: "Chicken Chowmein",
+      description: "The stir-fried noodles, the seasonal vegetables, the soy.",
+      price: "10.00",
+      categories: ["Mains", "Chinese"],
     },
     {
-      name: "Mushroom Risotto",
-      description: "Arborio rice, wild mushrooms, parmesan, truffle oil.",
-      price: "19.00",
-      category: "Mains",
+      name: "Thukpa",
+      description: "The Tibetan noodle soup, the chicken broth, the greens.",
+      price: "11.00",
+      categories: ["Mains", "Chinese"],
     },
     {
-      name: "Roast Chicken",
-      description: "Half chicken, herb butter, root vegetables.",
-      price: "22.00",
-      category: "Mains",
+      name: "Gundruk Ko Jhol",
+      description: "The fermented greens, the tomato, the dried chili.",
+      price: "8.50",
+      categories: ["Mains"],
+    },
+    // Breakfast
+    {
+      name: "Sel Roti",
+      description: "The ring-shaped rice bread, the sesame, the ghee.",
+      price: "4.00",
+      categories: ["Breakfast", "Tihar Special"],
+    },
+    {
+      name: "Aloo Paratha",
+      description: "The spiced potato flatbread, the curd, the pickle.",
+      price: "5.50",
+      categories: ["Breakfast"],
     },
     // Desserts
     {
-      name: "Chocolate Cake",
-      description: "Warm flourless chocolate cake, vanilla ice cream.",
-      price: "9.00",
-      category: "Desserts",
+      name: "Kheer",
+      description: "The rice pudding, the cardamom, the almond.",
+      price: "5.00",
+      categories: ["Desserts", "Tihar Special"],
     },
     {
-      name: "Crème Brûlée",
-      description: "Vanilla bean custard, caramelized sugar crust.",
-      price: "8.50",
-      category: "Desserts",
+      name: "Juju Dhau",
+      description: "The king curd, the honey, the pistachio.",
+      price: "6.00",
+      categories: ["Desserts"],
     },
     {
-      name: "Seasonal Fruit Plate",
-      description: "Fresh fruit, mint, lime.",
-      price: "7.50",
-      category: "Desserts",
+      name: "Lassi",
+      description: "The sweet yogurt drink, the cardamom.",
+      price: "4.50",
+      categories: ["Desserts", "Breakfast"],
     },
   ];
 
   const itemIds: Record<string, string> = {};
 
-  // Group the item definitions by category name so we query each category once.
-  const itemsByCategory = new Map<string, typeof itemDefs>();
-  for (const def of itemDefs) {
-    const list = itemsByCategory.get(def.category) ?? [];
-    list.push(def);
-    itemsByCategory.set(def.category, list);
+  const existingItemsResult = await menuRepo.listItems(venueId);
+  if (!existingItemsResult.ok) {
+    console.error(
+      `Failed to list items for venue: ${existingItemsResult.error.code} — ${existingItemsResult.error.message}`,
+    );
+    throw new Error("Item listing failed for venue");
   }
 
-  for (const [categoryName, defs] of itemsByCategory) {
-    const categoryId = categoryIds[categoryName];
-    if (!categoryId) {
-      console.error(`Category ${categoryName} not resolved before item seeding.`);
-      throw new Error(`Category missing: ${categoryName}`);
+  const existingItemsByName = new Map<string, { id: string }>();
+  for (const it of existingItemsResult.value) {
+    existingItemsByName.set(it.name, { id: it.id });
+  }
+
+  for (const def of itemDefs) {
+    const existing = existingItemsByName.get(def.name);
+
+    if (existing) {
+      console.log(`Item ${def.name} already exists.`);
+      itemIds[def.name] = existing.id;
+      continue;
     }
 
-    const existingItemsResult = await menuRepo.listItemsForCategory(
+    const targetCategoryIds = def.categories.map((cName) => {
+      const id = categoryIds[cName];
+      if (!id) {
+        throw new Error(`Category ${cName} not found in categoryIds map`);
+      }
+      return id;
+    });
+
+    const created = await menuRepo.createItem({
       venueId,
-      categoryId,
-    );
+      categoryIds: targetCategoryIds,
+      name: def.name,
+      description: def.description,
+      price: def.price,
+    });
 
-    if (!existingItemsResult.ok) {
+    if (!created.ok) {
       console.error(
-        `Failed to list items for category ${categoryName}: ${existingItemsResult.error.code} — ${existingItemsResult.error.message}`,
+        `Failed to create item ${def.name}: ${created.error.code} — ${created.error.message}`,
       );
-      throw new Error(`Item listing failed for category ${categoryName}`);
+      throw new Error(`Item creation failed: ${def.name}`);
     }
 
-    const existingItemsByName = new Map<string, { id: string }>();
-    for (const it of existingItemsResult.value) {
-      existingItemsByName.set(it.name, { id: it.id });
-    }
-
-    for (const def of defs) {
-      const existing = existingItemsByName.get(def.name);
-
-      if (existing) {
-        console.log(`Item ${def.name} already exists.`);
-        itemIds[def.name] = existing.id;
-        continue;
-      }
-
-      const created = await menuRepo.createItem({
-        venueId,
-        categoryId,
-        name: def.name,
-        description: def.description,
-        price: def.price,
-      });
-
-      if (!created.ok) {
-        console.error(
-          `Failed to create item ${def.name}: ${created.error.code} — ${created.error.message}`,
-        );
-        throw new Error(`Item creation failed: ${def.name}`);
-      }
-
-      console.log(`Created item ${def.name} (id: ${created.value.id}).`);
-      itemIds[def.name] = created.value.id;
-    }
+    console.log(`Created item ${def.name} (id: ${created.value.id}).`);
+    itemIds[def.name] = created.value.id;
   }
 
   // --- Modifier groups and their options ---
@@ -577,25 +579,36 @@ async function seedMenu(venueId: string): Promise<void> {
 
   const groupDefs = [
     {
-      item: "Ribeye Steak",
-      name: "Doneness",
+      item: "Steam Momo",
+      name: "Style",
       choiceType: ModifierChoiceType.SINGLE,
       isRequired: true,
       options: [
-        { name: "Rare", additionalPrice: "0.00" },
-        { name: "Medium", additionalPrice: "0.00" },
-        { name: "Well", additionalPrice: "0.00" },
+        { name: "Steam", additionalPrice: "0.00" },
+        { name: "Fried", additionalPrice: "1.00" },
+        { name: "Jhol", additionalPrice: "1.50" },
       ],
     },
     {
-      item: "Grilled Salmon",
+      item: "Chicken Chowmein",
+      name: "Spice",
+      choiceType: ModifierChoiceType.SINGLE,
+      isRequired: true,
+      options: [
+        { name: "Mild", additionalPrice: "0.00" },
+        { name: "Medium", additionalPrice: "0.00" },
+        { name: "Hot", additionalPrice: "0.00" },
+      ],
+    },
+    {
+      item: "Dal Bhat",
       name: "Extras",
       choiceType: ModifierChoiceType.MULTIPLE,
       isRequired: false,
       options: [
-        { name: "Extra cheese", additionalPrice: "1.50" },
-        { name: "Bacon", additionalPrice: "2.00" },
-        { name: "Avocado", additionalPrice: "1.75" },
+        { name: "Extra Achar", additionalPrice: "1.00" },
+        { name: "Extra Tarkari", additionalPrice: "2.00" },
+        { name: "Papad", additionalPrice: "0.50" },
       ],
     },
   ];

@@ -99,7 +99,13 @@ describe("Staff Orders & Place Action API Routes Integration Tests", () => {
         const menuItem = await tx.menuItem.create({
           data: {
             venueId: venue.id,
-            categoryId: category.id,
+            categories: {
+              create: {
+                venueId: venue.id,
+                categoryId: category.id,
+                sortOrder: 1,
+              },
+            },
             name: "Burger",
             price: "10.00",
             sortOrder: 1,
