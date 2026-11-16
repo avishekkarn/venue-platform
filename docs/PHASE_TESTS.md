@@ -875,6 +875,8 @@ Paste the twelve pieces of evidence into a new `PROGRESS.md` entry, mark every P
 
 **Milestone 8.1 scope (added 2026-11-15):** Phase 8's acceptance test is the sixteen-step test below. Milestone 8.1 (the dashboard) was closed against **Steps 1–3** of this test only — the manager logs in, sees the six live metrics, and watches them update as orders move. Steps 4–16 (orders list, completed-orders filters, CSV export, menu, tables, staff, reports, settings, audit viewer) are Phase 8's gate at the end of Milestone 8.8. Closing Milestone 8.1 against Steps 1–3 is the correct granularity: the dashboard is the loop Step 3 proves, and Steps 4–16 exercise features Milestones 8.2–8.8 build.
 
+**Milestone 8.2 scope (added 2026-11-16):** Milestone 8.2 (Order Management) was closed against **Steps 4–7** of this test — the manager navigates to Active Orders, filters the Completed Orders by a date range, exports the CSV, and opens it in a spreadsheet. Step 4 (the Active Orders table), Step 5 (the completed-orders date filter), Step 6 (the CSV export), and Step 7 (the CSV opens in a spreadsheet) are the 8.2 proof. Steps 8–16 (menu, tables, staff, reports, settings, audit viewer) are Milestones 8.3–8.8. The full Phase 8 acceptance test is at 8.8's close.
+
 **Environment:** The repository on the developer's machine. PostgreSQL running with the seeded venue and the historical orders. The dev server running. A desktop browser at 1440×900 or larger. A second tab (or a second window) with `prisma studio` open for verification. A phone for triggering orders during the live-metrics checks.
 
 ### Steps

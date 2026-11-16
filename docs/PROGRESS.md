@@ -137,16 +137,75 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
 | ENTRY-0228 | 2026-11-15 | D-9.7 superseded: the admin shell carries the single sign-out | STRUCTURAL | Milestone 8.1 | §5.3 |
+| ENTRY-0231 | 2026-11-16 | Milestone 8.2 closed: order management, CSV export, NPR, next/script fix | PASS | Milestone 8.2 | §5.3 |
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0231
+Next entry number: 0232
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0231 — 2026-11-16 — Milestone 8.2 closed: order management, CSV export, NPR, next/script fix
+
+**Status:** PASS
+
+**Task:** Milestone 8.2 — 8.2.1, 8.2.2, 8.2.3, 8.2.4, 8.2.5 (and the in-session fixes 8.2.0.FIX, 8.2.4.FIX, 8.1.4.FIX.3).
+
+**Summary:** Milestone 8.2 is closed. The admin panel's order management is live: `GET /api/admin/orders` (filterable by `state`, `dateFrom`, `dateTo`; `withAudit`-wrapped; LEADER 403); the Active Orders tab (`/admin/orders/active`, sorted oldest first, detail panel per `?id=`); the Completed Orders tab (`/admin/orders/completed`, terminal states, date-range filter with Today / Yesterday / This Week / This Month / Custom, sorted newest first); `GET /api/admin/orders/export` (CSV with the human-readable `Place` / `Items` / `History` columns — `Table 12`, `1× Garden Salad`, `APPROVED by Alice Manager at ...`). The whole software displays `NPR` (the venue's currency, 8.2.0.FIX). The admin dashboard's poll uses `next/script`'s `<Script strategy="afterInteractive">` (8.1.4.FIX.3 — the raw `<script>` caused React 19's "Encountered a script tag" on client-side navigation). The `6c5c968` commit's overclaim (`hasOrderAccess` was claimed but not changed) is corrected at `09a22cb` and recorded in ENTRY-0230.
+
+**The task breakdown:**
+- 8.2.1 — `GET /api/admin/orders` (filters; `withAudit`; 4 tests).
+- 8.2.2 — Active Orders tab (`app/admin/orders/active/page.tsx`; Server Component; `OrderQueueRow`; detail panel).
+- 8.2.3 — Completed Orders tab (`app/admin/orders/completed/page.tsx`; terminal states; date-range filter; newest first; export link).
+- 8.2.4 — CSV export (`GET /api/admin/orders/export`; raw columns; 4 tests).
+- 8.2.4.FIX — the CSV's human-readable enrichment (Place numbers, Items summary, History with staff names).
+- 8.2.0.FIX — the venue's currency is `NPR`; the seed re-syncs the existing row.
+- 8.1.4.FIX.3 — the dashboard's poll uses `next/script`; the raw `<script>` is removed.
+- 8.2.5 — the milestone acceptance test (Active Orders, Completed Orders, the date filters, the CSV export at 1440×900).
+
+**Baselines at close:**
+- `pnpm exec tsc --noEmit`: 0 errors
+- `pnpm test:unit`: 41 files / 282 tests
+- `pnpm test:integration`: 46 files / 327 tests
+- `pnpm build`: 45 routes
+
+**Manual verification (the runtime proof):**
+- The Active Orders tab lists the venue's active orders; the detail panel shows the full order.
+- The Completed Orders tab filters by the presets and a custom range; the list is newest first; the export link's `href` carries `from`/`to` as `YYYY-MM-DD`.
+- The CSV export opens in Excel; the columns are `Order ID, Place, Status, Items, Notes, Subtotal, Tax, Total, Placed At (UTC), History`; the `Place` cell is `Table 1` (not a UUID); the `Items` cell is `1× Garden Salad`; the `History` cell is the full sequence with staff names.
+- The currency is `NPR` on every surface (guest menu, cart, order tracking, staff, kitchen, admin).
+- The admin dashboard's poll works after a client-side navigation (no React 19 error).
+- No console errors.
+
+**The audit-gap decision:** The guest QR scan, staff action routes, and kitchen action routes are not `withAudit`-wrapped. Every Phase 8 admin route is (W-0021); the guest/staff/kitchen gap is deferred to Phase 10 (the audit sweep).
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | No | No product change | No change |
+| DECISIONS.md | No | No decision change | No change |
+| SYSTEM.md | No | No shape change | No change |
+| BUILD.md | No | No method change | No change |
+| ROADMAP.md | Yes | 8.2.1, 8.2.2, 8.2.3, 8.2.4, 8.2.5 → ✅; Phase 8 status | Updated in this commit |
+| PROGRESS.md | Yes | This entry; §5.2 ledger; next entry number | Updated in this commit |
+| README.md | Yes | §4 numbers (282/327/45); §5 current state | Updated in this commit |
+| WIRING.md | No | W-0021 remains OPEN (route-by-route); W-0003/W-0004/W-0005 remain OPEN; W-0026/W-0008 remain OPEN. No status change. | No change |
+| PHASE_TESTS.md | Yes | A Milestone 8.2 scope note under §10 | Updated in this commit |
+
+**Contradiction Check:** None found. The `next/script` fix is consistent with the existing `/staff` pattern. The `NPR` currency is consistent with D-11.2 (one currency per venue). The CSV's raw data + the 8.2.4.FIX enrichment is consistent with BUILD.md §7.1 (money as a decimal string). The `6c5c968` correction is recorded per PROGRESS.md §1 Rule 1 (append-only).
+
+**Noticed but Out of Scope:** The kitchen screen's poll may have the same raw-`<script>` pattern (a Phase 10 hardening concern). The CSV's Excel display collapses `"7.00"` to `7` (Excel's number formatting; the raw CSV is correct). The `admin-menu.test.ts` is still `(0 test)` (F-0004; filled in 8.3.1). The `middleware → proxy` deprecation is a Phase 10 concern.
+
+**Next:** Phase 8.3 — Menu Management (8.3.1: the menu list screen; fills F-0004).
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0230 — 2026-11-15 — Milestone 8.1 closed: Dashboard with live venue state and 5s polling
 

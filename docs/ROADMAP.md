@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestone 8.1 is ✅ closed at `2f735fe..6c5c968..09a22cb..(this commit)`. Milestone 8.2 is next.
+**Status:** 🟨 In progress. Milestones 8.1 and 8.2 are ✅ closed at `bede723..1ec4d43..(this commit)`. Milestone 8.3 is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
@@ -927,11 +927,11 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.2.1** | **Add `GET /api/admin/orders`** with filters (`state`, `dateFrom`, `dateTo`). Wraps `withAudit`. Returns `{ data: Order[] }` with money as decimal strings. Four route tests (401, 403 for LEADER, 200 empty, 200 populated with filter). | ⬜ | 8.1.5 |
-| **8.2.2** | **Add the Active Orders tab** (`app/admin/orders/active/page.tsx`): a full-width table from `OrderQueueRow`, columns Order ID / Place / Items summary / Status / Elapsed / Action. Clicking a row opens a right-side detail panel with the full order (items, states, history, notes). The right-panel slides in over 200ms (DESIGN.md §4.10.14). | ⬜ | 8.2.1 |
-| **8.2.3** | **Add the Completed Orders tab** (`app/admin/orders/completed/page.tsx`) with a date-range filter (Today / Yesterday / This Week / This Month / Custom, up to 6 months per D-12.1). Same table, read-only detail panel. | ⬜ | 8.2.1 |
-| **8.2.4** | **Add `GET /api/admin/orders/export`** (CSV). The CSV's columns match the visible table; money cells are quoted strings (`"10.99"`, `"0.00"`); the export respects the same filters as 8.2.1. Wraps `withAudit`. One route test (200; the CSV opens in a spreadsheet). | ⬜ | 8.2.3 |
-| **8.2.5** | **Verify:** filter by a 6-month range, export the CSV, open it in Excel / Google Sheets. The filtered row count matches the table's; the daily totals (summed) match the DB. Manual desktop at 1440×900. The milestone's acceptance test. | ⬜ | 8.2.4 |
+| **8.2.1** | **Add `GET /api/admin/orders`** with filters (`state`, `dateFrom`, `dateTo`). Wraps `withAudit`. Returns `{ data: Order[] }` with money as decimal strings. Four route tests (401, 403 for LEADER, 200 empty, 200 populated with filter). | ✅ | 8.1.5 |
+| **8.2.2** | **Add the Active Orders tab** (`app/admin/orders/active/page.tsx`): a full-width table from `OrderQueueRow`, columns Order ID / Place / Items summary / Status / Elapsed / Action. Clicking a row opens a right-side detail panel with the full order (items, states, history, notes). The right-panel slides in over 200ms (DESIGN.md §4.10.14). | ✅ | 8.2.1 |
+| **8.2.3** | **Add the Completed Orders tab** (`app/admin/orders/completed/page.tsx`) with a date-range filter (Today / Yesterday / This Week / This Month / Custom, up to 6 months per D-12.1). Same table, read-only detail panel. | ✅ | 8.2.1 |
+| **8.2.4** | **Add `GET /api/admin/orders/export`** (CSV). The CSV's columns match the visible table; money cells are quoted strings (`"10.99"`, `"0.00"`); the export respects the same filters as 8.2.1. Wraps `withAudit`. One route test (200; the CSV opens in a spreadsheet). | ✅ | 8.2.3 |
+| **8.2.5** | **Verify:** filter by a 6-month range, export the CSV, open it in Excel / Google Sheets. The filtered row count matches the table's; the daily totals (summed) match the DB. Manual desktop at 1440×900. The milestone's acceptance test. | ✅ | 8.2.4 |
 
 ### Milestone 8.3 — Menu Management
 

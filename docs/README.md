@@ -73,9 +73,9 @@ These are the counts as of the current state (2026-11-14, Phase 8.0.0):
 - **Decisions:** 104, across 17 categories (see `DECISIONS.md` Appendix)
 - **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed), Phase 7.6 (foundation hardening, closed), Phase 7.7 (production readiness prerequisites, closed), and Phase 8.0.0 (docs-code alignment, in progress)
 - **Unit tests passing:** 282 (41 files)
-- **Integration tests passing:** 319 (44 files)
-- **Production routes:** 41
-- **Current milestone:** Phase 8.2 — Order Management (Phase 8.1 closed at `09a22cb`; Phase 8.2.1 is next)
+- **Integration tests passing:** 327 (46 files)
+- **Production routes:** 45
+- **Current milestone:** Phase 8.3 — Menu Management (Phase 8.1 and 8.2 closed at `1ec4d43`; Phase 8.3.1 is next)
 
 ---
 
@@ -83,10 +83,11 @@ These are the counts as of the current state (2026-11-14, Phase 8.0.0):
 
 See the top of `PROGRESS.md` §7 (The Current State Snapshot). That snapshot is updated at the end of every session and is the single source of truth for what phase, milestone, and task the project is on.
 
-As of the last session (2026-11-15, commit `09a22cb`):
+As of the last session (2026-11-16, commit `1ec4d43`):
 
 - **Phase 7.7** (Production Readiness Prerequisites) is **fully closed** at `a09d832`.
 - **Phase 8.0.0** (Docs-Code Alignment) is **fully closed** at `620ebc3`.
-- **Phase 8.1** (Dashboard) is **✅ closed**. Milestone 8.1: 7.7.6, 8.1.1, 8.1.2, 8.1.3.A, 8.1.3.B, 8.1.4, 8.1.5 all ✅. The admin dashboard at `/admin` renders six live metric tiles, two order lists, one request list, and two maps. The dashboard polls every 5s via a vanilla-JS `<script async>` gated on `visibilityState` (D-19.1). The route is `withAudit`-wrapped (W-0021) and derives occupancy from `Table.state` / `Room.state` (7.7.6). The `/staff` page polls the same way with the same derivation (8.1.5.FIX.2 / FIX.3).
-- **Phase 8.2** (Order Management) is **next**: 8.2.1 is `GET /api/admin/orders` with filters.
-- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 282/282, `test:integration` 319/319, `build` 41 routes.
+- **Phase 8.1** (Dashboard) is **✅ closed**. The admin dashboard renders six live metric tiles, two order lists, one request list, and two maps; it polls every 5s via `next/script`'s `<Script strategy="afterInteractive">` (8.1.4.FIX.3), gated on `visibilityState`. The route is `withAudit`-wrapped and derives occupancy from `Table.state` / `Room.state`.
+- **Phase 8.2** (Order Management) is **✅ closed** at `1ec4d43`. The admin panel's `GET /api/admin/orders` (filters), the Active Orders tab, the Completed Orders tab (date-range filter), and the CSV export (human-readable: `Table 12`, `1× Garden Salad`, `APPROVED by Alice Manager at ...`) are live. The venue's currency is **`NPR`** (8.2.0.FIX). The seed re-syncs the existing venue's currency on each run.
+- **Phase 8.3** (Menu Management) is **next**: 8.3.1 is the menu list screen (fills F-0004, the `admin-menu.test.ts` placeholder).
+- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 282/282, `test:integration` 327/327, `build` 45 routes.
