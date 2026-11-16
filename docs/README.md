@@ -83,11 +83,13 @@ These are the counts as of the current state (2026-11-14, Phase 8.0.0):
 
 See the top of `PROGRESS.md` §7 (The Current State Snapshot). That snapshot is updated at the end of every session and is the single source of truth for what phase, milestone, and task the project is on.
 
-As of the last session (2026-11-16, commit `1ec4d43`):
+As of the last session (2026-11-16, commit `70ea012`):
 
 - **Phase 7.7** (Production Readiness Prerequisites) is **fully closed** at `a09d832`.
 - **Phase 8.0.0** (Docs-Code Alignment) is **fully closed** at `620ebc3`.
-- **Phase 8.1** (Dashboard) is **✅ closed**. The admin dashboard renders six live metric tiles, two order lists, one request list, and two maps; it polls every 5s via `next/script`'s `<Script strategy="afterInteractive">` (8.1.4.FIX.3), gated on `visibilityState`. The route is `withAudit`-wrapped and derives occupancy from `Table.state` / `Room.state`.
-- **Phase 8.2** (Order Management) is **✅ closed** at `1ec4d43`. The admin panel's `GET /api/admin/orders` (filters), the Active Orders tab, the Completed Orders tab (date-range filter), and the CSV export (human-readable: `Table 12`, `1× Garden Salad`, `APPROVED by Alice Manager at ...`) are live. The venue's currency is **`NPR`** (8.2.0.FIX). The seed re-syncs the existing venue's currency on each run.
-- **Phase 8.3** (Menu Management) is **next**: 8.3.1 is the menu list screen (fills F-0004, the `admin-menu.test.ts` placeholder).
+- **Phase 8.1** (Dashboard) is **✅ closed** at `f22aab3`.
+- **Phase 8.2** (Order Management) is **✅ closed** at `70ea012`. The admin panel's `GET /api/admin/orders`, the Active Orders tab, the Completed Orders tab (date-range filter), and the CSV export (human-readable: `Table 12`, `1× Garden Salad`, `APPROVED by Alice Manager at ...`) are live. The venue's currency is **`NPR`** (8.2.0.FIX).
+- **Phase 8.3** (Menu Management) is **next** — with the photo pipeline (8.3.0, 8.3.2a, 8.3.7a). The 8.3.0 is the first task.
+- **The roadmap is restructured** — the new **8.4 (Services Management)** is inserted; the current 8.4–8.8 renumber to 8.5–8.9.
+- **Canonical docs aligned** — the four new decisions (D-21.1, D-22.1, D-23.1, D-24.1) and docs are aligned (see ENTRY-0232).
 - **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 282/282, `test:integration` 327/327, `build` 45 routes.

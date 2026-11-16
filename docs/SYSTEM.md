@@ -639,7 +639,7 @@ The data model is the shape of everything the product remembers. It is described
 
 **The venue's modules.** Table, room, counter, kitchen. Each is on or off (per PRODUCT.md §2, D-10.1).
 
-**The venue's services.** The hotel services that are enabled for this venue: room service food, housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb. Each can be on or off.
+**The venue's services.** The venue's service catalog. Each **`ServiceItem`** has a `name`, a `description`, a `photoUrl`, a `photoBlurData` (the tiny base64 placeholder), a `price` (a decimal; `0.00` means free), an `estimatedMinutes` (optional), a 3-state (`AVAILABLE` / `UNAVAILABLE` / `HIDDEN`), and a `categoryId`. Each **`ServiceCategory`** has a `name` and a `sortOrder`. The seed creates nine `ServiceItem` rows in a "Hotel Services" category — Room Service Food, Housekeeping, Maintenance, Concierge, Laundry, Spa, Late Checkout, Wake-up Call, Do Not Disturb — and the operator can add custom `ServiceItem`s beyond the nine. The old `ServiceConfig` model (the nine booleans) is deprecated; the `ServiceItem`'s `state` is the enablement.
 
 **The table.** A physical table in the venue. Has a number or name and a state: free, occupied, or out of service. Only exists when the table module is on.
 
@@ -657,7 +657,7 @@ The data model is the shape of everything the product remembers. It is described
 
 **The menu category.** A grouping of items. Has a name and an order.
 
-**The menu item.** A dish or drink. Has a name, a description, a photo, a price, a category, and a state: available, unavailable, or hidden.
+**The menu item.** A dish or drink. Has a name, a description, a `photoUrl`, a `photoBlurData`, a price, a category, a sort order, and a state: available, unavailable, or hidden (D-4.2).
 
 **The modifier group.** A group of options for an item. Has a name and rules about whether the guest must choose and whether they can choose more than one.
 
@@ -765,9 +765,14 @@ The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/admin/dashboard` | Read the venue's six live dashboard metrics: `{ ordersWaiting, inKitchen, ready, revenueToday, ordersToday, requestsOpen }` |
+| POST | `/api/admin/media/upload` | Upload an image (multipart; max 5MB; `sharp` → WebP + blur) |
 | GET, POST, PATCH, DELETE | `/api/admin/menu/categories` | Manage categories |
 | GET, POST, PATCH, DELETE | `/api/admin/menu/items` | Manage menu items |
 | POST | `/api/admin/menu/items/[id]/state` | Change a menu item's state |
+| GET, POST, PATCH, DELETE | `/api/admin/services/categories` | Manage service categories (`ServiceCategory`) |
+| GET, POST, PATCH, DELETE | `/api/admin/services/items` | Manage service items (`ServiceItem`) |
+| PATCH | `/api/admin/services/items/[id]` | Update a service item |
+| POST | `/api/admin/services/items/[id]/state` | Change a service item's state |
 | GET, POST, PATCH | `/api/admin/tables` | Manage tables |
 | GET, POST, PATCH | `/api/admin/rooms` | Manage rooms |
 | POST | `/api/admin/qr/generate` | Generate a QR token for a place |

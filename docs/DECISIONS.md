@@ -28,6 +28,11 @@
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
 16. Implementation Contracts — D-16.1 to D-16.4
 17. Development Process — D-17.1 to D-17.5
+18. Staff Focus and the LEADER Role — D-18.1 to D-18.2
+19. Guest Tracking Polling and Join Approvals — D-19.1 to D-19.2
+20. Security Defenses — D-20.1
+21. Service Catalog and Media — D-21.1 to D-22.1
+22. Guest Rendering and Dynamic Routes — D-23.1 to D-24.1
 
 ---
 
@@ -2459,10 +2464,117 @@ The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.c
 
 ---
 
+## 21. Service Catalog and Media
+
+### D-21.1 — The service catalog is a first-class entity, and each service carries a configurable price
+
+**Decision:** The nine fixed hotel services (Room Service Food, Housekeeping, Maintenance, Concierge, Laundry, Spa, Late Checkout, Wake-up Call, Do Not Disturb) are seeded as `ServiceItem` rows in a seeded "Hotel Services" `ServiceCategory`. Each `ServiceItem` has a `name`, a `description`, a `photoUrl`, a `photoBlurData`, a `price` (Decimal(10,2); `0.00` means free), an optional `estimatedMinutes`, and a 3-state (`AVAILABLE` / `UNAVAILABLE` / `HIDDEN`). The operator manages the catalog from the admin panel's "Services" tab: editing the name, description, price, duration, photo, and state; adding custom `ServiceItem`s beyond the nine; and managing the `ServiceCategory`s. The `ServiceConfig` model (the venue's enabled services — the nine booleans) is **deprecated** and replaced by the `ServiceItem`'s state.
+
+**Context:** The current model treats the nine services as a fixed enum (`HotelService`) with a per-venue boolean enablement (`ServiceConfig`). The operator's actual pricing needs — Housekeeping and Maintenance are free, Concierge and Laundry and Spa are payable, Late Checkout depends on the venue's policy, Do Not Disturb is free and sets a room flag — are not expressible in the current model. The operator needs to set a price per service, add custom services (e.g., a "Birthday cake" service), and organize the catalog with categories and photos. This is a new PRODUCT.md requirement.
+
+**Alternatives considered:**
+
+- Keep the `ServiceConfig` booleans and add a separate `price` field per `HotelService` — rejected because it cannot support custom services (the `HotelService` enum is closed). The operator asked for custom services.
+- Add a `ServiceItem` catalog but keep the `ServiceConfig` as a parallel enablement — rejected because two sources of truth (the boolean and the 3-state) drift. The 3-state is the enablement.
+- A free-form JSON blob per venue — rejected because it loses the schema, the type safety, and the queryability.
+
+**Consequences:**
+
+- The Prisma schema gains `ServiceCategory` and `ServiceItem` models. The `ServiceConfig` model is deprecated (the schema's comment says "deprecated; the `ServiceItem` is the catalog"). The migration converts the nine `ServiceConfig` rows into nine `ServiceItem` rows.
+- The seed's `SEED_VENUE.services` becomes the nine `ServiceItem` rows in the "Hotel Services" category.
+- The `ServiceRequest`'s `serviceType` (the `HotelService` enum) stays — the request still records which of the nine services (or the two table actions) was requested. The `ServiceItem`'s id (not the enum) is what the guest selects; the request carries both (the `ServiceItem` id and the `serviceType` for the nine; the custom services have no `HotelService` value, and their requests are a Phase 9 concern).
+- The admin panel gains a "Services" tab (`/admin/services`): the list, the add/edit form, the photo box, the 3-state toggle, the category CRUD.
+- The guest services page (`app/(guest)/services/page.tsx`) reads the enabled `ServiceItem`s (the `state: AVAILABLE`), renders the photo, the name, the description, the price (or "Free"), and the estimated duration. The nine fixed services are the seeded rows; the custom ones are the operator's.
+
+**What would make us revisit:** If a venue's custom services require a fundamentally different flow (e.g., a spa booking with a real calendar), we add a dedicated flow for that service type.
+
+**Traces to:** PRODUCT.md §6 (the hotel guest journey), SYSTEM.md §11.1 (the entities), D-5.1 (the generic request structure), D-9.6 (the operator manages operations).
+
+---
+
+### D-22.1 — The media pipeline uses `sharp` on the server
+
+**Decision:** The `POST /api/admin/media/upload` route accepts a multipart upload (max 5MB, MIME image/jpeg, image/png, image/webp), resizes the image to 800px width, converts it to WebP (quality 80), generates a 16px blurDataURL, writes the file to `public/uploads/catalog/{uuid}.webp`, and returns `{ photoUrl, photoBlurData }`. The route is `withAudit` + `withCsrf` (it is a state-changing POST; the `withAudit` records the file write). The `sharp` npm package is the server-side image processor. The `public/uploads/` directory is `.gitignore`d (the files are venue-specific; not in the repo). The route is shared by the menu's item form (8.3.2a) and the services' item form (8.4.3a).
+
+**Context:** The photo pipeline is a new requirement (the menu items and the service items have photos). The server-side processing is the production standard: the client cannot be trusted (a client can bypass compression; the server is the boundary), and the `sharp` is the Node ecosystem's standard for image processing (resize, WebP, blur). The alternative (`browser-image-compression`) is client-side; it is rejected for the same reason. The `public/uploads/` is the dev-time storage; a production S3/R2 adapter is a Phase 10 concern (D-14.1's portability).
+
+**Alternatives considered:**
+
+- Client-side compression (`browser-image-compression`) — rejected. The server cannot trust the client's output. A malicious client could upload a 50MB image; the server must validate and process.
+- Storing the binary in PostgreSQL (`BYTEA`) — rejected. It bloats the database, slows the backups, and the query payloads. The URL pointer is the standard.
+- Storing the binary in the database and serving it through an API route — rejected for the same reason.
+- A CDN (Cloudflare R2, S3) as the primary storage — deferred to Phase 10. The dev version writes to the local disk; the production adapter is the Phase 10 task.
+
+**Consequences:**
+
+- `package.json` gains the `sharp` dependency (and the `@types/sharp` if needed).
+- `public/uploads/catalog/` is `.gitignore`d; the route creates the directory if absent.
+- The `POST /api/admin/media/upload` route is `withAudit` + `withCsrf`; the four route tests prove the shape.
+- The `MenuItem` and the `ServiceItem` gain a `photoBlurData String?` column.
+- The dev version writes to the local disk; a production S3/R2 adapter is a Phase 10 task.
+- The image's `Cache-Control` is `public, max-age=31536000, immutable` (the file is immutable; the UUID name is unique). The `next.config.mjs` gains the `/uploads/:path*` header.
+
+**What would make us revisit:** If the venue's production deployment requires an S3/R2 adapter, we add it as a Phase 10 task. If `sharp`'s native binding blocks the deployment (a host without the build tools), we switch to a pure-JS alternative (`jimp` or `browser-image-compression` + a server-side validation) via a new decision record.
+
+**Traces to:** BUILD.md §10.6 (a dependency choice requires a decision), D-3.9 (the strongest-available-correctness precedent), D-14.1 (the portable deployment), DESIGN.md §4.8.1 (the menu card's photo), the 8.3.0 task.
+
+---
+
+## 22. Guest Rendering and Dynamic Routes
+
+### D-23.1 — The guest menu and services render photos via `next/image`
+
+**Decision:** The guest menu's `MenuItemCard` and the guest services' `ServiceCard` render the `photoUrl` via Next.js's `<Image>` component (`next/image`), with the `photoBlurData` as the `placeholder="blur"` `blurDataURL`. The images are lazy-loaded (`loading="lazy"` is the default for the offscreen images; the above-the-fold images use `priority`). The `next.config.mjs` gains the `/uploads/:path*` `Cache-Control: public, max-age=31536000, immutable` header. The 5s guest menu poll (`/api/guest/menu/states`) continues to return only the state map (the `{ id, state }` pairs); the photos are in the Server Component render, not in the poll. The 5s services poll (if added) similarly returns only the metadata.
+
+**Context:** The current guest menu uses `<img src={photoUrl} />` (no optimization, no blur placeholder, no layout stability). The photo pipeline (D-22.1) adds the `photoBlurData`. The `next/image` is the framework's optimized image: auto WebP/AVIF, lazy loading, the blur placeholder, the `sizes` attributes. The alternative (`<img>` with manual `loading="lazy"` and a `blurDataURL` background) is the fallback; the `next/image` is the production-benchmark choice.
+
+**Alternatives considered:**
+
+- `<img src={photoUrl} />` with manual `loading="lazy"` and a `style={{ backgroundImage: ... }}` — rejected. The `next/image` is the framework's optimized image; the manual version is more code, fewer optimizations, and no CDN-cache integration (the `next/image` is optimized at build time or on-demand).
+- `<img>` with no optimization (the current state) — rejected. It is the regression D-15.5 (the 1-second landing) and the guest UX cannot afford.
+
+**Consequences:**
+
+- The `MenuItemCard` and the `ServiceCard` import `Image` from `next/image`; the `photoUrl` and the `photoBlurData` are the `src` and the `blurDataURL`.
+- The `next.config.mjs`'s `images` config (if needed for the remote patterns) and the `/uploads/:path*` headers.
+- The menu's Server Component render fetches the `photoUrl` + the `photoBlurData` for each item; the poll does not re-fetch them.
+- The `next/image` requires the images to be served from the app's origin (the `/uploads/` files are). The production CDN (if the images move to S3/R2) requires the `next.config.mjs`'s `remotePatterns`. **Phase 10 concern.**
+
+**What would make us revisit:** If the `next/image` optimization is not compatible with the deployment (e.g., a serverless host without the image optimization), we switch to the `<img>` with the `blurDataURL` background. The decision is a deployment concern, not a design concern.
+
+**Traces to:** DESIGN.md §4.8.1 (the menu card), §4.9.2 (the services), D-22.1 (the media pipeline), D-15.5 (the 1-second landing).
+
+---
+
+### D-24.1 — The `withAuditedDynamicRoute<TParams>` variant for the dynamic API routes
+
+**Decision:** The `withAudit` wrapper (BUILD.md §6.11) covers the non-dynamic routes (`(request: NextRequest) => Promise<NextResponse>`). The dynamic routes (`PATCH /api/admin/menu/items/[id]`, `PATCH /api/admin/services/items/[id]`, and any future `[id]` route) need the `context: { params: Promise<{ id: string }> }` for the Next.js dynamic params. The `with-audit.ts` file gains a **new** export `withAuditedDynamicRoute<TParams>` (a generic over the `TParams` shape, typically `{ id: string }`), which wraps a handler of the shape `(request: NextRequest, context: { params: Promise<TParams> }) => Promise<NextResponse>` and returns the same shape. The existing `withAudit` is **unchanged**; the two reference routes (`qr/generate`, `audit/export`) and their tests are untouched. The new variant's test proves the `context.params` passes through the wrapper to the handler.
+
+**Context:** BUILD.md §6.11 says the `AuditedRouteHandler` type does not carry a `context`; "When Phase 8 needs to wrap a dynamic route, it introduces a variant (e.g. `withAuditedDynamicRoute`)." Phase 8.3.3 (the `PATCH /api/admin/menu/items/[id]`) is the first such route; the 8.4.4 (the `PATCH /api/admin/services/items/[id]`) is the second. The variant is the additive, scoped change.
+
+**Alternatives considered:**
+
+- Make `withAudit` generic over a context — rejected. It changes the existing export's signature and every existing caller. The additive variant is the smaller change.
+- Read the `[id]` from the request URL (`new URL(request.url).pathname` parse) — rejected. It is fragile (the path parsing depends on the route's folder structure) and it does not match Next.js's `context.params` convention.
+- Use `withAudit` and a manual `params` extraction in each dynamic route — rejected. It duplicates the context handling; the wrapper is the right place.
+
+**Consequences:**
+
+- `src/infrastructure/audit/with-audit.ts` exports `withAuditedDynamicRoute<TParams>` (a generic; a new type `AuditedDynamicRouteHandler<TParams>`; a new function). The existing `withAudit` is unchanged.
+- The 8.3.3 (`PATCH /api/admin/menu/items/[id]`) uses `withAuditedDynamicRoute<{ id: string }>(resolvers, meta, handler)`. The 8.4.4 (`PATCH /api/admin/services/items/[id]`) uses the same.
+- The new variant's test (`tests/integration/audit/with-audit.test.ts` gains a test) proves the `context.params` passes through and the audit line is written.
+- The existing two reference routes (`qr/generate`, `audit/export`) and their tests are untouched.
+
+**What would make us revisit:** If Next.js changes the dynamic route signature (e.g., the `params` becomes sync), the variant is updated to match. Until then, the variant is the correct shape.
+
+**Traces to:** BUILD.md §6.11 (the `withAudit` contract), the 8.3.3 task, the 8.4.4 task, W-0021 (the audit coverage).
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 104
-**Categories:** 17
+**Total decisions:** 108 <!-- Total decisions: 108 -->
+**Categories:** 22
 **Status:** All locked.
 
 **How the count is derived:** the count in this appendix is the number of decisions whose `### D-` heading appears in this file. It is not a hand-maintained number; it is the count of the file's own records. Before version 2.0, this number was stale (it read 54 while the file contained 80). The correction is recorded in C-02's STRUCTURAL entry.

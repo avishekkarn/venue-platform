@@ -1367,7 +1367,7 @@ The guest is still anonymous. The product still uses a warm surface. The typogra
 
 **The primary action.** Instead of "View Menu", the primary action is a grid of service cards. The guest is not going to a menu; they are choosing what they want to happen.
 
-**The service catalog.** A 2-column grid on mobile (3-column on desktop) of `ServiceCard` components, one per enabled service. Each card: a single line-art icon in `--guest-brand`, the service name, and a one-line description.
+**The service catalog.** A 2-column grid on mobile (3-column on desktop) of `ServiceCard` components, one per enabled `ServiceItem`. Each card shows the service's photo (via `next/image`; the photo is square or 4:3; the `photoBlurData` is the blur placeholder), the service name, a one-line description, the price (`0.00` shows as "Free"; otherwise the formatted amount), and the estimated duration if present. The nine fixed services are the seed's initial rows; the operator's custom services appear in the same grid.
 
 **The service detail screens.** Each service opens a dedicated screen, not a sheet. The screen is a form: title, description, fields, submit button.
 
@@ -1470,31 +1470,38 @@ An admin's day on this screen looks like:
 ### 4.10.8 Menu Management
 
 - Full-width table of menu items, grouped by category.
-- Columns: Name, Category, Price, State, Actions.
+- Columns: Photo thumbnail, Name, Category, Price, State, Actions.
 - Actions per row: Edit, Toggle availability, Hide.
 - "Add item" button top-right.
-- Editing an item opens a right-hand form panel.
+- Editing an item opens a right-hand form panel with the name, description, photo (drag-and-drop upload; preview; the upload hits `POST /api/admin/media/upload`), price, category, and state.
 
-### 4.10.9 Tables / Rooms Management
+### 4.10.9 Services Management
+
+- Full-width table of service items, grouped by category. Columns: Photo thumbnail, Name, Category, Price, Estimated Minutes, State, Actions (Edit, Toggle availability, Hide).
+- "Add service" button top-right.
+- Editing a service opens a right-hand form panel with the name, description, photo (drag-and-drop upload; preview; the upload hits `POST /api/admin/media/upload`), price, estimated minutes, category, and state.
+- A "Manage categories" action for the service categories (add, rename, reorder).
+
+### 4.10.10 Tables / Rooms Management
 
 - A grid of cards, one per table or room.
 - Each card: the number, the status, the QR code state, and two actions: "Print QR" and "Revoke QR".
 - "Add table" / "Add room" button top-right.
 - "Print all QR codes" button top-right.
 
-### 4.10.10 QR Codes
+### 4.10.11 QR Codes
 
 - A table of all QR tokens, with their place, their state, and their created date.
 - "Generate new QR" button top-right.
 - Row actions: Print, Revoke.
 
-### 4.10.11 Staff Management
+### 4.10.12 Staff Management
 
 - A table of staff members with their name, username, roles, and last login.
 - Row actions: Edit, Reset password, Deactivate.
 - "Add staff" button top-right.
 
-### 4.10.12 Reports
+### 4.10.13 Reports
 
 - A date range picker at the top: Today, This Week, This Month, This Year, Custom (up to 6 months).
 - A line chart of daily revenue in `--staff-accent`.
@@ -1502,7 +1509,7 @@ An admin's day on this screen looks like:
 - A table of top-selling items.
 - "Export CSV" button top-right.
 
-### 4.10.13 Settings
+### 4.10.14 Settings
 
 - Venue name, address, contact (read-only, shown for reference).
 - Tax rate (read-only in the first version).
@@ -1511,7 +1518,7 @@ An admin's day on this screen looks like:
 - Service toggles: room service food, housekeeping, maintenance, concierge, laundry, spa, late checkout, wake-up call, do not disturb.
 - No payment bridge configuration. The payment provider is set by the developer in code (per D-9.6 and D-7.2), not in the admin panel.
 
-### 4.10.14 Motion
+### 4.10.15 Motion
 
 The admin panel has **no decorative motion**. No fade-ins on load. No slide-ins. No staggered reveals. The only motion is:
 
@@ -1519,7 +1526,7 @@ The admin panel has **no decorative motion**. No fade-ins on load. No slide-ins.
 - The right-side detail panel slides in over 200ms when a row is selected.
 - The theme toggle transitions the surfaces over 140ms.
 
-### 4.10.15 Tokens
+### 4.10.16 Tokens
 
 The admin uses only staff-world tokens. No guest tokens. No Fraunces. No warm surfaces. Ever.
 

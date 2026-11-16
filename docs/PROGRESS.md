@@ -137,17 +137,60 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
 | ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
 | ENTRY-0228 | 2026-11-15 | D-9.7 superseded: the admin shell carries the single sign-out | STRUCTURAL | Milestone 8.1 | §5.3 |
+| ENTRY-0232 | 2026-11-16 | Roadmap restructured: Services Management (8.4); 8.5–8.9 renumbered; the four new decisions | STRUCTURAL | Milestone 8.4 | §5.3 |
 | ENTRY-0231 | 2026-11-16 | Milestone 8.2 closed: order management, CSV export, NPR, next/script fix | PASS | Milestone 8.2 | §5.3 |
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0232
+Next entry number: 0233
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0232 — 2026-11-16 — Roadmap restructured: Services Management (8.4) inserted; 8.5–8.9 renumbered; the service catalog, the media pipeline, and the dynamic-route variant decided
+
+**Status:** STRUCTURAL
+
+**Task:** ROADMAP.md §12 restructure + the docs alignment (PRODUCT, SYSTEM, DESIGN, DECISIONS) for the new 8.4 (Services Management), the renumbered 8.5–8.9, and the four new decisions (D-21.1, D-22.1, D-23.1, D-24.1).
+
+**Summary:** The roadmap's Phase 8 is restructured. The current 8.4 (Tables and Rooms) becomes 8.5; the current 8.5 (Staff) becomes 8.6; the current 8.6 (Reports) becomes 8.7; the current 8.7 (Settings) becomes 8.8; the current 8.8 (Audit Viewer) becomes 8.9. The new **8.4 (Services Management)** is inserted: the operator manages the venue's service catalog (the nine fixed services plus custom ones), each with a photo, a configurable price, an estimated duration, and a 3-state. The new milestone's tasks (8.4.1 through 8.4.7a) are the schema, the admin screen, the POST/PATCH routes, the state toggle, the category CRUD, and the guest rendering. The four new decisions are recorded: D-21.1 (the service catalog as a first-class entity with a per-service price; the `ServiceConfig` deprecated), D-22.1 (the `sharp` media pipeline), D-23.1 (the `next/image` guest rendering), D-24.1 (the `withAuditedDynamicRoute` variant). The docs (PRODUCT §6/§8.9a/§12.4; SYSTEM §11.1/§12.5; DESIGN §4.9.2/§4.10.8/§4.10.9) are aligned. The 8.3 (Menu Management) gains the photo pipeline (8.3.0, 8.3.2a, 8.3.7a).
+
+**The docs changes:**
+- **PRODUCT.md** — the §6.2's service catalog (photos, prices, custom services), the §8.9a's Services tab, the §12.4's "Services management".
+- **SYSTEM.md** — the §11.1's `ServiceItem` / `ServiceCategory` (the `ServiceConfig` deprecated; the `MenuItem.photoBlurData`), the §12.5's new routes (`/api/admin/media/upload`, `/api/admin/services/*`).
+- **DESIGN.md** — the §4.9.2's `ServiceCard` (photo, price, duration), the §4.10.8's Menu Management (the photo column, the photo box), the new §4.10.9 Services Management, the §4.10.10–§4.10.14 renumber.
+- **DECISIONS.md** — the four new records; the Appendix's count 104 → 108.
+- **README.md** — the §5's current state (the roadmap restructured; the new 8.4 Services Management; the renumbering).
+
+**The baselines at close:** unchanged (the code is at `70ea012`; the docs edits don't touch the code). The four baselines: tsc 0, unit 41/282, integration 46/327, build 45 routes.
+
+**Document Impact:**
+
+| Document | Affected? | Reason | Action |
+|---|---|---|---|
+| PRODUCT.md | Yes | The service catalog (the new 8.4); the photos; the prices | Updated in this commit |
+| DECISIONS.md | Yes | The four new records (D-21.1, D-22.1, D-23.1, D-24.1); the Appendix's count | Updated in this commit |
+| SYSTEM.md | Yes | The `ServiceItem` / `ServiceCategory` entities; the API surface | Updated in this commit |
+| BUILD.md | No | The §10.6 rule covers the `sharp` decision | No change |
+| ROADMAP.md | Yes | The §12 restructure (the user pastes the revised §12 manually; the ENTRY-0232 records it) | Updated by the user |
+| PROGRESS.md | Yes | This entry; §5.2 ledger; the next entry number | Updated in this commit |
+| README.md | Yes | The §5 current state | Updated in this commit |
+| DESIGN.md | Yes | The service catalog's photo; the Services Management screen; the renumber | Updated in this commit |
+| WIRING.md | No | W-0005 remains OPEN (the 8.3.4 discharges it); no new obligation | No change |
+| PHASE_TESTS.md | No | The Phase 8's §10 milestone scope notes are added at each milestone's close, not now | No change |
+
+**Contradiction Check:** None found. The `ServiceItem` replaces the `ServiceConfig` (D-21.1). The `sharp` pipeline is a dependency choice recorded per BUILD.md §10.6 (D-22.1). The `next/image` is the framework's image component (BUILD.md §3.8). The `withAuditedDynamicRoute` is the additive variant (BUILD.md §6.11).
+
+**Noticed but Out of Scope:** The `ServiceConfig` model's actual deprecation in the Prisma schema (the comment, the seed migration) is the 8.4.1's work. The `next.config.mjs`'s `/uploads/*` header is the 8.3.0's work. The `sharp` package's installation is the 8.3.0's work. The docs describe the target; the code follows.
+
+**Next:** 8.3.0 — the media upload route + the `sharp` dependency + the D-22.1 (the first code task after the docs alignment).
+
+**Awaiting Human Verification:** YES
+
+---
 
 ### ENTRY-0231 — 2026-11-16 — Milestone 8.2 closed: order management, CSV export, NPR, next/script fix
 

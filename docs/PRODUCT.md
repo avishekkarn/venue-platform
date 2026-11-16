@@ -348,7 +348,7 @@ The hotel landing is calmer and more elegant than the restaurant landing. It con
 1. **The hotel's name**, in a refined display typeface, with the logo if available.
 2. **A hero image** — the room, the view, the lobby, or a soft abstract.
 3. **A personalized line** — "Welcome to room 412." or "Good evening." The room number comes from the QR code.
-4. **A service catalog** — a grid of large, friendly cards. Each card is one service: Room Service, Housekeeping, Maintenance, Concierge, Laundry, Spa, Late Checkout, Wake-up Call, Do Not Disturb.
+4. **A service catalog** — a grid of large, friendly cards. Each card is one service (the seeded "Hotel Services" category, plus any custom services the operator adds). Each card shows the service's photo, its name, a one-line description, and its price (`0.00` shows as "Free"; otherwise the formatted amount in the venue's currency). The nine fixed hotel services are the seed's initial rows; the operator manages the catalog — adding, editing, hiding, and pricing each service — from the admin panel's "Services" tab.
 5. **A "how it works" strip** — "Choose a service → Tell us what you need → We take care of it."
 6. **A quiet help button** — "Call the front desk."
 7. **A footer** — hotel name, wifi info, contact.
@@ -641,6 +641,16 @@ A list of every staff account. The operator can:
 
 A staff member can have more than one role. A housekeeping staff member who also handles laundry has both roles and sees both queues.
 
+### 8.9a The Services Tab
+
+The operator can see and manage the venue's service catalog:
+
+- **A list of services** — grouped by category, with each service's photo, name, price (`0.00` shows as "Free"), estimated duration, and state (Available / Unavailable / Hidden).
+- **An "Add service" action** — opens a right-hand form panel with the name, description, photo (upload or replace), price, estimated duration, category, and initial state.
+- **Row actions** — Edit, Toggle availability, Hide.
+- **Category management** — add, rename, and reorder the service categories.
+- **The nine fixed services are seeded** — Room Service, Housekeeping, Maintenance, Concierge, Laundry, Spa, Late Checkout, Wake-up Call, Do Not Disturb — each with a default price (`0.00` for the free ones; the operator sets the payable ones). The operator can add custom services beyond the nine.
+
 ### 8.10 The Reports Tab
 
 The operator can see:
@@ -909,7 +919,7 @@ This is every capability the product will have, described by what it does for a 
 9. **Batch QR printing** — print a sheet of QR codes for all tables or rooms at once.
 10. **Staff management** — add, edit, deactivate, and reset password for staff; assign roles and queues.
 11. **Module configuration** — toggle the modules the developer has enabled on or off.
-12. **Service catalog configuration** — toggle the services the developer has enabled on or off.
+12. **Services management** — add, edit, hide, and price the service items (the nine fixed services plus the operator's custom services); manage the service categories; upload and replace service photos; set the estimated duration per service. The guest services page renders the catalog with the photos and the prices.
 13. **Reports** — sales by day, week, month, year, and custom range, up to 6 months; export as CSV.
 14. **Settings** — address, contact, hours, notifications.
 15. **Role-based access** — staff see what their role allows; managers see more; owners see everything.

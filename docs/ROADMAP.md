@@ -933,71 +933,109 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 | **8.2.4** | **Add `GET /api/admin/orders/export`** (CSV). The CSV's columns match the visible table; money cells are quoted strings (`"10.99"`, `"0.00"`); the export respects the same filters as 8.2.1. Wraps `withAudit`. One route test (200; the CSV opens in a spreadsheet). | ✅ | 8.2.3 |
 | **8.2.5** | **Verify:** filter by a 6-month range, export the CSV, open it in Excel / Google Sheets. The filtered row count matches the table's; the daily totals (summed) match the DB. Manual desktop at 1440×900. The milestone's acceptance test. | ✅ | 8.2.4 |
 
-### Milestone 8.3 — Menu Management
+### Milestone 8.3 — Menu Management (with the photo pipeline)
+
+**Goal:** The operator manages the menu — categories, items, modifiers, prices, states, and photos — from the admin panel. The guest menu renders the item's photo, name, description, and price. The photo pipeline is shared with Milestone 8.4 (Services Management): one upload route, one `sharp` dependency, one `public/uploads/catalog/` directory.
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.3.1** | **Add the menu list screen** (`app/admin/menu/page.tsx`): full-width table grouped by category, columns Name / Category / Price / State / Actions (Edit, Toggle availability, Hide). **Fills `tests/integration/api/admin-menu.test.ts`** (currently `(0 test)`, F-0004). | ⬜ | 8.2.5 |
-| **8.3.2** | **Add `POST /api/admin/menu/items`** (withAudit + withCsrf). Body: name, description, photo (optional), price (decimal string), categoryId, state (default AVAILABLE). Returns `{ data: MenuItem }`. Four route tests (401, 403 for LEADER, 400 for missing fields, 201 with valid body). | ⬜ | 8.3.1 |
-| **8.3.3** | **Add `PATCH /api/admin/menu/items/[id]`** (withAudit + withCsrf). **The first dynamic route in Phase 8** — introduces the `withAuditedDynamicRoute<TParams>` variant in `with-audit.ts` (a new export + a new type + one test in `with-audit.test.ts` that proves the context passes through). The existing `withAudit` is unchanged; `qr/generate` and `audit/export` are untouched. Body: the partial menu-item shape. Returns `{ data: MenuItem }`. Four route tests. | ⬜ | 8.3.2 |
-| **8.3.4** | **Add the HIDDEN state to the existing toggle** (discharges **W-0005**). The toggle now has three states: AVAILABLE ↔ UNAVAILABLE ↔ HIDDEN. The admin UI's "Hide" action (the menu list's row action) changes the state to HIDDEN via `POST /api/admin/menu/items/[id]/state`. Existing `POST /api/admin/menu/items/[id]/state` (from 5.8.1) is unchanged; the admin form gains the third-state option. Three route tests (all three states). | ⬜ | 8.3.3 |
-| **8.3.5** | **Add category management CRUD** (`GET` / `POST` / `PATCH` / `DELETE` at `/api/admin/menu/categories`). All withAudit + withCsrf. The category rename must not orphan items (the items keep their `categoryId`; the category's `name` changes). Four route tests. | ⬜ | 8.3.4 |
-| **8.3.6** | **Add modifier group / option CRUD** (`POST` / `PATCH` / `DELETE` at `/api/admin/menu/modifiers` and `/api/admin/menu/modifiers/[id]`). All withAudit + withCsrf. The modifier's own price is a decimal string on the wire. Four route tests. | ⬜ | 8.3.5 |
-| **8.3.7** | **Verify:** add an item, edit it, hide it (HIDDEN), verify the guest menu sees it greyed-out/unavailable/hidden within 5 seconds (the guest polling from Phase 5.8 is live). Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.3.6 |
+| **8.3.0** | **The media upload route + the `sharp` dependency + D-22.1.** `POST /api/admin/media/upload` (multipart; max 5MB; MIME image/jpeg, image/png, image/webp; `withAudit` + `withCsrf`; `sharp` → 800px WebP (quality 80) → `public/uploads/catalog/{uuid}.webp`; 16px blurDataURL; returns `{ photoUrl, photoBlurData }`). `public/uploads/` is `.gitignore`d. Four route tests (401, 403 LEADER, 400 invalid MIME, 200 with a valid image). | ⬜ | 8.2.5 |
+| **8.3.1** | **The menu list screen** (`app/admin/menu/page.tsx`): full-width table grouped by category; columns Name / Category / Price / Photo / State / Actions (Edit, Toggle availability, Hide). **Fills `tests/integration/api/admin-menu.test.ts`** (F-0004). The list renders the `photoUrl` thumbnail. | ⬜ | 8.3.0 |
+| **8.3.2** | **`POST /api/admin/menu/items`** (`withAudit` + `withCsrf`). Body: name, description, photoUrl (optional), photoBlurData (optional), price (decimal string), categoryId, state. Returns `{ data: MenuItem }`. Four route tests (401, 403 LEADER, 400 missing fields, 201). | ⬜ | 8.3.1 |
+| **8.3.2a** | **The admin "Add/Edit Item" form's photo box.** A drag-and-drop photo box in the right panel (DESIGN.md §4.10.8). On drop: `fetch('/api/admin/media/upload', { method: 'POST', body: FormData })` → preview the returned `photoUrl` + attach the `photoBlurData` to the POST/PATCH payload. The box is a Client Component (`useState` for the preview; no `router.refresh`). | ⬜ | 8.3.2 |
+| **8.3.3** | **`PATCH /api/admin/menu/items/[id]`** (`withAudit` + `withCsrf`; **the first dynamic route** — introduces `withAuditedDynamicRoute<TParams>` in `with-audit.ts` per D-24.1). Body: the partial item shape. Returns `{ data: MenuItem }`. Four route tests. | ⬜ | 8.3.2a |
+| **8.3.4** | **The HIDDEN state toggle** (discharges **W-0005**). The 3-state `AVAILABLE ↔ UNAVAILABLE ↔ HIDDEN` via `POST /api/admin/menu/items/[id]/state` (the existing route; the admin form gains the third state). Three route tests. | ⬜ | 8.3.3 |
+| **8.3.5** | **The category CRUD** (`GET` / `POST` / `PATCH` / `DELETE` at `/api/admin/menu/categories`). All `withAudit` + `withCsrf`. Four route tests. | ⬜ | 8.3.4 |
+| **8.3.6** | **The modifier CRUD** (`POST` / `PATCH` / `DELETE` at `/api/admin/menu/modifiers` and `/api/admin/menu/modifiers/[id]`). All `withAudit` + `withCsrf`. Four route tests. | ⬜ | 8.3.5 |
+| **8.3.7** | **Verify:** add an item (with a photo), edit it, hide it (HIDDEN), verify the guest menu sees the item, the photo, and the state within 5s. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.3.6 |
+| **8.3.7a** | **The guest menu's photo rendering.** The `MenuItemCard` uses `next/image` (per D-23.1) with the `photoUrl` and the `photoBlurData` placeholder. The `next.config.mjs` gains the `/uploads/:path*` `Cache-Control: public, max-age=31536000, immutable` header. The 5s poll (`/api/guest/menu/states`) continues to return only the state map; the photos are in the Server Component render (not re-downloaded). | ⬜ | 8.3.7 |
 
-*(8.3.3 is the one structural addition Phase 8 makes to a Phase 7.7 file. The variant is additive — `withAudit` unchanged, `withAuditedDynamicRoute` new. The existing two reference routes and their tests are untouched. The variant's own test proves the context is passed through. This is the only Phase 8 task that touches `src/infrastructure/audit/with-audit.ts`.)*
+---
 
-### Milestone 8.4 — Tables and Rooms
+### Milestone 8.4 — Services Management
 
-| ID | Task | Status | Depends on |
-|----|------|--------|------------|
-| **8.4.1** | **Add `GET` / `POST` / `PATCH /api/admin/tables`**. All withAudit + withCsrf. `GET` returns the venue's tables. `POST` creates (number, state default FREE). `PATCH` updates (number, state) and — if the table has an active session — the state change is rejected with `CONFLICT` (the operator must close the table first, per the 7.7.6 state-consistency discipline). Four route tests. | ⬜ | 8.3.7 |
-| **8.4.2** | **Add `GET` / `POST` / `PATCH /api/admin/rooms`**. Same shape as 8.4.1 for rooms (state default VACANT; same CONFLICT guard). Four route tests. | ⬜ | 8.4.1 |
-| **8.4.3** | **Add the Tables/Rooms screens** (`app/admin/tables/page.tsx`, `app/admin/rooms/page.tsx`): a grid of `QrCodeCard`s, each with the number, the state, the QR preview, and two actions (Print QR, Revoke QR). The "Add Table" / "Add Room" form opens in the right panel. | ⬜ | 8.4.2 |
-| **8.4.4** | **Add the batch QR print view** (`app/admin/qr/print/batch/page.tsx`): a Server Component that fetches the venue's tables and rooms, renders their QRs in a printable grid, and offers a "Print" button. This is a Server Component read, not an API route, so no `withAudit` (the read is not state-changing). | ⬜ | 8.4.3 |
-| **8.4.5** | **Verify:** add a table, generate its QR, print a sheet, scan on a phone. The scan lands on the guest menu; the table appears in the admin's Rooms / Tables grid as Occupied (7.7.6's fix). Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.4.4 |
-
-### Milestone 8.5 — Staff Management
+**Goal:** The operator manages the venue's service catalog — categories, services, photos, prices, estimated durations, and states — from the admin panel. The guest services page renders each service's photo, name, description, price (or "Free"), and estimated duration. The nine fixed hotel services are seeded as `ServiceItem` rows (the `ServiceConfig` model is deprecated per D-21.1); the operator can add custom services beyond the nine.
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.5.1** | **Add `GET /api/admin/staff`** (withAudit). Returns `{ data: StaffMember[] }` with `id`, `name`, `username`, `roles`, `state`, `lastLoginAt`. No password hashes. Four route tests. | ⬜ | 8.4.5 |
-| **8.5.2** | **Add `POST /api/admin/staff`** (withAudit + withCsrf). Body: name, username, password (hashed via `hashPassword`, **never** returned), roles (the `StaffRole` array). Returns `{ data: StaffMember }` with the roles. Four route tests (401, 403 for LEADER, 400 for missing fields, 201 with valid body). | ⬜ | 8.5.1 |
-| **8.5.3** | **Add `PATCH /api/admin/staff/[id]`** (withAudit + withCsrf). Body: name, roles, state (ACTIVE / DEACTIVATED). **Does not accept a password** (8.5.4 handles resets). Deactivating a staff member does not delete their historical actions (D-3.7). Four route tests. | ⬜ | 8.5.2 |
-| **8.5.4** | **Add `POST /api/admin/staff/[id]/reset-password`** (withAudit + withCsrf). The second dynamic route (uses the 8.3.3 `withAuditedDynamicRoute` variant). Body: the new password. The route: (1) `hashPassword(newPassword)` (D-3.9); (2) `invalidateAllSessions(db, staffMemberId)` (D-3.3); (3) return `{ data: { success: true } }` — **never** the new password. Discharges **W-0003** (the `app/staff/_logout-button.tsx` file is retired as the shell's header carries sign-out) and **W-0004** (the `app/kitchen/_logout-button.tsx` file is retired). Four route tests. | ⬜ | 8.5.3 |
-| **8.5.5** | **Add the Staff Management screen** (`app/admin/staff/page.tsx`): a table of staff with name, username, roles, last login, state. Row actions: Edit, Reset Password, Deactivate. "Add Staff" opens the right panel. | ⬜ | 8.5.4 |
-| **8.5.6** | **Verify:** create a staff member, assign roles, deactivate, reset the password; log in as them, then reset from admin (the session is invalidated on reset — the staff member is logged out). Manual desktop. The milestone's acceptance test. | ⬜ | 8.5.5 |
+| **8.4.1** | **The `ServiceCategory` / `ServiceItem` schema + the migration + D-21.1.** The `ServiceCategory` (`id`, `name`, `sortOrder`); the `ServiceItem` (`id`, `name`, `description`, `photoUrl`, `photoBlurData`, `price` Decimal(10,2), `estimatedMinutes` Int?, `state` MenuItemState, `categoryId`, `category`, `updatedAt`, `createdAt`). The `ServiceConfig` is deprecated — the seed migrates the nine `services` array entries into nine `ServiceItem` rows in a seeded "Hotel Services" category. The migration. | ⬜ | 8.3.7a |
+| **8.4.2** | **The services list screen** (`app/admin/services/page.tsx`): grouped by service category; columns Photo / Name / Category / Price / Estimated Minutes / State / Actions (Edit, Toggle availability, Hide). Mirrors the 8.3.1 menu list. | ⬜ | 8.4.1 |
+| **8.4.3** | **`POST /api/admin/services/items`** (`withAudit` + `withCsrf`). Body: name, description, photoUrl, photoBlurData, price (decimal string), estimatedMinutes (optional int), categoryId, state. Returns `{ data: ServiceItem }`. Four route tests (401, 403 LEADER, 400 missing fields, 201). | ⬜ | 8.4.2 |
+| **8.4.3a** | **The admin "Add/Edit Service" form's photo box.** A drag-and-drop photo box in the right panel (the same 8.3.0's upload route; the same 8.3.2a's photo-box pattern). | ⬜ | 8.4.3 |
+| **8.4.4** | **`PATCH /api/admin/services/items/[id]`** (`withAudit` + `withCsrf`; the `withAuditedDynamicRoute` variant per D-24.1). Body: the partial shape. Returns `{ data: ServiceItem }`. Four route tests. | ⬜ | 8.4.3a |
+| **8.4.5** | **The service state toggle** (`POST /api/admin/services/items/[id]/state`). The 3-state `AVAILABLE ↔ UNAVAILABLE ↔ HIDDEN`. Three route tests. | ⬜ | 8.4.4 |
+| **8.4.6** | **The service category CRUD** (`GET` / `POST` / `PATCH` / `DELETE` at `/api/admin/services/categories`). All `withAudit` + `withCsrf`. Four route tests. | ⬜ | 8.4.5 |
+| **8.4.7** | **Verify:** add a service (with a photo), edit it, hide it, verify the guest services page sees the service and the photo within 5s. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.4.6 |
+| **8.4.7a** | **The guest services page's photo rendering.** The `ServiceCard` (a new component or the current `Card` shape) uses `next/image` (per D-23.1) with the `photoUrl` and the `photoBlurData` placeholder. The `app/(guest)/services/page.tsx` fetches the enabled `ServiceItem` rows (the `state: AVAILABLE`) and renders the cards. The price shows as "Free" when `price === "0.00"`; otherwise the formatted money (the `formatMoney` from `src/lib/money.ts`, the venue's `NPR` currency). The `ServiceItem`'s id is submitted with the request form (the `ServiceRequest`'s `serviceType` stays the `HotelService` enum; the `ServiceItem` is the catalog row). | ⬜ | 8.4.7 |
 
-*(8.5.4 is the most security-sensitive route in Phase 8. The route returns no plaintext, ever. The `hashPassword` call is the same as the seed and the login route. The `invalidateAllSessions` call is the same as the login route's on password change. The audit line names the actor and the target staff member.)*
+---
 
-### Milestone 8.6 — Reports
+### Milestone 8.5 — Tables and Rooms
 
-| ID | Task | Status | Depends on |
-|----|------|--------|------------|
-| **8.6.1** | **Add `GET /api/admin/reports/sales`** (withAudit). Query params: `dateFrom`, `dateTo` (up to 6 months per D-12.1). Returns `{ data: { dailyTotals: { date, revenue, orderCount }[], topItems: { itemName, quantity, revenue }[], byCategory: { categoryName, revenue }[] } }`. All money as decimal strings. Four route tests. | ⬜ | 8.5.6 |
-| **8.6.2** | **Add `GET /api/admin/reports/sales/export`** (CSV, withAudit). The CSV has three sheets? No — CSV is one sheet. The export is a zip of three CSVs? No — Phase 8 ships one CSV per report type, and the export endpoint is scoped to one type at a time via `?type=daily|items|categories`. The daily CSV is the default. Four route tests. | ⬜ | 8.6.1 |
-| **8.6.3** | **Add the Reports screen** (`app/admin/reports/page.tsx`): a date range picker at the top, a line chart of daily revenue in `--staff-accent`, a bar chart of orders per day, a table of top-selling items, and three "Export CSV" buttons (daily / items / categories). | ⬜ | 8.6.2 |
-| **8.6.4** | **Verify:** a 6-month range, export the daily CSV, open it; the daily totals sum to the same sum from `SELECT SUM(total) FROM orders WHERE placed_at BETWEEN ...`. Manual desktop. The milestone's acceptance test. | ⬜ | 8.6.3 |
-
-### Milestone 8.7 — Settings
+**Goal:** The operator manages the venue's tables and rooms — adding, editing, setting state, generating and printing QRs — from the admin panel.
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.7.1** | **Add `GET` / `PATCH /api/admin/settings`** (withAudit; PATCH + withCsrf). `GET` returns the venue's settings: address, contact, hours (editable), taxRate / currency / language (read-only). `PATCH` accepts only address, contact, hours. **Rejects writes to taxRate / currency / language with `VALIDATION_FAILED`** — those are developer settings (D-9.6). Four route tests. | ⬜ | 8.6.4 |
-| **8.7.2** | **Add `PATCH /api/admin/modules`** (withAudit + withCsrf). Body: the module toggles. The operator can turn off a module the developer enabled; the operator cannot turn on a module the developer did not enable (D-9.6). A request that tries to enable a disabled module returns `FORBIDDEN`. Four route tests. | ⬜ | 8.7.1 |
-| **8.7.3** | **Add `PATCH /api/admin/services`** (withAudit + withCsrf). Same as 8.7.2 for services. Four route tests. | ⬜ | 8.7.2 |
-| **8.7.4** | **Add the Settings screen** (`app/admin/settings/page.tsx`): the venue's address / contact / hours (editable form), the read-only taxRate / currency / language (rendered without input controls), the module toggles, the service toggles. No Branding tab. No payment-provider configuration. | ⬜ | 8.7.3 |
-| **8.7.5** | **Verify:** the read-only tax rate stays read-only (a PATCH including `taxRate` returns 400); a module toggle hides the Rooms tab (and the room-related guest cards); a service toggle hides the Laundry card on the guest service catalog. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.7.4 |
+| **8.5.1** | **`GET` / `POST` / `PATCH /api/admin/tables`**. All `withAudit` + `withCsrf`. `GET` returns the venue's tables. `POST` creates (number, state default FREE). `PATCH` updates (number, state). If the table has an active session, the state change is rejected with `CONFLICT`. Four route tests. | ⬜ | 8.4.7a |
+| **8.5.2** | **`GET` / `POST` / `PATCH /api/admin/rooms`**. Same shape as 8.5.1 (state default VACANT). Four route tests. | ⬜ | 8.5.1 |
+| **8.5.3** | **The Tables/Rooms screens** (`app/admin/tables/page.tsx`, `app/admin/rooms/page.tsx`): a grid of `QrCodeCard`s, each with the number, the state, the QR preview, and two actions (Print QR, Revoke QR). The "Add Table" / "Add Room" form opens in the right panel. | ⬜ | 8.5.2 |
+| **8.5.4** | **The batch QR print view** (`app/admin/qr/print/batch/page.tsx`): a Server Component that fetches the venue's tables and rooms, renders their QRs in a printable grid, and offers a "Print" button. | ⬜ | 8.5.3 |
+| **8.5.5** | **Verify:** add a table, generate its QR, print a sheet, scan on a phone. The scan lands on the guest menu; the table appears in the admin's Tables grid as Occupied (7.7.6's fix). Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.5.4 |
 
-### Milestone 8.8 — Audit Log Viewer
+---
+
+### Milestone 8.6 — Staff Management
+
+**Goal:** The operator manages the venue's staff accounts — adding, editing, assigning roles, deactivating, resetting passwords — from the admin panel. W-0003 and W-0004 discharge here (the per-page `_logout-button.tsx` files are retired when the shell's sign-out is the only one).
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.8.1** | **Add the "Audit Log" tab to the admin shell** (visible to MANAGER / OWNER only; LEADER gets 403 at the page level, defense-in-depth over the route's own guard). A new nav item in the sidebar. | ⬜ | 8.7.5 |
-| **8.8.2** | **Add the audit log list screen** (`app/admin/audit/page.tsx`): a table of the last 7 days, filterable by actor (staff / guest / anonymous), route, and status. Each row: timestamp, actorType, actorId, route, method, status, latency, ip. The list is read from `GET /api/admin/audit/export`? No — 8.8.3's ZIP is the download. The list reads from a new `GET /api/admin/audit/list?since=7d` route (withAudit) that returns the JSON lines in a paginated envelope. Four route tests. | ⬜ | 8.8.1 |
-| **8.8.3** | **Add a "Download ZIP" button** on the audit list screen, hitting `GET /api/admin/audit/export` (the 7.7.1b route). The ZIP opens in any text editor. | ⬜ | 8.8.2 |
-| **8.8.4** | **Verify:** a staff action (e.g., a menu-item toggle, a table close) produces a row in the audit list within one poll; the ZIP download opens in a text editor and contains the row. Manual desktop. The milestone's acceptance test. | ⬜ | 8.8.3 |
+| **8.6.1** | **`GET /api/admin/staff`** (`withAudit`). Returns `{ data: StaffMember[] }`. Four route tests. | ⬜ | 8.5.5 |
+| **8.6.2** | **`POST /api/admin/staff`** (`withAudit` + `withCsrf`). Body: name, username, password (hashed via `hashPassword`), roles. Returns `{ data: StaffMember }`. Four route tests. | ⬜ | 8.6.1 |
+| **8.6.3** | **`PATCH /api/admin/staff/[id]`** (`withAudit` + `withCsrf`; the `withAuditedDynamicRoute` variant). Body: name, roles, state. Deactivating a staff member keeps the history (D-3.7). Four route tests. | ⬜ | 8.6.2 |
+| **8.6.4** | **`POST /api/admin/staff/[id]/reset-password`** (`withAudit` + `withCsrf`). Body: the new password. The route: `hashPassword` (D-3.9); `invalidateAllSessions` (D-3.3); return `{ data: { success: true } }` — never the password. **Discharges W-0003 and W-0004** (the `app/staff/_logout-button.tsx` and `app/kitchen/_logout-button.tsx` files are removed). Four route tests. | ⬜ | 8.6.3 |
+| **8.6.5** | **The Staff Management screen** (`app/admin/staff/page.tsx`): a table of staff with name, username, roles, last login, state. Row actions: Edit, Reset Password, Deactivate. "Add Staff" opens the right panel. | ⬜ | 8.6.4 |
+| **8.6.6** | **Verify:** create a staff member, assign roles, deactivate, reset the password; log in as them, then reset from admin (the session is invalidated). Manual desktop. The milestone's acceptance test. | ⬜ | 8.6.5 |
 
+---
+
+### Milestone 8.7 — Reports
+
+**Goal:** The operator sees the venue's sales reports — daily revenue, orders per day, top-selling items, by category — and exports them as CSV.
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.7.1** | **`GET /api/admin/reports/sales`** (`withAudit`). Query params: `dateFrom`, `dateTo` (up to 6 months per D-12.1). Returns `{ data: { dailyTotals, topItems, byCategory } }`. All money as decimal strings. Four route tests. | ⬜ | 8.6.6 |
+| **8.7.2** | **`GET /api/admin/reports/sales/export`** (CSV, `withAudit`). One CSV per report type via `?type=daily|items|categories`. Four route tests. | ⬜ | 8.7.1 |
+| **8.7.3** | **The Reports screen** (`app/admin/reports/page.tsx`): a date range picker, a line chart of daily revenue, a bar chart of orders per day, a table of top-selling items, three "Export CSV" buttons. | ⬜ | 8.7.2 |
+| **8.7.4** | **Verify:** a 6-month range, export the daily CSV, open it; the daily totals sum to the same sum from the DB. Manual desktop. The milestone's acceptance test. | ⬜ | 8.7.3 |
+
+---
+
+### Milestone 8.8 — Settings
+
+**Goal:** The operator sees the venue's read-only tax / currency / language; can edit the address, contact, hours; and can toggle the modules and services within the limits the developer enabled.
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.8.1** | **`GET` / `PATCH /api/admin/settings`** (`withAudit`; PATCH + `withCsrf`). `GET` returns the venue's settings: address, contact, hours (editable), taxRate / currency / language (read-only). `PATCH` accepts only address, contact, hours. **Rejects writes to taxRate / currency / language with `VALIDATION_FAILED`** (D-9.6). Four route tests. | ⬜ | 8.7.4 |
+| **8.8.2** | **`PATCH /api/admin/modules`** (`withAudit` + `withCsrf`). Body: the module toggles. The operator can turn off a module the developer enabled; cannot turn on a disabled module (D-9.6). A request that tries to enable a disabled module returns `FORBIDDEN`. Four route tests. | ⬜ | 8.8.1 |
+| **8.8.3** | **`PATCH /api/admin/services`** (`withAudit` + `withCsrf`). Same as 8.8.2 for the service-catalog enablement. Four route tests. | ⬜ | 8.8.2 |
+| **8.8.4** | **The Settings screen** (`app/admin/settings/page.tsx`): the venue's address / contact / hours (editable form), the read-only taxRate / currency / language, the module toggles, the service toggles. | ⬜ | 8.8.3 |
+| **8.8.5** | **Verify:** the read-only tax rate stays read-only (a PATCH including `taxRate` returns 400); a module toggle hides the Rooms tab; a service toggle hides the Laundry card on the guest service catalog. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.8.4 |
+
+---
+
+### Milestone 8.9 — Audit Log Viewer
+
+**Goal:** The operator sees the audit log's last 7 days, filterable; can download the full log as a ZIP.
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.9.1** | **The "Audit Log" tab in the admin shell** (visible to MANAGER / OWNER only). | ⬜ | 8.8.5 |
+| **8.9.2** | **The audit log list screen** (`app/admin/audit/page.tsx`): a table of the last 7 days, filterable by actor, route, and status. Reads from a new `GET /api/admin/audit/list?since=7d` route (`withAudit`, paginated envelope). Four route tests. | ⬜ | 8.9.1 |
+| **8.9.3** | **The "Download ZIP" button** on the audit list screen, hitting `GET /api/admin/audit/export` (the 7.7.1b route). | ⬜ | 8.9.2 |
+| **8.9.4** | **Verify:** a staff action produces a row in the audit list within one poll; the ZIP download opens in a text editor and contains the row. Manual desktop. The milestone's acceptance test. | ⬜ | 8.9.3 |
 ---
 
 ### Phase 8 Acceptance (from PHASE_TESTS.md §10)
