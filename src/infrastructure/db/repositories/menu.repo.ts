@@ -19,6 +19,7 @@ import {
   type PrismaClient,
   type Prisma,
   type MenuCategory as PrismaMenuCategory,
+  type MenuCollection as PrismaMenuCollection,
   type MenuItem as PrismaMenuItem,
   type ModifierGroup as PrismaModifierGroup,
   type ModifierOption as PrismaModifierOption,
@@ -28,6 +29,12 @@ import {
 import {
   type MenuRepository,
   type MenuCategory,
+  type MenuCollection,
+  type MenuCollectionView,
+  type CreateCollectionInput,
+  type UpdateCollectionInput,
+  type AddItemToCollectionInput,
+  type MenuCollectionItem,
   type MenuItem,
   type ModifierGroup,
   type ModifierOption,
@@ -220,6 +227,43 @@ function mapMenuCategoryView(
   };
 }
 
+function mapMenuCollection(raw: PrismaMenuCollection): MenuCollection {
+  return {
+    id: raw.id,
+    venueId: raw.venueId,
+    name: raw.name,
+    featuredFrom: raw.featuredFrom ?? null,
+    featuredTo: raw.featuredTo ?? null,
+    sortOrder: raw.sortOrder,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+  };
+}
+
+function mapMenuCollectionView(
+  raw: PrismaMenuCollection & {
+    items: Array<{
+      sortOrder: number;
+      menuItem: PrismaMenuItem & {
+        categories?: { categoryId: string }[];
+        modifierGroups: (PrismaModifierGroup & { options: PrismaModifierOption[] })[];
+      };
+    }>;
+  }
+): MenuCollectionView {
+  return {
+    id: raw.id,
+    name: raw.name,
+    featuredFrom: raw.featuredFrom ?? null,
+    featuredTo: raw.featuredTo ?? null,
+    sortOrder: raw.sortOrder,
+    items: raw.items.map((it) => ({
+      ...mapMenuItemView(it.menuItem),
+      order: it.sortOrder,
+    })),
+  };
+}
+
 export function createPrismaMenuRepository(
   client: DbClient
 ): MenuRepository {
@@ -237,6 +281,186 @@ export function createPrismaMenuRepository(
           DomainErrorCode.INTERNAL,
           "Database read operation failed"
         );
+      }
+    },
+
+    async listCollections(
+      venueId: string,
+      at: Date
+    ): Promise<Result<MenuCollectionView[]>> {
+      try {
+        const collections = await client.menuCollection.findMany({
+          where: {
+            venueId,
+            AND: [
+              { OR: [{ featuredFrom: null }, { featuredFrom: { lte: at } }] },
+              { OR: [{ featuredTo: null }, { featuredTo: { gte: at } }] },
+            ],
+          },
+          orderBy: { sortOrder: "asc" },
+          include: {
+            items: {
+              orderBy: { sortOrder: "asc" },
+              include: {
+                menuItem: {
+                  include: {
+                    categories: true,
+                    modifierGroups: {
+                      orderBy: { sortOrder: "asc" },
+                      include: {
+                        options: { orderBy: { sortOrder: "asc" } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        return ok(collections.map(mapMenuCollectionView));
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database read operation failed");
+      }
+    },
+
+    async createCollection(
+      input: CreateCollectionInput
+    ): Promise<Result<MenuCollection>> {
+      try {
+        const collection = await client.menuCollection.create({
+          data: {
+            venueId: input.venueId,
+            name: input.name,
+            featuredFrom: input.featuredFrom ?? null,
+            featuredTo: input.featuredTo ?? null,
+            sortOrder: input.sortOrder ?? 0,
+          },
+        });
+        return ok(mapMenuCollection(collection));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Collection '${input.name}' violates unique constraint`
+          );
+        }
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async updateCollection(
+      venueId: string,
+      collectionId: string,
+      input: UpdateCollectionInput
+    ): Promise<Result<MenuCollection>> {
+      try {
+        const existing = await client.menuCollection.findFirst({
+          where: { id: collectionId, venueId },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Menu collection with id '${collectionId}' not found in venue '${venueId}'`
+          );
+        }
+        const data: {
+          name?: string;
+          featuredFrom?: Date | null;
+          featuredTo?: Date | null;
+          sortOrder?: number;
+        } = {};
+        if (input.name !== undefined) data.name = input.name;
+        if (input.featuredFrom !== undefined) data.featuredFrom = input.featuredFrom;
+        if (input.featuredTo !== undefined) data.featuredTo = input.featuredTo;
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+
+        const updated = await client.menuCollection.update({
+          where: { id: collectionId },
+          data,
+        });
+        return ok(mapMenuCollection(updated));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Collection '${input.name ?? collectionId}' violates unique constraint`
+          );
+        }
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async deleteCollection(
+      venueId: string,
+      collectionId: string
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.menuCollection.findFirst({
+          where: { id: collectionId, venueId },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Menu collection with id '${collectionId}' not found in venue '${venueId}'`
+          );
+        }
+        await client.menuCollection.delete({ where: { id: collectionId } });
+        return ok(undefined);
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async addItemToCollection(
+      input: AddItemToCollectionInput
+    ): Promise<Result<MenuCollectionItem>> {
+      try {
+        const item = await client.menuCollectionItem.create({
+          data: {
+            venueId: input.venueId,
+            collectionId: input.collectionId,
+            menuItemId: input.menuItemId,
+            sortOrder: input.sortOrder ?? 0,
+          },
+        });
+        return ok({
+          id: item.id,
+          venueId: item.venueId,
+          collectionId: item.collectionId,
+          menuItemId: item.menuItemId,
+          sortOrder: item.sortOrder,
+        });
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Item is already in this collection`
+          );
+        }
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async removeItemFromCollection(
+      venueId: string,
+      collectionId: string,
+      menuItemId: string
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.menuCollectionItem.findFirst({
+          where: { venueId, collectionId, menuItemId },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Collection item not found`
+          );
+        }
+        await client.menuCollectionItem.delete({ where: { id: existing.id } });
+        return ok(undefined);
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
       }
     },
 

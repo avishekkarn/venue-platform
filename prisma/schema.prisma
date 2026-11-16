@@ -155,6 +155,7 @@ model Venue {
   qrTokens       QrToken[]
   staffMembers   StaffMember[]
   menuCategories MenuCategory[]
+  menuCollections MenuCollection[]
   orders         Order[]
   requests       ServiceRequest[]
   payments       PaymentTicket[]
@@ -395,6 +396,7 @@ model MenuItem {
   categories     MenuItemCategory[]
   modifierGroups ModifierGroup[]
   orderItems     OrderItem[]
+  collectionItems MenuCollectionItem[]
 
   @@index([venueId])
   @@index([venueId, state])
@@ -415,6 +417,39 @@ model MenuItemCategory {
   @@index([venueId])
   @@index([categoryId])
   @@map("menu_item_categories")
+}
+
+model MenuCollection {
+  id           String   @id @default(uuid())
+  venueId      String
+  name         String
+  featuredFrom DateTime?
+  featuredTo   DateTime?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  venue Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  items MenuCollectionItem[]
+
+  @@index([venueId, sortOrder])
+  @@map("menu_collections")
+}
+
+model MenuCollectionItem {
+  id           String @id @default(uuid())
+  venueId      String
+  collectionId String
+  menuItemId   String
+  sortOrder    Int    @default(0)
+
+  collection MenuCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem       @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, menuItemId])
+  @@index([venueId])
+  @@index([collectionId])
+  @@map("menu_collection_items")
 }
 
 model ModifierGroup {

@@ -128,6 +128,56 @@ export interface UpdateCategoryInput {
   readonly sortOrder?: number;
 }
 
+export interface MenuCollection {
+  readonly id: string;
+  readonly venueId: string;
+  readonly name: string;
+  readonly featuredFrom: Date | null;
+  readonly featuredTo: Date | null;
+  readonly sortOrder: number;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+export interface MenuCollectionView {
+  readonly id: string;
+  readonly name: string;
+  readonly featuredFrom: Date | null;
+  readonly featuredTo: Date | null;
+  readonly sortOrder: number;
+  readonly items: readonly MenuItemView[];
+}
+
+export interface CreateCollectionInput {
+  readonly venueId: string;
+  readonly name: string;
+  readonly featuredFrom?: Date | null;
+  readonly featuredTo?: Date | null;
+  readonly sortOrder?: number;
+}
+
+export interface UpdateCollectionInput {
+  readonly name?: string;
+  readonly featuredFrom?: Date | null;
+  readonly featuredTo?: Date | null;
+  readonly sortOrder?: number;
+}
+
+export interface AddItemToCollectionInput {
+  readonly venueId: string;
+  readonly collectionId: string;
+  readonly menuItemId: string;
+  readonly sortOrder?: number;
+}
+
+export interface MenuCollectionItem {
+  readonly id: string;
+  readonly venueId: string;
+  readonly collectionId: string;
+  readonly menuItemId: string;
+  readonly sortOrder: number;
+}
+
 export interface CreateItemInput {
   readonly venueId: string;
   readonly categoryIds: readonly string[];
@@ -168,6 +218,20 @@ export interface CreateModifierOptionInput {
 
 export interface MenuRepository {
   listCategories(venueId: string): Promise<Result<MenuCategory[]>>;
+  listCollections(venueId: string, at: Date): Promise<Result<MenuCollectionView[]>>;
+  createCollection(input: CreateCollectionInput): Promise<Result<MenuCollection>>;
+  updateCollection(
+    venueId: string,
+    collectionId: string,
+    input: UpdateCollectionInput
+  ): Promise<Result<MenuCollection>>;
+  deleteCollection(venueId: string, collectionId: string): Promise<Result<void>>;
+  addItemToCollection(input: AddItemToCollectionInput): Promise<Result<MenuCollectionItem>>;
+  removeItemFromCollection(
+    venueId: string,
+    collectionId: string,
+    menuItemId: string
+  ): Promise<Result<void>>;
   listItemsForCategory(
     venueId: string,
     categoryId: string

@@ -702,8 +702,81 @@ async function seedMenu(venueId: string): Promise<void> {
     }
   }
 
+  // --- Collections (8.3.5c.A, D-25.2) ---
+  console.log("Seeding collections...");
+  const existingCollections = await prisma.menuCollection.findMany({
+    where: { venueId },
+  });
+  const existingCollectionsByName = new Map<string, { id: string }>();
+  for (const c of existingCollections) {
+    existingCollectionsByName.set(c.name, { id: c.id });
+  }
+
+  const collectionDefs = [
+    {
+      name: "Chef Recommendation",
+      featuredFrom: null,
+      featuredTo: null,
+      sortOrder: 1,
+      itemNames: ["Steam Momo", "Dal Bhat", "Kheer"],
+    },
+    {
+      name: "Tihar Special",
+      featuredFrom: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      featuredTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      sortOrder: 2,
+      itemNames: ["Steam Momo", "Dal Bhat", "Sel Roti", "Kheer"],
+    },
+  ];
+
+  for (const cDef of collectionDefs) {
+    let collectionId = existingCollectionsByName.get(cDef.name)?.id;
+    if (!collectionId) {
+      const createdCol = await prisma.menuCollection.create({
+        data: {
+          venueId,
+          name: cDef.name,
+          featuredFrom: cDef.featuredFrom,
+          featuredTo: cDef.featuredTo,
+          sortOrder: cDef.sortOrder,
+        },
+      });
+      collectionId = createdCol.id;
+      console.log(`Created collection "${cDef.name}" (id: ${collectionId}).`);
+    } else {
+      console.log(`Collection "${cDef.name}" already exists.`);
+    }
+
+    const existingColItems = await prisma.menuCollectionItem.findMany({
+      where: { collectionId },
+    });
+    const existingColItemIds = new Set(existingColItems.map((ci) => ci.menuItemId));
+
+    for (let i = 0; i < cDef.itemNames.length; i++) {
+      const itName = cDef.itemNames[i];
+      if (!itName) continue;
+      const menuItemId = itemIds[itName];
+      if (!menuItemId) {
+        console.warn(`Item ${itName} not found in itemIds map for collection ${cDef.name}`);
+        continue;
+      }
+      if (existingColItemIds.has(menuItemId)) {
+        continue;
+      }
+      await prisma.menuCollectionItem.create({
+        data: {
+          venueId,
+          collectionId,
+          menuItemId,
+          sortOrder: i + 1,
+        },
+      });
+      console.log(`Added "${itName}" to collection "${cDef.name}".`);
+    }
+  }
+
   console.log(
-    `Seeded ${categoryDefs.length} categories, ${itemDefs.length} items, ${groupDefs.length} modifier groups.`,
+    `Seeded ${categoryDefs.length} categories, ${itemDefs.length} items, ${groupDefs.length} modifier groups, ${collectionDefs.length} collections.`,
   );
 }
 
