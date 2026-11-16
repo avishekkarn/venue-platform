@@ -1,4 +1,4 @@
-﻿# WIRING.md — The Cross-Task Wiring Ledger
+# WIRING.md — The Cross-Task Wiring Ledger
 
 **Version:** 1.0
 **Status:** Approved
@@ -159,7 +159,7 @@ Status: SUPERSEDED.
 - **Verification:** Single canonical `cn` export location with clean imports across codebase; unit tests pass.
 - **Status:** OPEN
 
-### W-0005 — OPEN — Admin UI exposes only AVAILABLE↔UNAVAILABLE; add HIDDEN state action
+### W-0005 — DISCHARGED — Admin UI exposes only AVAILABLE↔UNAVAILABLE; add HIDDEN state action
 
 - **Originated:** Task 8.0.2 (PROGRESS ENTRY-0202).
 - **Obligation:** Admin UI exposes only AVAILABLE↔UNAVAILABLE for menu items; the HIDDEN action (D-4.2) has no UI. This task moves 8.3.4 from ⬜ to ✅ and opens W-0005 to track the missing third state action.
@@ -167,7 +167,7 @@ Status: SUPERSEDED.
 - **Satisfied by:** Task 8.3.1 / Task 8.3.4 (Menu Management).
 - **Depends on:** DECISIONS.md D-4.2, SYSTEM.md §11.1.
 - **Verification:** Admin UI exposes controls for AVAILABLE, UNAVAILABLE, and HIDDEN; integration tests verify all three states.
-- **Status:** OPEN
+- **Status:** DISCHARGED at 8.3.4 (the HIDDEN state in the admin Edit form; the state route's UI wiring).
 
 ### W-0004 — OPEN — Remove app/kitchen/_logout-button.tsx when the kitchen shell is built
 

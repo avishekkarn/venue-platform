@@ -54,14 +54,18 @@ export function EditSheet({
         }
       }}
     >
-      <SheetContent side="right" world="staff">
-        <SheetHeader>
+      <SheetContent
+        side="right"
+        world="staff"
+        className="flex flex-col h-full w-full sm:max-w-[480px] overflow-hidden"
+      >
+        <SheetHeader className="shrink-0">
           <SheetTitle>Edit menu item</SheetTitle>
           <SheetDescription>
             Update item details, price, category, and photo.
           </SheetDescription>
         </SheetHeader>
-        <SheetBody>
+        <SheetBody className="flex-1 overflow-y-auto min-h-0">
           <EditForm
             item={item}
             initialCategoryId={initialCategoryId}

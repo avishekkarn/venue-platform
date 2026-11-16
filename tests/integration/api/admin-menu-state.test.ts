@@ -144,4 +144,23 @@ describe("POST /api/admin/menu/items/[id]/state — audit (8.3.0.F, W-0021)", ()
       expect(line.status).toBe(403);
     });
   });
+
+  it("returns 401 UNAUTHORIZED when session is missing", async () => {
+    vi.mocked(getSessionCookie).mockResolvedValue(null);
+    vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+    const id = "11111111-2222-3333-4444-555555555555";
+    const request = new NextRequest(
+      `http://localhost/api/admin/menu/items/${id}/state`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "test-csrf-token" },
+        body: JSON.stringify({ state: MenuItemState.UNAVAILABLE }),
+      }
+    );
+    const response = await POST(request, { params: Promise.resolve({ id }) });
+    expect(response.status).toBe(401);
+    const json = await response.json();
+    expect(json.error.code).toBe("UNAUTHORIZED");
+  });
 });
