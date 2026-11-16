@@ -15,6 +15,7 @@ import {
 import { MenuItemRow } from "@/components/staff/menu-item-row";
 import { EditSheet } from "./_edit-sheet";
 import { CategoriesSheetTrigger } from "./_categories-sheet-trigger";
+import { CollectionsSheetTrigger } from "./_collections-sheet-trigger";
 
 /**
  * The admin menu list screen (8.3.1, 8.3.3, DESIGN.md §4.10.8).
@@ -43,15 +44,23 @@ export default async function MenuPage({
   const venueRepo = createPrismaVenueRepository(prisma);
   const menuRepo = createPrismaMenuRepository(prisma);
 
-  const [venueResult, menuResult] = await Promise.all([
+  const [venueResult, menuResult, collectionsResult] = await Promise.all([
     venueRepo.findById(staff.venueId),
     menuRepo.getFullMenu(staff.venueId),
+    menuRepo.listCollections(staff.venueId, new Date()),
   ]);
 
   const currency = venueResult.ok ? venueResult.value.currency || "NPR" : "NPR";
   const categories = menuResult.ok ? menuResult.value : [];
+  const collections = collectionsResult.ok ? collectionsResult.value : [];
   const uniqueItemIds = new Set(categories.flatMap((c) => c.items.map((i) => i.id)));
   const itemCount = uniqueItemIds.size;
+
+  const allMenuItems = Array.from(
+    new Map(
+      categories.flatMap((c) => c.items.map((it) => [it.id, { id: it.id, name: it.name }] as const))
+    ).values()
+  );
 
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedId = resolvedSearchParams.id;
@@ -80,6 +89,21 @@ export default async function MenuPage({
           <p className="text-sm text-staff-text-muted">
             {itemCount} item{itemCount === 1 ? "" : "s"}
           </p>
+          <CollectionsSheetTrigger
+            collections={collections.map((col) => ({
+              id: col.id,
+              name: col.name,
+              featuredFrom: col.featuredFrom ? col.featuredFrom.toISOString() : null,
+              featuredTo: col.featuredTo ? col.featuredTo.toISOString() : null,
+              sortOrder: col.sortOrder,
+              items: col.items.map((it) => ({
+                id: it.id,
+                name: it.name,
+                sortOrder: it.order,
+              })),
+            }))}
+            allMenuItems={allMenuItems}
+          />
           <CategoriesSheetTrigger
             categories={categories.map((c) => ({
               id: c.id,
