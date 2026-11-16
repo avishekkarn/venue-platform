@@ -8,6 +8,7 @@ describe("isOrderable domain function", () => {
     name: "Bruschetta",
     description: "Toasted bread with tomatoes",
     photoUrl: "https://example.com/bruschetta.jpg",
+    photoBlurData: null,
     price: "9.50",
     state,
     order: 1,

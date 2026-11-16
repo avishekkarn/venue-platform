@@ -250,6 +250,7 @@ describe("Milestone 5.1 Verification — HIDDEN Item Filter against real Postgre
         name: hiddenItem.name,
         description: hiddenItem.description,
         photoUrl: hiddenItem.photoUrl,
+        photoBlurData: null,
         price: "14.00",
         state: MenuItemState.HIDDEN,
         order: hiddenItem.sortOrder,
