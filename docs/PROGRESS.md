@@ -127,28 +127,33 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
-| ENTRY-0219 | 2026-11-10 | Phase 7.5 Reconciliation & Closure | STRUCTURAL | Milestone 7.5 | §5.3 |
-| ENTRY-0220 | 2026-11-10 | Phase 7.6 closure & foundation verification | PASS | Milestone 7.6 | §5.3 |
-| ENTRY-0221 | 2026-11-12 | Phase 7.7 amendment: production readiness prerequisites | STRUCTURAL | Milestone 7.7 | §5.3 |
-| ENTRY-0222 | 2026-11-12 | Milestone 7.7.1 closed: request-level audit log with downloadable ZIP | PASS | Milestone 7.7.1 | §5.3 |
-| ENTRY-0223 | 2026-11-12 | Milestone 7.7.2 closed: database security hardening | PASS | Milestone 7.7.2 | §5.3 |
-| ENTRY-0224 | 2026-11-13 | Milestone 7.7.3 closed: automated daily backups | PASS | Milestone 7.7.3 | §5.3 |
-| ENTRY-0225 | 2026-11-13 | Milestone 7.7.4 closed: CSRF enforcement on all 25 state-changing routes (Part A; Part B deferred) | PASS | Milestone 7.7.4 | §5.3 |
-| ENTRY-0226 | 2026-11-13 | Milestone 7.7.4 fully closed: CSRF client/cookie wiring and Part B verification | PASS | Milestone 7.7.4 | §5.3 |
-| ENTRY-0227 | 2026-11-14 | Milestone 7.7.5 closed: login rate limiting, landing-route fix, granular staff access | PASS | Milestone 7.7.5 | §5.3 |
-| ENTRY-0228 | 2026-11-15 | D-9.7 superseded: the admin shell carries the single sign-out | STRUCTURAL | Milestone 8.1 | §5.3 |
+| ENTRY-0233 | 2026-11-16 | 8.3.5b.B committed at 1070693; F-0005 discharged (env); baselines re-recorded | PASS | Milestone 8.3 | §5.3 |
 | ENTRY-0232 | 2026-11-16 | Roadmap restructured: Services Management (8.4); 8.5–8.9 renumbered; the four new decisions | STRUCTURAL | Milestone 8.4 | §5.3 |
 | ENTRY-0231 | 2026-11-16 | Milestone 8.2 closed: order management, CSV export, NPR, next/script fix | PASS | Milestone 8.2 | §5.3 |
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0233
+Next entry number: 0234
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0233 — 2026-11-16 — 8.3.5b.B committed at 1070693; F-0005 discharged (env); baselines re-recorded
+
+**Status:** PASS
+
+**Task:** 8.3.5b.B (the multi-category Edit form + the categoryIds routes) + F-0005 discharge + baseline re-recording.
+
+**Summary:** The 8.3.5b.B is committed at 1070693 and pushed to origin/main (the 8-file commit: the 7 code files + docs/WIRING.md's W-0030 DISCHARGED). The .B's message says "the scalar categoryId removed"; 4 JSDoc lines in the two items routes still describe a scalar — scheduled as 8.3.5.F. F-0005 (the integration suite's 50-failed / 350-skipped run) was environmental: the postgresql-x64-18 service was stopped; started via elevated PowerShell; qrproject and qrproject_test both at 9/9 migrations; the suite restored to 51 files / 350 tests (139.41s). The build baseline is 73 route entries (5 static, 68 dynamic), not the handoff's stale 49; the delta is the 8.3.0–8.3.5b.A routes. The 8.3.5's expected build is 77 routes.
+
+**Files changed:** docs/ROADMAP.md (the 8.3.0–8.3.3 ✅ flips; the 8.3.5b → 8.3.5b.A + 8.3.5b.B + 8.3.5.F split; the 8.3.5 dependency re-point); docs/PROGRESS.md (this entry; §7 rewrite; F-0004/5/6 status); docs/README.md (the five numbers); docs/WIRING.md (W-0030 DISCHARGED).
+
+**Verification:** tsc 0; unit 41/282 unchanged (docs-only); integration 51/350 unchanged (docs-only); build 73 routes unchanged (docs-only). git --no-pager diff --stat = 4 docs files.
+
+**Next:** Phase 8.3.5 — the category CRUD (7 files).
 
 ### ENTRY-0232 — 2026-11-16 — Roadmap restructured: Services Management (8.4) inserted; 8.5–8.9 renumbered; the service catalog, the media pipeline, and the dynamic-route variant decided
 
@@ -997,7 +1002,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 7.7 (Production Readiness Prerequisites) is **fully closed** at `a09d832`. Milestone 7.7.4 (CSRF) closed at `084414c`; the docs reconciliation landed at `70986c4`; Milestone 7.7.5 (Login Rate Limiting) closed across `c393ac0` (helper + 6 unit tests), `b65a2d8` (route integration + 3 integration tests + 429 UX in the three login forms), `c9654af` (the follow-up fix: server-computed `landingRoute`, `venue_staff` on `NextResponse`, React `onSubmit` with hard navigation), and `a09d832` (the follow-up fix: role-aware request API, role-aware tabs, focused seed staff `frank`/`grace`). Baselines: `tsc` 0, `unit` 40 files / 279 tests, `integration` 43 files / 304 tests, `build` 40 routes. The next task is **Phase 8.1.1 — `GET /api/admin/dashboard`** (with `withAudit`, discharging W-0021).
+**Current status:** Phase 8.3 (Menu Management) is in progress. The 8.3.0–8.3.5b.B are ✅ (the .B committed at 1070693; origin/main matches). The 8.3.5 (the category CRUD) is next; then 8.3.5.F (the stale categoryId JSDoc), 8.3.5a (the "Manage categories" sheet), 8.3.5c (the collections CRUD + UI), 8.3.6 (the modifier CRUD), 8.3.7 (the verify), 8.3.7a (the guest menu's next/image + Special-events strip, discharging W-0029). Baselines as of 1070693 (2026-11-16): tsc 0, unit 41 files / 282 tests, integration 51 files / 350 tests, build 73 route entries (5 static, 68 dynamic). F-0005 (the integration suite's 50-failed run) was environmental — the postgresql-x64-18 service was stopped; started via elevated PowerShell; both qrproject and qrproject_test at 9/9 migrations; the 51/350 restored. The next task is Phase 8.3.5 — the category CRUD (7 files: the UpdateCategoryInput port + the updateCategory/deleteCategory adapter methods + categories/route.ts + categories/[id]/route.ts + the 4 integration tests + the CSRF inventory 27→30 + the ROADMAP flip).
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
@@ -1018,7 +1023,7 @@ Updated at the end of every session.
 - `listForGuestSession` is a required method on the port (7.6.9).
 - The three new process obligations: W-0018, W-0019, W-0020.
 - The three open code obligations: W-0002, W-0003, W-0004 (all discharged in Phase 8.1.2), W-0005 (Phase 8.3.4).
-- The deferred follow-ups: F-0002 (line endings), F-0003 (empty tax-rate stub), F-0004 (admin-menu.test.ts still `(0 test)`, filled in Phase 8.3.1).
+- The deferred follow-ups: F-0002 (line endings), F-0003 (empty tax-rate stub). F-0004 is CLOSED (the admin-menu.test.ts was filled at 8.3.1, 3 tests). F-0005 is DISCHARGED (2026-11-16, env-only: PostgreSQL service started; 51/350 restored). F-0006 is CLOSED (the README's build count was stale at 49; corrected to 73).
 - **W-0025 (DISCHARGED 2026-11-14, Phase 8.0.0.1):** The `withAudit` wrapper populates the `ip` field from `x-forwarded-for` (first segment) → `x-real-ip` → `null` via `extractClientIp` in `src/infrastructure/audit/with-audit.ts` (defined line 149, called line 129). It was already implemented in Phase 7.7.1a; WIRING.md incorrectly said OPEN and incorrectly described the fallback as `"unknown"` (the rate limiter's bucket key, not an audit-log value). The code is correct; WIRING.md was corrected in this task. Two tests in `tests/integration/audit/with-audit.test.ts` prove the population (`x-forwarded-for: 203.0.113.42, 10.0.0.1` produces `ip: "203.0.113.42"`; no forwarded header produces `ip: null`). Every Phase 8 audit line carries a real IP or `null`; `null` now provably means "no forwarded header," not "the wrapper forgot."
 - **W-0026 (OPEN, Phase 10.7):** Audit log rotation. The `logs/audit/` directory grows by one file per UTC day, forever. The Phase 10.7 deployment task adds a pruner that deletes `.jsonl` files older than 30 days, matching the backup retention (D-8.5). The backup script (`scripts/backup-daily.ps1` / `.sh`) is the reference pattern.
 

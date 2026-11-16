@@ -31,15 +31,15 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
-### W-0030 — OPEN — Admin Add/Edit Item form must support multi-category selection
+### W-0030 — DISCHARGED (at 8.3.5b.B, `1070693`) — Admin Add/Edit Item form must support multi-category selection
 
 - **Originated:** Task 8.3.5.DOCS (D-25.1).
 - **Obligation:** The admin "Add Item" and "Edit Item" forms (`_edit-form.tsx`) currently expose a single-select `<select>` for `categoryId`. With D-25.1's multi-category model, an item belongs to one or more categories. The form's category control must be updated to a multi-select (native `<select multiple>` per D-25.1), requiring at least one category selected and sending `categoryIds: readonly string[]` in the create/patch payload.
 - **Files and call site:** `app/admin/(shell)/menu/_edit-form.tsx`.
-- **Satisfied by:** Task 8.3.5b (the multi-category migration and domain model update).
+- **Satisfied by:** Task 8.3.5b.B (the multi-select form in `_edit-form.tsx` + the `categoryIds` routes at `1070693`).
 - **Depends on:** D-25.1, `MenuItemCategory` schema model, SYSTEM.md §11.1.
 - **Verification:** The form compiles under strict mode (`tsc`), allows selecting multiple categories, sends `categoryIds`, and passes integration tests.
-- **Status:** OPEN
+- **Status:** DISCHARGED (2026-11-16, at `1070693`; verified by the multi-select in `_edit-form.tsx` and the `categoryIds` payload in `POST /api/admin/menu/items` + `PATCH /api/admin/menu/items/[id]`)
 
 ### W-0029 — OPEN — Guest menu must render active Special Events collections strip above categories
 

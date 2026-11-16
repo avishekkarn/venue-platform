@@ -67,15 +67,15 @@ At the end of every phase:
 
 ## 4. The Numbers
 
-These are the counts as of the current state (2026-11-14, Phase 8.0.0):
+These are the counts as of the current state (2026-11-16, `1070693`, Phase 8.3.5b.B):
 
 - **Documents:** 9 canonical files (PRODUCT, DECISIONS, SYSTEM, BUILD, ROADMAP, PROGRESS, DESIGN, PHASE_TESTS, WIRING) + README
-- **Decisions:** 104, across 17 categories (see `DECISIONS.md` Appendix)
-- **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (room-service convergence, closed), Phase 7.6 (foundation hardening, closed), Phase 7.7 (production readiness prerequisites, closed), and Phase 8.0.0 (docs-code alignment, in progress)
+- **Decisions:** 110, across 23 categories (see `DECISIONS.md` Appendix; §23 is Menu Categorization and Collections, D-25.1 + D-25.2)
+- **Phases:** Phase 0 through Phase 10 (11 planned phases), plus Phase 7.5 (closed), Phase 7.6 (closed), Phase 7.7 (closed), Phase 8.0.0 (closed at `620ebc3`), Phase 8.1 (closed at `f22aab3`), Phase 8.2 (closed at `70ea012`), and Phase 8.3 (in progress; 8.3.0–8.3.5b.B closed)
 - **Unit tests passing:** 282 (41 files)
-- **Integration tests passing:** 327 (46 files)
-- **Production routes:** 45
-- **Current milestone:** Phase 8.3 — Menu Management (Phase 8.1 and 8.2 closed at `1ec4d43`; Phase 8.3.1 is next)
+- **Integration tests passing:** 350 (51 files)
+- **Production routes:** 73 route entries (5 static, 68 dynamic)
+- **Current milestone:** Phase 8.3 — Menu Management (8.3.5b.B ✅ `1070693`; 8.3.5 — the category CRUD — is next)
 
 ---
 
@@ -92,4 +92,4 @@ As of the last session (2026-11-16, commit `70ea012`):
 - **Phase 8.3** (Menu Management) is **next** — with the photo pipeline (8.3.0, 8.3.2a, 8.3.7a). The 8.3.0 is the first task.
 - **The roadmap is restructured** — the new **8.4 (Services Management)** is inserted; the current 8.4–8.8 renumber to 8.5–8.9.
 - **Canonical docs aligned** — the four new decisions (D-21.1, D-22.1, D-23.1, D-24.1) and docs are aligned (see ENTRY-0232).
-- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 282/282, `test:integration` 327/327, `build` 45 routes.
+- **All four baselines pass:** `tsc --noEmit` 0 errors, `test:unit` 41 files / 282 tests, `test:integration` 51 files / 350 tests, `build` 73 route entries (5 static, 68 dynamic).
