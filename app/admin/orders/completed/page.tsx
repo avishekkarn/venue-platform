@@ -218,12 +218,17 @@ export default async function CompletedOrdersPage({
 
   const now = new Date();
 
-  // Build the export href with the current filter params.
+  // Build the export href with the current date boundaries as YYYY-MM-DD.
+  // The route parses `from`/`to` with the same UTC day semantics as the
+  // 8.2.1 route's parseDateBoundary. The `range` preset is resolved to
+  // its boundaries by `computeRange` above; the export link uses those
+  // boundaries, not the preset key.
   const exportParams = new URLSearchParams();
-  exportParams.set("range", rangeKey);
-  if (rangeKey === "custom" && isDateString(params.from) && isDateString(params.to)) {
-    exportParams.set("from", params.from);
-    exportParams.set("to", params.to);
+  if (range.dateFrom) {
+    exportParams.set("from", range.dateFrom.toISOString().slice(0, 10));
+  }
+  if (range.dateTo) {
+    exportParams.set("to", range.dateTo.toISOString().slice(0, 10));
   }
   const exportHref = `/api/admin/orders/export?${exportParams.toString()}`;
 
