@@ -14,8 +14,9 @@ import { formatMoney } from "@/lib/money";
  * Six cells: Photo (a plain <img> or "—"), Name, Category, Price (via
  * `formatMoney`), State (a Badge), Actions (three disabled buttons with
  * titles pointing to 8.3.3 / 8.3.4). The badge maps MenuItemState to the
- * Badge primitive's status: AVAILABLE → "active", UNAVAILABLE →
- * "cancelled", HIDDEN → "done".
+ * Badge primitive's status: AVAILABLE → "ready" (DESIGN.md §4.2.3: Ready /
+ * Available -> status-ready, green #3d7a4a), UNAVAILABLE → "cancelled"
+ * (muted rust #8a3a34), HIDDEN → "done" (sage).
  *
  * The row is a Server Component. No client state, no onClick. The buttons
  * are disabled until the routes are wired (8.3.3 for Edit, 8.3.4 for the
@@ -34,7 +35,7 @@ interface MenuItemRowProps {
 function stateToBadge(state: MenuItemState): { status: BadgeStatus; label: string } {
   switch (state) {
     case MenuItemState.AVAILABLE:
-      return { status: "active", label: "Available" };
+      return { status: "ready", label: "Available" };
     case MenuItemState.UNAVAILABLE:
       return { status: "cancelled", label: "Unavailable" };
     case MenuItemState.HIDDEN:
