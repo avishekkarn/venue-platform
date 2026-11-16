@@ -2,7 +2,7 @@
  * POST /api/admin/menu/items — create a menu item for the venue.
  *
  * The body: { name, description?, photoUrl?, photoBlurData?, price,
- * categoryId, state? }. `price` is a decimal string. `state` defaults to
+ * categoryIds, state? }. `price` is a decimal string. `state` defaults to
  * AVAILABLE. `photoUrl` and `photoBlurData` are the upload route's return
  * values (8.3.0); they are optional (the item can be created without a
  * photo).
@@ -11,8 +11,8 @@
  *   - withAudit(resolvers, meta, withCsrf(handler)) — audit-outer,
  *     CSRF-inner (D-20.1). The 403 rejection is audited (W-0021).
  *   - Session (admin-only: MANAGER or OWNER; LEADER -> 403).
- *   - The categoryId belongs to the resolved venue (D-10.2); a
- *     cross-venue category -> 400 VALIDATION_FAILED.
+ *   - The categoryIds belong to the resolved venue (D-10.2); a
+ *     cross-venue categoryIds -> 400 VALIDATION_FAILED.
  *
  * Returns { data: MenuItem } at 201.
  *

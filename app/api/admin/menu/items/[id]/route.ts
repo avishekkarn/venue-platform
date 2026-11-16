@@ -2,13 +2,13 @@
  * PATCH /api/admin/menu/items/[id] — update a menu item for the venue.
  *
  * Accepts a partial body: name?, description?, photoUrl?, photoBlurData?,
- * price?, categoryId?, state?, sortOrder?.
+ * price?, categoryIds?, state?, sortOrder?.
  *
  * Guards:
  *   - withAuditedDynamicRoute(resolvers, meta, withCsrf(patchHandler)) —
  *     audit-outer, CSRF-inner (D-20.1, D-24.1, W-0021).
  *   - Session (admin-only: MANAGER or OWNER; LEADER -> 403).
- *   - Category-vs-venue check if categoryId is provided (D-10.2).
+ *   - Category-vs-venue check if categoryIds is provided (D-10.2).
  *   - Decimal string validation if price is provided.
  *
  * Returns { data: MenuItem } at 200.
