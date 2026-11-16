@@ -60,7 +60,7 @@ describe("POST /api/admin/menu/items Route Tests (8.3.2)", () => {
       body: JSON.stringify({
         name: "Test Item",
         price: "10.00",
-        categoryId: "11111111-2222-3333-4444-555555555555",
+        categoryIds: ["11111111-2222-3333-4444-555555555555"],
       }),
     });
 
@@ -109,7 +109,7 @@ describe("POST /api/admin/menu/items Route Tests (8.3.2)", () => {
         body: JSON.stringify({
           name: "Test Item",
           price: "10.00",
-          categoryId: "11111111-2222-3333-4444-555555555555",
+          categoryIds: ["11111111-2222-3333-4444-555555555555"],
         }),
       });
 
@@ -159,7 +159,7 @@ describe("POST /api/admin/menu/items Route Tests (8.3.2)", () => {
         },
         body: JSON.stringify({
           price: "10.00",
-          categoryId: "11111111-2222-3333-4444-555555555555",
+          categoryIds: ["11111111-2222-3333-4444-555555555555"],
         }),
       });
 
@@ -222,7 +222,7 @@ describe("POST /api/admin/menu/items Route Tests (8.3.2)", () => {
           name: "Grilled Ribeye",
           description: "Prime beef with herbs",
           price: "32.00",
-          categoryId,
+          categoryIds: [categoryId],
           photoUrl: "/uploads/catalog/test-item.webp",
           photoBlurData: "data:image/webp;base64,TESTBLURDATA",
         }),
@@ -236,7 +236,7 @@ describe("POST /api/admin/menu/items Route Tests (8.3.2)", () => {
       expect(json.data.name).toBe("Grilled Ribeye");
       expect(json.data.description).toBe("Prime beef with herbs");
       expect(json.data.price).toBe("32.00");
-      expect(json.data.categoryId).toBe(categoryId);
+      expect(json.data.categoryIds).toEqual([categoryId]);
       expect(json.data.photoUrl).toBe("/uploads/catalog/test-item.webp");
       expect(json.data.photoBlurData).toBe("data:image/webp;base64,TESTBLURDATA");
       expect(json.data.state).toBe("AVAILABLE");

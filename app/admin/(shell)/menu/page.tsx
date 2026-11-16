@@ -49,20 +49,21 @@ export default async function MenuPage({
 
   const currency = venueResult.ok ? venueResult.value.currency || "NPR" : "NPR";
   const categories = menuResult.ok ? menuResult.value : [];
-  const itemCount = categories.reduce((n, c) => n + c.items.length, 0);
+  const uniqueItemIds = new Set(categories.flatMap((c) => c.items.map((i) => i.id)));
+  const itemCount = uniqueItemIds.size;
 
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedId = resolvedSearchParams.id;
 
   let selectedItem: MenuItemView | null = null;
-  let selectedCategoryId = "";
+  let selectedCategoryIds: readonly string[] = [];
 
   if (selectedId) {
     for (const cat of categories) {
       const found = cat.items.find((it) => it.id === selectedId);
       if (found) {
         selectedItem = found;
-        selectedCategoryId = cat.id;
+        selectedCategoryIds = found.categoryIds;
         break;
       }
     }
@@ -140,7 +141,7 @@ export default async function MenuPage({
       {selectedItem ? (
         <EditSheet
           item={selectedItem}
-          initialCategoryId={selectedCategoryId}
+          initialCategoryIds={selectedCategoryIds}
           categories={categories}
           currency={currency}
         />

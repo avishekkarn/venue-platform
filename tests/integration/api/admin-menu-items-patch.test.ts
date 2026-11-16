@@ -234,7 +234,7 @@ describe("PATCH /api/admin/menu/items/[id] Route Tests (8.3.3)", () => {
       expect(json.data.price).toBe("32.50");
       expect(json.data.name).toBe("Steak Frites");
       expect(json.data.description).toBe("Ribeye with hand-cut fries");
-      expect(json.data.categoryId).toBe(categoryId);
+      expect(json.data.categoryIds).toEqual([categoryId]);
       expect(json.data.photoUrl).toBe("/uploads/catalog/steak.webp");
       expect(json.data.photoBlurData).toBe("data:image/webp;base64,TESTBLUR");
       expect(json.data.state).toBe("AVAILABLE");

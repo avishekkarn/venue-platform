@@ -23,7 +23,7 @@ import { MenuItemState, type MenuItemView } from "@/domain/menu/menu.repository"
  */
 interface EditFormProps {
   readonly item: MenuItemView;
-  readonly initialCategoryId: string;
+  readonly initialCategoryIds: readonly string[];
   readonly categories: readonly { id: string; name: string }[];
   readonly currency?: string;
   readonly onClose?: () => void;
@@ -31,7 +31,7 @@ interface EditFormProps {
 
 export function EditForm({
   item,
-  initialCategoryId,
+  initialCategoryIds,
   categories,
   currency = "NPR",
   onClose,
@@ -41,7 +41,7 @@ export function EditForm({
   const [name, setName] = useState(item.name);
   const [description, setDescription] = useState(item.description ?? "");
   const [price, setPrice] = useState(item.price);
-  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const [categoryIds, setCategoryIds] = useState<string[]>([...initialCategoryIds]);
   const [state, setState] = useState<MenuItemState>(item.state);
   const [photoUrl, setPhotoUrl] = useState<string | null>(item.photoUrl);
   const [photoBlurData, setPhotoBlurData] = useState<string | null>(
@@ -72,6 +72,11 @@ export function EditForm({
       return;
     }
 
+    if (categoryIds.length === 0) {
+      setError("Select at least one category.");
+      return;
+    }
+
     const stateChanged = state !== item.state;
 
     // Build the diff against the initial item (partial PATCH contract):
@@ -81,7 +86,16 @@ export function EditForm({
       payload.description = description.trim() || null;
     }
     if (trimmedPrice !== item.price) payload.price = trimmedPrice;
-    if (categoryId !== initialCategoryId) payload.categoryId = categoryId;
+
+    const initialSorted = [...initialCategoryIds].sort();
+    const currentSorted = [...categoryIds].sort();
+    const categoryIdsChanged =
+      initialSorted.length !== currentSorted.length ||
+      initialSorted.some((id, idx) => id !== currentSorted[idx]);
+    if (categoryIdsChanged) {
+      payload.categoryIds = categoryIds;
+    }
+
     if (photoUrl !== item.photoUrl) payload.photoUrl = photoUrl;
     if (photoBlurData !== (item.photoBlurData ?? null)) {
       payload.photoBlurData = photoBlurData;
@@ -199,21 +213,30 @@ export function EditForm({
           htmlFor="edit-item-category"
           className="text-sm font-medium text-staff-text-primary"
         >
-          Category
+          Categories
         </label>
         <select
           id="edit-item-category"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+          multiple
+          size={Math.min(6, Math.max(3, categories.length))}
+          value={categoryIds}
+          onChange={(e) =>
+            setCategoryIds(
+              Array.from(e.target.selectedOptions, (o) => o.value)
+            )
+          }
           disabled={loading}
-          className="h-10 px-3 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-staff-brand"
+          className="p-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-staff-brand"
         >
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>
+            <option key={c.id} value={c.id} className="py-1 px-1">
               {c.name}
             </option>
           ))}
         </select>
+        <span className="text-xs text-staff-text-muted">
+          Hold Ctrl (Windows) or Cmd (Mac) to select multiple categories.
+        </span>
       </div>
 
       <div className="flex flex-col gap-1.5">

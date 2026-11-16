@@ -28,14 +28,14 @@ import type {
  */
 interface EditSheetProps {
   readonly item: MenuItemView;
-  readonly initialCategoryId: string;
+  readonly initialCategoryIds: readonly string[];
   readonly categories: readonly MenuCategoryView[];
   readonly currency: string;
 }
 
 export function EditSheet({
   item,
-  initialCategoryId,
+  initialCategoryIds,
   categories,
   currency,
 }: EditSheetProps): JSX.Element {
@@ -68,7 +68,7 @@ export function EditSheet({
         <SheetBody className="flex-1 overflow-y-auto min-h-0">
           <EditForm
             item={item}
-            initialCategoryId={initialCategoryId}
+            initialCategoryIds={initialCategoryIds}
             categories={categories}
             currency={currency}
             onClose={() => {

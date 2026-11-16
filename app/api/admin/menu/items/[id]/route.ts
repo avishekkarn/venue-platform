@@ -56,7 +56,7 @@ const ALLOWED_FIELDS = new Set([
   "photoUrl",
   "photoBlurData",
   "price",
-  "categoryId",
+  "categoryIds",
   "state",
   "sortOrder",
 ]);
@@ -238,15 +238,19 @@ const patchHandler = async (
     (updateInput as { price?: string }).price = price;
   }
 
-  if (body["categoryId"] !== undefined) {
-    const categoryId = body["categoryId"];
-    if (typeof categoryId !== "string" || categoryId.trim().length === 0) {
+  if (body["categoryIds"] !== undefined) {
+    const categoryIdsRaw = body["categoryIds"];
+    if (
+      !Array.isArray(categoryIdsRaw) ||
+      categoryIdsRaw.length === 0 ||
+      !categoryIdsRaw.every((id) => typeof id === "string" && id.trim().length > 0)
+    ) {
       return NextResponse.json(
-        { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "categoryId must be a non-empty string" } },
+        { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "categoryIds must be a non-empty array of strings" } },
         { status: 400 }
       );
     }
-    (updateInput as { categoryIds?: readonly string[] }).categoryIds = [categoryId.trim()];
+    (updateInput as { categoryIds?: readonly string[] }).categoryIds = (categoryIdsRaw as string[]).map((id) => id.trim());
   }
 
   if (body["state"] !== undefined) {
@@ -286,10 +290,11 @@ const patchHandler = async (
         { status: 500 }
       );
     }
-    const categoryBelongsToVenue = categoriesResult.value.some((c) =>
-      updateInput.categoryIds?.includes(c.id)
+    const venueCategoryIds = new Set(categoriesResult.value.map((c) => c.id));
+    const allCategoriesBelong = updateInput.categoryIds.every((id) =>
+      venueCategoryIds.has(id)
     );
-    if (!categoryBelongsToVenue) {
+    if (!allCategoriesBelong) {
       return NextResponse.json(
         { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "Category not found for this venue" } },
         { status: 400 }
@@ -313,12 +318,7 @@ const patchHandler = async (
   }
 
   return NextResponse.json(
-    {
-      data: {
-        ...result.value,
-        categoryId: result.value.categoryIds[0] ?? null,
-      },
-    },
+    { data: result.value },
     { status: 200 }
   );
 };

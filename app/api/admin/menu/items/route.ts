@@ -123,7 +123,7 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
 
   const name = body["name"];
   const price = body["price"];
-  const categoryId = body["categoryId"];
+  const categoryIdsRaw = body["categoryIds"];
   const description = body["description"];
   const photoUrl = body["photoUrl"];
   const photoBlurData = body["photoBlurData"];
@@ -142,12 +142,17 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
       { status: 400 }
     );
   }
-  if (typeof categoryId !== "string" || categoryId.trim().length === 0) {
+  if (
+    !Array.isArray(categoryIdsRaw) ||
+    categoryIdsRaw.length === 0 ||
+    !categoryIdsRaw.every((id) => typeof id === "string" && id.trim().length > 0)
+  ) {
     return NextResponse.json(
-      { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "categoryId is required" } },
+      { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "categoryIds must be a non-empty array of strings" } },
       { status: 400 }
     );
   }
+  const categoryIds = (categoryIdsRaw as string[]).map((id) => id.trim());
   if (description !== undefined && description !== null && typeof description !== "string") {
     return NextResponse.json(
       { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "description must be a string" } },
@@ -198,8 +203,9 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-  const categoryBelongsToVenue = categoriesResult.value.some((c) => c.id === categoryId);
-  if (!categoryBelongsToVenue) {
+  const venueCategoryIds = new Set(categoriesResult.value.map((c) => c.id));
+  const allCategoriesBelong = categoryIds.every((id) => venueCategoryIds.has(id));
+  if (!allCategoriesBelong) {
     return NextResponse.json(
       { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "Category not found for this venue" } },
       { status: 400 }
@@ -209,7 +215,7 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
   // 6. Create
   const created = await menuRepo.createItem({
     venueId: venue.id,
-    categoryIds: [categoryId],
+    categoryIds,
     name: name.trim(),
     description: description === undefined ? null : (description as string | null),
     photoUrl: photoUrl === undefined ? null : (photoUrl as string | null),
@@ -228,12 +234,7 @@ const routeHandler: AuditedRouteHandler = async (request: NextRequest) => {
   }
 
   return NextResponse.json(
-    {
-      data: {
-        ...created.value,
-        categoryId: created.value.categoryIds[0] ?? null,
-      },
-    },
+    { data: created.value },
     { status: 201 }
   );
 };
