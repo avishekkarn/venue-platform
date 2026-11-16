@@ -33,6 +33,7 @@
 20. Security Defenses — D-20.1
 21. Service Catalog and Media — D-21.1 to D-22.1
 22. Guest Rendering and Dynamic Routes — D-23.1 to D-24.1
+23. Menu Categorization and Collections — D-25.1 to D-25.2
 
 ---
 
@@ -2571,10 +2572,63 @@ The root-scan route (app/(guest)/qr/[token]/route.ts) had always used response.c
 
 ---
 
+## 23. Menu Categorization and Collections — D-25.1 to D-25.2
+
+### D-25.1 — A menu item belongs to one or more categories (the multi-category item)
+
+**Decision:** A `MenuItem` is a single catalog row that belongs to **one or more** `MenuCategory`s via an explicit join model `MenuItemCategory(venueId, menuItemId, categoryId, sortOrder)`. The `MenuItem.categoryId` scalar is removed; the migration backfills each existing item's current `categoryId` and `sortOrder` into one `MenuItemCategory` row. The `MenuRepository`'s reads (`getFullMenu`, `listItemsForCategory`, `listItems`) go through the join; the `MenuItem` domain interface carries `categoryIds: readonly string[]`. The admin "Add/Edit Item" form's Category control is a multi-select (at least one category; the set replaces the join rows in one transaction). The guest menu renders the item **once per category it belongs to** — the same `id`, `name`, `price`, `photoUrl`, `photoBlurData`, `state`; the category's group header. A Momo in "Breakfast" and "Chinese" is one catalog row, one price, one photo, rendered in both groups.
+
+**Context:** The operator's stated need: a dish can belong to more than one menu category (e.g., Momos in Breakfast and Chinese), and adding it twice as separate rows makes the price/photo/state drift between copies. The current schema's `MenuItem.categoryId` is a single FK, so the duplicate-row workaround is the only option — and it is a data-integrity bug (two rows, two prices, two photos, two states; editing one leaves the other stale). The many-to-many is the standard menu model.
+
+**Alternatives considered:**
+- Duplicate rows (two `MenuItem`s for the same dish) — rejected. The drift is the bug the change fixes; the manager edits one and the other is stale; the reporting double-counts when the item is ordered from both.
+- A single `categoryIds` array column (Postgres `text[]`) — rejected. No referential integrity, no cascade, no per-category order; the join table is the correct relational shape.
+- A `MenuItemCategory` without a per-category `sortOrder` — rejected. The item's position in "Breakfast" may differ from its position in "Chinese"; the join's `sortOrder` carries the per-category order.
+
+**Consequences:**
+- `MenuItem.categoryId` is removed; `MenuItemCategory` is added with `venueId`, `menuItemId`, `categoryId`, `sortOrder`, and the `@@unique([menuItemId, categoryId])`.
+- The `MenuItem` domain interface's `categoryId: string` is replaced by `categoryIds: readonly string[]`; the `MenuItemView` carries `categoryIds` (or the category names) for the edit form.
+- `CreateItemInput.categoryId: string` becomes `categoryIds: readonly string[]` (at least one); `UpdateItemInput.categoryId?: string` becomes `categoryIds?: readonly string[]` (the set replaces the join rows in one transaction).
+- The `MenuRepository.createItem` writes the `MenuItemCategory` rows in the same transaction as the `MenuItem`; the `updateItem` replaces the set (delete + create) in one transaction.
+- The `deleteCategory`'s "has items" check is the `MenuItemCategory` count; the category with join rows → 409; the empty → 204.
+- The admin form's Category is a multi-select (the native `<select multiple>`, given the `@base-ui/react` `Select` does not open inside the `Sheet`).
+- The guest menu's `getMenu` filters HIDDEN; the item appears in each of its categories (the same `MenuItemView` in each group).
+- The 8.3.5's routes (the category CRUD) are written against the join; the 8.3.5's tests include the multi-category path.
+- The 8.3.2's POST and the 8.3.3's PATCH accept `categoryIds` (the array), not `categoryId`.
+
+**What would make us revisit:** Never for the many-to-many. The per-category `sortOrder` may be revisited if the operator wants a single global order.
+
+**Traces to:** SYSTEM.md §4 (the menu module), §11.1 (the menu entities), D-4.2 (the three item states — unchanged), D-10.2 (venue isolation — the join is venue-scoped), the 8.3.5b (the migration), the 8.3.5's routes, the 8.3.5a (the UI), the 8.3.7a (the guest render).
+
+### D-25.2 — The special-events collection is a curated, dated set of menu items
+
+**Decision:** A "special events" collection is a `MenuCollection` entity — a named, operator-curated set of `MenuItem`s, with an optional `featuredFrom`/`featuredTo` date range and a `sortOrder`. The `MenuCollectionItem(venueId, collectionId, menuItemId, sortOrder)` join. The guest menu renders the active collections **above** the categories (a "Special events" / "Featured" strip). The admin "Manage collections" screen adds/removes items; the date range gates the render (a null range = always live).
+
+**Context:** The operator wants a "special events" collection, addable/removable, rendered on the guest menu. The collection is orthogonal to the categories — an item can be in multiple categories and multiple collections. The date range makes the "special" — the operator schedules a holiday menu; the collection is live only in its window.
+
+**Alternatives considered:**
+- A `featured: boolean` on the `MenuItem` — rejected. A boolean is not a "collection"; the operator wants a named set, with a date range, with an order.
+- A `MenuCategory` with a date range — rejected. The collection is not a category; it is a cross-category curated set, and the item can be in many.
+- No date range — rejected. The "special" is the window; the permanent "Featured" is the null-range case.
+
+**Consequences:**
+- The `MenuCollection` model (`id`, `venueId`, `name`, `featuredFrom: DateTime?`, `featuredTo: DateTime?`, `sortOrder`, `createdAt`, `updatedAt`); the `MenuCollectionItem` join (`venueId`, `collectionId`, `menuItemId`, `sortOrder`; the `@@unique([collectionId, menuItemId])`).
+- The `MenuRepository`'s `listCollections(venueId, at: Date): Promise<Result<MenuCollectionView[]>>` (the active at the date, ordered by `sortOrder`); the `createCollection`/`updateCollection`/`deleteCollection`; the `addItemToCollection`/`removeItemFromCollection`.
+- The admin "Manage collections" screen (the 8.3.5c — the CRUD + the UI); the routes: the `/api/admin/menu/collections` (the `GET`/`POST`), the `/api/admin/menu/collections/[id]` (the `PATCH`/`DELETE`), the `/api/admin/menu/collections/[id]/items` (the `POST`/`DELETE`).
+- The guest menu's "Special events" strip (the 8.3.7a — the guest render; the `next/image` is the 8.3.7a's).
+- The venue isolation: the collection and its items are venue-scoped; the cross-venue read is NOT_FOUND.
+- The 8.3.5c's tests: the collection's CRUD, the add/remove, the date-range filter (an expired collection is not rendered; a future collection is not rendered).
+
+**What would make us revisit:** If the operator wants the collection without a date range (the `featuredFrom`/`featuredTo` are null — the permanent "Featured"), the model already supports it. If the operator wants the collection to have its own photo/price (a "special" item, not a curated set of the catalog), that is a different entity and a new decision.
+
+**Traces to:** SYSTEM.md §4 (the menu module), §11.1 (the menu entities), D-10.2 (venue isolation), the 8.3.5c (the migration + the routes + the UI), the 8.3.7a (the guest strip).
+
+---
+
 ## Appendix — The Record Set as of Version 2.0
 
-**Total decisions:** 108 <!-- Total decisions: 108 -->
-**Categories:** 22
+**Total decisions:** 110 <!-- Total decisions: 110 -->
+**Categories:** 23
 **Status:** All locked.
 
 **How the count is derived:** the count in this appendix is the number of decisions whose `### D-` heading appears in this file. It is not a hand-maintained number; it is the count of the file's own records. Before version 2.0, this number was stale (it read 54 while the file contained 80). The correction is recorded in C-02's STRUCTURAL entry.

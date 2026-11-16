@@ -923,19 +923,26 @@ Paste the twelve pieces of evidence into a new `PROGRESS.md` entry, mark every P
 - **If it fails:** Task 8.2.4.
 - **Evidence:** A screenshot of the downloaded CSV opened in a spreadsheet.
 
-#### Step 7 — A menu item can be added
+#### Step 7 — A menu item can be added with multiple categories (D-25.1)
 
-- **Action:** Navigate to the Menu tab. Click "Add Item". Fill in the name, description, price, category, and a modifier group with two options. Save.
-- **Expected:** The item appears in the menu list. Its row shows the name, category, price, and state (Available). The price is stored as a decimal string with two digits after the decimal point. Navigating to the item's detail shows the modifier group and its options.
-- **If it fails:** Task 8.3.2, or Task 8.3.6.
-- **Evidence:** A screenshot of the new item's row and a screenshot of its modifier group.
+- **Action:** Navigate to the Menu tab. Click "Add Item". Fill in the name, description, price, select two categories ("Breakfast" and "Chinese") in the Category multi-select, and a modifier group with two options. Save.
+- **Expected:** The item appears in the menu list under both categories ("Breakfast" and "Chinese"). Each row shows the name, respective category, price, and state (Available). In the database, a single `MenuItem` row is created, linked to two `MenuItemCategory` rows (D-25.1). On the guest menu, the item renders under both category sections with identical price and photo. Editing the price or photo updates both sections without data drift.
+- **If it fails:** Task 8.3.2, Task 8.3.5b, or Task 8.3.6.
+- **Evidence:** A screenshot of the new item in both categories on the admin menu and a screenshot of the guest menu.
 
-#### Step 8 — A menu item's state can be toggled
+#### Step 8 — A menu item's state can be toggled across all its categories
 
-- **Action:** On the menu list, tap the state toggle on the newly added item. Choose "Unavailable". Then choose "Hidden". Then "Available".
-- **Expected:** Each toggle updates the item's row in place, with no confirmation dialog. In `prisma studio`, the item's `state` column changes each time. In the guest menu on a phone, the item greys out when it becomes Unavailable, disappears when it becomes Hidden, and reappears when it becomes Available — each within 5 seconds.
-- **If it fails:** Task 8.3.4.
+- **Action:** On the menu list, tap the state toggle on the multi-category item. Choose "Unavailable". Then choose "Hidden". Then "Available".
+- **Expected:** Each toggle updates the item's row in place across all assigned categories. In `prisma studio`, the single `MenuItem.state` changes. In the guest menu on a phone, the item updates in both categories simultaneously — greys out when Unavailable, disappears when Hidden, and reappears when Available — within 5 seconds.
+- **If it fails:** Task 8.3.4, Task 8.3.5b.
 - **Evidence:** A screenshot of the row before and after each toggle, and a screenshot of the guest menu.
+
+#### Step 8b — Special Events collections can be curated and render to guests (D-25.2)
+
+- **Action:** Navigate to the Menu tab. Click "Manage Collections". Create a new collection named "Holiday Specials" with a valid date range spanning today. Add two menu items to the collection. In a guest phone browser, navigate to `/menu`.
+- **Expected:** The "Holiday Specials" collection appears as an active strip above the category tab strip on the guest menu, rendering the items' photos and details. Updating the collection's date range to expired or future removes the strip from the guest menu within 5 seconds.
+- **If it fails:** Task 8.3.5c, Task 8.3.7, or Task 8.3.7a.
+- **Evidence:** A screenshot of the admin Manage Collections screen and a screenshot of the guest menu showing the collections strip.
 
 #### Step 9 — A table can be added and its QR generated
 

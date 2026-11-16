@@ -239,7 +239,7 @@ The domain layer is divided into modules. Each module owns a slice of the busine
 |--------|------|----------------|
 | `organization` | Venue resolution, venue configuration, module toggles, branding values (read from configuration) | `getVenue()`, `getEnabledModules()`, `getVenueLanguage()` |
 | `auth` | Session validation, login, logout, role checks, permission checks | `login(username, password)`, `getSession(token)`, `logout(token)`, `canAccess(session, area)` |
-| `menu` | Menu retrieval, item state (available, unavailable, hidden), modifier resolution | `getMenu()`, `getMenuItem(id)`, `isOrderable(itemId)` |
+| `menu` | Menu retrieval (via category joins), item state (available, unavailable, hidden), modifier resolution, collections resolution | `getMenu()`, `getMenuItem(id)`, `isOrderable(itemId)`, `listCollections(at)` |
 | `orders` | Order creation, price computation, tax snapshot, state machine, cancellation | `createOrder(input)`, `advanceOrder(orderId, nextState, staffId)`, `cancelOrder(orderId, reason, staffId)` |
 | `requests` | Service request creation, state machine, cancellation, decline | `createRequest(input)`, `advanceRequest(requestId, nextState, staffId)`, `cancelRequest(requestId, by, reason)` |
 | `qr` | Token generation, resolution, revocation | `generateToken(venueId, placeType, placeId)`, `resolveToken(token)`, `revokeToken(token)` |
@@ -657,7 +657,13 @@ The data model is the shape of everything the product remembers. It is described
 
 **The menu category.** A grouping of items. Has a name and an order.
 
-**The menu item.** A dish or drink. Has a name, a description, a `photoUrl`, a `photoBlurData`, a price, a category, a sort order, and a state: available, unavailable, or hidden (D-4.2).
+**The menu item.** A dish or drink. Has a name, a description, a `photoUrl`, a `photoBlurData`, a price, and a state: available, unavailable, or hidden (D-4.2). Belongs to one or more menu categories via `MenuItemCategory` (D-25.1).
+
+**The menu item category join (`MenuItemCategory`).** Explicit join entity (`venueId`, `menuItemId`, `categoryId`, `sortOrder`). Allows a single catalog item to be grouped into multiple categories with distinct per-category sort orders without duplicating rows or creating price/photo drift (D-25.1).
+
+**The menu collection (`MenuCollection`).** An operator-curated named collection of menu items (e.g., "Special events", "Chef's Specials"). Has a name, optional `featuredFrom` and `featuredTo` date window, and a `sortOrder` (D-25.2).
+
+**The menu collection item (`MenuCollectionItem`).** Explicit join entity (`venueId`, `collectionId`, `menuItemId`, `sortOrder`) linking items to collections.
 
 **The modifier group.** A group of options for an item. Has a name and rules about whether the guest must choose and whether they can choose more than one.
 
@@ -682,7 +688,10 @@ The data model is the shape of everything the product remembers. It is described
 - A venue has many tables, rooms, staff members, QR tokens, menu categories, orders, service requests, and payments.
 - A table has many QR tokens (one active at a time, and any number of revoked ones for history).
 - A room has many QR tokens, same as a table.
-- A menu category has many menu items.
+- A menu category has many menu items via `MenuItemCategory`.
+- A menu item belongs to one or more menu categories via `MenuItemCategory` (D-25.1).
+- A venue has many menu collections (`MenuCollection`).
+- A menu collection has many menu items via `MenuCollectionItem` (D-25.2).
 - A menu item has many modifier groups.
 - A modifier group has many modifier options.
 - An order has many order items and many order state changes.
@@ -767,6 +776,9 @@ The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, 
 | GET | `/api/admin/dashboard` | Read the venue's six live dashboard metrics: `{ ordersWaiting, inKitchen, ready, revenueToday, ordersToday, requestsOpen }` |
 | POST | `/api/admin/media/upload` | Upload an image (multipart; max 5MB; `sharp` → WebP + blur) |
 | GET, POST, PATCH, DELETE | `/api/admin/menu/categories` | Manage categories |
+| GET, POST | `/api/admin/menu/collections` | Manage menu collections (D-25.2) |
+| PATCH, DELETE | `/api/admin/menu/collections/[id]` | Update or delete a menu collection |
+| POST, DELETE | `/api/admin/menu/collections/[id]/items` | Add or remove items from a menu collection |
 | GET, POST, PATCH, DELETE | `/api/admin/menu/items` | Manage menu items |
 | POST | `/api/admin/menu/items/[id]/state` | Change a menu item's state |
 | GET, POST, PATCH, DELETE | `/api/admin/services/categories` | Manage service categories (`ServiceCategory`) |

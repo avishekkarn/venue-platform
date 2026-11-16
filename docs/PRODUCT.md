@@ -210,7 +210,8 @@ The menu supports:
 
 - **Search** — a small search icon in the header opens a text field. The guest types a dish name and the list filters live.
 - **Filter by dietary tags** — if the venue labels items (vegetarian, vegan, gluten-free, spicy), small chips let the guest filter.
-- **Featured section at the top** — the venue can mark some items as "chef's picks" or "popular", and these appear in a horizontal scroll above the categories.
+- **Special events / Featured strip at the top (D-25.2)** — the operator can curate named collections of items (e.g., "Special events", "Holiday Specials", "Chef's Picks") with optional scheduling date windows (`featuredFrom`/`featuredTo`). Active collections render in a prominent horizontal strip above the categories.
+- **Multi-category item presentation (D-25.1)** — an item can belong to one or more categories (e.g., Momos in both Breakfast and Chinese). The item is rendered once per category it belongs to, showing identical price, photo, blur preview, and availability state without duplicate catalog rows.
 
 **What the guest does not see:** no logins, no forms, no account creation, no "please register to continue". The guest is anonymous. The product knows only which table they scanned, and nothing else.
 
@@ -570,12 +571,13 @@ A historical list of every completed order. Filterable by date range: today, yes
 
 A list of every menu item, grouped by category. The operator can:
 
-- Add a new item — a form with name, description, photo, price, category, availability toggle, and modifier groups.
-- Edit an item — change any field.
+- Add a new item — a form with name, description, photo, price, category multi-select (an item can belong to one or more categories, D-25.1), state toggle (Available / Unavailable / Hidden), and modifier groups.
+- Edit an item — change any field; selecting or deselecting categories updates the join mappings without creating duplicate catalog records or price/photo drift.
 - Reorder items within a category.
-- Mark an item as sold out (temporarily unavailable).
+- Mark an item as sold out (temporarily unavailable) or hidden from guest view.
 - Delete an item (soft delete — the item is hidden but historical orders keep their record).
-- Create or edit categories.
+- Manage categories — create, edit, sort, and delete categories (categories containing items reject deletion with 409 Conflict).
+- Manage collections — create, edit, schedule (`featuredFrom`/`featuredTo`), and delete curated "Special events" and seasonal collections, and add/remove items within them (D-25.2).
 - Create or edit modifier groups and their options.
 
 ### 8.6 The Tables Tab (Restaurant)

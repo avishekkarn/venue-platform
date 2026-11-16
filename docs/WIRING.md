@@ -31,6 +31,36 @@
 
 *(Newest first. Each entry is appended by the task that creates it, per Rule 5.)*
 
+### W-0030 — OPEN — Admin Add/Edit Item form must support multi-category selection
+
+- **Originated:** Task 8.3.5.DOCS (D-25.1).
+- **Obligation:** The admin "Add Item" and "Edit Item" forms (`_edit-form.tsx`) currently expose a single-select `<select>` for `categoryId`. With D-25.1's multi-category model, an item belongs to one or more categories. The form's category control must be updated to a multi-select (native `<select multiple>` per D-25.1), requiring at least one category selected and sending `categoryIds: readonly string[]` in the create/patch payload.
+- **Files and call site:** `app/admin/(shell)/menu/_edit-form.tsx`.
+- **Satisfied by:** Task 8.3.5b (the multi-category migration and domain model update).
+- **Depends on:** D-25.1, `MenuItemCategory` schema model, SYSTEM.md §11.1.
+- **Verification:** The form compiles under strict mode (`tsc`), allows selecting multiple categories, sends `categoryIds`, and passes integration tests.
+- **Status:** OPEN
+
+### W-0029 — OPEN — Guest menu must render active Special Events collections strip above categories
+
+- **Originated:** Task 8.3.5.DOCS (D-25.2).
+- **Obligation:** D-25.2 defines the `MenuCollection` entity for curated, dated collections (e.g. "Special events", "Holiday Specials"). The guest menu page must query active collections (`listCollections(venueId, new Date())`) and render an above-the-fold horizontal scroll strip of collection items using `next/image` above the category tab strip and item list.
+- **Files and call site:** `app/(guest)/menu/page.tsx`, `src/components/hospitality/menu-collection-strip.tsx`.
+- **Satisfied by:** Task 8.3.7a (the guest menu photo rendering and Special Events strip).
+- **Depends on:** D-25.2, D-23.1, `MenuCollection` / `MenuCollectionItem` schema models, SYSTEM.md §4, DESIGN.md §4.8.1.
+- **Verification:** Integration tests prove that active collections within their date range render to guests while expired or future collections are excluded; manual check at 1440×900 and mobile.
+- **Status:** OPEN
+
+### W-0028 — OPEN — MenuRepository queries (`getFullMenu`, `getMenu`, `listItemsForCategory`) must traverse `MenuItemCategory` join
+
+- **Originated:** Task 8.3.5.DOCS (D-25.1).
+- **Obligation:** The Prisma schema drops `MenuItem.categoryId` in favor of the explicit join model `MenuItemCategory(venueId, menuItemId, categoryId, sortOrder)`. All repository reads and queries (`getFullMenu`, `getMenu`, `listItemsForCategory`, `listItems`, `createItem`, `updateItem`) must be rewritten to join across `MenuItemCategory`. `MenuItem` domain entities carry `categoryIds: readonly string[]`. In `getFullMenu` and `getMenu`, multi-category items must appear under each category they are linked to.
+- **Files and call site:** `src/domain/menu/menu.repository.ts`, `src/infrastructure/db/repositories/menu.repo.ts`.
+- **Satisfied by:** Task 8.3.5b (the multi-category migration and repository update).
+- **Depends on:** D-25.1, SYSTEM.md §4, §11.1, ROADMAP.md Task 8.3.5b.
+- **Verification:** `getFullMenu` returns the item under all associated categories; unit and integration tests pass with 100% coverage of the multi-category join.
+- **Status:** OPEN
+
 ### W-0027 — OPEN — `src/infrastructure/config/venue.ts` must exist and export `getVenueSlug()`
 
 - **Originated:** Phase 8.0.0.4 pre-read (2026-11-14). The file `src/infrastructure/config/venue.ts` exists but is empty. Two admin routes — `app/api/admin/qr/generate/route.ts` and `app/api/admin/audit/export/route.ts` — read the venue's slug via `process.env["VENUE_SLUG"] ?? "juniper-house"` directly. The `?? "juniper-house"` fallback is a data-isolation footgun at production scale (D-10.2, SYSTEM.md §15.4): a mis-set `VENUE_SLUG` on a production deployment silently reads the seed venue's data. The dashboard route (8.1.1) will inherit the same pattern if the helper does not exist first.

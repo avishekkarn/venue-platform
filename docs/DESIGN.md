@@ -1240,8 +1240,9 @@ The landing page uses only guest-world tokens. Specifically: `--guest-surface`, 
 
 **Layout:**
 - Header bar (sticky): the venue's name in small display text on the left, the cart icon with count badge on the right. Height 56px. Background `--guest-surface-raised`.
+- Special events / Featured strip (D-25.2): horizontal scroll above the category sections, rendering items from active collections (within their `featuredFrom`/`featuredTo` date window). Each card displays the photo (via `next/image` with blur placeholder), item name, and price.
 - Category tab strip (sticky beneath the header): horizontal scroll, no wrapping, each tab 40px height, active tab underlined with a 2px line in `--guest-brand`. Height 48px. Background `--guest-surface-raised`, with `--guest-border-subtle` bottom border.
-- Item list: single column. Each item is a `MenuItemCard`. Vertical gap `--space-3`.
+- Item list: single column. Each item is a `MenuItemCard`. Vertical gap `--space-3`. Multi-category items (D-25.1) appear under each category they belong to, sharing identical price, photo, and availability status.
 - Floating cart bar (only when cart is non-empty): sticky at bottom of viewport, 16px from bottom, height 56px, `--guest-brand` background, `--guest-text-inverse`. Shows "3 items · $42.50" and a "View cart" button.
 - Right-hand side (desktop only): the cart is a persistent right column, 320px wide, sticky.
 
@@ -1469,11 +1470,13 @@ An admin's day on this screen looks like:
 
 ### 4.10.8 Menu Management
 
-- Full-width table of menu items, grouped by category.
+- Full-width table of menu items, grouped by category. Items belonging to multiple categories appear under each assigned category grouping with identical data.
 - Columns: Photo thumbnail, Name, Category, Price, State, Actions.
 - Actions per row: Edit, Toggle availability, Hide.
-- "Add item" button top-right.
-- Editing an item opens a right-hand form panel with the name, description, photo (drag-and-drop upload; preview; the upload hits `POST /api/admin/media/upload`), price, category, and state.
+- Header actions: "Add item", "Manage categories", and "Manage collections" buttons top-right.
+- Editing an item opens a right-hand form panel with the name, description, photo (drag-and-drop upload; preview; the upload hits `POST /api/admin/media/upload`), price, Category multi-select (native `<select multiple>`, D-25.1), and state.
+- "Manage categories" panel: list categories, add category, rename, reorder, delete (validates no item associations exist; rejects with 409 if items are assigned).
+- "Manage collections" panel: list collections (name, `featuredFrom`, `featuredTo`, `sortOrder`), create/edit collection, add/remove items to/from the collection (D-25.2).
 
 ### 4.10.9 Services Management
 
