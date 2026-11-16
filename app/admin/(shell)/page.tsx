@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import Script from "next/script";
 import { requireRole } from "@/lib/auth/require-role";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
@@ -219,8 +220,9 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
 
   return (
     <>
-      <script
-        async
+      <Script
+        id="dashboard-controller"
+        strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: DASHBOARD_SCRIPT,
         }}
