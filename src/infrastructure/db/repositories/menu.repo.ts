@@ -38,6 +38,7 @@ import {
   type ModifierOptionView,
   type CreateCategoryInput,
   type CreateItemInput,
+  type UpdateItemInput,
   type CreateModifierGroupInput,
   type CreateModifierOptionInput,
   MenuItemState,
@@ -347,6 +348,65 @@ export function createPrismaMenuRepository(
           return fail(
             DomainErrorCode.CONFLICT,
             `Menu item '${input.name}' violates unique constraint`
+          );
+        }
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
+    async updateItem(
+      venueId: string,
+      itemId: string,
+      input: UpdateItemInput
+    ): Promise<Result<MenuItem>> {
+      try {
+        const existing = await client.menuItem.findFirst({
+          where: { id: itemId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Menu item with id '${itemId}' not found in venue '${venueId}'`
+          );
+        }
+
+        const data: {
+          name?: string;
+          description?: string | null;
+          photoUrl?: string | null;
+          photoBlurData?: string | null;
+          price?: string;
+          categoryId?: string;
+          state?: PrismaMenuItemState;
+          sortOrder?: number;
+        } = {};
+
+        if (input.name !== undefined) data.name = input.name;
+        if (input.description !== undefined) data.description = input.description;
+        if (input.photoUrl !== undefined) data.photoUrl = input.photoUrl;
+        if (input.photoBlurData !== undefined) data.photoBlurData = input.photoBlurData;
+        if (input.price !== undefined) data.price = input.price;
+        if (input.categoryId !== undefined) data.categoryId = input.categoryId;
+        if (input.state !== undefined) {
+          data.state = DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state];
+        }
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+
+        const updated = await client.menuItem.update({
+          where: { id: itemId },
+          data,
+        });
+
+        return ok(mapMenuItem(updated));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Menu item '${input.name ?? itemId}' violates unique constraint`
           );
         }
         return fail(

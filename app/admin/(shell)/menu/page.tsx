@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
+import type { MenuItemView } from "@/domain/menu/menu.repository";
 import {
   Table,
   TableHeader,
@@ -12,25 +13,30 @@ import {
   TableEmpty,
 } from "@/components/ui/table";
 import { MenuItemRow } from "@/components/staff/menu-item-row";
+import { EditSheet } from "./_edit-sheet";
 
 /**
- * The admin menu list screen (8.3.1, DESIGN.md §4.10.8).
+ * The admin menu list screen (8.3.1, 8.3.3, DESIGN.md §4.10.8).
  *
  * A Server Component inside the (shell) route group. It reads the venue's
  * full menu via `menuRepo.getFullMenu` — not `getMenu` — so HIDDEN items
- * are visible to the manager (D-4.2, W-0005). The six columns are
- * Photo / Name / Category / Price / State / Actions. The Actions and the
- * Add button are disabled until 8.3.2a (the form), 8.3.3 (the PATCH), and
- * 8.3.4 (the state toggle) wire them — the list is the read surface only.
+ * are visible to the manager (D-4.2, W-0005).
  *
- * No `withCsrf`: a GET render is not a state-changing route (D-20.1).
- * No `next/image`: the thumbnail is a plain <img>; the 8.3.7a swaps it
- * (D-23.1). No client state: the page is a Server Component.
+ * The six columns are Photo / Name / Category / Price / State / Actions.
+ * In 8.3.3, the Actions column's Edit button is a Link to ?id=<itemId> rendered
+ * via MenuItemRow's editHref prop. When searchParams.id is set, the page renders
+ * EditSheet (a controlled Client Component boundary around Sheet and EditForm).
  *
- * Reference: ROADMAP.md §12 (8.3.1), DESIGN.md §4.10.8, D-4.2, D-20.1,
- * D-23.1.
+ * Reference: ROADMAP.md §12 (8.3.1, 8.3.3), DESIGN.md §4.10.8, D-4.2, D-20.1,
+ * D-22.1, D-23.1, D-24.1.
  */
-export default async function MenuPage(): Promise<JSX.Element> {
+interface MenuPageProps {
+  readonly searchParams?: Promise<{ id?: string }>;
+}
+
+export default async function MenuPage({
+  searchParams,
+}: MenuPageProps): Promise<JSX.Element> {
   const staff = await requireRole(["admin"]);
 
   const venueRepo = createPrismaVenueRepository(prisma);
@@ -44,6 +50,23 @@ export default async function MenuPage(): Promise<JSX.Element> {
   const currency = venueResult.ok ? venueResult.value.currency || "NPR" : "NPR";
   const categories = menuResult.ok ? menuResult.value : [];
   const itemCount = categories.reduce((n, c) => n + c.items.length, 0);
+
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const selectedId = resolvedSearchParams.id;
+
+  let selectedItem: MenuItemView | null = null;
+  let selectedCategoryId = "";
+
+  if (selectedId) {
+    for (const cat of categories) {
+      const found = cat.items.find((it) => it.id === selectedId);
+      if (found) {
+        selectedItem = found;
+        selectedCategoryId = cat.id;
+        break;
+      }
+    }
+  }
 
   return (
     <section className="flex flex-col gap-6">
@@ -102,6 +125,7 @@ export default async function MenuPage(): Promise<JSX.Element> {
                           item={item}
                           categoryName={category.name}
                           currency={currency}
+                          editHref={`/admin/menu?id=${item.id}`}
                         />
                       ))
                     )}
@@ -112,6 +136,15 @@ export default async function MenuPage(): Promise<JSX.Element> {
           ))}
         </div>
       )}
+
+      {selectedItem ? (
+        <EditSheet
+          item={selectedItem}
+          initialCategoryId={selectedCategoryId}
+          categories={categories}
+          currency={currency}
+        />
+      ) : null}
     </section>
   );
 }

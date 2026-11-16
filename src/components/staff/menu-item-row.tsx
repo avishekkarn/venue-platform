@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import Link from "next/link";
 import {
   type MenuItemView,
   MenuItemState,
@@ -27,6 +28,7 @@ interface MenuItemRowProps {
   readonly item: MenuItemView;
   readonly categoryName: string;
   readonly currency: string;
+  readonly editHref?: string;
 }
 
 function stateToBadge(state: MenuItemState): { status: BadgeStatus; label: string } {
@@ -44,6 +46,7 @@ export function MenuItemRow({
   item,
   categoryName,
   currency,
+  editHref,
 }: MenuItemRowProps): JSX.Element {
   const badge = stateToBadge(item.state);
   const priceLabel = formatMoney(item.price, currency);
@@ -80,15 +83,24 @@ export function MenuItemRow({
       </TableCell>
       <TableCell className="text-right">
         <div className="inline-flex gap-2">
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Available in 8.3.3"
-            className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-          >
-            Edit
-          </button>
+          {editHref ? (
+            <Link
+              href={editHref}
+              className="h-8 px-2 rounded text-xs font-medium inline-flex items-center justify-center bg-staff-surface-raised hover:bg-staff-surface-sunken text-staff-text-primary border border-staff-border-subtle"
+            >
+              Edit
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title="Available in 8.3.3"
+              className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
+            >
+              Edit
+            </button>
+          )}
           <button
             type="button"
             disabled

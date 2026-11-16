@@ -48,7 +48,7 @@ export interface MenuItem {
   readonly name: string;
   readonly description: string | null;
   readonly photoUrl: string | null;
-  readonly photoBlurData: string | null;
+  readonly photoBlurData?: string | null;
   readonly price: string;
   readonly state: MenuItemState;
   readonly sortOrder: number;
@@ -102,7 +102,7 @@ export interface MenuItemView {
   readonly name: string;
   readonly description: string | null;
   readonly photoUrl: string | null;
-  readonly photoBlurData: string | null;
+  readonly photoBlurData?: string | null;
   readonly price: string;
   readonly state: MenuItemState;
   readonly order: number;
@@ -130,6 +130,17 @@ export interface CreateItemInput {
   readonly photoUrl?: string | null;
   readonly photoBlurData?: string | null;
   readonly price: string;
+  readonly state?: MenuItemState;
+  readonly sortOrder?: number;
+}
+
+export interface UpdateItemInput {
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly photoUrl?: string | null;
+  readonly photoBlurData?: string | null;
+  readonly price?: string;
+  readonly categoryId?: string;
   readonly state?: MenuItemState;
   readonly sortOrder?: number;
 }
@@ -162,6 +173,11 @@ export interface MenuRepository {
   ): Promise<Result<MenuItemWithModifiers>>;
   createCategory(input: CreateCategoryInput): Promise<Result<MenuCategory>>;
   createItem(input: CreateItemInput): Promise<Result<MenuItem>>;
+  updateItem(
+    venueId: string,
+    itemId: string,
+    input: UpdateItemInput
+  ): Promise<Result<MenuItem>>;
   setItemState(
     venueId: string,
     itemId: string,
