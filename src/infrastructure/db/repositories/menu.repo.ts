@@ -49,6 +49,8 @@ import {
   type UpdateItemInput,
   type CreateModifierGroupInput,
   type CreateModifierOptionInput,
+  type UpdateModifierGroupInput,
+  type UpdateModifierOptionInput,
   MenuItemState,
   ModifierChoiceType,
 } from "@/domain/menu/menu.repository";
@@ -877,6 +879,124 @@ export function createPrismaMenuRepository(
           DomainErrorCode.INTERNAL,
           "Database write operation failed"
         );
+      }
+    },
+
+    async updateModifierGroup(
+      venueId: string,
+      groupId: string,
+      input: UpdateModifierGroupInput
+    ): Promise<Result<ModifierGroup>> {
+      try {
+        const existing = await client.modifierGroup.findFirst({
+          where: {
+            id: groupId,
+            menuItem: { venueId },
+          },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Modifier group with id '${groupId}' not found in venue '${venueId}'`
+          );
+        }
+        const data: {
+          name?: string;
+          choiceType?: PrismaModifierChoiceType;
+          isRequired?: boolean;
+          sortOrder?: number;
+        } = {};
+        if (input.name !== undefined) data.name = input.name;
+        if (input.choiceType !== undefined)
+          data.choiceType = DOMAIN_TO_PRISMA_CHOICE_TYPE[input.choiceType];
+        if (input.isRequired !== undefined) data.isRequired = input.isRequired;
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+        const updated = await client.modifierGroup.update({
+          where: { id: groupId },
+          data,
+        });
+        return ok(mapModifierGroup(updated));
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async deleteModifierGroup(
+      venueId: string,
+      groupId: string
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.modifierGroup.findFirst({
+          where: { id: groupId, menuItem: { venueId } },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Modifier group with id '${groupId}' not found in venue '${venueId}'`
+          );
+        }
+        await client.modifierGroup.delete({ where: { id: groupId } });
+        return ok(undefined);
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async updateModifierOption(
+      venueId: string,
+      optionId: string,
+      input: UpdateModifierOptionInput
+    ): Promise<Result<ModifierOption>> {
+      try {
+        const existing = await client.modifierOption.findFirst({
+          where: {
+            id: optionId,
+            modifierGroup: { menuItem: { venueId } },
+          },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Modifier option with id '${optionId}' not found in venue '${venueId}'`
+          );
+        }
+        const data: {
+          name?: string;
+          additionalPrice?: string;
+          sortOrder?: number;
+        } = {};
+        if (input.name !== undefined) data.name = input.name;
+        if (input.additionalPrice !== undefined)
+          data.additionalPrice = input.additionalPrice;
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+        const updated = await client.modifierOption.update({
+          where: { id: optionId },
+          data,
+        });
+        return ok(mapModifierOption(updated));
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async deleteModifierOption(
+      venueId: string,
+      optionId: string
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.modifierOption.findFirst({
+          where: { id: optionId, modifierGroup: { menuItem: { venueId } } },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Modifier option with id '${optionId}' not found in venue '${venueId}'`
+          );
+        }
+        await client.modifierOption.delete({ where: { id: optionId } });
+        return ok(undefined);
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
       }
     },
 

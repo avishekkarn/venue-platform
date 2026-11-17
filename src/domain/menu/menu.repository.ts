@@ -216,6 +216,19 @@ export interface CreateModifierOptionInput {
   readonly sortOrder?: number;
 }
 
+export interface UpdateModifierGroupInput {
+  readonly name?: string;
+  readonly choiceType?: ModifierChoiceType;
+  readonly isRequired?: boolean;
+  readonly sortOrder?: number;
+}
+
+export interface UpdateModifierOptionInput {
+  readonly name?: string;
+  readonly additionalPrice?: string;
+  readonly sortOrder?: number;
+}
+
 export interface MenuRepository {
   listCategories(venueId: string): Promise<Result<MenuCategory[]>>;
   listCollections(venueId: string, at: Date): Promise<Result<MenuCollectionView[]>>;
@@ -268,5 +281,17 @@ export interface MenuRepository {
   createModifierOption(
     input: CreateModifierOptionInput
   ): Promise<Result<ModifierOption>>;
+  updateModifierGroup(
+    venueId: string,
+    groupId: string,
+    input: UpdateModifierGroupInput
+  ): Promise<Result<ModifierGroup>>;
+  deleteModifierGroup(venueId: string, groupId: string): Promise<Result<void>>;
+  updateModifierOption(
+    venueId: string,
+    optionId: string,
+    input: UpdateModifierOptionInput
+  ): Promise<Result<ModifierOption>>;
+  deleteModifierOption(venueId: string, optionId: string): Promise<Result<void>>;
   getFullMenu(venueId: string): Promise<Result<MenuCategoryView[]>>;
 }
