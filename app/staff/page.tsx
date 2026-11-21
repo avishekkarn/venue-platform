@@ -262,13 +262,19 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   const urgentCalls: ServiceRequest[] = [];
   for (const req of rawRequests) {
     if (
-      req.state === RequestState.SUBMITTED &&
-      (req.serviceType === HotelService.CALL_WAITER || req.serviceType === HotelService.REQUEST_BILL)
+      (req.state === RequestState.SUBMITTED ||
+        req.state === RequestState.ACKNOWLEDGED ||
+        req.state === RequestState.IN_PROGRESS) &&
+      (req.serviceType === HotelService.CALL_WAITER ||
+        req.serviceType === HotelService.REQUEST_BILL)
     ) {
-      const callType = req.serviceType === HotelService.CALL_WAITER ? "WAITER" : "BILL";
-      if (req.tableId) tableCallMap[req.tableId] = callType;
-      if (req.roomId) roomCallMap[req.roomId] = callType;
-      urgentCalls.push(req);
+      const callType =
+        req.serviceType === HotelService.CALL_WAITER ? "WAITER" : "BILL";
+      if (req.tableId && activeTableIds.has(req.tableId)) tableCallMap[req.tableId] = callType;
+      if (req.roomId && activeRoomIds.has(req.roomId)) roomCallMap[req.roomId] = callType;
+      if (req.state === RequestState.SUBMITTED) {
+        urgentCalls.push(req);
+      }
     }
   }
 
@@ -825,11 +831,13 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
               dndMap[rk.roomId] = true;
             }
           }
-          if (rk.state === 'SUBMITTED' && (rk.serviceType === 'CALL_WAITER' || rk.serviceType === 'REQUEST_BILL')) {
+          if ((rk.state === 'SUBMITTED' || rk.state === 'ACKNOWLEDGED' || rk.state === 'IN_PROGRESS') && (rk.serviceType === 'CALL_WAITER' || rk.serviceType === 'REQUEST_BILL')) {
             var cType = rk.serviceType === 'CALL_WAITER' ? 'WAITER' : 'BILL';
             if (rk.tableId) newTableCalls[rk.tableId] = cType;
             if (rk.roomId) newRoomCalls[rk.roomId] = cType;
-            urgentCalls.push(rk);
+            if (rk.state === 'SUBMITTED') {
+              urgentCalls.push(rk);
+            }
           }
         }
         currentDndRoomIds = Object.keys(dndMap);

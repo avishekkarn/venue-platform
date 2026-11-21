@@ -186,6 +186,7 @@ const postHandler = async (
 
   const createRequestInput: CreateRequestInput = {
     venueId: session.venueId,
+    guestSessionId: session.id,
     placeType,
     tableId,
     roomId,

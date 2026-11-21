@@ -155,26 +155,38 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
   // Fetch active guest sessions for this venue. Requests whose guestSessionId
   // is not in this set are excluded from the active queue — they belong to a
   // session that has already been closed by staff (checkout or table close).
-  // Legacy requests with guestSessionId = null (pre-7.5.15.A data) are also
-  // excluded; they remain in the DB for audit and future dashboard filters.
+  // If guestSessionId is null/omitted, fallback to verifying the room or table
+  // currently has an active guest session.
   const activeSessions = await db.guestSession.findMany({
     where: { venueId: venue.id, endedAt: null },
-    select: { id: true },
+    select: { id: true, roomId: true, tableId: true },
   });
   const activeSessionIds = new Set(activeSessions.map((s) => s.id));
+  const activePlaceRoomIds = new Set(
+    activeSessions.map((s) => s.roomId).filter(Boolean) as string[]
+  );
+  const activePlaceTableIds = new Set(
+    activeSessions.map((s) => s.tableId).filter(Boolean) as string[]
+  );
 
   const combined = [
     ...submittedRes.value,
     ...acknowledgedRes.value,
     ...inProgressRes.value,
-  ].filter(
-    (r) =>
-      r.guestSessionId !== null &&
-      r.guestSessionId !== undefined &&
-      activeSessionIds.has(r.guestSessionId) &&
-      (visibleAreas.includes(resolveAreaForRequest(r)) ||
-        (Boolean(r.roomId) && resolveAreaForRequest(r) === "room-service" && visibleAreas.includes("front-desk")))
-  );
+  ].filter((r) => {
+    const isSessionActive = r.guestSessionId
+      ? activeSessionIds.has(r.guestSessionId)
+      : (Boolean(r.roomId) && activePlaceRoomIds.has(r.roomId!)) ||
+        (Boolean(r.tableId) && activePlaceTableIds.has(r.tableId!));
+
+    if (!isSessionActive) return false;
+
+    const reqArea = resolveAreaForRequest(r);
+    return (
+      visibleAreas.includes(reqArea) ||
+      (Boolean(r.roomId) && reqArea === "room-service" && visibleAreas.includes("front-desk"))
+    );
+  });
 
   return NextResponse.json({ data: combined }, { status: 200 });
 }
