@@ -2,29 +2,19 @@ import type { Metadata } from "next";
 import type { JSX } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  UtensilsCrossed,
-  BedDouble,
-  Wrench,
-  Bell,
-  Shirt,
-  Flower,
-  Clock,
-  Phone,
-  DoorClosed,
-  type LucideIcon,
-} from "lucide-react";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
+import { createPrismaServiceRepository } from "@/infrastructure/db/repositories/service.repo";
 import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
-import { type HotelService } from "@/domain/organization/venue.repository";
+import { MenuItemState } from "@/domain/menu/menu.repository";
+import { getVenueSlug } from "@/infrastructure/config/venue";
 import { GuestHero } from "@/components/guest/hero";
 import { JoinRequestScript } from "@/components/guest/join-request-script";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { ServiceList } from "./_service-list";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -32,59 +22,6 @@ export const metadata: Metadata = {
     index: false,
   },
 };
-
-interface ServiceDescriptor {
-  label: string;
-  icon: LucideIcon;
-}
-
-const SERVICE_DESCRIPTORS: Record<HotelService, ServiceDescriptor> = {
-  ROOM_SERVICE_FOOD: {
-    label: "Room Service",
-    icon: UtensilsCrossed,
-  },
-  HOUSEKEEPING: {
-    label: "Housekeeping",
-    icon: BedDouble,
-  },
-  MAINTENANCE: {
-    label: "Maintenance",
-    icon: Wrench,
-  },
-  CONCIERGE: {
-    label: "Concierge",
-    icon: Bell,
-  },
-  LAUNDRY: {
-    label: "Laundry",
-    icon: Shirt,
-  },
-  SPA: {
-    label: "Spa",
-    icon: Flower,
-  },
-  LATE_CHECKOUT: {
-    label: "Late Checkout",
-    icon: Clock,
-  },
-  WAKE_UP_CALL: {
-    label: "Wake-up Call",
-    icon: Phone,
-  },
-  DO_NOT_DISTURB: {
-    label: "Do Not Disturb",
-    icon: DoorClosed,
-  },
-};
-
-function getServiceDescriptor(service: HotelService): ServiceDescriptor {
-  return (
-    SERVICE_DESCRIPTORS[service] ?? {
-      label: service,
-      icon: Bell,
-    }
-  );
-}
 
 export default async function ServicesPage(): Promise<JSX.Element> {
   const cookie = await getGuestCookie();
@@ -99,14 +36,12 @@ export default async function ServicesPage(): Promise<JSX.Element> {
   }
 
   const venueRepo = createPrismaVenueRepository(prisma);
-  const venue = await venueRepo.findBySlug(
-    process.env["VENUE_SLUG"] ?? "juniper-house"
-  );
+  const venue = await venueRepo.findBySlug(getVenueSlug());
   if (!venue.ok) {
     return (
       <div className="min-h-dvh flex items-center justify-center px-4 text-center">
         <p className="text-base text-guest-text-muted">
-          We couldn't load the venue.
+          We couldn&apos;t load the venue.
         </p>
       </div>
     );
@@ -129,6 +64,18 @@ export default async function ServicesPage(): Promise<JSX.Element> {
     }
   }
 
+  const serviceRepo = createPrismaServiceRepository(prisma);
+  const catalogResult = await serviceRepo.getFullServiceCatalog(venue.value.id);
+  const fullCatalog = catalogResult.ok ? catalogResult.value : [];
+  const categories = fullCatalog
+    .map((c) => ({
+      ...c,
+      items: c.items.filter((i) => i.state === MenuItemState.AVAILABLE),
+    }))
+    .filter((c) => c.items.length > 0);
+
+  const currency = venue.value.currency || "NPR";
+
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
       <GuestHero venue={venue.value} placeContext={placeContext} />
@@ -148,94 +95,11 @@ export default async function ServicesPage(): Promise<JSX.Element> {
         </Link>
       </div>
 
-      {venue.value.services && venue.value.services.length > 0 && (
-        <div className="mt-6 w-full max-w-4xl mx-auto px-4 animate-in fade-in duration-700 delay-500 ease-guest-entrance">
-          <h2 className="font-display text-xl text-guest-text-primary mb-3 text-center">
-            Our Services
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {venue.value.services.map((service) => {
-              const { label, icon: Icon } = getServiceDescriptor(service);
-              const card = (
-                <Card
-                  key={service}
-                  interactive={true}
-                  className="p-3 flex flex-col items-center text-center"
-                >
-                  <Icon className="w-6 h-6 text-guest-brand mb-2" />
-                  <span className="text-sm font-semibold text-guest-text-primary">
-                    {label}
-                  </span>
-                </Card>
-              );
-
-              if (service === "ROOM_SERVICE_FOOD") {
-                return (
-                  <Link key={service} href="/menu" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "HOUSEKEEPING") {
-                return (
-                  <Link key={service} href="/services/housekeeping" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "MAINTENANCE") {
-                return (
-                  <Link key={service} href="/services/maintenance" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "CONCIERGE") {
-                return (
-                  <Link key={service} href="/services/concierge" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "LAUNDRY") {
-                return (
-                  <Link key={service} href="/services/laundry" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "SPA") {
-                return (
-                  <Link key={service} href="/services/spa" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "LATE_CHECKOUT") {
-                return (
-                  <Link key={service} href="/services/late-checkout" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "WAKE_UP_CALL") {
-                return (
-                  <Link key={service} href="/services/wake-up-call" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-              if (service === "DO_NOT_DISTURB") {
-                return (
-                  <Link key={service} href="/services/do-not-disturb" aria-label={`Open ${label}`}>
-                    {card}
-                  </Link>
-                );
-              }
-
-              return card;
-            })}
-          </div>
+      {categories.length > 0 ? (
+        <ServiceList categories={categories} currency={currency} />
+      ) : (
+        <div className="mt-6 text-center text-sm text-guest-text-muted">
+          No services are currently available.
         </div>
       )}
 
