@@ -37,6 +37,7 @@ import {
   type AuditMeta,
 } from "@/infrastructure/audit/with-audit";
 import type { ActorResolvers } from "@/infrastructure/audit/logger";
+import { deleteUploadedPhoto } from "@/infrastructure/media/delete-upload";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -302,6 +303,18 @@ const patchHandler = async (
     }
   }
 
+  // 6.5. Clean up obsolete photo if photoUrl is being replaced or removed
+  if (updateInput.photoUrl !== undefined) {
+    const existingItem = await menuRepo.getItemWithModifiers(venue.id, itemId);
+    if (
+      existingItem.ok &&
+      existingItem.value.photoUrl &&
+      existingItem.value.photoUrl !== updateInput.photoUrl
+    ) {
+      await deleteUploadedPhoto(existingItem.value.photoUrl);
+    }
+  }
+
   // 7. Update menu item
   const result = await menuRepo.updateItem(venue.id, itemId, updateInput);
   if (!result.ok) {
@@ -419,21 +432,32 @@ const deleteHandler = async (
   }
   const itemId = id.trim();
 
-  const existing = await db.menuItem.findUnique({
-    where: { id: itemId },
-    select: { id: true, venueId: true },
-  });
-
-  if (!existing || existing.venueId !== venue.id) {
+  const menuRepo = createPrismaMenuRepository(db);
+  const existing = await menuRepo.getItemWithModifiers(venue.id, itemId);
+  if (!existing.ok) {
     return NextResponse.json(
       { error: { code: DomainErrorCode.NOT_FOUND, message: "Menu item not found" } },
       { status: 404 }
     );
   }
 
-  await db.menuItem.delete({
-    where: { id: itemId },
-  });
+  if (existing.value.photoUrl) {
+    await deleteUploadedPhoto(existing.value.photoUrl);
+  }
+
+  const deleteResult = await menuRepo.deleteItem(venue.id, itemId);
+  if (!deleteResult.ok) {
+    const status = domainErrorToStatus(deleteResult.error.code);
+    return NextResponse.json(
+      {
+        error: {
+          code: deleteResult.error.code,
+          message: deleteResult.error.message,
+        },
+      },
+      { status }
+    );
+  }
 
   return new NextResponse(null, { status: 204 });
 };

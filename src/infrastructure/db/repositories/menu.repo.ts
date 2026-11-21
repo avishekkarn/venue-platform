@@ -789,6 +789,26 @@ export function createPrismaMenuRepository(
       }
     },
 
+    async deleteItem(venueId: string, itemId: string): Promise<Result<void>> {
+      try {
+        const existing = await client.menuItem.findFirst({
+          where: { id: itemId, venueId },
+        });
+        if (!existing) {
+          return fail(DomainErrorCode.NOT_FOUND, "Item not found");
+        }
+        await client.menuItem.delete({
+          where: { id: itemId },
+        });
+        return ok(undefined);
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
     async setItemState(
       venueId: string,
       itemId: string,

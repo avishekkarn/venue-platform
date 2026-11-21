@@ -99,9 +99,14 @@ describe("getMenuItem domain function", () => {
       removeItemFromCollection: vi.fn(),
       createItem: vi.fn(),
       updateItem: vi.fn(),
+      deleteItem: vi.fn(),
       setItemState: vi.fn(),
       createModifierGroup: vi.fn(),
       createModifierOption: vi.fn(),
+      updateModifierGroup: vi.fn(),
+      deleteModifierGroup: vi.fn(),
+      updateModifierOption: vi.fn(),
+      deleteModifierOption: vi.fn(),
       getFullMenu: vi.fn(),
     };
     deps = { menuRepo: mockRepo };

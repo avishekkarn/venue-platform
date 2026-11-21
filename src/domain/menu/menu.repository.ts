@@ -270,6 +270,10 @@ export interface MenuRepository {
     itemId: string,
     input: UpdateItemInput
   ): Promise<Result<MenuItem>>;
+  deleteItem(
+    venueId: string,
+    itemId: string
+  ): Promise<Result<void>>;
   setItemState(
     venueId: string,
     itemId: string,

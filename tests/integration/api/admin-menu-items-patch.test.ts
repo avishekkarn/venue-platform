@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { mkdtempSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { PATCH, setTestDbClient } from "@/../app/api/admin/menu/items/[id]/route";
+import { PATCH, DELETE, setTestDbClient } from "@/../app/api/admin/menu/items/[id]/route";
 import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
 import { createPrismaStaffRepository } from "@/infrastructure/db/repositories/staff.repo";
 import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
@@ -33,6 +33,7 @@ import { getCsrfCookie } from "@/infrastructure/csrf/cookies";
 describe("PATCH /api/admin/menu/items/[id] Route Tests (8.3.3)", () => {
   let auditDir: string;
   const originalAuditLogDir = process.env["AUDIT_LOG_DIR"];
+  const originalVenueSlug = process.env["VENUE_SLUG"];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -45,6 +46,8 @@ describe("PATCH /api/admin/menu/items/[id] Route Tests (8.3.3)", () => {
     if (existsSync(auditDir)) rmSync(auditDir, { recursive: true, force: true });
     if (originalAuditLogDir === undefined) delete process.env["AUDIT_LOG_DIR"];
     else process.env["AUDIT_LOG_DIR"] = originalAuditLogDir;
+    if (originalVenueSlug === undefined) delete process.env["VENUE_SLUG"];
+    else process.env["VENUE_SLUG"] = originalVenueSlug;
   });
 
   it("returns 401 UNAUTHORIZED when session is missing", async () => {
@@ -238,6 +241,78 @@ describe("PATCH /api/admin/menu/items/[id] Route Tests (8.3.3)", () => {
       expect(json.data.photoUrl).toBe("/uploads/catalog/steak.webp");
       expect(json.data.photoBlurData).toBe("data:image/webp;base64,TESTBLUR");
       expect(json.data.state).toBe("AVAILABLE");
+    });
+  });
+
+  it("deletes menu item on 204 via DELETE and cascades removal", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      const venueSlug = `venue-del-${Date.now()}`;
+      process.env["VENUE_SLUG"] = venueSlug;
+
+      const venueRepo = createPrismaVenueRepository(tx);
+      const venueResult = await venueRepo.create({
+        name: "Delete Test Venue",
+        slug: venueSlug,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const staffRepo = createPrismaStaffRepository(tx);
+      const hash = await hashPassword("password123");
+      const staffResult = await staffRepo.create({
+        venueId,
+        name: "Admin User",
+        username: `admin_${Date.now()}`,
+        passwordHash: hash,
+        roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const staffId = staffResult.value.id;
+
+      const session = await createSession(tx, staffId);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+      const menuRepo = createPrismaMenuRepository(tx);
+      const categoryResult = await menuRepo.createCategory({
+        venueId,
+        name: `Test Cat ${Date.now()}`,
+      });
+      expect(categoryResult.ok).toBe(true);
+      if (!categoryResult.ok) return;
+
+      const createResult = await menuRepo.createItem({
+        venueId,
+        categoryIds: [categoryResult.value.id],
+        name: "Item to Delete",
+        price: "15.00",
+        state: MenuItemState.AVAILABLE,
+      });
+      expect(createResult.ok).toBe(true);
+      if (!createResult.ok) return;
+      const itemId = createResult.value.id;
+
+      const request = new NextRequest(`http://localhost/api/admin/menu/items/${itemId}`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRF-Token": "test-csrf-token",
+          "x-forwarded-for": "127.0.0.1",
+        },
+      });
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: itemId }) });
+      expect(response.status).toBe(204);
+
+      const findResult = await menuRepo.getItemWithModifiers(venueId, itemId);
+      expect(findResult.ok).toBe(false);
+      if (!findResult.ok) {
+        expect(findResult.error.code).toBe(DomainErrorCode.NOT_FOUND);
+      }
     });
   });
 });
