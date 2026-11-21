@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0237 | 2026-11-21 | Milestone 8.5 Task 8.5.3 closed (Reserved Table Customer Protection & Scan Routing) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0236 | 2026-11-21 | Milestone 8.5 Tasks 8.5.1 & 8.5.2 closed (Table & Room Categories Schema, Migration, Seed, Table Management API & Tests) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0235 | 2026-11-21 | Milestones 8.4, 8.4.8 & 8.4.9 closed (Services, Operations Loop & Unified Admin Hub) | PASS | Milestone 8.4, 8.4.8, 8.4.9 | §5.3 |
 | ENTRY-0234 | 2026-11-21 | Milestone 8.3 closed (Menu Management & sync); Milestone 8.4.1 foundation complete | PASS | Milestone 8.3 & 8.4 | §5.3 |
@@ -136,13 +137,51 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0237
+Next entry number: 0238
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.3 — Reserved Table Customer Protection & Scan Routing (`/qr/reserved`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.4 — Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0237 — 2026-11-21 — Milestone 8.5 Task 8.5.3 closed: Reserved Table Customer Protection & Scan Routing (/qr/reserved)
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.3).
+
+**Summary:**
+Milestone 8.5 Task 8.5.3 is completed, tested, and verified.
+1. **Reserved Table Scan Resolver Guard (`app/(guest)/qr/[token]/route.ts`)**:
+   - Updated QR landing resolver to fetch the table and its associated `TableCategory`.
+   - If `category.isReserved === true`:
+     - Checks if the customer holds a valid `venue_guest` cookie matching an active session on that specific reserved table. If matched, the seated guest is admitted to `/menu`.
+     - If the customer does NOT hold the active session cookie (walk-ins, new scanners, third parties), session creation and join requests are strictly blocked, and the request is redirected to `/qr/reserved?table=${number}`.
+2. **Dedicated Reserved Notice Page (`app/(guest)/qr/reserved/page.tsx`)**:
+   - Built a mobile-first, responsive screen with amber accent badge (`Reserved`), shield alert iconography, clear table identifier, polite instructions (*"This table has been reserved for another party. Please speak with our host or team member to be seated, or select an open table."*), one-tap host dialer button (`tel:+97714200000`), and link back to the venue welcome page.
+3. **Integration Tests (`tests/integration/guest/qr-landing.test.ts`)**:
+   - Added integration test proving that scanning a reserved table without an active cookie redirects to `/qr/reserved?table=...` with zero cookie creation, while scanning with an authorized session cookie successfully admits the guest to `/menu`. All 4 QR landing tests pass against PostgreSQL.
+
+**Files changed:**
+- `app/(guest)/qr/[token]/route.ts` (added reserved table check and redirection)
+- `app/(guest)/qr/reserved/page.tsx` (new customer-facing reserved notice and dialer)
+- `tests/integration/guest/qr-landing.test.ts` (integration tests for reserved protection)
+- `docs/ROADMAP.md` (marked Task 8.5.3 complete)
+- `docs/PROGRESS.md` (this entry, ledger, and §7 snapshot)
+
+**Verification:**
+- `pnpm exec tsc --noEmit`: 0 errors.
+- `pnpm test` (Unit Tests): 41 test files, 282 tests passed.
+- `pnpm vitest run --config vitest.integration.config.ts tests/integration/guest/qr-landing.test.ts`: 4 passed.
+
+**Contradiction Check:** None found. Respects guest session isolation, double-submit CSRF, and domain state boundaries.
+
+**Next:** Task 8.5.4 — Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`).
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0236 — 2026-11-21 — Milestone 8.5 Tasks 8.5.1 & 8.5.2 closed: Table & Room Categories Schema, Migration, Seed, Table Management API, End Session Authority & Route Tests
 
@@ -1138,7 +1177,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1 and 8.5.2 are CLOSED (✅). The next active task is **Task 8.5.3 (Reserved Table Customer Protection & Scan Routing (`/qr/reserved`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration admin-tables passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, and 8.5.3 are CLOSED (✅). The next active task is **Task 8.5.4 (Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration qr-landing passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.

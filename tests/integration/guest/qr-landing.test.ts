@@ -25,6 +25,7 @@ function withTxPrismaDelegation(
   const originalRoom = prisma.room;
   const originalCounter = prisma.counter;
   const originalGuestSession = prisma.guestSession;
+  const originalTableCategory = (prisma as any).tableCategory;
 
   (prisma as any).qrToken = tx.qrToken;
   (prisma as any).venue = tx.venue;
@@ -32,6 +33,7 @@ function withTxPrismaDelegation(
   (prisma as any).room = tx.room;
   (prisma as any).counter = tx.counter;
   (prisma as any).guestSession = tx.guestSession;
+  (prisma as any).tableCategory = (tx as any).tableCategory;
 
   return fn().finally(() => {
     (prisma as any).qrToken = originalQrToken;
@@ -40,6 +42,7 @@ function withTxPrismaDelegation(
     (prisma as any).room = originalRoom;
     (prisma as any).counter = originalCounter;
     (prisma as any).guestSession = originalGuestSession;
+    (prisma as any).tableCategory = originalTableCategory;
   });
 }
 
@@ -176,6 +179,105 @@ describe("QR Landing Route Handler Integration Tests", () => {
         expect(response.status).toBe(307);
         expect(response.headers.get("location")).toMatch(/\/qr\/inactive$/);
         expect(response.headers.get("set-cookie")).toBeNull();
+      });
+    });
+  });
+
+  it("scanning a reserved table redirects unauthorized guest to /qr/reserved?table=... (Task 8.5.3)", async () => {
+    await withTransaction(async (tx) => {
+      await withTxPrismaDelegation(tx, async () => {
+        const venueRepo = createPrismaVenueRepository(tx);
+        const qrRepo = createPrismaQrTokenRepository(tx);
+
+        const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+        let venueResult = await venueRepo.findBySlug(venueSlug);
+        let venueId: string;
+        if (!venueResult.ok) {
+          const created = await venueRepo.create({
+            name: "Juniper House",
+            slug: venueSlug,
+            taxRate: "0.1000",
+            modules: ["TABLE"],
+          });
+          venueId = created.ok ? created.value.id : "";
+        } else {
+          venueId = venueResult.value.id;
+        }
+
+        // 1. Create a reserved category
+        const reservedCategory = await (tx as any).tableCategory.create({
+          data: {
+            venueId,
+            name: "VIP Reserved",
+            isReserved: true,
+            sortOrder: 99,
+          },
+        });
+
+        // 2. Create a table assigned to the reserved category
+        const tableNumber = `VIP-RES-${Date.now()}`;
+        const table = await tx.table.create({
+          data: {
+            venueId,
+            number: tableNumber,
+            categoryId: reservedCategory.id,
+            state: "FREE",
+          },
+        });
+
+        // 3. Generate QR token for this reserved table
+        const tokenResult = await qrRepo.generate({
+          venueId,
+          placeType: PlaceType.TABLE,
+          tableId: table.id,
+        });
+        expect(tokenResult.ok).toBe(true);
+        if (!tokenResult.ok) return;
+
+        const token = tokenResult.value.token;
+
+        // 4. Unauthorized guest scans
+        const scanReq = new NextRequest(`http://localhost:3000/qr/${token}`, {
+          method: "GET",
+        });
+
+        const scanRes = await GET(scanReq, {
+          params: Promise.resolve({ token }),
+        });
+
+        expect(scanRes.status).toBe(307);
+        const location = scanRes.headers.get("location") || "";
+        expect(location).toContain("/qr/reserved");
+        expect(location).toContain(`table=${encodeURIComponent(tableNumber)}`);
+
+        // No guest session cookie is created
+        const setCookie = scanRes.headers.get("set-cookie");
+        expect(setCookie).toBeNull();
+
+        // 5. If guest holds an active session on this reserved table, they are admitted to /menu
+        const guestSession = await tx.guestSession.create({
+          data: {
+            venueId,
+            tableId: table.id,
+            placeType: "TABLE",
+            qrTokenId: tokenResult.value.id,
+            token: "authorized-reserved-token",
+          },
+        });
+
+        const authorizedReq = new NextRequest(`http://localhost:3000/qr/${token}`, {
+          method: "GET",
+          headers: {
+            cookie: `venue_guest=${guestSession.token}`,
+          },
+        });
+
+        const authorizedRes = await GET(authorizedReq, {
+          params: Promise.resolve({ token }),
+        });
+
+        expect(authorizedRes.status).toBe(307);
+        expect(authorizedRes.headers.get("location")).toMatch(/\/menu$/);
       });
     });
   });

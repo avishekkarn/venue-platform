@@ -90,6 +90,26 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
 
+    // Check if table is in a reserved category (Task 8.5.3)
+    if (resolved.value.placeType === PlaceType.TABLE) {
+      const table = await prisma.table.findUnique({
+        where: { id: placeId },
+        include: { category: true },
+      });
+
+      if (table?.category?.isReserved) {
+        const guestCookie = request.cookies.get("venue_guest")?.value;
+        if (activeSession && guestCookie === activeSession.token) {
+          return NextResponse.redirect(`${baseUrl}/menu`);
+        }
+
+        const reservedUrl = `${baseUrl}/qr/reserved?table=${encodeURIComponent(
+          table.number
+        )}`;
+        return NextResponse.redirect(reservedUrl);
+      }
+    }
+
     if (activeSession) {
       const guestCookie = request.cookies.get("venue_guest")?.value;
       if (guestCookie === activeSession.token) {
