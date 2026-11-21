@@ -33,6 +33,9 @@ import { AddItemButton } from "./_add-item-button";
  * Reference: ROADMAP.md §12 (8.3.1, 8.3.3), DESIGN.md §4.10.8, D-4.2, D-20.1,
  * D-22.1, D-23.1, D-24.1.
  */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface MenuPageProps {
   readonly searchParams?: Promise<{ id?: string }>;
 }

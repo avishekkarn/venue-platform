@@ -5,6 +5,7 @@ import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
 import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
 import { createPrismaMenuRepository } from "@/infrastructure/db/repositories/menu.repo";
+import { getMenu } from "@/domain/menu/get-menu";
 import { DomainErrorCode } from "@/domain/shared/result";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -47,9 +48,13 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
   }
   const session = sessionResult.value;
 
-  // 2. Fetch items for session venue
+  // 2. Fetch items and structured menu for session venue
   const menuRepo = createPrismaMenuRepository(db);
-  const itemsResult = await menuRepo.listItems(session.venueId);
+  const [itemsResult, menuResult] = await Promise.all([
+    menuRepo.listItems(session.venueId),
+    getMenu({ menuRepo }, session.venueId),
+  ]);
+
   if (!itemsResult.ok) {
     return NextResponse.json(
       {
@@ -68,6 +73,16 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     state: item.state,
   }));
 
-  return NextResponse.json({ data }, { status: 200 });
+  // 4. Structural signature captures category IDs, items, and their sequential order
+  const signature = menuResult.ok
+    ? menuResult.value
+        .map(
+          (cat) =>
+            `${cat.id}:${cat.items.map((it) => `${it.id}:${it.state}`).join(",")}`
+        )
+        .join("|")
+    : "";
+
+  return NextResponse.json({ data, signature }, { status: 200 });
 }
 

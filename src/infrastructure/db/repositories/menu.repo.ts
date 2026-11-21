@@ -839,29 +839,19 @@ export function createPrismaMenuRepository(
           return ok(undefined);
         }
 
-        const current = mics[idx];
-        const neighbor = mics[targetIdx];
-        if (!current || !neighbor) return ok(undefined);
+        const temp = mics[idx]!;
+        mics[idx] = mics[targetIdx]!;
+        mics[targetIdx] = temp;
 
-        let currentNewOrder = neighbor.sortOrder;
-        let neighborNewOrder = current.sortOrder;
-        if (currentNewOrder === neighborNewOrder) {
-          currentNewOrder =
-            direction === "up" ? neighbor.sortOrder - 1 : neighbor.sortOrder + 1;
+        for (let i = 0; i < mics.length; i++) {
+          const row = mics[i]!;
+          if (row.sortOrder !== i) {
+            await client.menuItemCategory.update({
+              where: { id: row.id },
+              data: { sortOrder: i },
+            });
+          }
         }
-
-        await client.menuItemCategory.update({
-          where: { id: current.id },
-          data: { sortOrder: currentNewOrder },
-        });
-        await client.menuItemCategory.update({
-          where: { id: neighbor.id },
-          data: { sortOrder: neighborNewOrder },
-        });
-        await client.menuItem.update({
-          where: { id: current.menuItemId },
-          data: { sortOrder: currentNewOrder },
-        });
 
         return ok(undefined);
       } catch {
@@ -1089,7 +1079,7 @@ export function createPrismaMenuRepository(
           orderBy: { sortOrder: "asc" },
           include: {
             menuItemCategories: {
-              orderBy: { sortOrder: "asc" },
+              orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
               include: {
                 menuItem: {
                   include: {

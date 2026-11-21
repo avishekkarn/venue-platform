@@ -21,6 +21,9 @@ import { formatMoney } from "@/lib/money";
 import { MenuList } from "./_menu-list";
 import { SpecialEventsStrip } from "./_special-events-strip";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Menu",
   robots: {
@@ -110,6 +113,15 @@ export default async function MenuPage(): Promise<JSX.Element> {
       }
     }
   }
+
+  const initialSignature = menuResult.ok
+    ? menuResult.value
+        .map(
+          (cat) =>
+            `${cat.id}:${cat.items.map((it) => `${it.id}:${it.state}`).join(",")}`
+        )
+        .join("|")
+    : "";
 
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
@@ -227,6 +239,7 @@ export default async function MenuPage(): Promise<JSX.Element> {
 (function() {
   var STORAGE_KEY = 'guest_menu_states';
   var initialStates = ${JSON.stringify(currentItemStates)};
+  var currentSignature = ${JSON.stringify(initialSignature)};
   var lastReloadTime = 0;
 
   // Store host_token in localStorage for session recovery
@@ -352,8 +365,21 @@ export default async function MenuPage(): Promise<JSX.Element> {
           }
         }
 
-        // Check if items were added or deleted from the roster
+        // Check if item order or structure changed via signature
         var now = Date.now();
+        if (json.signature && json.signature !== currentSignature) {
+          if (now - lastReloadTime > 2000) {
+            lastReloadTime = now;
+            currentSignature = json.signature;
+            try {
+              sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStatesMap));
+            } catch (e) {}
+            window.location.reload();
+            return;
+          }
+        }
+
+        // Check if items were added or deleted from the roster as fallback
         var cards = document.querySelectorAll('[data-item-id]');
         var domItemIds = {};
         for (var c = 0; c < cards.length; c++) {
@@ -381,7 +407,7 @@ export default async function MenuPage(): Promise<JSX.Element> {
           }
         }
 
-        if (rosterChanged && (now - lastReloadTime > 60000)) {
+        if (rosterChanged && (now - lastReloadTime > 2000)) {
           lastReloadTime = now;
           try {
             sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStatesMap));
