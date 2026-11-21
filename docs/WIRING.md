@@ -41,15 +41,15 @@
 - **Verification:** The form compiles under strict mode (`tsc`), allows selecting multiple categories, sends `categoryIds`, and passes integration tests.
 - **Status:** DISCHARGED (2026-11-16, at `1070693`; verified by the multi-select in `_edit-form.tsx` and the `categoryIds` payload in `POST /api/admin/menu/items` + `PATCH /api/admin/menu/items/[id]`)
 
-### W-0029 — OPEN — Guest menu must render active Special Events collections strip above categories
+### W-0029 — DISCHARGED — Guest menu must render active Special Events collections strip above categories
 
 - **Originated:** Task 8.3.5.DOCS (D-25.2).
 - **Obligation:** D-25.2 defines the `MenuCollection` entity for curated, dated collections (e.g. "Special events", "Holiday Specials"). The guest menu page must query active collections (`listCollections(venueId, new Date())`) and render an above-the-fold horizontal scroll strip of collection items using `next/image` above the category tab strip and item list.
-- **Files and call site:** `app/(guest)/menu/page.tsx`, `src/components/hospitality/menu-collection-strip.tsx`.
+- **Files and call site:** `app/(guest)/menu/page.tsx`, `app/(guest)/menu/_special-events-strip.tsx`.
 - **Satisfied by:** Task 8.3.7a (the guest menu photo rendering and Special Events strip).
 - **Depends on:** D-25.2, D-23.1, `MenuCollection` / `MenuCollectionItem` schema models, SYSTEM.md §4, DESIGN.md §4.8.1.
 - **Verification:** Integration tests prove that active collections within their date range render to guests while expired or future collections are excluded; manual check at 1440×900 and mobile.
-- **Status:** OPEN
+- **Status:** DISCHARGED (Task 8.3.7a.A)
 
 ### W-0028 — DISCHARGED — MenuRepository queries (`getFullMenu`, `getMenu`, `listItemsForCategory`) must traverse `MenuItemCategory` join
 

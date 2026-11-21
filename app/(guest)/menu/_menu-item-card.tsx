@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import Image from "next/image";
 import type { MenuItemView } from "@/domain/menu/menu.repository";
 import { isOrderable } from "@/domain/menu/is-orderable";
 import { Card, CardMedia } from "@/components/ui/card";
@@ -43,17 +44,19 @@ export function MenuItemCard({
         "motion-reduce:transition-none motion-reduce:[transform:none] motion-reduce:shadow-sm",
       )}
     >
-      {hasPhoto ? (
+      {hasPhoto && item.photoUrl ? (
         <CardMedia>
-          {/* Aspect box keeps the image at 16:9; object-cover fills without distortion. */}
-          <img
-            src={item.photoUrl!}
-            alt=""
-            className={cn(
-              "aspect-[16/9] w-full object-cover rounded-t-lg",
-              !orderable && "grayscale",
-            )}
-          />
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-lg">
+            <Image
+              src={item.photoUrl}
+              alt={item.name}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={cn("object-cover", !orderable && "grayscale")}
+              placeholder={item.photoBlurData ? "blur" : "empty"}
+              blurDataURL={item.photoBlurData ?? undefined}
+            />
+          </div>
         </CardMedia>
       ) : null}
 

@@ -17,16 +17,9 @@ import { getMenu } from "@/domain/menu/get-menu";
 import { GuestHero } from "@/components/guest/hero";
 import { JoinRequestScript } from "@/components/guest/join-request-script";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardMedia,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardBody,
-} from "@/components/ui/card";
 import { formatMoney } from "@/lib/money";
 import { MenuList } from "./_menu-list";
+import { SpecialEventsStrip } from "./_special-events-strip";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -80,12 +73,12 @@ export default async function MenuPage(): Promise<JSX.Element> {
 
   const menuRepo = createPrismaMenuRepository(prisma);
   const menuResult = await getMenu({ menuRepo }, venue.value.id);
+  const collectionsResult = await menuRepo.listCollections(
+    venue.value.id,
+    new Date()
+  );
+  const collections = collectionsResult.ok ? collectionsResult.value : [];
   const itemsResult = await menuRepo.listItems(venue.value.id);
-  const featuredItems = itemsResult.ok
-    ? itemsResult.value
-        .filter((item) => item.state === MenuItemState.AVAILABLE)
-        .slice(0, 3)
-    : [];
 
   const orderRepo = createPrismaOrderRepository(prisma);
   const ordersResult = await orderRepo.listForGuestSession(
@@ -155,49 +148,10 @@ export default async function MenuPage(): Promise<JSX.Element> {
           Request the bill
         </Button>
       </div>
-      {featuredItems.length > 0 ? (
-        <div className="mt-6 w-full max-w-4xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
-          <h2 className="font-display text-xl text-guest-text-primary mb-3 text-center">
-            Chef's Picks
-          </h2>
-          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [scrollbar-width:none] hide-scrollbar">
-            {featuredItems.map((item) => {
-              const imageUrl =
-                item.photoUrl ??
-                (item as unknown as { imageUrl?: string | null }).imageUrl;
-
-              return (
-                <Card
-                  key={item.id}
-                  interactive={true}
-                  className="min-w-[160px] max-w-[160px] snap-center overflow-hidden flex flex-col justify-between"
-                >
-                  {imageUrl ? (
-                    <CardMedia>
-                      <img
-                        src={imageUrl}
-                        alt={item.name}
-                        className="h-20 w-full object-cover"
-                      />
-                    </CardMedia>
-                  ) : null}
-                  <CardHeader>
-                    <CardTitle>{item.name}</CardTitle>
-                    {item.description ? (
-                      <CardDescription>{item.description}</CardDescription>
-                    ) : null}
-                  </CardHeader>
-                  <CardBody className="px-3 py-2">
-                    <p className="text-guest-text-primary text-sm font-medium">
-                      {formatMoney(item.price, venue.value.currency)}
-                    </p>
-                  </CardBody>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
+      <SpecialEventsStrip
+        collections={collections}
+        currency={venue.value.currency}
+      />
       <div className="mt-8 max-w-2xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000 ease-guest-entrance">
         <div className="flex flex-row items-start justify-center gap-4 md:gap-8 text-center">
           <div>

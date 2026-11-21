@@ -965,6 +965,8 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 | **8.3.6.C** | **The item edit form's modifier section.** The "Manage modifiers" UI inside the item edit sheet: list the item's modifier groups, add/edit/delete a group, add/edit/delete an option. | ✅ | 8.3.6.B |
 | **8.3.7** | **Verify:** add an item (with a photo and multi-categories), edit it, hide it (HIDDEN), verify the guest menu sees the item, the photo, and the state within 5s. Manual desktop + mobile. The milestone's acceptance test. | ✅ | 8.3.6 |
 | **8.3.7a** | **The guest menu's photo rendering and Special Events strip (D-23.1, D-25.2).** The `MenuItemCard` uses `next/image` with `photoUrl` and `photoBlurData`. The guest menu renders active collections as a "Special events" / "Featured" strip above categories. Discharges **W-0029**. `next.config.mjs` cache headers. | ⬜ | 8.3.7 |
+| **8.3.7a.A** | **The photo pipeline + collections strip.** `next.config.mjs` immutable cache headers; `MenuItemCard` uses `next/image` with blur placeholder; `SpecialEventsStrip` renders active collections above categories; discharges W-0029. | ✅ | 8.3.7 |
+| **8.3.7a.B** | **Hard delete & photo lifecycle cleanup.** Adds `deleteItem` to MenuRepository port and Prisma adapter; `deleteUploadedPhoto` unlinks obsolete WebP images on photo replacement and item deletion; `DELETE /api/admin/menu/items/[id]` with full audit, CSRF, and cascade. | ⬜ | 8.3.7a.A |
 
 ---
 
