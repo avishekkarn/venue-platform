@@ -188,19 +188,6 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
     .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime())
     .slice(0, 5);
 
-  const EXCLUDED_REQUEST_TYPES: readonly HotelService[] = [
-    HotelService.CALL_WAITER,
-    HotelService.REQUEST_BILL,
-  ];
-  const recentRoomRequests = openRequests
-    .filter(
-      (r) =>
-        r.placeType === PlaceType.ROOM &&
-        !EXCLUDED_REQUEST_TYPES.includes(r.serviceType)
-    )
-    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
-    .slice(0, 5);
-
   const activeTableIds = new Set<string>();
   const activeRoomIds = new Set<string>();
   for (const t of tables) {
@@ -209,6 +196,31 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
   for (const r of rooms) {
     if (r.state === RoomState.OCCUPIED) activeRoomIds.add(r.id);
   }
+
+  const activeSessions = await db.guestSession.findMany({
+    where: { venueId: venue.id, endedAt: null },
+    select: { id: true },
+  });
+  const activeSessionIds = new Set(activeSessions.map((s) => s.id));
+
+  // Active open requests must belong to an active guest session if session-bound
+  const activeOpenRequests = openRequests.filter((r) => {
+    if (r.guestSessionId && !activeSessionIds.has(r.guestSessionId)) return false;
+    return true;
+  });
+
+  const EXCLUDED_REQUEST_TYPES: readonly HotelService[] = [
+    HotelService.CALL_WAITER,
+    HotelService.REQUEST_BILL,
+  ];
+  const recentRoomRequests = activeOpenRequests
+    .filter(
+      (r) =>
+        r.placeType === PlaceType.ROOM &&
+        !EXCLUDED_REQUEST_TYPES.includes(r.serviceType)
+    )
+    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+    .slice(0, 5);
 
   let ordersWaiting = 0;
   let inKitchen = 0;
@@ -255,8 +267,8 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
   // enums → their string values (already strings); money → strings.
   // The poll's string builders read this shape.
   const dndRoomIds = new Set<string>();
-  for (const r of openRequests) {
-    if (r.serviceType === HotelService.DO_NOT_DISTURB && r.roomId) {
+  for (const r of activeOpenRequests) {
+    if (r.serviceType === HotelService.DO_NOT_DISTURB && r.roomId && activeRoomIds.has(r.roomId)) {
       if ((r.details as Record<string, unknown>)?.["state"] !== "Off") {
         dndRoomIds.add(r.roomId);
       }
@@ -299,7 +311,7 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
         ordersRevenue: ordersRevenueString,
         servicesRevenue: servicesRevenueString,
         ordersToday: todayOrders.length,
-        requestsOpen: openRequests.length,
+        requestsOpen: activeOpenRequests.length,
         // 8.1.4 — the six sections' data
         recentTableOrders: recentTableOrders.map(serializeOrder),
         recentRoomOrders: recentRoomOrders.map(serializeOrder),

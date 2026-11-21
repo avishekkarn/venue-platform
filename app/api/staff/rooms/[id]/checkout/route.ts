@@ -127,6 +127,20 @@ const postHandler = async (
     }
   }
 
+  // 9. Cancel open service requests for the checked-out room
+  await db.serviceRequest.updateMany({
+    where: {
+      venueId: venue.id,
+      roomId,
+      state: {
+        in: ["SUBMITTED", "ACKNOWLEDGED", "IN_PROGRESS"],
+      },
+    },
+    data: {
+      state: "CANCELLED",
+    },
+  });
+
   return NextResponse.json({ data: { success: true } }, { status: 200 });
 };
 

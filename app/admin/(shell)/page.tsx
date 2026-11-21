@@ -172,20 +172,6 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
     .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime())
     .slice(0, 5);
 
-  // --- Room requests (excluding the attention-signal types) ---
-  const EXCLUDED_REQUEST_TYPES: readonly HotelService[] = [
-    HotelService.CALL_WAITER,
-    HotelService.REQUEST_BILL,
-  ];
-  const recentRoomRequests: ServiceRequest[] = openRequests
-    .filter(
-      (r) =>
-        r.placeType === PlaceType.ROOM &&
-        !EXCLUDED_REQUEST_TYPES.includes(r.serviceType)
-    )
-    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
-    .slice(0, 5);
-
   // --- Occupancy sets (active order/session per place) ---
   const activeTableIds = new Set<string>();
   const activeRoomIds = new Set<string>();
@@ -196,9 +182,35 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
     if (r.state === RoomState.OCCUPIED) activeRoomIds.add(r.id);
   }
 
+  const activeSessions = await prisma.guestSession.findMany({
+    where: { venueId: staff.venueId, endedAt: null },
+    select: { id: true },
+  });
+  const activeSessionIds = new Set(activeSessions.map((s) => s.id));
+
+  // Active open requests must belong to an active guest session if session-bound
+  const activeOpenRequests = openRequests.filter((r) => {
+    if (r.guestSessionId && !activeSessionIds.has(r.guestSessionId)) return false;
+    return true;
+  });
+
+  // --- Room requests (excluding the attention-signal types) ---
+  const EXCLUDED_REQUEST_TYPES: readonly HotelService[] = [
+    HotelService.CALL_WAITER,
+    HotelService.REQUEST_BILL,
+  ];
+  const recentRoomRequests: ServiceRequest[] = activeOpenRequests
+    .filter(
+      (r) =>
+        r.placeType === PlaceType.ROOM &&
+        !EXCLUDED_REQUEST_TYPES.includes(r.serviceType)
+    )
+    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+    .slice(0, 5);
+
   const dndRoomIds = new Set<string>();
-  for (const r of openRequests) {
-    if (r.serviceType === HotelService.DO_NOT_DISTURB && r.roomId) {
+  for (const r of activeOpenRequests) {
+    if (r.serviceType === HotelService.DO_NOT_DISTURB && r.roomId && activeRoomIds.has(r.roomId)) {
       if ((r.details as Record<string, unknown>)?.["state"] !== "Off") {
         dndRoomIds.add(r.roomId);
       }
@@ -273,7 +285,7 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
             subtext={`F&B: ${ordersRevenueString} · Services: ${servicesRevenueString}`}
           />
           <MetricTile label="Orders Today" value={todayOrders.length} />
-          <MetricTile label="Requests Open" value={openRequests.length} />
+          <MetricTile label="Requests Open" value={activeOpenRequests.length} />
         </div>
       </section>
 
@@ -597,7 +609,7 @@ const DASHBOARD_SCRIPT = `
     for (var i = 0; i < rooms.length; i++) {
       var r = rooms[i];
       var occ = activeIds.indexOf(r.id) !== -1;
-      var isDnd = dndIds.indexOf(r.id) !== -1;
+      var isDnd = occ && dndIds.indexOf(r.id) !== -1;
       var dndTag = isDnd
         ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>Do Not Disturb</span>'
         : '';

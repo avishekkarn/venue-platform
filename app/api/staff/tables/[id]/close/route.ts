@@ -127,6 +127,20 @@ const postHandler = async (
     }
   }
 
+  // 9. Cancel open service requests for the closed table
+  await db.serviceRequest.updateMany({
+    where: {
+      venueId: venue.id,
+      tableId,
+      state: {
+        in: ["SUBMITTED", "ACKNOWLEDGED", "IN_PROGRESS"],
+      },
+    },
+    data: {
+      state: "CANCELLED",
+    },
+  });
+
   return NextResponse.json({ data: { success: true } }, { status: 200 });
 };
 
