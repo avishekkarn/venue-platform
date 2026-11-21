@@ -63,6 +63,19 @@ export interface ServiceItemView {
   readonly order: number;
 }
 
+export interface CreateServiceItemInput {
+  readonly venueId: string;
+  readonly categoryId: string;
+  readonly name: string;
+  readonly description?: string | null;
+  readonly photoUrl?: string | null;
+  readonly photoBlurData?: string | null;
+  readonly price: string;
+  readonly estimatedMinutes?: number | null;
+  readonly state?: MenuItemState;
+  readonly sortOrder?: number;
+}
+
 export interface ServiceRepository {
   listCategories(venueId: string): Promise<Result<ServiceCategory[]>>;
   listItems(venueId: string): Promise<Result<ServiceItem[]>>;
@@ -72,4 +85,5 @@ export interface ServiceRepository {
   ): Promise<Result<ServiceItem[]>>;
   getFullServiceCatalog(venueId: string): Promise<Result<ServiceCategoryView[]>>;
   getItemById(venueId: string, itemId: string): Promise<Result<ServiceItem>>;
+  createServiceItem(input: CreateServiceItemInput): Promise<Result<ServiceItem>>;
 }

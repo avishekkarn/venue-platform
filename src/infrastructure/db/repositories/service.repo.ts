@@ -25,9 +25,11 @@ import {
   type ServiceItem,
   type ServiceCategoryView,
   type ServiceItemView,
+  type CreateServiceItemInput,
 } from "@/domain/services/service.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import { ok, fail, DomainErrorCode, type Result } from "@/domain/shared/result";
+import { isUniqueConstraintError } from "@/infrastructure/db/errors";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -38,6 +40,15 @@ const PRISMA_TO_DOMAIN_MENU_ITEM_STATE: Record<
   [PrismaMenuItemState.AVAILABLE]: MenuItemState.AVAILABLE,
   [PrismaMenuItemState.UNAVAILABLE]: MenuItemState.UNAVAILABLE,
   [PrismaMenuItemState.HIDDEN]: MenuItemState.HIDDEN,
+};
+
+const DOMAIN_TO_PRISMA_MENU_ITEM_STATE: Record<
+  MenuItemState,
+  PrismaMenuItemState
+> = {
+  [MenuItemState.AVAILABLE]: PrismaMenuItemState.AVAILABLE,
+  [MenuItemState.UNAVAILABLE]: PrismaMenuItemState.UNAVAILABLE,
+  [MenuItemState.HIDDEN]: PrismaMenuItemState.HIDDEN,
 };
 
 function mapServiceCategory(raw: PrismaServiceCategory): ServiceCategory {
@@ -184,6 +195,38 @@ export function createPrismaServiceRepository(
           DomainErrorCode.INTERNAL,
           `Failed to get service item by id: ${err instanceof Error ? err.message : String(err)}`
         );
+      }
+    },
+
+    async createServiceItem(
+      input: CreateServiceItemInput
+    ): Promise<Result<ServiceItem>> {
+      try {
+        const item = await client.serviceItem.create({
+          data: {
+            venueId: input.venueId,
+            categoryId: input.categoryId,
+            name: input.name,
+            description: input.description ?? null,
+            photoUrl: input.photoUrl ?? null,
+            photoBlurData: input.photoBlurData ?? null,
+            price: input.price,
+            estimatedMinutes: input.estimatedMinutes ?? null,
+            sortOrder: input.sortOrder ?? 0,
+            state: input.state
+              ? DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state]
+              : PrismaMenuItemState.AVAILABLE,
+          },
+        });
+        return ok(mapServiceItem(item));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Service item '${input.name}' violates unique constraint`
+          );
+        }
+        return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
       }
     },
   };

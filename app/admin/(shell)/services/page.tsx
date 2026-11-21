@@ -15,6 +15,7 @@ import {
 import { Badge, type BadgeStatus } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/money";
 import { MenuItemState } from "@/domain/menu/menu.repository";
+import { AddServiceButton } from "./_add-service-button";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -50,14 +51,10 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           Services
         </h1>
         <div className="flex items-center gap-4">
-          <button
-            type="button"
-            disabled
-            title="Available in 8.4.3"
-            className="h-9 px-3 rounded-md text-sm font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-          >
-            Add service
-          </button>
+          <AddServiceButton
+            categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+            currency={currency}
+          />
         </div>
       </header>
 
