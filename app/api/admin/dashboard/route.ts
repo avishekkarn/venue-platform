@@ -199,7 +199,7 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
 
   const activeSessions = await db.guestSession.findMany({
     where: { venueId: venue.id, endedAt: null },
-    select: { id: true },
+    select: { id: true, placeType: true, tableId: true, roomId: true },
   });
   const activeSessionIds = new Set(activeSessions.map((s) => s.id));
 
@@ -258,10 +258,64 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
     }
   }
 
-  const revenueToday = ordersRevenue + servicesRevenue;
+  // Room stays revenue today (active room sessions or completed room sessions today)
+  const rawRoomsWithCategory = await db.room.findMany({
+    where: { venueId: venue.id },
+    include: { category: true },
+  });
+
+  const roomBasePriceByRoomId = new Map<string, number>();
+  for (const r of rawRoomsWithCategory) {
+    if (r.category?.basePrice) {
+      roomBasePriceByRoomId.set(r.id, Number(r.category.basePrice));
+    }
+  }
+
+  const roomSessionsToday = await db.guestSession.findMany({
+    where: {
+      venueId: venue.id,
+      placeType: "ROOM",
+      roomId: { not: null },
+      OR: [
+        { endedAt: null },
+        { endedAt: { gte: todayStart } },
+      ],
+    },
+    select: {
+      roomId: true,
+    },
+  });
+
+  let roomsRevenue = 0;
+  for (const sess of roomSessionsToday) {
+    if (sess.roomId) {
+      roomsRevenue += roomBasePriceByRoomId.get(sess.roomId) ?? 0;
+    }
+  }
+
+  const revenueToday = ordersRevenue + servicesRevenue + roomsRevenue;
   const revenueTodayString = revenueToday.toFixed(2);
   const ordersRevenueString = ordersRevenue.toFixed(2);
   const servicesRevenueString = servicesRevenue.toFixed(2);
+  const roomsRevenueString = roomsRevenue.toFixed(2);
+
+  const ATTENTION_TYPES: readonly HotelService[] = [
+    HotelService.CALL_WAITER,
+    HotelService.REQUEST_BILL,
+  ];
+  const recentAttentionRequests = activeOpenRequests
+    .filter((r) => ATTENTION_TYPES.includes(r.serviceType))
+    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+    .slice(0, 5);
+
+  const recentTableRequests = activeOpenRequests
+    .filter((r) => r.placeType === PlaceType.TABLE)
+    .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+    .slice(0, 5);
+
+  const activeSessionsCount = activeSessions.length;
+  const activeTableSessionsCount = activeSessions.filter((s) => s.placeType === "TABLE").length;
+  const activeRoomSessionsCount = activeSessions.filter((s) => s.placeType === "ROOM").length;
 
   // Serialize each order/request to plain JSON. Dates → ISO strings;
   // enums → their string values (already strings); money → strings.
@@ -310,12 +364,18 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
         revenueToday: revenueTodayString,
         ordersRevenue: ordersRevenueString,
         servicesRevenue: servicesRevenueString,
+        roomsRevenue: roomsRevenueString,
         ordersToday: todayOrders.length,
         requestsOpen: activeOpenRequests.length,
+        activeSessionsCount,
+        activeTableSessionsCount,
+        activeRoomSessionsCount,
         // 8.1.4 — the six sections' data
         recentTableOrders: recentTableOrders.map(serializeOrder),
         recentRoomOrders: recentRoomOrders.map(serializeOrder),
         recentRoomRequests: recentRoomRequests.map(serializeRequest),
+        recentAttentionRequests: recentAttentionRequests.map(serializeRequest),
+        recentTableRequests: recentTableRequests.map(serializeRequest),
         tables: tables.map((t) => ({ id: t.id, number: t.number, state: t.state })),
         rooms: rooms.map((r) => ({ id: r.id, number: r.number, state: r.state })),
         activeTableIds: [...activeTableIds],
