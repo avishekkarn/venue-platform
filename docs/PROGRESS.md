@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0235 | 2026-11-21 | Milestones 8.4, 8.4.8 & 8.4.9 closed (Services, Operations Loop & Unified Admin Hub) | PASS | Milestone 8.4, 8.4.8, 8.4.9 | §5.3 |
 | ENTRY-0234 | 2026-11-21 | Milestone 8.3 closed (Menu Management & sync); Milestone 8.4.1 foundation complete | PASS | Milestone 8.3 & 8.4 | §5.3 |
 | ENTRY-0233 | 2026-11-16 | 8.3.5b.B committed at 1070693; F-0005 discharged (env); baselines re-recorded | PASS | Milestone 8.3 | §5.3 |
 | ENTRY-0232 | 2026-11-16 | Roadmap restructured: Services Management (8.4); 8.5–8.9 renumbered; the four new decisions | STRUCTURAL | Milestone 8.4 | §5.3 |
@@ -134,13 +135,58 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0235
+Next entry number: 0236
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.4 (Services Management). Current task: Task 8.4.2 — The services list screen (app/admin/services/page.tsx).
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.1 — GET / POST / PATCH /api/admin/tables.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0235 — 2026-11-21 — Milestones 8.4, 8.4.8 & 8.4.9 closed: Services Management, 3-Layer Operations Loop, Unified Staff & Admin Hub, Collapsible Progress Tracking
+
+**Status:** PASS
+
+**Task:** Milestones 8.4 (Tasks 8.4.1–8.4.7d), 8.4.8 (Tasks 8.4.8a–8.4.8), and 8.4.9 (Tasks 8.4.9a–8.4.9).
+
+**Summary:**
+Milestones 8.4, 8.4.8, and 8.4.9 are fully completed, tested, verified, and closed.
+1. **Milestone 8.4 (Services Management)**: Operators manage service categories, items, pricing (NPR), estimated duration, photos (Sharp WebP 800px pipeline), and 3-state availability. Guests navigate the dynamic mobile catalog, dedicated mobile-first service forms, and generic detail form (`/services/[id]`) with real-time 5-second polling synchronization (`GET /api/guest/services/states`).
+2. **Milestone 8.4.8 (The Enhanced Guest-Staff-Admin Operational Loop)**: Full mobile menu redesign with quick-action bar, direct front desk dialing (`tel:`), order history view (`/orders`), instant "Call Waiter" routing and staff alerts, consolidated billing folio system (`GET /api/guest/bill` accumulating F&B + payable services), and "Do Not Disturb" (DND) status indicators on room maps with auto-clear on room checkout and table close.
+3. **Milestone 8.4.9 (The Unified Staff & Admin Operations Hub)**: Admin shell hierarchy alignment with persistent 240px sidebar and explicit "← Back to Dashboard" breadcrumbs across all admin views; staff high-priority alert banner and pulsating badges for quick requests; Active Sessions hub (`/admin/orders/active`) consolidating tables and rooms with elapsed time, active orders, and open requests; Completed Orders & Folios ledger (`/admin/orders/completed`) displaying itemized billing breakdowns (F&B + Services); and dashboard consolidated revenue metrics.
+4. **Progress Tracking Mobile Experience**: Mobile collapsible dropdown cards implemented on both Order Progress Tracking (`/order/[id]/track`) and Requests Tracking (`/requests`), starting completed/past cards collapsed and active cards expanded with live status pills and steppers, resolving excessive vertical scrolling.
+
+**Files changed:**
+- `app/(guest)/menu/page.tsx`, `_menu-item-card.tsx` (mobile-first menu redesign, quick actions, front desk dialing)
+- `app/(guest)/orders/page.tsx`, `_orders-client.tsx` (guest order history view with live polling)
+- `app/(guest)/services/page.tsx`, `app/(guest)/services/*` (dedicated & generic mobile forms, dynamic pricing)
+- `app/(guest)/order/[id]/track/page.tsx` (collapsible dropdown cards with live status badges and polling)
+- `src/components/guest/requests-client.tsx` (collapsible dropdown cards for active and historical requests)
+- `app/api/guest/bill/route.ts` (consolidated billing route for room and table sessions)
+- `app/api/guest/call/route.ts` (instant Call Waiter and Request Bill dispatch with session persistence)
+- `app/api/staff/requests/route.ts`, `app/staff/page.tsx` (staff call routing, attention banner, pulsating badges, map callouts)
+- `src/components/staff/table-map-cell.tsx`, `src/components/staff/room-map-cell.tsx` (callout and DND tags)
+- `app/admin/(shell)/orders/active/page.tsx` (active sessions hub)
+- `app/admin/(shell)/orders/completed/page.tsx` (completed orders, requests, and closed session folios)
+- `app/api/admin/orders/export/route.ts` (CSV export updated with unified session datasets)
+- `app/api/admin/dashboard/route.ts`, `app/admin/(shell)/page.tsx` (consolidated revenue metrics and DND session guard)
+- `app/admin/(shell)/*` (consistent "← Back to Dashboard" navigation across all admin sections)
+- `docs/ROADMAP.md` (all tasks 8.4.1–8.4.9 marked complete)
+- `docs/PROGRESS.md` (this entry, §7 snapshot, Appendix A ledger)
+
+**Verification:**
+- `pnpm exec tsc --noEmit`: 0 errors.
+- `pnpm test` (Unit Tests): 41 test files, 282 tests passed.
+- `pnpm build`: Next.js production build succeeded with exit code 0 (all 54 routes compiled).
+- Commits: `823ff6c`, `6684ebd`, `110a648` pushed to `origin/main`.
+
+**Contradiction Check:** None found. Respects all design decisions (D-19, D-20, D-21, D-24, D-25) and architecture boundaries.
+
+**Next:** Milestone 8.5 (Tables and Rooms) — Task 8.5.1: `GET` / `POST` / `PATCH /api/admin/tables`.
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0234 — 2026-11-21 — Milestone 8.3 closed (Menu Management & sync); Milestone 8.4.1 foundation complete (D-21.1)
 
@@ -1041,7 +1087,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8.3 (Menu Management) is CLOSED (✅). Milestone 8.4 (Services Management) is in progress. Task 8.4.1 (The ServiceCategory and ServiceItem schema migration per D-21.1) is ✅ (migration `20261121071603_add_service_items` applied; 9 hotel services seeded with `sortOrder: 0..8`). Next task is 8.4.2 — The services list screen (`app/admin/services/page.tsx`). Baselines as of 2026-11-21 (commit `fc43636`): tsc 0, unit 41 test files / 282 tests passed, integration 28 API suites / 220 tests passed, production build succeeded.
+**Current status:** Phase 8 Milestones 8.1 (Dashboard), 8.2 (Order Management), 8.3 (Menu Management), 8.4 (Services Management), 8.4.8 (Enhanced Guest-Staff-Admin Operational Loop), and 8.4.9 (Unified Staff & Admin Operations Hub) are ALL CLOSED (✅). The next active milestone is **Milestone 8.5 (Tables and Rooms)**, starting with Task 8.5.1 (`GET` / `POST` / `PATCH /api/admin/tables`). Baselines as of 2026-11-21 (commit `110a648`): tsc 0 errors, unit 41 test files / 282 tests passed, integration 28 API suites / 220 tests passed, production build succeeded (54 routes).
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
@@ -1054,7 +1100,9 @@ Updated at the end of every session.
 - `withAudit` is the mandatory wrapper for every Phase 8 admin route (BUILD.md §6.11, W-0021).
 - `audit/export` is the first fully-wrapped admin route; `qr/generate` is the second. Both are the Phase 8 template.
 - Milestone 8.3 closed: Sharp WebP 800px upload pipeline (8.3.0), menu list (8.3.1), create item sheet (8.3.2/8.3.2a), edit item & hard delete with unlinking (8.3.3/8.3.3.FIX), 3-state toggle (8.3.4), multi-category join architecture (8.3.5b), category CRUD & sheet (8.3.5/8.3.5a), menu collections with date scheduling (8.3.5c), next/image blur rendering with Special Events strip (8.3.7a), and sequential reordering with zero ties and auto-increment sortOrder (8.3.8). W-0005, W-0028, W-0029, and W-0030 are all DISCHARGED.
-- Milestone 8.4 foundation (8.4.1) closed: `ServiceCategory` and `ServiceItem` Prisma models added, migration `20261121071603_add_service_items` applied, `ServiceRequest.serviceItemId` relation linked, and 9 hotel services seeded with `sortOrder: 0..8`.
+- Milestone 8.4 closed: `ServiceCategory` and `ServiceItem` Prisma models added (8.4.1, D-21.1), admin services management screen (8.4.2), POST/PATCH item routes with WebP photo pipeline and 3-state availability (8.4.3–8.4.5), category CRUD (8.4.6), guest services dynamic catalog with next/image blur placeholders (8.4.7a), dedicated mobile-first forms (8.4.7b), generic custom service detail form (8.4.7c), and real-time 5-second polling synchronization (`GET /api/guest/services/states`, 8.4.7d).
+- Milestone 8.4.8 closed: Mobile menu redesign with luxury styling and quick-action bar (8.4.8a), guest orders history view (`/orders`, 8.4.8b), instant "Call Waiter" routing and staff alerts (8.4.8c), consolidated billing folio system (`GET /api/guest/bill`, 8.4.8d), and "Do Not Disturb" (DND) status indicators on room maps with auto-clear on room checkout and table close (8.4.8e).
+- Milestone 8.4.9 closed: Admin shell hierarchy alignment with persistent sidebar and "← Back to Dashboard" navigation (8.4.9a), staff high-priority alert banner and pulsating badges (8.4.9b), Active Sessions hub (`/admin/orders/active`, 8.4.9c), Completed Orders & Folios ledger (`/admin/orders/completed`, 8.4.9d), dashboard consolidated revenue metrics (8.4.9e), and collapsible dropdown progress tracking cards on both `/order/[id]/track` and `/requests`.
 
 ## 8. How the File Evolves
 
@@ -1084,29 +1132,27 @@ All five tasks ✅ Complete: 8.2.1 through 8.2.5.
 
 All tasks ✅ Complete: 8.3.0 through 8.3.8.
 
-*Milestone 8.4 — Services Management (CURRENT)*
+*Milestone 8.4 — Services Management (CLOSED)*
 
-| ID | Task | Status |
-|----|------|--------|
-| 8.4.1 | Add `ServiceCategory` and `ServiceItem` schema + migration (D-21.1) | ✅ |
-| 8.4.2 | Add the services list screen (`app/admin/services/page.tsx`) | ⬜ |
-| 8.4.3 | Add `POST /api/admin/services/items` | ⬜ |
-| 8.4.3a | Add admin Add/Edit Service form's photo box | ⬜ |
-| 8.4.4 | Add `PATCH /api/admin/services/items/[id]` | ⬜ |
-| 8.4.5 | Add service state toggle (`POST /api/admin/services/items/[id]/state`) | ⬜ |
-| 8.4.6 | Add service category CRUD (`/api/admin/services/categories`) | ⬜ |
-| 8.4.7 | Verify: add service, edit, hide, guest sees within 5s | ⬜ |
-| 8.4.7a | Guest services page photo rendering and dynamic catalog integration | ⬜ |
+All tasks ✅ Complete: 8.4.1 through 8.4.7d, and 8.4.7.
 
-*Milestone 8.5 — Tables and Rooms*
+*Milestone 8.4.8 — The Enhanced Guest-Staff-Admin Operational Loop (CLOSED)*
 
-| ID | Task | Status |
-|----|------|--------|
-| 8.5.1 | Add `GET/POST/PATCH /api/admin/tables` | ⬜ |
-| 8.5.2 | Add `GET/POST/PATCH /api/admin/rooms` | ⬜ |
-| 8.5.3 | Add the Tables/Rooms screens with QR preview | ⬜ |
-| 8.5.4 | Add batch QR print view | ⬜ |
-| 8.5.5 | Verify: add table, generate QR, print sheet | ⬜ |
+All tasks ✅ Complete: 8.4.8a through 8.4.8.
+
+*Milestone 8.4.9 — The Unified Staff & Admin Operations Hub (CLOSED)*
+
+All tasks ✅ Complete: 8.4.9a through 8.4.9.
+
+*Milestone 8.5 — Tables and Rooms (CURRENT)*
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| 8.5.1 | Add `GET/POST/PATCH /api/admin/tables` | ⬜ | 8.4.9 |
+| 8.5.2 | Add `GET/POST/PATCH /api/admin/rooms` | ⬜ | 8.5.1 |
+| 8.5.3 | Add the Tables/Rooms screens with QR preview | ⬜ | 8.5.2 |
+| 8.5.4 | Add batch QR print view | ⬜ | 8.5.3 |
+| 8.5.5 | Verify: add table, generate QR, print sheet | ⬜ | 8.5.4 |
 
 *Milestone 8.6 — Staff Management*
 
