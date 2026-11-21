@@ -149,6 +149,8 @@ model Venue {
 
   modules        VenueModuleToggle[]
   services       VenueServiceToggle[]
+  tableCategories   TableCategory[]
+  roomCategories    RoomCategory[]
   tables         Table[]
   rooms          Room[]
   counter        Counter?
@@ -235,18 +237,56 @@ model ServiceItem {
 }
 
 // ------------------------------------------------------------
-// Places — Table, Room, Counter (Task 2.1.3)
+// Places — Table, Room, Counter (Task 2.1.3 & Milestone 8.5)
 // ------------------------------------------------------------
 
-model Table {
-  id        String     @id @default(uuid())
-  venueId   String
-  number    String
-  state     TableState @default(FREE)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+model TableCategory {
+  id          String   @id @default(uuid())
+  venueId     String
+  name        String
+  description String?
+  isReserved  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue  Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  tables Table[]
+
+  @@unique([venueId, name])
+  @@index([venueId, sortOrder])
+  @@map("table_categories")
+}
+
+model RoomCategory {
+  id          String   @id @default(uuid())
+  venueId     String
+  name        String
+  description String?
+  basePrice   Decimal  @db.Decimal(10, 2) @default(0)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  venue Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  rooms Room[]
+
+  @@unique([venueId, name])
+  @@index([venueId, sortOrder])
+  @@map("room_categories")
+}
+
+model Table {
+  id         String         @id @default(uuid())
+  venueId    String
+  categoryId String?
+  number     String
+  state      TableState     @default(FREE)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  venue    Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  category TableCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   qrTokens QrToken[]
   orders   Order[]
   requests ServiceRequest[]
@@ -254,18 +294,21 @@ model Table {
   @@unique([venueId, number])
   @@index([venueId])
   @@index([venueId, state])
+  @@index([categoryId])
   @@map("tables")
 }
 
 model Room {
-  id        String    @id @default(uuid())
-  venueId   String
-  number    String
-  state     RoomState @default(VACANT)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String        @id @default(uuid())
+  venueId    String
+  categoryId String?
+  number     String
+  state      RoomState     @default(VACANT)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
-  venue    Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue    Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  category RoomCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   qrTokens QrToken[]
   orders   Order[]
   requests ServiceRequest[]
@@ -273,6 +316,7 @@ model Room {
   @@unique([venueId, number])
   @@index([venueId])
   @@index([venueId, state])
+  @@index([categoryId])
   @@map("rooms")
 }
 

@@ -1148,7 +1148,7 @@ All tasks ✅ Complete: 8.4.9a through 8.4.9.
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 8.5.1 | Table & Room Categories Schema + Migration (`TableCategory` & `RoomCategory`) | ⬜ | 8.4.9 |
+| 8.5.1 | Table & Room Categories Schema + Migration (`TableCategory` & `RoomCategory`) | ✅ | 8.4.9 |
 | 8.5.2 | Table Categories & Table Management API (`/api/admin/tables`) | ⬜ | 8.5.1 |
 | 8.5.3 | Reserved Table Customer Protection & Scan Routing (`/qr/reserved`) | ⬜ | 8.5.2 |
 | 8.5.4 | Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`) | ⬜ | 8.5.3 |

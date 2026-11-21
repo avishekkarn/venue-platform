@@ -28,6 +28,7 @@ function mapTable(raw: PrismaTable): Table {
   return {
     id: raw.id,
     venueId: raw.venueId,
+    categoryId: raw.categoryId ?? null,
     number: raw.number,
     state: raw.state as TableState,
     createdAt: raw.createdAt,
@@ -109,6 +110,7 @@ export function createPrismaTableRepository(
         const table = await client.table.create({
           data: {
             venueId,
+            categoryId: input.categoryId ?? undefined,
             number: input.number,
             state: input.state ? (input.state as unknown as PrismaTableState) : undefined,
           },

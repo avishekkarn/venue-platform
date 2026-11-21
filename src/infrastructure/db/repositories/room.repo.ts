@@ -28,6 +28,7 @@ function mapRoom(raw: PrismaRoom): Room {
   return {
     id: raw.id,
     venueId: raw.venueId,
+    categoryId: raw.categoryId ?? null,
     number: raw.number,
     state: raw.state as RoomState,
     createdAt: raw.createdAt,
@@ -109,6 +110,7 @@ export function createPrismaRoomRepository(
         const room = await client.room.create({
           data: {
             venueId,
+            categoryId: input.categoryId ?? undefined,
             number: input.number,
             state: input.state ? (input.state as unknown as PrismaRoomState) : undefined,
           },

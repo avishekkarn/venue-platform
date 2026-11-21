@@ -22,6 +22,7 @@ export { TableState as TableStatus };
 export interface Table {
   id: string;
   venueId: string;
+  categoryId?: string | null;
   number: string;
   state: TableState;
   createdAt: Date;
@@ -30,6 +31,7 @@ export interface Table {
 
 export interface CreateTableInput {
   number: string;
+  categoryId?: string | null;
   state?: TableState;
 }
 

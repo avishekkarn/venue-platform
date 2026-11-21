@@ -160,25 +160,174 @@ export async function seedVenue(): Promise<{
   throw new Error(existingResult.error.message);
 }
 
+const SEED_TABLE_CATEGORIES = [
+  {
+    name: "Indoor Dining",
+    description: "Main indoor dining hall",
+    isReserved: false,
+    sortOrder: 0,
+  },
+  {
+    name: "Patio & Garden",
+    description: "Open-air patio and garden seating",
+    isReserved: false,
+    sortOrder: 1,
+  },
+  {
+    name: "VIP Lounge",
+    description: "Exclusive private VIP dining section",
+    isReserved: false,
+    sortOrder: 2,
+  },
+  {
+    name: "Reserved",
+    description: "Designated reserved tables for bookings and VIP guests",
+    isReserved: true,
+    sortOrder: 3,
+  },
+];
+
+const SEED_ROOM_CATEGORIES = [
+  {
+    name: "NON AC",
+    description: "Standard comfort room with fresh mountain ventilation",
+    basePrice: "1200.00",
+    sortOrder: 0,
+  },
+  {
+    name: "AC",
+    description: "Climate-controlled room with modern air conditioning",
+    basePrice: "1800.00",
+    sortOrder: 1,
+  },
+  {
+    name: "DELUXE",
+    description: "Spacious deluxe room with premium furnishings",
+    basePrice: "2500.00",
+    sortOrder: 2,
+  },
+  {
+    name: "SUPER DELUXE",
+    description: "Luxury super deluxe room with private balcony view",
+    basePrice: "3500.00",
+    sortOrder: 3,
+  },
+  {
+    name: "DOUBLE BED ROOM NON AC",
+    description: "Two double beds room with scenic window",
+    basePrice: "2000.00",
+    sortOrder: 4,
+  },
+  {
+    name: "DOUBLE BED ROOM AC",
+    description: "Two double beds room with central air conditioning",
+    basePrice: "2800.00",
+    sortOrder: 5,
+  },
+  {
+    name: "ROOM FOR GROUP",
+    description: "Spacious multi-guest suite ideal for families and touring groups",
+    basePrice: "4500.00",
+    sortOrder: 6,
+  },
+  {
+    name: "NIGHT SUITES",
+    description: "Executive honeymoon and luxury suite with private lounge",
+    basePrice: "6000.00",
+    sortOrder: 7,
+  },
+];
+
 /**
- * Seeds tables and rooms for the specified venue.
- * Idempotent: checks for existence by (venueId, number) before creating.
+ * Seeds tables, rooms, and their categories for the specified venue.
+ * Idempotent: checks for existence before creating, updates categories.
  */
 export async function seedTablesAndRooms(venueId: string): Promise<void> {
+  console.log("Seeding table and room categories...");
+
+  const tableCategoryMap = new Map<string, string>();
+  for (const cat of SEED_TABLE_CATEGORIES) {
+    const tableCat = await prisma.tableCategory.upsert({
+      where: {
+        venueId_name: {
+          venueId,
+          name: cat.name,
+        },
+      },
+      update: {
+        description: cat.description,
+        isReserved: cat.isReserved,
+        sortOrder: cat.sortOrder,
+      },
+      create: {
+        venueId,
+        name: cat.name,
+        description: cat.description,
+        isReserved: cat.isReserved,
+        sortOrder: cat.sortOrder,
+      },
+    });
+    tableCategoryMap.set(cat.name, tableCat.id);
+  }
+
+  const roomCategoryMap = new Map<string, string>();
+  for (const cat of SEED_ROOM_CATEGORIES) {
+    const roomCat = await prisma.roomCategory.upsert({
+      where: {
+        venueId_name: {
+          venueId,
+          name: cat.name,
+        },
+      },
+      update: {
+        description: cat.description,
+        basePrice: cat.basePrice,
+        sortOrder: cat.sortOrder,
+      },
+      create: {
+        venueId,
+        name: cat.name,
+        description: cat.description,
+        basePrice: cat.basePrice,
+        sortOrder: cat.sortOrder,
+      },
+    });
+    roomCategoryMap.set(cat.name, roomCat.id);
+  }
+
   console.log("Seeding tables and rooms...");
   const tableRepo = createPrismaTableRepository(prisma);
   const roomRepo = createPrismaRoomRepository(prisma);
 
+  // Table category assignments
+  const getTableCategoryName = (num: string): string => {
+    const n = parseInt(num, 10);
+    if (n >= 1 && n <= 6) return "Indoor Dining";
+    if (n >= 7 && n <= 10) return "Patio & Garden";
+    if (n === 11) return "VIP Lounge";
+    return "Reserved"; // Table 12
+  };
+
   for (const number of TABLE_NUMBERS) {
+    const categoryName = getTableCategoryName(number);
+    const categoryId = tableCategoryMap.get(categoryName);
+
     const existing = await tableRepo.findByNumber(venueId, number);
     if (existing.ok) {
-      console.log(`Table ${number} already exists.`);
+      if (categoryId && existing.value.categoryId !== categoryId) {
+        await prisma.table.update({
+          where: { id: existing.value.id },
+          data: { categoryId },
+        });
+      }
+      console.log(`Table ${number} already exists (category: ${categoryName}).`);
       continue;
     }
 
     if (existing.error.code === DomainErrorCode.NOT_FOUND) {
       const created = await tableRepo.create(venueId, {
         number,
+        categoryId,
         state: TableState.FREE,
       });
       if (!created.ok) {
@@ -187,7 +336,7 @@ export async function seedTablesAndRooms(venueId: string): Promise<void> {
         );
         throw new Error(created.error.message);
       }
-      console.log(`Created table ${number} (id: ${created.value.id}).`);
+      console.log(`Created table ${number} (id: ${created.value.id}, category: ${categoryName}).`);
       continue;
     }
 
@@ -197,16 +346,41 @@ export async function seedTablesAndRooms(venueId: string): Promise<void> {
     throw new Error(existing.error.message);
   }
 
+  // Room category assignments
+  const getRoomCategoryName = (num: string): string => {
+    switch (num) {
+      case "401": return "SUPER DELUXE";
+      case "402": return "DELUXE";
+      case "403": return "AC";
+      case "404": return "NON AC";
+      case "411": return "DOUBLE BED ROOM AC";
+      case "412": return "DOUBLE BED ROOM NON AC";
+      case "413": return "ROOM FOR GROUP";
+      case "414": return "NIGHT SUITES";
+      default: return "DELUXE";
+    }
+  };
+
   for (const number of ROOM_NUMBERS) {
+    const categoryName = getRoomCategoryName(number);
+    const categoryId = roomCategoryMap.get(categoryName);
+
     const existing = await roomRepo.findByNumber(venueId, number);
     if (existing.ok) {
-      console.log(`Room ${number} already exists.`);
+      if (categoryId && existing.value.categoryId !== categoryId) {
+        await prisma.room.update({
+          where: { id: existing.value.id },
+          data: { categoryId },
+        });
+      }
+      console.log(`Room ${number} already exists (category: ${categoryName}).`);
       continue;
     }
 
     if (existing.error.code === DomainErrorCode.NOT_FOUND) {
       const created = await roomRepo.create(venueId, {
         number,
+        categoryId,
         state: RoomState.VACANT,
       });
       if (!created.ok) {
@@ -215,7 +389,7 @@ export async function seedTablesAndRooms(venueId: string): Promise<void> {
         );
         throw new Error(created.error.message);
       }
-      console.log(`Created room ${number} (id: ${created.value.id}).`);
+      console.log(`Created room ${number} (id: ${created.value.id}, category: ${categoryName}).`);
       continue;
     }
 
@@ -226,7 +400,7 @@ export async function seedTablesAndRooms(venueId: string): Promise<void> {
   }
 
   console.log(
-    `Seeded ${TABLE_NUMBERS.length} tables and ${ROOM_NUMBERS.length} rooms.`
+    `Seeded ${TABLE_NUMBERS.length} tables and ${ROOM_NUMBERS.length} rooms with categories.`
   );
 }
 

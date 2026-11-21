@@ -23,6 +23,7 @@ export { RoomState as RoomStatus };
 export interface Room {
   id: string;
   venueId: string;
+  categoryId?: string | null;
   number: string;
   state: RoomState;
   createdAt: Date;
@@ -31,6 +32,7 @@ export interface Room {
 
 export interface CreateRoomInput {
   number: string;
+  categoryId?: string | null;
   state?: RoomState;
 }
 
