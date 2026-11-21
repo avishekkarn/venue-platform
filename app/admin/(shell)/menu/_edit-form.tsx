@@ -41,7 +41,6 @@ export function EditForm({
   const [description, setDescription] = useState(item.description ?? "");
   const [price, setPrice] = useState(item.price);
   const [categoryIds, setCategoryIds] = useState<string[]>([...initialCategoryIds]);
-  const [sortOrder, setSortOrder] = useState<number>(item.order);
   const [state, setState] = useState<MenuItemState>(item.state);
   const [photoUrl, setPhotoUrl] = useState<string | null>(item.photoUrl);
   const [photoBlurData, setPhotoBlurData] = useState<string | null>(
@@ -56,7 +55,6 @@ export function EditForm({
     setDescription(item.description ?? "");
     setPrice(item.price);
     setCategoryIds([...initialCategoryIds]);
-    setSortOrder(item.order);
     setState(item.state);
     setPhotoUrl(item.photoUrl);
     setPhotoBlurData(item.photoBlurData ?? null);
@@ -98,7 +96,6 @@ export function EditForm({
       payload.description = description.trim() || null;
     }
     if (trimmedPrice !== item.price) payload.price = trimmedPrice;
-    if (sortOrder !== item.order) payload.sortOrder = sortOrder;
 
     const initialSorted = [...initialCategoryIds].sort();
     const currentSorted = [...categoryIds].sort();
@@ -299,26 +296,6 @@ export function EditForm({
           placeholder="0.00"
           className="h-10 px-3 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm font-mono focus:outline-none focus:ring-2 focus:ring-staff-brand"
         />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="edit-item-sort"
-          className="text-sm font-medium text-staff-text-primary"
-        >
-          Sort Order
-        </label>
-        <input
-          id="edit-item-sort"
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
-          disabled={loading}
-          className="h-10 px-3 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm font-mono focus:outline-none focus:ring-2 focus:ring-staff-brand"
-        />
-        <span className="text-xs text-staff-text-muted">
-          Items with lower numbers appear first within each category.
-        </span>
       </div>
 
       <div className="flex flex-col gap-1.5">

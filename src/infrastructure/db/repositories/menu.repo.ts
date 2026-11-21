@@ -659,32 +659,70 @@ export function createPrismaMenuRepository(
 
     async createItem(input: CreateItemInput): Promise<Result<MenuItem>> {
       try {
-        const item = await client.menuItem.create({
-          data: {
-            venueId: input.venueId,
-            name: input.name,
-            description: input.description ?? null,
-            photoUrl: input.photoUrl ?? null,
-            photoBlurData: input.photoBlurData ?? null,
-            price: input.price,
-            sortOrder: input.sortOrder ?? 0,
-            state: input.state
-              ? DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state]
-              : PrismaMenuItemState.AVAILABLE,
-            categories: {
-              create: input.categoryIds.map((categoryId) => ({
+        const createInTx = async (tx: DbClient): Promise<MenuItem> => {
+          let itemSortOrder = input.sortOrder;
+          if (itemSortOrder === undefined) {
+            const lastItem = await tx.menuItem.findFirst({
+              where: { venueId: input.venueId },
+              orderBy: { sortOrder: "desc" },
+              select: { sortOrder: true },
+            });
+            itemSortOrder = lastItem ? lastItem.sortOrder + 1 : 0;
+          }
+
+          const categoryCreates = await Promise.all(
+            input.categoryIds.map(async (categoryId) => {
+              if (input.sortOrder !== undefined) {
+                return {
+                  venueId: input.venueId,
+                  categoryId,
+                  sortOrder: input.sortOrder,
+                };
+              }
+              const lastCatItem = await tx.menuItemCategory.findFirst({
+                where: { venueId: input.venueId, categoryId },
+                orderBy: { sortOrder: "desc" },
+                select: { sortOrder: true },
+              });
+              const nextCatOrder = lastCatItem ? lastCatItem.sortOrder + 1 : 0;
+              return {
                 venueId: input.venueId,
                 categoryId,
-                sortOrder: input.sortOrder ?? 0,
-              })),
-            },
-          },
-          include: {
-            categories: true,
-          },
-        });
+                sortOrder: nextCatOrder,
+              };
+            })
+          );
 
-        return ok(mapMenuItem(item));
+          const item = await tx.menuItem.create({
+            data: {
+              venueId: input.venueId,
+              name: input.name,
+              description: input.description ?? null,
+              photoUrl: input.photoUrl ?? null,
+              photoBlurData: input.photoBlurData ?? null,
+              price: input.price,
+              sortOrder: itemSortOrder,
+              state: input.state
+                ? DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state]
+                : PrismaMenuItemState.AVAILABLE,
+              categories: {
+                create: categoryCreates,
+              },
+            },
+            include: {
+              categories: true,
+            },
+          });
+
+          return mapMenuItem(item);
+        };
+
+        const result =
+          "$transaction" in client && typeof client.$transaction === "function"
+            ? await client.$transaction(async (tx) => createInTx(tx))
+            : await createInTx(client);
+
+        return ok(result);
       } catch (error) {
         if (isUniqueConstraintError(error)) {
           return fail(
@@ -735,27 +773,42 @@ export function createPrismaMenuRepository(
           }
           if (input.sortOrder !== undefined) {
             data.sortOrder = input.sortOrder;
-            if (input.categoryIds === undefined) {
-              await tx.menuItemCategory.updateMany({
-                where: { menuItemId: itemId },
-                data: { sortOrder: input.sortOrder },
-              });
-            }
           }
 
           if (input.categoryIds !== undefined) {
-            await tx.menuItemCategory.deleteMany({
+            const existingMics = await tx.menuItemCategory.findMany({
               where: { menuItemId: itemId },
             });
-            if (input.categoryIds.length > 0) {
-              await tx.menuItemCategory.createMany({
-                data: input.categoryIds.map((categoryId) => ({
-                  venueId,
-                  menuItemId: itemId,
-                  categoryId,
-                  sortOrder: input.sortOrder ?? existing.sortOrder,
-                })),
-              });
+            const existingOrderMap = new Map(
+              existingMics.map((m) => [m.categoryId, m.sortOrder])
+            );
+
+            // Remove categories that are no longer assigned to this item
+            await tx.menuItemCategory.deleteMany({
+              where: {
+                menuItemId: itemId,
+                categoryId: { notIn: [...input.categoryIds] },
+              },
+            });
+
+            // Add newly assigned categories, placing them sequentially at the end
+            for (const categoryId of input.categoryIds) {
+              if (!existingOrderMap.has(categoryId)) {
+                const lastCatItem = await tx.menuItemCategory.findFirst({
+                  where: { venueId, categoryId },
+                  orderBy: { sortOrder: "desc" },
+                  select: { sortOrder: true },
+                });
+                const nextCatOrder = lastCatItem ? lastCatItem.sortOrder + 1 : 0;
+                await tx.menuItemCategory.create({
+                  data: {
+                    venueId,
+                    menuItemId: itemId,
+                    categoryId,
+                    sortOrder: nextCatOrder,
+                  },
+                });
+              }
             }
           }
 
