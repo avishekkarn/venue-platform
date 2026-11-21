@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0241 | 2026-11-21 | Milestone 8.5 Task 8.5.7 closed (Admin Rooms Screen & Daily Reporting) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0240 | 2026-11-21 | Milestone 8.5 Task 8.5.6 closed (Admin Tables Screen & Daily Reporting) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0239 | 2026-11-21 | Milestone 8.5 Task 8.5.5 closed (Room Stay Pricing Integration into Folio & Billing) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0238 | 2026-11-21 | Milestone 8.5 Task 8.5.4 closed (Room Categories, Room Management API, Dedicated Pricing & Tests) | PASS | Milestone 8.5 | §5.3 |
@@ -140,13 +141,42 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0241
+Next entry number: 0242
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.7 — Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.8 — Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0241 — 2026-11-21 — Milestone 8.5 Task 8.5.7 closed: Admin Rooms Screen & Daily Reporting
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.7).
+
+**Summary:**
+Milestone 8.5 Task 8.5.7 is completed, tested, and verified.
+1. **Admin Rooms Server Component (`app/admin/(shell)/rooms/page.tsx`)**:
+   - Built full screen with `requireRole(["admin"])` and venue currency resolution.
+   - Fetched room categories via `roomRepo.listCategories(staff.venueId)`.
+   - Fetched rooms with details via `roomRepo.listRoomsWithDetails(staff.venueId)`.
+   - Fetched active room QR tokens via `prisma.qrToken.findMany({ where: { placeType: "ROOM", state: "ACTIVE" } })`.
+   - Aggregated today's guest sessions starting from start-of-day boundary to compute per-room sessions count, F&B orders count, service requests count, and total revenue today (combining base room rates, orders, and payable services) in NPR.
+2. **Interactive Rooms View Client Hub (`app/admin/(shell)/rooms/_rooms-view.tsx`)**:
+   - Metric summary cards: Total Rooms, Vacant Rooms, Occupied Rooms, Cleaning/Out of Service Rooms, and Today's Room Sales in NPR.
+   - Category filter tabs with item counters and configured nightly stay rate badges.
+   - State filter pills: All, Vacant, Occupied, Cleaning, Out of Service.
+   - Rich room card grid displaying Room number, category badge, nightly rate in NPR, operational status badge, DND alert indicator ("🔴 DND"), active stay details (elapsed duration, orders, requests, total active folio including room stay rate), and today's metrics.
+3. **Interactive Actions & Dialogs**:
+   - `_categories-sheet.tsx` & `_categories-sheet-trigger.tsx`: Manage room categories and nightly stay base pricing in NPR with CSRF protection.
+   - `_add-room-sheet.tsx` & `_add-room-button.tsx`: Add Room sheet with custom numbering, category pricing selection, and operational state.
+   - `_edit-room-sheet.tsx`: Edit Room sheet with number, category, state, and delete action.
+   - `_end-session-button.tsx`: Authority button to force checkout active room sessions (`POST /api/admin/rooms/[id]/end-session`) with confirmation prompt.
+   - `_room-qr-dialog.tsx`: Scannable QR modal preview with direct link to printable placard (`/admin/qr/print/${qrTokenId}`).
+4. **Quality Verification**:
+   - `pnpm typecheck` passed with 0 errors.
+   - `tests/integration/api/admin-rooms.test.ts` (4 tests) passed with 100% success rate.
 
 ### ENTRY-0240 — 2026-11-21 — Milestone 8.5 Task 8.5.6 closed: Admin Tables Screen & Daily Reporting
 
@@ -1283,7 +1313,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, 8.5.4, 8.5.5, and 8.5.6 are CLOSED (✅). The next active task is **Task 8.5.7 (Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, 8.5.4, 8.5.5, 8.5.6, and 8.5.7 are CLOSED (✅). The next active task is **Task 8.5.8 (Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
