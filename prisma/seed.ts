@@ -833,6 +833,115 @@ export async function seedStaff(venueId: string): Promise<void> {
   }
 }
 
+interface SeedServiceDef {
+  name: string;
+  description: string;
+  estimatedMinutes: number | null;
+  sortOrder: number;
+}
+
+const SEED_SERVICES: SeedServiceDef[] = [
+  {
+    name: "Room Service",
+    description: "Order food and beverages directly to your room.",
+    estimatedMinutes: 30,
+    sortOrder: 0,
+  },
+  {
+    name: "Housekeeping",
+    description: "Request room cleaning, fresh towels, or extra amenities.",
+    estimatedMinutes: 20,
+    sortOrder: 1,
+  },
+  {
+    name: "Maintenance",
+    description: "Report an issue with room facilities or request technical assistance.",
+    estimatedMinutes: 30,
+    sortOrder: 2,
+  },
+  {
+    name: "Concierge",
+    description: "Assistance with luggage, reservations, local tours, or travel advice.",
+    estimatedMinutes: 15,
+    sortOrder: 3,
+  },
+  {
+    name: "Laundry",
+    description: "Professional washing, dry cleaning, and garment pressing services.",
+    estimatedMinutes: 120,
+    sortOrder: 4,
+  },
+  {
+    name: "Spa",
+    description: "Relax with massages, wellness treatments, and personalized care.",
+    estimatedMinutes: 60,
+    sortOrder: 5,
+  },
+  {
+    name: "Late Checkout",
+    description: "Request extended room departure time beyond standard checkout hours.",
+    estimatedMinutes: null,
+    sortOrder: 6,
+  },
+  {
+    name: "Wake-up Call",
+    description: "Schedule a morning wake-up call with front desk assistance.",
+    estimatedMinutes: null,
+    sortOrder: 7,
+  },
+  {
+    name: "Do Not Disturb",
+    description: "Request privacy and silence for your room.",
+    estimatedMinutes: null,
+    sortOrder: 8,
+  },
+];
+
+export async function seedServices(venueId: string): Promise<void> {
+  console.log("Seeding services catalog (D-21.1)...");
+
+  let category = await prisma.serviceCategory.findFirst({
+    where: { venueId, name: "Hotel Services" },
+  });
+
+  if (!category) {
+    category = await prisma.serviceCategory.create({
+      data: {
+        venueId,
+        name: "Hotel Services",
+        sortOrder: 0,
+      },
+    });
+    console.log(`Created service category 'Hotel Services' (${category.id})`);
+  } else {
+    console.log(`Service category 'Hotel Services' already exists (${category.id})`);
+  }
+
+  for (const def of SEED_SERVICES) {
+    const existing = await prisma.serviceItem.findFirst({
+      where: { venueId, categoryId: category.id, name: def.name },
+    });
+
+    if (!existing) {
+      await prisma.serviceItem.create({
+        data: {
+          venueId,
+          categoryId: category.id,
+          name: def.name,
+          description: def.description,
+          price: "0.00",
+          estimatedMinutes: def.estimatedMinutes,
+          state: MenuItemState.AVAILABLE,
+          sortOrder: def.sortOrder,
+        },
+      });
+      console.log(`Created service item: ${def.name}`);
+    } else {
+      console.log(`Service item '${def.name}' already exists.`);
+    }
+  }
+}
+
 async function main(): Promise<void> {
   console.log("Seed starting.");
   const { venueId, counterId } = await seedVenue();
@@ -840,6 +949,7 @@ async function main(): Promise<void> {
   await seedTablesAndRooms(venueId);
   await seedQrTokens(venueId);
   await seedCounter(venueId, counterId);
+  await seedServices(venueId);
   await seedMenu(venueId);
   console.log("Seed complete.");
 }

@@ -156,6 +156,8 @@ model Venue {
   staffMembers   StaffMember[]
   menuCategories MenuCategory[]
   menuCollections MenuCollection[]
+  serviceCategories ServiceCategory[]
+  serviceItems      ServiceItem[]
   orders         Order[]
   requests       ServiceRequest[]
   payments       PaymentTicket[]
@@ -187,6 +189,49 @@ model VenueServiceToggle {
 
   @@unique([venueId, service])
   @@map("venue_service_toggles")
+}
+
+// ------------------------------------------------------------
+// Services Catalog (D-21.1)
+// ------------------------------------------------------------
+
+model ServiceCategory {
+  id        String   @id @default(uuid())
+  venueId   String
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue        Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  serviceItems ServiceItem[]
+
+  @@index([venueId, sortOrder])
+  @@map("service_categories")
+}
+
+model ServiceItem {
+  id               String   @id @default(uuid())
+  venueId          String
+  categoryId       String
+  name             String
+  description      String?
+  photoUrl         String?
+  photoBlurData    String?
+  price            Decimal  @db.Decimal(10, 2) @default(0)
+  estimatedMinutes Int?
+  state            MenuItemState @default(AVAILABLE)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  venue    Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  category ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  requests ServiceRequest[] @relation("ServiceItemRequests")
+
+  @@index([venueId, state])
+  @@index([categoryId, sortOrder])
+  @@map("service_items")
 }
 
 // ------------------------------------------------------------
@@ -570,6 +615,7 @@ model ServiceRequest {
   tableId        String?
   counterId      String?
   guestSessionId String?
+  serviceItemId  String?
   serviceType    HotelService
   state          RequestState @default(SUBMITTED)
   detailsJson    Json         @default("{}")
@@ -581,6 +627,7 @@ model ServiceRequest {
   table        Table?               @relation(fields: [tableId], references: [id], onDelete: SetNull)
   counter      Counter?             @relation(fields: [counterId], references: [id], onDelete: SetNull)
   guestSession GuestSession?        @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
+  serviceItem  ServiceItem?         @relation("ServiceItemRequests", fields: [serviceItemId], references: [id], onDelete: SetNull)
   stateChanges RequestStateChange[]
 
   @@index([venueId, state])
@@ -589,6 +636,7 @@ model ServiceRequest {
   @@index([venueId, tableId])
   @@index([venueId, counterId])
   @@index([venueId, guestSessionId])
+  @@index([serviceItemId])
   @@map("service_requests")
 }
 
