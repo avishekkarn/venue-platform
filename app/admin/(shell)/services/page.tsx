@@ -18,6 +18,7 @@ import { formatMoney } from "@/lib/money";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import type { ServiceItemView } from "@/domain/services/service.repository";
 import { AddServiceButton } from "./_add-service-button";
+import { ServiceCategoriesSheetTrigger } from "./_categories-sheet-trigger";
 import { EditServiceSheet } from "./_edit-service-sheet";
 import { ServiceRowActions } from "@/components/staff/service-row-actions";
 
@@ -75,6 +76,13 @@ export default async function ServicesPage({
           Services
         </h1>
         <div className="flex items-center gap-4">
+          <ServiceCategoriesSheetTrigger
+            categories={categories.map((c) => ({
+              id: c.id,
+              name: c.name,
+              sortOrder: c.order,
+            }))}
+          />
           <AddServiceButton
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             currency={currency}

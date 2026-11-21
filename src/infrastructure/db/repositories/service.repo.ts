@@ -27,6 +27,8 @@ import {
   type ServiceItemView,
   type CreateServiceItemInput,
   type UpdateServiceItemInput,
+  type CreateServiceCategoryInput,
+  type UpdateServiceCategoryInput,
 } from "@/domain/services/service.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import { ok, fail, DomainErrorCode, type Result } from "@/domain/shared/result";
@@ -287,6 +289,110 @@ export function createPrismaServiceRepository(
           );
         }
         return fail(DomainErrorCode.INTERNAL, "Database update operation failed");
+      }
+    },
+
+    async createCategory(
+      input: CreateServiceCategoryInput
+    ): Promise<Result<ServiceCategory>> {
+      try {
+        const category = await client.serviceCategory.create({
+          data: {
+            venueId: input.venueId,
+            name: input.name,
+            sortOrder: input.sortOrder ?? 0,
+          },
+        });
+        return ok(mapServiceCategory(category));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Category '${input.name}' violates unique constraint`
+          );
+        }
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
+    async updateCategory(
+      venueId: string,
+      categoryId: string,
+      input: UpdateServiceCategoryInput
+    ): Promise<Result<ServiceCategory>> {
+      try {
+        const existing = await client.serviceCategory.findFirst({
+          where: { id: categoryId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Service category with id '${categoryId}' not found in venue '${venueId}'`
+          );
+        }
+
+        const data: { name?: string; sortOrder?: number } = {};
+        if (input.name !== undefined) data.name = input.name;
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+
+        const updated = await client.serviceCategory.update({
+          where: { id: categoryId },
+          data,
+        });
+
+        return ok(mapServiceCategory(updated));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Category '${input.name ?? categoryId}' violates unique constraint`
+          );
+        }
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
+    async deleteCategory(
+      venueId: string,
+      categoryId: string
+    ): Promise<Result<void>> {
+      try {
+        const existing = await client.serviceCategory.findFirst({
+          where: { id: categoryId, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Service category with id '${categoryId}' not found in venue '${venueId}'`
+          );
+        }
+
+        const assignedCount = await client.serviceItem.count({
+          where: { categoryId, venueId },
+        });
+
+        if (assignedCount > 0) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Category '${existing.name}' has ${assignedCount} service(s); reassign or delete them first`
+          );
+        }
+
+        await client.serviceCategory.delete({ where: { id: categoryId } });
+        return ok(undefined);
+      } catch {
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
       }
     },
   };

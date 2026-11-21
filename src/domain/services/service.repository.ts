@@ -88,6 +88,17 @@ export interface UpdateServiceItemInput {
   readonly sortOrder?: number;
 }
 
+export interface CreateServiceCategoryInput {
+  readonly venueId: string;
+  readonly name: string;
+  readonly sortOrder?: number;
+}
+
+export interface UpdateServiceCategoryInput {
+  readonly name?: string;
+  readonly sortOrder?: number;
+}
+
 export interface ServiceRepository {
   listCategories(venueId: string): Promise<Result<ServiceCategory[]>>;
   listItems(venueId: string): Promise<Result<ServiceItem[]>>;
@@ -103,4 +114,11 @@ export interface ServiceRepository {
     itemId: string,
     input: UpdateServiceItemInput
   ): Promise<Result<ServiceItem>>;
+  createCategory(input: CreateServiceCategoryInput): Promise<Result<ServiceCategory>>;
+  updateCategory(
+    venueId: string,
+    categoryId: string,
+    input: UpdateServiceCategoryInput
+  ): Promise<Result<ServiceCategory>>;
+  deleteCategory(venueId: string, categoryId: string): Promise<Result<void>>;
 }

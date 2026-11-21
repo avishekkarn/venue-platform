@@ -26,6 +26,11 @@ import {
 import { POST as adminMenuModifierOptionsPOST } from "@/../app/api/admin/menu/modifiers/[id]/options/route";
 import { POST as adminServiceItemsPOST } from "@/../app/api/admin/services/items/route";
 import { PATCH as adminServiceItemPatchPATCH } from "@/../app/api/admin/services/items/[id]/route";
+import { POST as adminServiceCategoriesPOST } from "@/../app/api/admin/services/categories/route";
+import {
+  PATCH as adminServiceCategoryPatchPATCH,
+  DELETE as adminServiceCategoryDeleteDELETE,
+} from "@/../app/api/admin/services/categories/[id]/route";
 import { POST as adminQrRevokePOST } from "@/../app/api/admin/qr/[id]/revoke/route";
 import { POST as adminQrGeneratePOST } from "@/../app/api/admin/qr/generate/route";
 import { POST as loginPOST } from "@/../app/api/auth/login/route";
@@ -82,7 +87,7 @@ async function expectCsrfRejection(response: Response): Promise<void> {
   expect(json.error.message).toBe(CSRF_FORBIDDEN.message);
 }
 
-describe("CSRF enforcement on the 41-route state-changing surface (D-20.1, 7.7.4d)", () => {
+describe("CSRF enforcement on the 44-route state-changing surface (D-20.1, 7.7.4d)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
@@ -417,6 +422,29 @@ describe("CSRF enforcement on the 41-route state-changing surface (D-20.1, 7.7.4
     const id = "11111111-2222-3333-4444-555555555555";
     const req = new NextRequest(`http://localhost/api/admin/services/items/${id}`, { method: "PATCH" });
     const res = await adminServiceItemPatchPATCH(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 42
+  it("admin/services/categories POST rejects without X-CSRF-Token", async () => {
+    const req = new NextRequest("http://localhost/api/admin/services/categories", { method: "POST" });
+    const res = await adminServiceCategoriesPOST(req);
+    await expectCsrfRejection(res);
+  });
+
+  // 43
+  it("admin/services/categories/[id] PATCH rejects without X-CSRF-Token", async () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const req = new NextRequest(`http://localhost/api/admin/services/categories/${id}`, { method: "PATCH" });
+    const res = await adminServiceCategoryPatchPATCH(req, { params: Promise.resolve({ id }) });
+    await expectCsrfRejection(res);
+  });
+
+  // 44
+  it("admin/services/categories/[id] DELETE rejects without X-CSRF-Token", async () => {
+    const id = "11111111-2222-3333-4444-555555555555";
+    const req = new NextRequest(`http://localhost/api/admin/services/categories/${id}`, { method: "DELETE" });
+    const res = await adminServiceCategoryDeleteDELETE(req, { params: Promise.resolve({ id }) });
     await expectCsrfRejection(res);
   });
 });
