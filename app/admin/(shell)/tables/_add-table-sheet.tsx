@@ -89,7 +89,7 @@ export function AddTableSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
+      <SheetContent data-world="staff" side="right" className="w-full sm:max-w-md flex flex-col p-0 bg-white">
         <SheetHeader className="p-6 border-b border-staff-border-subtle">
           <SheetTitle className="text-xl font-bold text-staff-text-primary">
             Add New Table
@@ -175,7 +175,8 @@ export function AddTableSheet({
               <button
                 type="submit"
                 disabled={loading || !number.trim()}
-                className="px-4 py-2 text-xs font-medium rounded-lg bg-staff-brand text-white hover:bg-staff-brand-hover transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-xs font-medium rounded-lg bg-[#344b3c] text-white hover:bg-[#243329] transition-colors disabled:opacity-50 cursor-pointer inline-flex items-center justify-center shadow-xs"
+                style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
               >
                 {loading ? "Creating..." : "Create Table"}
               </button>

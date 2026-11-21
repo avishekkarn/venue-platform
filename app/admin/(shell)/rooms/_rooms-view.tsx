@@ -195,27 +195,30 @@ export function RoomsView({
             onClick={() => setSelectedCategory("ALL")}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 ${
               selectedCategory === "ALL"
-                ? "bg-staff-brand text-white shadow-2xs"
-                : "bg-staff-surface text-staff-text-secondary hover:text-staff-text-primary hover:bg-staff-surface-raised"
+                ? "bg-[#344b3c] text-white shadow-xs font-semibold"
+                : "bg-stone-100 text-stone-700 hover:text-stone-900 hover:bg-stone-200"
             }`}
+            style={selectedCategory === "ALL" ? { backgroundColor: "#344b3c", color: "#ffffff" } : undefined}
           >
             All Categories ({initialRooms.length})
           </button>
           {categories.map((c) => {
             const count = categoryCounts.get(c.id) ?? 0;
+            const isSelected = selectedCategory === c.id;
             return (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setSelectedCategory(c.id)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 flex items-center gap-1.5 ${
-                  selectedCategory === c.id
-                    ? "bg-staff-brand text-white shadow-2xs"
-                    : "bg-staff-surface text-staff-text-secondary hover:text-staff-text-primary hover:bg-staff-surface-raised"
+                  isSelected
+                    ? "bg-[#344b3c] text-white shadow-xs font-semibold"
+                    : "bg-stone-100 text-stone-700 hover:text-stone-900 hover:bg-stone-200"
                 }`}
+                style={isSelected ? { backgroundColor: "#344b3c", color: "#ffffff" } : undefined}
               >
                 <span>{c.name}</span>
-                <span className="opacity-75 text-[10px]">({count})</span>
+                <span className={isSelected ? "text-white/80 text-[10px]" : "text-stone-500 text-[10px]"}>({count})</span>
               </button>
             );
           })}
@@ -236,9 +239,10 @@ export function RoomsView({
               onClick={() => setSelectedState(s.id)}
               className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${
                 selectedState === s.id
-                  ? "bg-staff-text-primary text-white"
+                  ? "bg-[#141413] text-white shadow-xs font-semibold"
                   : "text-staff-text-muted hover:text-staff-text-secondary hover:bg-staff-surface-raised"
               }`}
+              style={selectedState === s.id ? { backgroundColor: "#141413", color: "#ffffff" } : undefined}
             >
               {s.label}
             </button>

@@ -19,7 +19,8 @@ export function AddRoomButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-4 py-2 text-xs font-medium rounded-lg bg-staff-brand text-white hover:bg-staff-brand-hover transition-colors shadow-2xs"
+        className="px-4 py-2 text-xs font-medium rounded-lg bg-[#344b3c] text-white hover:bg-[#243329] transition-colors shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+        style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
       >
         + Add Room
       </button>

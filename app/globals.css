@@ -379,6 +379,20 @@ body {
   --sidebar-accent-foreground: var(--color-neutral-900);
   --sidebar-border:         var(--color-neutral-200);
   --sidebar-ring:           var(--color-olive-500);
+
+  /* Staff world fallbacks on root so portals (Sheets, Dialogs, Toasts) always resolve */
+  --staff-surface:         var(--color-neutral-50);
+  --staff-surface-raised:  var(--color-neutral-0);
+  --staff-surface-sunken:  var(--color-neutral-100);
+  --staff-text-primary:    var(--color-neutral-900);
+  --staff-text-secondary:  var(--color-neutral-600);
+  --staff-text-muted:      var(--color-neutral-400);
+  --staff-text-inverse:    var(--color-neutral-0);
+  --staff-border-subtle:   var(--color-neutral-200);
+  --staff-border-strong:   var(--color-neutral-300);
+  --staff-brand:           var(--color-forest-700);
+  --staff-brand-contrast:  var(--color-neutral-0);
+  --staff-accent:          var(--color-sage-500);
 }
 
 /* ============================================================

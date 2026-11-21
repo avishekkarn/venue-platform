@@ -36,7 +36,7 @@ export function RoomQrDialog({
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-xs text-center p-6 flex flex-col items-center">
+        <DialogContent data-world="staff" className="sm:max-w-xs text-center p-6 flex flex-col items-center bg-white">
           <DialogHeader className="mb-2">
             <DialogTitle className="text-lg font-bold text-staff-text-primary">
               Room {roomNumber} QR Code
@@ -65,7 +65,8 @@ export function RoomQrDialog({
                 <Link
                   href={`/admin/qr/print/${qrTokenId}`}
                   target="_blank"
-                  className="px-4 py-2 text-xs font-medium rounded-lg bg-staff-brand text-white hover:bg-staff-brand-hover transition-colors"
+                  className="px-4 py-2 text-xs font-medium rounded-lg bg-[#344b3c] text-white hover:bg-[#243329] transition-colors shadow-xs"
+                  style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
                 >
                   Print QR Placard ↗
                 </Link>
@@ -85,7 +86,8 @@ export function RoomQrDialog({
               </p>
               <Link
                 href="/admin/qr"
-                className="px-4 py-2 text-xs font-medium rounded-lg bg-staff-brand text-white hover:bg-staff-brand-hover transition-colors"
+                className="px-4 py-2 text-xs font-medium rounded-lg bg-[#344b3c] text-white hover:bg-[#243329] transition-colors shadow-xs"
+                style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
               >
                 Generate in QR Codes Hub
               </Link>

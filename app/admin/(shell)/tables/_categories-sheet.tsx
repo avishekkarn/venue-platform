@@ -239,7 +239,7 @@ export function TableCategoriesSheet({
         if (!next) onClose();
       }}
     >
-      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0">
+      <SheetContent data-world="staff" side="right" className="w-full sm:max-w-lg flex flex-col p-0 bg-white">
         <SheetHeader className="p-6 border-b border-staff-border-subtle">
           <SheetTitle className="text-xl font-bold text-staff-text-primary">
             Table Categories
@@ -313,7 +313,8 @@ export function TableCategoriesSheet({
             <button
               type="submit"
               disabled={busyId !== null || !newName.trim()}
-              className="mt-1 w-full py-2 text-xs font-medium rounded-lg bg-staff-brand text-white hover:bg-staff-brand-hover transition-colors disabled:opacity-50"
+              className="mt-1 w-full py-2 text-xs font-medium rounded-lg bg-[#344b3c] text-white hover:bg-[#243329] transition-colors disabled:opacity-50 cursor-pointer inline-flex items-center justify-center shadow-xs"
+              style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
             >
               {busyId === "add" ? "Adding..." : "Add Category"}
             </button>
@@ -376,7 +377,8 @@ export function TableCategoriesSheet({
                             type="button"
                             onClick={() => handleSaveEdit(cat.id)}
                             disabled={busyId === cat.id || !editName.trim()}
-                            className="px-3 py-1 text-xs rounded-lg bg-staff-brand text-white hover:bg-staff-brand-hover transition-colors disabled:opacity-50"
+                            className="px-3 py-1 text-xs font-medium rounded-lg bg-[#344b3c] text-white hover:bg-[#243329] transition-colors disabled:opacity-50 cursor-pointer inline-flex items-center justify-center shadow-xs"
+                            style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
                           >
                             {busyId === cat.id ? "Saving..." : "Save"}
                           </button>
