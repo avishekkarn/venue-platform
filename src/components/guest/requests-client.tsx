@@ -9,7 +9,44 @@ import {
   type ServiceRequest,
 } from "@/domain/requests/request.repository";
 import { RequestStatusTimeline } from "@/components/guest/request-status-timeline";
-import { formatDateTime } from "@/lib/date";
+import { formatDateTime, formatTime } from "@/lib/date";
+
+function getRequestBadgeClass(state: RequestState): string {
+  switch (state) {
+    case RequestState.SUBMITTED:
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    case RequestState.ACKNOWLEDGED:
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case RequestState.IN_PROGRESS:
+      return "bg-indigo-100 text-indigo-800 border-indigo-200";
+    case RequestState.COMPLETED:
+      return "bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle";
+    case RequestState.CANCELLED:
+    case RequestState.DECLINED:
+      return "bg-rose-100 text-rose-800 border-rose-200";
+    default:
+      return "bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle";
+  }
+}
+
+function getRequestBadgeLabel(state: RequestState): string {
+  switch (state) {
+    case RequestState.SUBMITTED:
+      return "● Submitted";
+    case RequestState.ACKNOWLEDGED:
+      return "● Acknowledged";
+    case RequestState.IN_PROGRESS:
+      return "● In progress";
+    case RequestState.COMPLETED:
+      return "✓ Completed";
+    case RequestState.CANCELLED:
+      return "✕ Cancelled";
+    case RequestState.DECLINED:
+      return "✕ Declined";
+    default:
+      return state;
+  }
+}
 
 /*
  * POLLING HTML XSS CONTRACT (task 7.6.8, decisions D-19.1 and D-19.2)
@@ -129,33 +166,64 @@ export function RequestsClient({
             <h2 className="font-display text-lg font-semibold text-guest-text-primary">
               Active ({activeRequests.length})
             </h2>
-            {activeRequests.map((req) => (
-              <article
-                key={req.id}
-                data-request-card={req.id}
-                data-request-state={req.state}
-                className="bg-guest-surface-raised border border-guest-border-subtle rounded-xl p-5 flex flex-col gap-4"
-              >
-                <header className="flex items-baseline justify-between gap-3">
-                  <div>
-                    <h3 className="font-display text-base font-semibold text-guest-text-primary">
-                      {SERVICE_LABELS[req.serviceType] ?? req.serviceType}
-                    </h3>
-                    <p className="text-xs text-guest-text-muted mt-0.5">
-                      Requested {formatDateTime(new Date(req.submittedAt), locale)}
-                    </p>
+            {activeRequests.map((req, index) => {
+              const isDefaultOpen = activeRequests.length === 1 || index === 0;
+              return (
+                <details
+                  key={req.id}
+                  data-request-card={req.id}
+                  data-request-state={req.state}
+                  open={isDefaultOpen}
+                  className="group bg-guest-surface-raised border border-guest-border-subtle rounded-2xl overflow-hidden shadow-xs transition-all"
+                >
+                  <summary
+                    className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-guest-surface-sunken/40 transition-colors list-none [&::-webkit-details-marker]:hidden outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`Toggle ${SERVICE_LABELS[req.serviceType] ?? req.serviceType} request progress`}
+                  >
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h3 className="font-display text-base font-semibold text-guest-text-primary">
+                        {SERVICE_LABELS[req.serviceType] ?? req.serviceType}
+                      </h3>
+                      <span
+                        data-request-badge={req.id}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getRequestBadgeClass(req.state)}`}
+                      >
+                        {getRequestBadgeLabel(req.state)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className="text-xs text-guest-text-secondary font-mono">
+                        {formatTime(new Date(req.submittedAt), locale)}
+                      </span>
+                      <div className="w-6 h-6 rounded-full bg-guest-surface flex items-center justify-center border border-guest-border-subtle text-guest-text-secondary group-open:rotate-180 transition-transform duration-200">
+                        <svg
+                          className="size-3.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      </div>
+                    </div>
+                  </summary>
+                  <div className="p-4 pt-1 border-t border-guest-border-subtle/60">
+                    <div data-timeline-container={req.id} className="pt-2">
+                      <RequestStatusTimeline
+                        currentState={req.state}
+                        stateChanges={req.stateChanges}
+                        serviceType={req.serviceType}
+                        locale={locale}
+                      />
+                    </div>
                   </div>
-                </header>
-                <div data-timeline-container={req.id}>
-                  <RequestStatusTimeline
-                    currentState={req.state}
-                    stateChanges={req.stateChanges}
-                    serviceType={req.serviceType}
-                    locale={locale}
-                  />
-                </div>
-              </article>
-            ))}
+                </details>
+              );
+            })}
           </section>
         )}
 
@@ -165,22 +233,55 @@ export function RequestsClient({
               Recent history
             </h2>
             {pastRequests.map((req) => (
-              <article
+              <details
                 key={req.id}
-                className="bg-guest-surface-raised border border-guest-border-subtle rounded-xl p-4 flex items-center justify-between gap-3"
+                className="group bg-guest-surface-raised border border-guest-border-subtle rounded-xl overflow-hidden shadow-xs transition-all"
               >
-                <div>
-                  <p className="text-sm font-medium text-guest-text-primary">
-                    {SERVICE_LABELS[req.serviceType] ?? req.serviceType}
-                  </p>
-                  <p className="text-xs text-guest-text-muted mt-0.5">
-                    {formatDateTime(new Date(req.submittedAt), locale)}
-                  </p>
+                <summary
+                  className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-guest-surface-sunken/40 transition-colors list-none [&::-webkit-details-marker]:hidden outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Toggle ${SERVICE_LABELS[req.serviceType] ?? req.serviceType} past details`}
+                >
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <p className="text-sm font-medium text-guest-text-primary">
+                      {SERVICE_LABELS[req.serviceType] ?? req.serviceType}
+                    </p>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getRequestBadgeClass(req.state)}`}
+                    >
+                      {getRequestBadgeLabel(req.state)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className="text-xs text-guest-text-secondary font-mono">
+                      {formatDateTime(new Date(req.submittedAt), locale)}
+                    </span>
+                    <div className="w-5 h-5 rounded-full bg-guest-surface flex items-center justify-center border border-guest-border-subtle text-guest-text-secondary group-open:rotate-180 transition-transform duration-200">
+                      <svg
+                        className="size-3"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </div>
+                  </div>
+                </summary>
+                <div className="p-4 pt-1 border-t border-guest-border-subtle/60">
+                  <div className="pt-2">
+                    <RequestStatusTimeline
+                      currentState={req.state}
+                      stateChanges={req.stateChanges}
+                      serviceType={req.serviceType}
+                      locale={locale}
+                    />
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-guest-text-secondary">
-                  {req.state}
-                </span>
-              </article>
+              </details>
             ))}
           </section>
         )}
@@ -275,6 +376,30 @@ export function RequestsClient({
     return html;
   }
 
+  function getBadgeClass(state) {
+    switch (state) {
+      case 'SUBMITTED': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'ACKNOWLEDGED': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'IN_PROGRESS': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'COMPLETED': return 'bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle';
+      case 'CANCELLED':
+      case 'DECLINED': return 'bg-rose-100 text-rose-800 border-rose-200';
+      default: return 'bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle';
+    }
+  }
+
+  function getBadgeLabel(state) {
+    switch (state) {
+      case 'SUBMITTED': return '● Submitted';
+      case 'ACKNOWLEDGED': return '● Acknowledged';
+      case 'IN_PROGRESS': return '● In progress';
+      case 'COMPLETED': return '✓ Completed';
+      case 'CANCELLED': return '✕ Cancelled';
+      case 'DECLINED': return '✕ Declined';
+      default: return state;
+    }
+  }
+
   function pollRequests() {
     if (document.visibilityState !== 'visible') return;
 
@@ -297,7 +422,14 @@ export function RequestsClient({
               return;
             }
             if (!prevState || prevState !== r.state) {
-              if (card) card.setAttribute('data-request-state', r.state);
+              if (card) {
+                card.setAttribute('data-request-state', r.state);
+                var badge = card.querySelector('[data-request-badge="' + r.id + '"]');
+                if (badge) {
+                  badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ' + getBadgeClass(r.state);
+                  badge.textContent = getBadgeLabel(r.state);
+                }
+              }
               container.innerHTML = renderTimelineHtml(r.state, r.serviceType, r.stateChanges, locale);
             }
           }

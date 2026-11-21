@@ -25,6 +25,48 @@ export const metadata: Metadata = {
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function getStateBadgeClass(state: OrderState): string {
+  switch (state) {
+    case OrderState.PLACED:
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    case OrderState.APPROVED:
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case OrderState.PREPARING:
+      return "bg-indigo-100 text-indigo-800 border-indigo-200";
+    case OrderState.READY:
+      return "bg-emerald-100 text-emerald-800 border-emerald-200 animate-pulse";
+    case OrderState.DELIVERED:
+      return "bg-teal-100 text-teal-800 border-teal-200";
+    case OrderState.COMPLETED:
+      return "bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle";
+    case OrderState.CANCELLED:
+      return "bg-rose-100 text-rose-800 border-rose-200";
+    default:
+      return "bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle";
+  }
+}
+
+function getStateLabel(state: OrderState): string {
+  switch (state) {
+    case OrderState.PLACED:
+      return "● Placed";
+    case OrderState.APPROVED:
+      return "● Approved";
+    case OrderState.PREPARING:
+      return "● Preparing";
+    case OrderState.READY:
+      return "● Ready";
+    case OrderState.DELIVERED:
+      return "● Delivered";
+    case OrderState.COMPLETED:
+      return "✓ Completed";
+    case OrderState.CANCELLED:
+      return "✕ Cancelled";
+    default:
+      return state;
+  }
+}
+
 interface TrackOrderPageProps {
   params: Promise<{ id: string }>;
 }
@@ -166,18 +208,26 @@ export default async function TrackOrderPage({
           const orderNumShort = order.id.slice(0, 8);
           const isUrlOrder = order.id === urlOrder.id;
           const placedTime = formatTime(new Date(order.placedAt), locale);
+          const isActive =
+            order.state !== OrderState.COMPLETED &&
+            order.state !== OrderState.CANCELLED;
+          const isDefaultOpen =
+            orderedList.length === 1 || isActive || index === 0;
 
           return (
-            <article
+            <details
               key={order.id}
               data-order-card={order.id}
               data-order-state={order.state}
+              open={isDefaultOpen}
               aria-labelledby={`order-heading-${order.id}`}
-              className="rounded-lg bg-guest-surface-raised border border-guest-border-subtle p-5 shadow-sm space-y-5"
+              className="group rounded-2xl bg-guest-surface-raised border border-guest-border-subtle overflow-hidden shadow-xs transition-all"
             >
-              {/* Order Card Header */}
-              <div className="flex items-center justify-between border-b border-guest-border-subtle pb-3">
-                <div className="flex items-center gap-2">
+              <summary
+                className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-guest-surface-sunken/40 transition-colors list-none [&::-webkit-details-marker]:hidden outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`Toggle Order #${orderNumShort} progress`}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
                   <h2
                     id={`order-heading-${order.id}`}
                     className="font-mono text-sm font-bold text-guest-text-primary"
@@ -189,42 +239,24 @@ export default async function TrackOrderPage({
                       This order
                     </span>
                   )}
-                </div>
-                <span className="text-xs text-guest-text-secondary">
-                  {placedTime}
-                </span>
-              </div>
-
-              {/* Order Status Timeline */}
-              <div data-timeline-container={order.id}>
-                <OrderStatusTimeline
-                  currentState={order.state}
-                  stateChanges={order.stateChanges}
-                  placeType={order.placeType}
-                  locale={locale}
-                />
-              </div>
-
-              {/* Collapsible Items List */}
-              <details
-                open={index === 0}
-                className="group rounded-md bg-guest-surface border border-guest-border-subtle overflow-hidden"
-              >
-                <summary className="flex items-center justify-between p-3 cursor-pointer select-none font-medium text-xs text-guest-text-primary hover:bg-guest-surface-sunken transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <span>
-                    {order.items.length}{" "}
-                    {order.items.length === 1 ? "item" : "items"}
+                  <span
+                    data-order-badge={order.id}
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getStateBadgeClass(order.state)}`}
+                  >
+                    {getStateLabel(order.state)}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-guest-text-secondary">
-                      {formatMoney(order.total, currency, locale)}
-                    </span>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <span className="text-xs text-guest-text-secondary font-mono">
+                    {placedTime}
+                  </span>
+                  <div className="w-6 h-6 rounded-full bg-guest-surface flex items-center justify-center border border-guest-border-subtle text-guest-text-secondary group-open:rotate-180 transition-transform duration-200">
                     <svg
-                      className="size-3.5 text-guest-text-secondary transition-transform duration-guest-base group-open:rotate-180"
+                      className="size-3.5"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       aria-hidden="true"
@@ -232,79 +264,124 @@ export default async function TrackOrderPage({
                       <path d="M6 9l6 6 6-6" />
                     </svg>
                   </div>
-                </summary>
+                </div>
+              </summary>
 
-                <div className="px-3 pb-3 border-t border-guest-border-subtle pt-2.5">
-                  <ul
-                    className="divide-y divide-guest-border-subtle"
-                    role="list"
-                  >
-                    {order.items.map((item) => {
-                      const modifiers = Array.isArray(item.modifiersJson)
-                        ? (item.modifiersJson as Array<{ name?: string }>)
-                            .map((m) => m?.name)
-                            .filter(
-                              (name): name is string =>
-                                typeof name === "string" && name.length > 0
-                            )
-                        : [];
+              <div className="p-4 pt-1 border-t border-guest-border-subtle/60 space-y-4">
+                {/* Order Status Timeline */}
+                <div data-timeline-container={order.id} className="pt-2">
+                  <OrderStatusTimeline
+                    currentState={order.state}
+                    stateChanges={order.stateChanges}
+                    placeType={order.placeType}
+                    locale={locale}
+                  />
+                </div>
 
-                      return (
-                        <li key={item.id} className="py-2 first:pt-0 last:pb-0">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline gap-2">
-                                <span className="font-mono text-xs font-medium text-guest-text-secondary">
-                                  {item.quantity}×
-                                </span>
-                                <span className="text-xs font-medium text-guest-text-primary">
-                                  {item.itemName}
-                                </span>
-                              </div>
-                              {modifiers.length > 0 && (
-                                <p className="mt-0.5 text-[11px] text-guest-text-secondary pl-5">
-                                  {modifiers.join(", ")}
-                                </p>
-                              )}
-                              {item.notes && (
-                                <p className="mt-0.5 text-[11px] italic text-guest-text-muted pl-5">
-                                  &ldquo;{item.notes}&rdquo;
-                                </p>
-                              )}
-                            </div>
-                            <span className="font-mono text-xs font-medium text-guest-text-primary shrink-0">
-                              {formatMoney(item.lineTotal, currency, locale)}
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-
-                  {/* Order Financial Breakdown */}
-                  <div className="mt-2.5 pt-2.5 border-t border-guest-border-subtle space-y-1 text-xs">
-                    <div className="flex justify-between text-guest-text-secondary">
-                      <span>Subtotal</span>
-                      <span className="font-mono">
-                        {formatMoney(order.subtotal, currency, locale)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-guest-text-secondary">
-                      <span>Tax</span>
-                      <span className="font-mono">
-                        {formatMoney(order.taxAmount, currency, locale)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between pt-1.5 border-t border-guest-border-subtle font-medium text-guest-text-primary">
-                      <span>Order total</span>
-                      <span className="font-mono">
+                {/* Collapsible Items List */}
+                <details
+                  open={isActive}
+                  className="group/items rounded-xl bg-guest-surface border border-guest-border-subtle overflow-hidden"
+                >
+                  <summary className="flex items-center justify-between p-3 cursor-pointer select-none font-medium text-xs text-guest-text-primary hover:bg-guest-surface-sunken transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <span>
+                      {order.items.length}{" "}
+                      {order.items.length === 1 ? "item" : "items"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-guest-text-secondary">
                         {formatMoney(order.total, currency, locale)}
                       </span>
+                      <svg
+                        className="size-3.5 text-guest-text-secondary transition-transform duration-guest-base group-open/items:rotate-180"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </div>
+                  </summary>
+
+                  <div className="px-3 pb-3 border-t border-guest-border-subtle pt-2.5">
+                    <ul
+                      className="divide-y divide-guest-border-subtle"
+                      role="list"
+                    >
+                      {order.items.map((item) => {
+                        const modifiers = Array.isArray(item.modifiersJson)
+                          ? (item.modifiersJson as Array<{ name?: string }>)
+                              .map((m) => m?.name)
+                              .filter(
+                                (name): name is string =>
+                                  typeof name === "string" && name.length > 0
+                              )
+                          : [];
+
+                        return (
+                          <li
+                            key={item.id}
+                            className="py-2 first:pt-0 last:pb-0"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2">
+                                  <span className="font-mono text-xs font-medium text-guest-text-secondary">
+                                    {item.quantity}×
+                                  </span>
+                                  <span className="text-xs font-medium text-guest-text-primary">
+                                    {item.itemName}
+                                  </span>
+                                </div>
+                                {modifiers.length > 0 && (
+                                  <p className="mt-0.5 text-[11px] text-guest-text-secondary pl-5">
+                                    {modifiers.join(", ")}
+                                  </p>
+                                )}
+                                {item.notes && (
+                                  <p className="mt-0.5 text-[11px] italic text-guest-text-muted pl-5">
+                                    &ldquo;{item.notes}&rdquo;
+                                  </p>
+                                )}
+                              </div>
+                              <span className="font-mono text-xs font-medium text-guest-text-primary shrink-0">
+                                {formatMoney(item.lineTotal, currency, locale)}
+                              </span>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    {/* Order Financial Breakdown */}
+                    <div className="mt-2.5 pt-2.5 border-t border-guest-border-subtle space-y-1 text-xs">
+                      <div className="flex justify-between text-guest-text-secondary">
+                        <span>Subtotal</span>
+                        <span className="font-mono">
+                          {formatMoney(order.subtotal, currency, locale)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-guest-text-secondary">
+                        <span>Tax</span>
+                        <span className="font-mono">
+                          {formatMoney(order.taxAmount, currency, locale)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-1.5 border-t border-guest-border-subtle font-medium text-guest-text-primary">
+                        <span>Order total</span>
+                        <span className="font-mono">
+                          {formatMoney(order.total, currency, locale)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </details>
-            </article>
+                </details>
+              </div>
+            </details>
           );
         })}
 
@@ -616,6 +693,32 @@ export default async function TrackOrderPage({
     return html;
   }
 
+  function getStateBadgeClass(state) {
+    switch (state) {
+      case 'PLACED': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'APPROVED': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PREPARING': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'READY': return 'bg-emerald-100 text-emerald-800 border-emerald-200 animate-pulse';
+      case 'DELIVERED': return 'bg-teal-100 text-teal-800 border-teal-200';
+      case 'COMPLETED': return 'bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle';
+      case 'CANCELLED': return 'bg-rose-100 text-rose-800 border-rose-200';
+      default: return 'bg-guest-surface-sunken text-guest-text-secondary border-guest-border-subtle';
+    }
+  }
+
+  function getStateLabel(state) {
+    switch (state) {
+      case 'PLACED': return '● Placed';
+      case 'APPROVED': return '● Approved';
+      case 'PREPARING': return '● Preparing';
+      case 'READY': return '● Ready';
+      case 'DELIVERED': return '● Delivered';
+      case 'COMPLETED': return '✓ Completed';
+      case 'CANCELLED': return '✕ Cancelled';
+      default: return state;
+    }
+  }
+
   function pollOrders() {
     if (document.visibilityState !== 'visible') return;
 
@@ -636,6 +739,11 @@ export default async function TrackOrderPage({
             if (prevState !== o.state) {
               card.setAttribute('data-order-state', o.state);
               container.innerHTML = renderTimelineHtml(o.state, o.placeType, o.stateChanges, locale);
+              var badge = card.querySelector('[data-order-badge="' + o.id + '"]');
+              if (badge) {
+                badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ' + getStateBadgeClass(o.state);
+                badge.textContent = getStateLabel(o.state);
+              }
             }
           }
         }
