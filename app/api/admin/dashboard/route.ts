@@ -219,13 +219,37 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
     if (order.state === "READY") ready += 1;
   }
 
-  let revenueToday = 0;
+  const nowUtc = new Date();
+  const todayStart = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), 0, 0, 0, 0));
+  const todayEnd = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), 23, 59, 59, 999));
+
+  const completedServicesToday = await db.serviceRequest.findMany({
+    where: {
+      venueId: venue.id,
+      state: "COMPLETED",
+      submittedAt: { gte: todayStart, lte: todayEnd },
+    },
+    include: { serviceItem: true },
+  });
+
+  let ordersRevenue = 0;
   for (const order of todayOrders) {
     if (order.state === "COMPLETED") {
-      revenueToday += Number(order.total);
+      ordersRevenue += Number(order.total);
     }
   }
+
+  let servicesRevenue = 0;
+  for (const srv of completedServicesToday) {
+    if (srv.serviceItem && Number(srv.serviceItem.price) > 0) {
+      servicesRevenue += Number(srv.serviceItem.price);
+    }
+  }
+
+  const revenueToday = ordersRevenue + servicesRevenue;
   const revenueTodayString = revenueToday.toFixed(2);
+  const ordersRevenueString = ordersRevenue.toFixed(2);
+  const servicesRevenueString = servicesRevenue.toFixed(2);
 
   // Serialize each order/request to plain JSON. Dates → ISO strings;
   // enums → their string values (already strings); money → strings.
@@ -272,6 +296,8 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
         inKitchen,
         ready,
         revenueToday: revenueTodayString,
+        ordersRevenue: ordersRevenueString,
+        servicesRevenue: servicesRevenueString,
         ordersToday: todayOrders.length,
         requestsOpen: openRequests.length,
         // 8.1.4 — the six sections' data

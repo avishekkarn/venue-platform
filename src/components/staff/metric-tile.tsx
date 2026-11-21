@@ -17,9 +17,10 @@ import type { JSX } from "react";
 export interface MetricTileProps {
   readonly label: string;
   readonly value: string | number;
+  readonly subtext?: string;
 }
 
-export function MetricTile({ label, value }: MetricTileProps): JSX.Element {
+export function MetricTile({ label, value, subtext }: MetricTileProps): JSX.Element {
   return (
     <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-4 flex flex-col gap-1">
       <span className="text-[12px] leading-[16px] font-medium text-staff-text-muted uppercase tracking-wide">
@@ -28,6 +29,11 @@ export function MetricTile({ label, value }: MetricTileProps): JSX.Element {
       <span className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
         {value}
       </span>
+      {subtext ? (
+        <span className="text-[11px] leading-[14px] text-staff-text-secondary mt-0.5 font-medium truncate">
+          {subtext}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -113,13 +113,37 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
     if (order.state === OrderState.READY) ready += 1;
   }
 
-  let revenueToday = 0;
+  const nowUtc = new Date();
+  const todayStart = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), 0, 0, 0, 0));
+  const todayEnd = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), 23, 59, 59, 999));
+
+  const completedServicesToday = await prisma.serviceRequest.findMany({
+    where: {
+      venueId: staff.venueId,
+      state: "COMPLETED",
+      submittedAt: { gte: todayStart, lte: todayEnd },
+    },
+    include: { serviceItem: true },
+  });
+
+  let ordersRevenue = 0;
   for (const order of todayOrders) {
     if (order.state === OrderState.COMPLETED) {
-      revenueToday += Number(order.total);
+      ordersRevenue += Number(order.total);
     }
   }
+
+  let servicesRevenue = 0;
+  for (const srv of completedServicesToday) {
+    if (srv.serviceItem && Number(srv.serviceItem.price) > 0) {
+      servicesRevenue += Number(srv.serviceItem.price);
+    }
+  }
+
+  const revenueToday = ordersRevenue + servicesRevenue;
   const revenueTodayString = revenueToday.toFixed(2);
+  const ordersRevenueString = ordersRevenue.toFixed(2);
+  const servicesRevenueString = servicesRevenue.toFixed(2);
 
   // --- Table / room number lookup (id → number) ---
   const tableNumberById = new Map<string, string>();
@@ -243,7 +267,11 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
           <MetricTile label="Orders Waiting" value={ordersWaiting} />
           <MetricTile label="In Kitchen" value={inKitchen} />
           <MetricTile label="Ready" value={ready} />
-          <MetricTile label="Revenue Today" value={revenueTodayString} />
+          <MetricTile
+            label="Revenue Today"
+            value={revenueTodayString}
+            subtext={`F&B: ${ordersRevenueString} · Services: ${servicesRevenueString}`}
+          />
           <MetricTile label="Orders Today" value={todayOrders.length} />
           <MetricTile label="Requests Open" value={openRequests.length} />
         </div>
@@ -436,15 +464,21 @@ const DASHBOARD_SCRIPT = `
   function renderMetrics(d) {
     var el = document.getElementById('dashboard-metrics');
     if (!el) return;
+    var revSubtext = (d.ordersRevenue !== undefined && d.servicesRevenue !== undefined) ? ('F&B: ' + d.ordersRevenue + ' · Services: ' + d.servicesRevenue) : '';
     var items = [
-      ['Orders Waiting', d.ordersWaiting], ['In Kitchen', d.inKitchen], ['Ready', d.ready],
-      ['Revenue Today', d.revenueToday], ['Orders Today', d.ordersToday], ['Requests Open', d.requestsOpen]
+      ['Orders Waiting', d.ordersWaiting, ''],
+      ['In Kitchen', d.inKitchen, ''],
+      ['Ready', d.ready, ''],
+      ['Revenue Today', d.revenueToday, revSubtext],
+      ['Orders Today', d.ordersToday, ''],
+      ['Requests Open', d.requestsOpen, '']
     ];
     var html = '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">';
     for (var i = 0; i < items.length; i++) {
       html += '<div class="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-4 flex flex-col gap-1">' +
         '<span class="text-[12px] leading-[16px] font-medium text-staff-text-muted uppercase tracking-wide">' + escapeHtml(items[i][0]) + '</span>' +
         '<span class="text-[28px] leading-[36px] font-semibold text-staff-text-primary">' + escapeHtml(String(items[i][1])) + '</span>' +
+        (items[i][2] ? '<span class="text-[11px] leading-[14px] text-staff-text-secondary mt-0.5 font-medium truncate">' + escapeHtml(items[i][2]) + '</span>' : '') +
       '</div>';
     }
     html += '</div>';
