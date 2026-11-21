@@ -11,6 +11,7 @@ import { prisma } from "@/infrastructure/db/client";
 import { PlaceType } from "@/domain/guest/guest-session.repository";
 import { RequestFormField } from "@/components/guest/request-form-field";
 import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/lib/money";
 
 /**
  * Laundry Request Form Page.
@@ -97,6 +98,18 @@ export default async function LaundryPage(): Promise<JSX.Element> {
     }
   }
 
+  const serviceItem = await prisma.serviceItem.findFirst({
+    where: {
+      venueId: venue.value.id,
+      name: { equals: "Laundry", mode: "insensitive" },
+    },
+  });
+  const currency = venue.value.currency || "NPR";
+  const priceLabel =
+    !serviceItem || serviceItem.price.toFixed(2) === "0.00"
+      ? "Complimentary"
+      : formatMoney(serviceItem.price.toFixed(2), currency);
+
   return (
     <main data-world="guest" className="min-h-dvh bg-guest-surface text-guest-text-primary px-4 py-6 md:py-10">
       <div className="max-w-xl mx-auto flex flex-col gap-6">
@@ -117,6 +130,16 @@ export default async function LaundryPage(): Promise<JSX.Element> {
               {venue.value.name}
               {placeContext ? ` · ${placeContext}` : ""}
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-guest-brand/10 text-guest-brand border border-guest-brand/20">
+                {priceLabel}
+              </span>
+              {serviceItem?.estimatedMinutes ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-guest-surface-sunken text-guest-text-secondary border border-guest-border-subtle">
+                  ~{serviceItem.estimatedMinutes} min
+                </span>
+              ) : null}
+            </div>
           </div>
         </header>
 
@@ -137,18 +160,20 @@ export default async function LaundryPage(): Promise<JSX.Element> {
               We have your request. Laundry will be picked up shortly.
             </p>
           </div>
-          <Link
-            href="/services"
-            className="mt-2 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-guest-brand text-guest-brand-contrast hover:brightness-95 transition-all"
-          >
-            Back to services
-          </Link>
-          <Link
-            href="/requests"
-            className="mt-2 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-guest-border-strong text-guest-text-primary hover:bg-guest-surface-sunken transition-all"
-          >
-            View request status
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 mt-3 w-full justify-center">
+            <Link
+              href="/requests"
+              className="inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold bg-guest-brand text-guest-brand-contrast hover:brightness-95 transition-all shadow-sm"
+            >
+              Track request status →
+            </Link>
+            <Link
+              href="/services"
+              className="inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium border border-guest-border-strong text-guest-text-primary hover:bg-guest-surface-sunken transition-all"
+            >
+              Back to services
+            </Link>
+          </div>
         </div>
 
         {/* Form container */}
@@ -305,6 +330,7 @@ export default async function LaundryPage(): Promise<JSX.Element> {
           },
           body: JSON.stringify({
             serviceType: "LAUNDRY",
+            serviceItemId: ${JSON.stringify(serviceItem?.id ?? null)},
             details: {
               items: items,
               serviceLevel: serviceLevel,

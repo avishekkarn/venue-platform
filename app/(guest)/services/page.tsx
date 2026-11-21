@@ -75,6 +75,12 @@ export default async function ServicesPage(): Promise<JSX.Element> {
     .filter((c) => c.items.length > 0);
 
   const currency = venue.value.currency || "NPR";
+  const initialSignature = categories
+    .map(
+      (cat) =>
+        `${cat.id}:${cat.items.map((it) => `${it.id}:${it.state}:${it.price}`).join(",")}`
+    )
+    .join("|");
 
   return (
     <div className="flex flex-col justify-center items-center min-h-[calc(100dvh-4rem)]">
@@ -136,6 +142,45 @@ export default async function ServicesPage(): Promise<JSX.Element> {
         <p className="mt-1 text-[10px]">Open daily. Powered by IronMan.</p>
       </footer>
       <JoinRequestScript />
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+(function() {
+  var currentSignature = ${JSON.stringify(initialSignature)};
+  var lastReloadTime = 0;
+
+  function checkServiceStates() {
+    if (document.visibilityState !== 'visible') return;
+
+    fetch('/api/guest/services/states')
+      .then(function(res) {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then(function(json) {
+        if (!json || typeof json.signature !== 'string') return;
+        if (json.signature !== currentSignature) {
+          var now = Date.now();
+          if (now - lastReloadTime > 2000) {
+            lastReloadTime = now;
+            window.location.reload();
+          }
+        }
+      })
+      .catch(function() {});
+  }
+
+  setInterval(checkServiceStates, 5000);
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      checkServiceStates();
+    }
+  });
+})();
+`,
+        }}
+      />
     </div>
   );
 }

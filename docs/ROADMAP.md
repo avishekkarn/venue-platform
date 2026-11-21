@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestones 8.1, 8.2, and 8.3 are ✅ closed. Milestone 8.4 (Services Management) is in progress (Task 8.4.1 ✅ closed, Task 8.4.2 next).
+**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, and 8.4 are ✅ closed. Milestone 8.5 (Tables Management) is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
@@ -984,8 +984,11 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 | **8.4.4** | **`PATCH /api/admin/services/items/[id]`** (`withAudit` + `withCsrf`; the `withAuditedDynamicRoute` variant per D-24.1). Body: the partial shape. Returns `{ data: ServiceItem }`. Four route tests. | ✅ | 8.4.3a |
 | **8.4.5** | **The service state toggle** (`ServiceRowActions`). The 3-state `AVAILABLE ↔ UNAVAILABLE ↔ HIDDEN` via the 8.4.4 PATCH route. | ✅ | 8.4.4 |
 | **8.4.6** | **The service category CRUD** (`GET` / `POST` / `PATCH` / `DELETE` at `/api/admin/services/categories`). All `withAudit` + `withCsrf`. Four route tests. | ✅ | 8.4.5 |
-| **8.4.7** | **Verify:** add a service (with a photo), edit it, hide it, verify the guest services page sees the service and the photo within 5s. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.4.6 |
-| **8.4.7a** | **The guest services page's photo rendering.** The `ServiceCard` (a new component or the current `Card` shape) uses `next/image` (per D-23.1) with the `photoUrl` and the `photoBlurData` placeholder. The `app/(guest)/services/page.tsx` fetches the enabled `ServiceItem` rows (the `state: AVAILABLE`) and renders the cards. The price shows as "Free" when `price === "0.00"`; otherwise the formatted money (the `formatMoney` from `src/lib/money.ts`, the venue's `NPR` currency). The `ServiceItem`'s id is submitted with the request form (the `ServiceRequest`'s `serviceType` stays the `HotelService` enum; the `ServiceItem` is the catalog row). | ✅ | 8.4.7 |
+| **8.4.7a** | **The guest services page's photo rendering.** The `ServiceCard` (a new component or the current `Card` shape) uses `next/image` (per D-23.1) with the `photoUrl` and the `photoBlurData` placeholder. The `app/(guest)/services/page.tsx` fetches the enabled `ServiceItem` rows (the `state: AVAILABLE`) and renders the cards. The price shows as "Free" when `price === "0.00"`; otherwise the formatted money (the `formatMoney` from `src/lib/money.ts`, the venue's `NPR` currency). The `ServiceItem`'s id is submitted with the request form (the `ServiceRequest`'s `serviceType` stays the `HotelService` enum; the `ServiceItem` is the catalog row). | ✅ | 8.4.6 |
+| **8.4.7b** | **The Mobile-First Dedicated Service Forms + Dynamic Pricing Integration.** Wires all guest service forms (`housekeeping`, `laundry`, `spa`, `maintenance`, `concierge`, `late-checkout`, `wake-up-call`, `do-not-disturb`) to load the live `ServiceItem` record, displays admin-managed pricing and estimated minutes in a mobile-optimized header badge, attaches `serviceItemId` to the `POST /api/guest/requests` submission payload, and links directly to `/requests` for progress tracking. | ✅ | 8.4.7a |
+| **8.4.7c** | **The Generic Custom Service Detail Form (`/services/[id]`).** A responsive mobile-first detail form for any custom operator-created service beyond the 9 seeded hotel services, letting guests read the description, see pricing/duration, submit intake notes, and track progress on `/requests`. | ✅ | 8.4.7b |
+| **8.4.7d** | **Service Polling & Live State Sync (`GET /api/guest/services/states`).** Implements the lightweight guest polling endpoint for services (mirroring `/api/guest/menu/states`) and client reload hook so when an admin toggles a service state (Available/Unavailable/Hidden), the guest services catalog updates within 5s. | ✅ | 8.4.7c |
+| **8.4.7** | **Verify:** Full operational loop verification (Admin configures service price & availability → Guest navigates dynamic mobile catalog → Guest submits structured request → Staff receives in `/staff` area queue and advances state → Guest tracks live timeline on `/requests`). Manual desktop + mobile. The milestone's acceptance test. | ✅ | 8.4.7d |
 
 ---
 

@@ -37,6 +37,7 @@ export interface CreateRequestInput {
   readonly tableId?: string | null;
   readonly counterId?: string | null;
   readonly guestSessionId?: string | null;
+  readonly serviceItemId?: string | null;
   readonly serviceType: HotelService;
   readonly details?: ServiceRequestDetails;
 }
@@ -127,6 +128,7 @@ export async function createRequest(
     tableId: hasTable ? (input.tableId ?? null) : null,
     counterId: hasCounter ? (input.counterId ?? null) : null,
     guestSessionId: input.guestSessionId ?? null,
+    serviceItemId: input.serviceItemId ?? null,
     serviceType: input.serviceType,
     details: input.details,
   };

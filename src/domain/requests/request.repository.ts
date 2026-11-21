@@ -70,6 +70,7 @@ export interface ServiceRequest {
   readonly tableId?: string | null;
   readonly counterId?: string | null;
   readonly guestSessionId?: string | null;
+  readonly serviceItemId?: string | null;
   readonly serviceType: HotelService;
   readonly state: RequestState;
   readonly details: ServiceRequestDetails;
@@ -85,6 +86,7 @@ export interface CreateServiceRequestInput {
   readonly tableId?: string | null;
   readonly counterId?: string | null;
   readonly guestSessionId?: string | null;
+  readonly serviceItemId?: string | null;
   readonly serviceType: HotelService;
   readonly details?: ServiceRequestDetails;
 }

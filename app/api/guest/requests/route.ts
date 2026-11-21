@@ -146,6 +146,13 @@ const postHandler = async (
     details = body["details"] as ServiceRequestDetails;
   }
 
+  // 4b. Optional serviceItemId
+  const rawServiceItemId = body["serviceItemId"];
+  const serviceItemId =
+    typeof rawServiceItemId === "string" && rawServiceItemId.trim().length > 0
+      ? rawServiceItemId.trim()
+      : null;
+
   // 5. Authoritative venue and place resolved strictly from the session
   const placeType = session.placeType as unknown as PlaceType;
   let tableId: string | null = null;
@@ -167,6 +174,7 @@ const postHandler = async (
     tableId,
     roomId,
     counterId,
+    serviceItemId,
     serviceType,
     details,
   };
