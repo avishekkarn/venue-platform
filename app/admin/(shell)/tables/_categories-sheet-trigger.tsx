@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type JSX } from "react";
+import { useRouter } from "next/navigation";
 import { TableCategoriesSheet, type TableCategoryItem } from "./_categories-sheet";
 
 interface TableCategoriesSheetTriggerProps {
@@ -11,6 +12,7 @@ export function TableCategoriesSheetTrigger({
   categories,
 }: TableCategoriesSheetTriggerProps): JSX.Element {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -22,12 +24,17 @@ export function TableCategoriesSheetTrigger({
         Manage Categories
       </button>
 
-      <TableCategoriesSheet
-        open={open}
-        onOpenChange={setOpen}
-        initialCategories={categories}
-        onClose={() => setOpen(false)}
-      />
+      {open ? (
+        <TableCategoriesSheet
+          open={open}
+          onOpenChange={setOpen}
+          initialCategories={categories}
+          onClose={() => {
+            setOpen(false);
+            router.refresh();
+          }}
+        />
+      ) : null}
     </>
   );
 }

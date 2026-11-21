@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type JSX } from "react";
+import { useRouter } from "next/navigation";
 import { RoomCategoriesSheet, type RoomCategoryItem } from "./_categories-sheet";
 
 interface RoomCategoriesSheetTriggerProps {
@@ -13,6 +14,7 @@ export function RoomCategoriesSheetTrigger({
   currency,
 }: RoomCategoriesSheetTriggerProps): JSX.Element {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -24,13 +26,18 @@ export function RoomCategoriesSheetTrigger({
         Room Pricing & Categories
       </button>
 
-      <RoomCategoriesSheet
-        open={open}
-        onOpenChange={setOpen}
-        initialCategories={categories}
-        currency={currency}
-        onClose={() => setOpen(false)}
-      />
+      {open ? (
+        <RoomCategoriesSheet
+          open={open}
+          onOpenChange={setOpen}
+          initialCategories={categories}
+          currency={currency}
+          onClose={() => {
+            setOpen(false);
+            router.refresh();
+          }}
+        />
+      ) : null}
     </>
   );
 }

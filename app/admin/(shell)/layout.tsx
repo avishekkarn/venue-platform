@@ -4,6 +4,7 @@ import { getVenueSlug } from '@/infrastructure/config/venue';
 import { AdminNav } from './_nav';
 import { AdminSignOut } from './_sign-out';
 import { AdminShellTitle } from './_shell-title';
+import { Toaster } from '@/components/ui/toast';
 
 /**
  * The admin shell (DESIGN.md §4.10.3).
@@ -62,7 +63,9 @@ export default async function AdminShellLayout({
           </header>
 
           <div className="flex-1 overflow-y-auto p-6">
-            {children}
+            <Toaster position="bottom-center">
+              {children}
+            </Toaster>
           </div>
         </div>
       </div>
