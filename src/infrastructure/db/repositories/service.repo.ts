@@ -26,6 +26,7 @@ import {
   type ServiceCategoryView,
   type ServiceItemView,
   type CreateServiceItemInput,
+  type UpdateServiceItemInput,
 } from "@/domain/services/service.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 import { ok, fail, DomainErrorCode, type Result } from "@/domain/shared/result";
@@ -227,6 +228,65 @@ export function createPrismaServiceRepository(
           );
         }
         return fail(DomainErrorCode.INTERNAL, "Database write operation failed");
+      }
+    },
+
+    async updateServiceItem(
+      venueId: string,
+      itemId: string,
+      input: UpdateServiceItemInput
+    ): Promise<Result<ServiceItem>> {
+      try {
+        const existing = await client.serviceItem.findFirst({
+          where: { id: itemId, venueId },
+        });
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Service item ${itemId} not found in venue ${venueId}`
+          );
+        }
+
+        if (input.categoryId !== undefined) {
+          const category = await client.serviceCategory.findFirst({
+            where: { id: input.categoryId, venueId },
+          });
+          if (!category) {
+            return fail(
+              DomainErrorCode.VALIDATION_FAILED,
+              "Category not found for this venue"
+            );
+          }
+        }
+
+        const data: Prisma.ServiceItemUpdateInput = {};
+        if (input.name !== undefined) data.name = input.name;
+        if (input.description !== undefined) data.description = input.description;
+        if (input.photoUrl !== undefined) data.photoUrl = input.photoUrl;
+        if (input.photoBlurData !== undefined) data.photoBlurData = input.photoBlurData;
+        if (input.price !== undefined) data.price = input.price;
+        if (input.estimatedMinutes !== undefined) data.estimatedMinutes = input.estimatedMinutes;
+        if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+        if (input.state !== undefined) {
+          data.state = DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state];
+        }
+        if (input.categoryId !== undefined) {
+          data.category = { connect: { id: input.categoryId } };
+        }
+
+        const updated = await client.serviceItem.update({
+          where: { id: itemId },
+          data,
+        });
+        return ok(mapServiceItem(updated));
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          return fail(
+            DomainErrorCode.CONFLICT,
+            `Service item '${input.name ?? itemId}' violates unique constraint`
+          );
+        }
+        return fail(DomainErrorCode.INTERNAL, "Database update operation failed");
       }
     },
   };

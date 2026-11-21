@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/require-role";
 import { prisma } from "@/infrastructure/db/client";
 import { createPrismaServiceRepository } from "@/infrastructure/db/repositories/service.repo";
@@ -15,10 +16,16 @@ import {
 import { Badge, type BadgeStatus } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/money";
 import { MenuItemState } from "@/domain/menu/menu.repository";
+import type { ServiceItemView } from "@/domain/services/service.repository";
 import { AddServiceButton } from "./_add-service-button";
+import { EditServiceSheet } from "./_edit-service-sheet";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+interface ServicesPageProps {
+  readonly searchParams?: Promise<{ id?: string }>;
+}
 
 function stateToBadge(state: MenuItemState): { status: BadgeStatus; label: string } {
   switch (state) {
@@ -31,7 +38,9 @@ function stateToBadge(state: MenuItemState): { status: BadgeStatus; label: strin
   }
 }
 
-export default async function ServicesPage(): Promise<JSX.Element> {
+export default async function ServicesPage({
+  searchParams,
+}: ServicesPageProps): Promise<JSX.Element> {
   const staff = await requireRole(["admin"]);
   const venueRepo = createPrismaVenueRepository(prisma);
   const serviceRepo = createPrismaServiceRepository(prisma);
@@ -43,6 +52,20 @@ export default async function ServicesPage(): Promise<JSX.Element> {
 
   const currency = venueResult.ok ? venueResult.value.currency || "NPR" : "NPR";
   const categories = catalogResult.ok ? catalogResult.value : [];
+
+  const resolved = searchParams ? await searchParams : {};
+  const selectedId = resolved.id;
+
+  let selected: { item: ServiceItemView; categoryId: string } | null = null;
+  if (selectedId) {
+    for (const cat of categories) {
+      const found = cat.items.find((it) => it.id === selectedId);
+      if (found) {
+        selected = { item: found, categoryId: cat.id };
+        break;
+      }
+    }
+  }
 
   return (
     <section className="flex flex-col gap-6">
@@ -131,14 +154,12 @@ export default async function ServicesPage(): Promise<JSX.Element> {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="inline-flex gap-2">
-                                <button
-                                  type="button"
-                                  disabled
-                                  title="Available in 8.4.4"
-                                  className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
+                                <Link
+                                  href={`/admin/services?id=${item.id}`}
+                                  className="h-8 px-2 rounded text-xs font-medium inline-flex items-center justify-center bg-staff-surface-raised hover:bg-staff-surface-sunken text-staff-text-primary border border-staff-border-subtle"
                                 >
                                   Edit
-                                </button>
+                                </Link>
                                 <button
                                   type="button"
                                   disabled
@@ -168,6 +189,15 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           ))}
         </div>
       )}
+
+      {selected ? (
+        <EditServiceSheet
+          item={selected.item}
+          categoryId={selected.categoryId}
+          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+          currency={currency}
+        />
+      ) : null}
     </section>
   );
 }
