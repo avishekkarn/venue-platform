@@ -8,41 +8,32 @@ import { createPrismaTableRepository } from "@/infrastructure/db/repositories/ta
 import { createPrismaRoomRepository } from "@/infrastructure/db/repositories/room.repo";
 import { OrderState, PlaceType, type OrderFilter } from "@/domain/orders/order.repository";
 import type { Order, OrderItem } from "@/domain/orders/order.repository";
+import {
+  HotelService,
+  RequestState,
+  type ServiceRequest,
+} from "@/domain/requests/request.repository";
 import { OrderQueueRow } from "@/components/staff/order-queue-row";
+import {
+  RequestQueueRow,
+  SERVICE_LABELS,
+} from "@/components/staff/request-queue-row";
 import { formatMoney } from "@/lib/money";
 import { formatElapsed } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 /**
- * The Completed Orders tab (DESIGN.md §4.10.7).
+ * The Completed Orders & Closed Folios Ledger (Milestone 8.4.9d).
  *
- * A full-width list of completed orders — COMPLETED and CANCELLED — with
- * a date-range filter at the top (Today / Yesterday / This Week / This
- * Month / Custom) and an "Export CSV" button top-right. Sorted newest
- * first (the operator's mental model after service: what closed most
- * recently).
+ * A comprehensive ledger of closed business:
+ *   - Completed Orders: F&B orders in COMPLETED or CANCELLED state.
+ *   - Completed Requests: Hotel service requests in COMPLETED or CANCELLED state.
+ *   - Closed Session Folios: Closed guest sessions with itemized bills (Orders + Hotel Services + Tax = Total).
  *
- * The filter is URL state: ?range=today|yesterday|week|month|custom and,
- * for custom, &from=YYYY-MM-DD&to=YYYY-MM-DD. The page computes the
- * UTC day boundaries inline (the same contract as the 8.2.1 route's
- * parseDateBoundary), passes dateFrom/dateTo to the repository, and
- * renders the result.
- *
- * This is a Server Component. It reads via the repositories directly,
- * like the Active Orders tab at app/admin/orders/active/page.tsx. No
- * API route, no client polling. The admin panel has no decorative
- * motion (DESIGN.md §4.10.14).
- *
- * The "Export CSV" button links to /api/admin/orders/export with the
- * current filter params. The route is 8.2.4's job; the button ships
- * with this page per DESIGN.md §4.10.7. The click 404s until 8.2.4
- * ships the route — an honest 404 on an incomplete feature.
- *
- * Reference: DESIGN.md §4.10.7, §4.10.14, D-9.2, D-19.1, SYSTEM.md
- * §15.4, D-10.2, D-12.1, ROADMAP.md §12 (Task 8.2.3).
+ * Supports time presets (Today, Yesterday, This Week, This Month, Custom) and CSV export.
  */
 
-const TERMINAL_STATES: readonly OrderState[] = [
+const TERMINAL_ORDER_STATES: readonly OrderState[] = [
   OrderState.COMPLETED,
   OrderState.CANCELLED,
 ];
@@ -55,6 +46,9 @@ interface CompletedOrdersPageProps {
     range?: string;
     from?: string;
     to?: string;
+    view?: string;
+    sessionId?: string;
+    requestId?: string;
   }>;
 }
 
@@ -80,6 +74,25 @@ function badgeClass(state: OrderState): string {
   }
 }
 
+function requestBadgeClass(state: RequestState): string {
+  const base =
+    "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium";
+  switch (state) {
+    case RequestState.SUBMITTED:
+      return `${base} bg-amber-100 text-amber-800`;
+    case RequestState.ACKNOWLEDGED:
+      return `${base} bg-purple-100 text-purple-800`;
+    case RequestState.IN_PROGRESS:
+      return `${base} bg-sky-100 text-sky-800`;
+    case RequestState.COMPLETED:
+      return `${base} bg-status-done-bg text-status-done`;
+    case RequestState.CANCELLED:
+      return `${base} bg-status-cancelled-bg text-status-cancelled`;
+    default:
+      return base;
+  }
+}
+
 function isDateString(s: string | undefined): s is string {
   return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
@@ -96,47 +109,50 @@ function endOfUtcDay(d: Date): Date {
   );
 }
 
-function parseUtcDate(s: string): Date | null {
-  const d = new Date(`${s}T00:00:00.000Z`);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function computeRange(range: RangeKey, from?: string, to?: string): {
-  dateFrom?: Date;
-  dateTo?: Date;
-  label: string;
-} {
+function computeRange(
+  key: RangeKey,
+  from?: string,
+  to?: string
+): { dateFrom?: Date; dateTo?: Date; label: string } {
   const now = new Date();
-  const todayStart = startOfUtcDay(now);
-  const todayEnd = endOfUtcDay(now);
-
-  if (range === "today") {
-    return { dateFrom: todayStart, dateTo: todayEnd, label: "Today" };
+  if (key === "today") {
+    return {
+      dateFrom: startOfUtcDay(now),
+      dateTo: endOfUtcDay(now),
+      label: "Today",
+    };
   }
-  if (range === "yesterday") {
-    const y = new Date(todayStart);
-    y.setUTCDate(y.getUTCDate() - 1);
-    return { dateFrom: startOfUtcDay(y), dateTo: endOfUtcDay(y), label: "Yesterday" };
+  if (key === "yesterday") {
+    const y = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return {
+      dateFrom: startOfUtcDay(y),
+      dateTo: endOfUtcDay(y),
+      label: "Yesterday",
+    };
   }
-  if (range === "week") {
-    // ISO week: Monday-start. The DESIGN.md §4.10.7 does not name the
-    // start; Monday is the standard.
-    const day = todayStart.getUTCDay(); // 0 = Sunday
-    const diff = (day + 6) % 7; // days since Monday
-    const weekStart = new Date(todayStart);
-    weekStart.setUTCDate(weekStart.getUTCDate() - diff);
-    return { dateFrom: weekStart, dateTo: todayEnd, label: "This Week" };
+  if (key === "week") {
+    const day = now.getUTCDay();
+    const diffToMonday = (day + 6) % 7;
+    const monday = new Date(now.getTime() - diffToMonday * 24 * 60 * 60 * 1000);
+    return {
+      dateFrom: startOfUtcDay(monday),
+      dateTo: endOfUtcDay(now),
+      label: "This Week",
+    };
   }
-  if (range === "month") {
-    const monthStart = new Date(
-      Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1, 0, 0, 0, 0)
+  if (key === "month") {
+    const firstOfMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0)
     );
-    return { dateFrom: monthStart, dateTo: todayEnd, label: "This Month" };
+    return {
+      dateFrom: firstOfMonth,
+      dateTo: endOfUtcDay(now),
+      label: "This Month",
+    };
   }
-  // Custom
-  if (isDateString(from) && isDateString(to)) {
-    const fromD = parseUtcDate(from);
-    const toD = parseUtcDate(to);
+  if (key === "custom" && isDateString(from) && isDateString(to)) {
+    const fromD = new Date(`${from}T00:00:00.000Z`);
+    const toD = new Date(`${to}T23:59:59.999Z`);
     if (fromD && toD) {
       return {
         dateFrom: startOfUtcDay(fromD),
@@ -158,10 +174,58 @@ export default async function CompletedOrdersPage({
   const tableRepo = createPrismaTableRepository(prisma);
   const roomRepo = createPrismaRoomRepository(prisma);
 
-  const [venueResult, tablesResult, roomsResult] = await Promise.all([
+  const params = await searchParams;
+  const currentView = params.view || "orders";
+  const rangeKey: RangeKey =
+    params.range === "yesterday" ||
+    params.range === "week" ||
+    params.range === "month" ||
+    params.range === "custom"
+      ? params.range
+      : "today";
+
+  const range = computeRange(rangeKey, params.from, params.to);
+
+  const orderFilter: OrderFilter = {
+    ...(range.dateFrom ? { dateFrom: range.dateFrom, dateTo: range.dateTo } : {}),
+  };
+
+  const [
+    venueResult,
+    ordersResult,
+    tablesResult,
+    roomsResult,
+    completedRequestsRaw,
+    closedSessionsRaw,
+  ] = await Promise.all([
     venueRepo.findById(staff.venueId),
+    orderRepo.listForVenue(staff.venueId, orderFilter),
     tableRepo.listForVenue(staff.venueId),
     roomRepo.listForVenue(staff.venueId),
+    prisma.serviceRequest.findMany({
+      where: {
+        venueId: staff.venueId,
+        state: { in: [RequestState.COMPLETED, RequestState.CANCELLED] },
+        ...(range.dateFrom ? { submittedAt: { gte: range.dateFrom, lte: range.dateTo } } : {}),
+      },
+      include: { serviceItem: true },
+      orderBy: { submittedAt: "desc" },
+    }),
+    prisma.guestSession.findMany({
+      where: {
+        venueId: staff.venueId,
+        endedAt: range.dateFrom ? { gte: range.dateFrom, lte: range.dateTo } : { not: null },
+      },
+      include: {
+        orders: {
+          include: { items: true, stateChanges: true },
+        },
+        serviceRequests: {
+          include: { serviceItem: true },
+        },
+      },
+      orderBy: { endedAt: "desc" },
+    }),
   ]);
 
   const currency = venueResult.ok ? venueResult.value.currency || "USD" : "USD";
@@ -173,29 +237,11 @@ export default async function CompletedOrdersPage({
   const roomNumberById = new Map<string, string>();
   for (const r of rooms) roomNumberById.set(r.id, r.number);
 
-  const params = await searchParams;
-  const rangeKey: RangeKey =
-    params.range === "yesterday" ||
-    params.range === "week" ||
-    params.range === "month" ||
-    params.range === "custom"
-      ? params.range
-      : "today"; // default
-  const range = computeRange(rangeKey, params.from, params.to);
+  const completedOrders = (ordersResult.ok ? ordersResult.value : [])
+    .filter((o) => TERMINAL_ORDER_STATES.includes(o.state))
+    .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime());
 
-  const filter: OrderFilter = {
-    ...(range.dateFrom !== undefined ? { dateFrom: range.dateFrom } : {}),
-    ...(range.dateTo !== undefined ? { dateTo: range.dateTo } : {}),
-  };
-
-  const ordersResult = await orderRepo.listForVenue(staff.venueId, filter);
-  const allOrders = ordersResult.ok ? ordersResult.value : [];
-
-  const completedOrders = allOrders
-    .filter((o) => TERMINAL_STATES.includes(o.state))
-    .sort((a, b) => b.placedAt.getTime() - a.placedAt.getTime()); // newest first
-
-  function placeLabel(order: Order): string {
+  function placeLabel(order: { placeType: PlaceType; tableId?: string | null; roomId?: string | null; pickupName?: string | null }): string {
     if (order.placeType === PlaceType.TABLE) {
       return order.tableId ? tableNumberById.get(order.tableId) ?? "—" : "—";
     }
@@ -205,24 +251,40 @@ export default async function CompletedOrdersPage({
     return order.pickupName ?? "—";
   }
 
-  function placeTypeLabel(order: Order): string {
+  function placeTypeLabel(order: { placeType: PlaceType }): string {
     if (order.placeType === PlaceType.TABLE) return "Table";
     if (order.placeType === PlaceType.ROOM) return "Room";
     return "Counter";
   }
 
-  const selectedId = params.id;
-  const selectedOrder: Order | null = selectedId
-    ? completedOrders.find((o) => o.id === selectedId) ?? null
+  function sessionPlaceLabel(session: { placeType: string; tableId?: string | null; roomId?: string | null }): { type: string; number: string } {
+    if (session.placeType === "TABLE" && session.tableId) {
+      return { type: "Table", number: tableNumberById.get(session.tableId) ?? "—" };
+    }
+    if (session.placeType === "ROOM" && session.roomId) {
+      return { type: "Room", number: roomNumberById.get(session.roomId) ?? "—" };
+    }
+    return { type: "Counter", number: "—" };
+  }
+
+  const selectedOrderId = params.id;
+  const selectedSessionId = params.sessionId;
+  const selectedRequestId = params.requestId;
+
+  const selectedOrder: Order | null = selectedOrderId
+    ? completedOrders.find((o) => o.id === selectedOrderId) ?? null
+    : null;
+
+  const selectedSession = selectedSessionId
+    ? closedSessionsRaw.find((s) => s.id === selectedSessionId) ?? null
+    : null;
+
+  const selectedRequest = selectedRequestId
+    ? completedRequestsRaw.find((r) => r.id === selectedRequestId) ?? null
     : null;
 
   const now = new Date();
 
-  // Build the export href with the current date boundaries as YYYY-MM-DD.
-  // The route parses `from`/`to` with the same UTC day semantics as the
-  // 8.2.1 route's parseDateBoundary. The `range` preset is resolved to
-  // its boundaries by `computeRange` above; the export link uses those
-  // boundaries, not the preset key.
   const exportParams = new URLSearchParams();
   if (range.dateFrom) {
     exportParams.set("from", range.dateFrom.toISOString().slice(0, 10));
@@ -235,7 +297,7 @@ export default async function CompletedOrdersPage({
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <Link
               href="/admin"
@@ -244,7 +306,7 @@ export default async function CompletedOrdersPage({
               ← Back to Dashboard
             </Link>
             <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
-              Completed Orders
+              Completed Orders & Closed Folios
             </h1>
           </div>
           <a
@@ -255,7 +317,7 @@ export default async function CompletedOrdersPage({
           </a>
         </div>
 
-        {/* Date-range filter (DESIGN.md §4.10.7) */}
+        {/* Date-range filter */}
         <nav
           aria-label="Date range"
           className="flex flex-wrap items-center gap-2"
@@ -271,7 +333,7 @@ export default async function CompletedOrdersPage({
             return (
               <Link
                 key={key}
-                href={`/admin/orders/completed?range=${key}`}
+                href={`/admin/orders/completed?range=${key}&view=${currentView}`}
                 className={cn(
                   "inline-flex items-center justify-center rounded-md px-3 h-9 text-sm font-medium border",
                   isActive
@@ -285,7 +347,6 @@ export default async function CompletedOrdersPage({
             );
           })}
 
-          {/* Custom: a Server Component <form>. No client JS. */}
           <form
             action="/admin/orders/completed"
             method="GET"
@@ -297,6 +358,7 @@ export default async function CompletedOrdersPage({
             )}
           >
             <input type="hidden" name="range" value="custom" />
+            <input type="hidden" name="view" value={currentView} />
             <label className="text-xs font-medium whitespace-nowrap" htmlFor="from">
               From
             </label>
@@ -326,140 +388,432 @@ export default async function CompletedOrdersPage({
           </form>
         </nav>
 
+        {/* View Switcher Tabs */}
+        <div className="flex items-center gap-2 border-b border-staff-border-subtle pb-px">
+          <Link
+            href={`/admin/orders/completed?range=${rangeKey}&view=orders${params.from ? `&from=${params.from}&to=${params.to}` : ""}`}
+            className={cn(
+              "px-4 py-2 text-sm font-semibold border-b-2 transition-colors",
+              currentView === "orders"
+                ? "border-staff-brand text-staff-text-primary"
+                : "border-transparent text-staff-text-muted hover:text-staff-text-primary"
+            )}
+          >
+            Completed Orders ({completedOrders.length})
+          </Link>
+          <Link
+            href={`/admin/orders/completed?range=${rangeKey}&view=requests${params.from ? `&from=${params.from}&to=${params.to}` : ""}`}
+            className={cn(
+              "px-4 py-2 text-sm font-semibold border-b-2 transition-colors",
+              currentView === "requests"
+                ? "border-staff-brand text-staff-text-primary"
+                : "border-transparent text-staff-text-muted hover:text-staff-text-primary"
+            )}
+          >
+            Completed Requests ({completedRequestsRaw.length})
+          </Link>
+          <Link
+            href={`/admin/orders/completed?range=${rangeKey}&view=folios${params.from ? `&from=${params.from}&to=${params.to}` : ""}`}
+            className={cn(
+              "px-4 py-2 text-sm font-semibold border-b-2 transition-colors",
+              currentView === "folios"
+                ? "border-staff-brand text-staff-text-primary"
+                : "border-transparent text-staff-text-muted hover:text-staff-text-primary"
+            )}
+          >
+            Closed Session Folios ({closedSessionsRaw.length})
+          </Link>
+        </div>
+
         <p className="text-sm text-staff-text-muted">
-          {range.label} · {completedOrders.length}{" "}
-          order{completedOrders.length === 1 ? "" : "s"}
+          {range.label} · {currentView === "orders" ? `${completedOrders.length} orders` : currentView === "requests" ? `${completedRequestsRaw.length} requests` : `${closedSessionsRaw.length} closed sessions`}
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-        <div
-          id="completed-orders-list"
-          className="flex flex-col gap-3"
-          aria-label="Completed orders"
-        >
-          {completedOrders.length === 0 ? (
-            <p className="text-sm text-staff-text-muted py-6 text-center border border-staff-border-subtle rounded-xl">
-              No orders in this range.
-            </p>
-          ) : (
-            completedOrders.map((order) => (
-              <Link
-                key={order.id}
-                href={`/admin/orders/completed?range=${rangeKey}${
-                  rangeKey === "custom" && isDateString(params.from) && isDateString(params.to)
-                    ? `&from=${params.from}&to=${params.to}`
-                    : ""
-                }&id=${order.id}`}
-                className={cn(
-                  "block rounded-xl transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-staff-brand",
-                  selectedId === order.id && "ring-2 ring-staff-brand"
-                )}
-              >
-                <OrderQueueRow
-                  order={order}
-                  placeLabel={placeLabel(order)}
-                  placeTypeLabel={placeTypeLabel(order)}
-                  elapsedLabel={formatElapsed(order.placedAt, now)}
-                />
-              </Link>
-            ))
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+        <div className="flex flex-col gap-4">
+          {/* VIEW: COMPLETED ORDERS */}
+          {currentView === "orders" && (
+            <div id="completed-orders-list" className="flex flex-col gap-3">
+              {completedOrders.length === 0 ? (
+                <p className="text-sm text-staff-text-muted py-8 text-center border border-staff-border-subtle rounded-xl bg-staff-surface-raised">
+                  No completed orders in this date range.
+                </p>
+              ) : (
+                completedOrders.map((order) => (
+                  <Link
+                    key={order.id}
+                    href={`/admin/orders/completed?range=${rangeKey}&view=orders&id=${order.id}${params.from ? `&from=${params.from}&to=${params.to}` : ""}`}
+                    className={cn(
+                      "block rounded-xl transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-staff-brand",
+                      selectedOrderId === order.id && "ring-2 ring-staff-brand"
+                    )}
+                  >
+                    <OrderQueueRow
+                      order={order}
+                      placeLabel={placeLabel(order)}
+                      placeTypeLabel={placeTypeLabel(order)}
+                      elapsedLabel={formatElapsed(order.placedAt, now)}
+                    />
+                  </Link>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* VIEW: COMPLETED REQUESTS */}
+          {currentView === "requests" && (
+            <div id="completed-requests-list" className="flex flex-col gap-3">
+              {completedRequestsRaw.length === 0 ? (
+                <p className="text-sm text-staff-text-muted py-8 text-center border border-staff-border-subtle rounded-xl bg-staff-surface-raised">
+                  No completed requests in this date range.
+                </p>
+              ) : (
+                completedRequestsRaw.map((req) => {
+                  const placeNumber =
+                    req.placeType === PlaceType.ROOM && req.roomId
+                      ? roomNumberById.get(req.roomId) ?? "—"
+                      : req.placeType === PlaceType.TABLE && req.tableId
+                        ? tableNumberById.get(req.tableId) ?? "—"
+                        : "Counter";
+                  const placeType =
+                    req.placeType === PlaceType.ROOM
+                      ? "Room"
+                      : req.placeType === PlaceType.TABLE
+                        ? "Table"
+                        : "Counter";
+
+                  return (
+                    <Link
+                      key={req.id}
+                      href={`/admin/orders/completed?range=${rangeKey}&view=requests&requestId=${req.id}${params.from ? `&from=${params.from}&to=${params.to}` : ""}`}
+                      className={cn(
+                        "block rounded-xl transition-colors",
+                        selectedRequestId === req.id && "ring-2 ring-staff-brand"
+                      )}
+                    >
+                      <RequestQueueRow
+                        request={req as unknown as ServiceRequest}
+                        placeNumber={placeNumber}
+                        placeTypeLabel={placeType}
+                        elapsedLabel={formatElapsed(req.submittedAt, now)}
+                        readOnly={true}
+                      />
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* VIEW: CLOSED SESSION FOLIOS */}
+          {currentView === "folios" && (
+            <div id="closed-folios-list" className="flex flex-col gap-3">
+              {closedSessionsRaw.length === 0 ? (
+                <p className="text-sm text-staff-text-muted py-8 text-center border border-staff-border-subtle rounded-xl bg-staff-surface-raised">
+                  No closed session folios in this date range.
+                </p>
+              ) : (
+                closedSessionsRaw.map((sess) => {
+                  const place = sessionPlaceLabel(sess);
+                  let ordersTotal = 0;
+                  for (const ord of sess.orders) {
+                    if (ord.state !== OrderState.CANCELLED) {
+                      ordersTotal += Number(ord.total);
+                    }
+                  }
+
+                  let servicesTotal = 0;
+                  for (const srv of sess.serviceRequests) {
+                    if (srv.state !== RequestState.CANCELLED && srv.serviceItem) {
+                      servicesTotal += Number(srv.serviceItem.price);
+                    }
+                  }
+
+                  const grandTotal = ordersTotal + servicesTotal;
+                  const isSelected = selectedSessionId === sess.id;
+
+                  return (
+                    <Link
+                      key={sess.id}
+                      href={`/admin/orders/completed?range=${rangeKey}&view=folios&sessionId=${sess.id}${params.from ? `&from=${params.from}&to=${params.to}` : ""}`}
+                      className={cn(
+                        "block p-5 bg-staff-surface-raised border border-staff-border-subtle rounded-xl transition-all shadow-2xs hover:border-staff-border",
+                        isSelected && "ring-2 ring-staff-brand"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-staff-text-primary">
+                              {place.type} {place.number}
+                            </span>
+                            <span className="text-xs px-2 py-0.5 rounded font-medium bg-emerald-100 text-emerald-800">
+                              Closed · {sess.endedAt ? sess.endedAt.toLocaleDateString() : ""}
+                            </span>
+                          </div>
+                          <p className="text-xs text-staff-text-secondary mt-0.5">
+                            Duration: {formatElapsed(sess.createdAt, sess.endedAt || now)}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-base font-bold text-staff-text-primary block font-mono">
+                            {formatMoney(grandTotal.toFixed(2), currency)}
+                          </span>
+                          <span className="text-[11px] text-staff-text-muted">
+                            F&B: {formatMoney(ordersTotal.toFixed(2), currency)} · Services: {formatMoney(servicesTotal.toFixed(2), currency)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-staff-border-subtle/80 flex items-center justify-between text-xs">
+                        <span className="text-staff-text-muted">
+                          {sess.orders.length} order{sess.orders.length === 1 ? "" : "s"} · {sess.serviceRequests.length} service request{sess.serviceRequests.length === 1 ? "" : "s"}
+                        </span>
+                        <span className="text-staff-brand font-medium hover:underline">
+                          View Itemized Folio →
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
           )}
         </div>
 
-        {selectedOrder ? (
-          <aside
-            id="order-detail-panel"
-            className="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-5 flex flex-col gap-4 self-start sticky top-4"
-            aria-label="Order detail"
-          >
-            <header className="flex items-center justify-between gap-2">
-              <h2 className="text-lg font-semibold text-staff-text-primary">
-                #{selectedOrder.id.slice(0, 8).toUpperCase()}
-              </h2>
-              <span className={badgeClass(selectedOrder.state)}>
-                {selectedOrder.state}
-              </span>
-            </header>
+        {/* RIGHT DETAIL INSPECTOR */}
+        <aside className="self-start sticky top-4 flex flex-col gap-4">
+          {selectedSession ? (
+            /* SESSION FOLIO DETAIL */
+            <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-5 flex flex-col gap-4">
+              <header className="flex items-center justify-between gap-2 border-b border-staff-border-subtle pb-3">
+                <div>
+                  <h2 className="text-lg font-bold text-staff-text-primary">
+                    {sessionPlaceLabel(selectedSession).type} {sessionPlaceLabel(selectedSession).number} Folio
+                  </h2>
+                  <p className="text-xs text-staff-text-secondary">
+                    Closed Session #{selectedSession.id.slice(0, 8).toUpperCase()}
+                  </p>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded font-medium bg-emerald-100 text-emerald-800">
+                  Closed
+                </span>
+              </header>
 
-            <div className="text-sm text-staff-text-secondary">
-              {placeTypeLabel(selectedOrder)} {placeLabel(selectedOrder)}
+              {/* Food & Drink Orders */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                  Food & Beverage Orders ({selectedSession.orders.length})
+                </h3>
+                {selectedSession.orders.length === 0 ? (
+                  <p className="text-xs text-staff-text-muted italic">No orders recorded</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {selectedSession.orders.map((ord) => (
+                      <div
+                        key={ord.id}
+                        className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex flex-col gap-1.5"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-staff-text-primary">
+                            #{ord.id.slice(0, 8).toUpperCase()}
+                          </span>
+                          <span className={badgeClass(ord.state as OrderState)}>
+                            {ord.state}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1 text-staff-text-secondary">
+                          {ord.items.map((it) => (
+                            <div key={it.id} className="flex justify-between">
+                              <span>{it.quantity}× {it.itemName}</span>
+                              <span className="font-mono">{formatMoney(it.lineTotal.toString(), currency)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between font-medium pt-1 border-t border-staff-border-subtle/60 text-staff-text-primary">
+                          <span>Order Total</span>
+                          <span className="font-mono">{formatMoney(ord.total.toString(), currency)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Hotel Services */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                  Hotel Services ({selectedSession.serviceRequests.length})
+                </h3>
+                {selectedSession.serviceRequests.length === 0 ? (
+                  <p className="text-xs text-staff-text-muted italic">No hotel services recorded</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {selectedSession.serviceRequests.map((req) => (
+                      <div
+                        key={req.id}
+                        className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex flex-col gap-1"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-staff-text-primary">
+                            {SERVICE_LABELS[req.serviceType as HotelService] || req.serviceType}
+                          </span>
+                          <span className={requestBadgeClass(req.state as RequestState)}>
+                            {req.state}
+                          </span>
+                        </div>
+                        {req.serviceItem && Number(req.serviceItem.price) > 0 ? (
+                          <div className="flex justify-between text-staff-text-secondary pt-0.5">
+                            <span>Service Charge</span>
+                            <span className="font-mono font-medium text-staff-text-primary">
+                              {formatMoney(req.serviceItem.price.toString(), currency)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-staff-text-muted italic">Complimentary service</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+          ) : selectedOrder ? (
+            /* ORDER DETAIL */
+            <div
+              id="order-detail-panel"
+              className="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-5 flex flex-col gap-4"
+              aria-label="Order detail"
+            >
+              <header className="flex items-center justify-between gap-2 border-b border-staff-border-subtle pb-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-staff-text-primary">
+                    #{selectedOrder.id.slice(0, 8).toUpperCase()}
+                  </h2>
+                  <div className="text-xs text-staff-text-secondary">
+                    {placeTypeLabel(selectedOrder)} {placeLabel(selectedOrder)}
+                  </div>
+                </div>
+                <span className={badgeClass(selectedOrder.state)}>
+                  {selectedOrder.state}
+                </span>
+              </header>
 
-            {selectedOrder.notes ? (
-              <p className="text-sm italic text-staff-text-muted">
-                Note: {selectedOrder.notes}
+              {selectedOrder.notes ? (
+                <p className="text-xs italic text-staff-text-muted bg-staff-surface p-2 rounded">
+                  Note: {selectedOrder.notes}
+                </p>
+              ) : null}
+
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                  Items
+                </h3>
+                <ul className="flex flex-col gap-2">
+                  {selectedOrder.items.map((it: OrderItem) => (
+                    <li key={it.id} className="flex items-start justify-between gap-3 text-xs">
+                      <span className="text-staff-text-primary">
+                        {it.quantity}× {it.itemName}
+                        {it.notes ? (
+                          <span className="block text-[11px] italic text-staff-text-muted">
+                            {it.notes}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="font-mono text-staff-text-primary">
+                        {formatMoney(it.lineTotal, currency)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="border-t border-staff-border-subtle pt-3 flex flex-col gap-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-staff-text-muted">Subtotal</span>
+                  <span className="font-mono text-staff-text-primary">
+                    {formatMoney(selectedOrder.subtotal, currency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-staff-text-muted">Tax</span>
+                  <span className="font-mono text-staff-text-primary">
+                    {formatMoney(selectedOrder.taxAmount, currency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-semibold pt-1 border-t border-staff-border-subtle/60 text-sm">
+                  <span>Total</span>
+                  <span className="font-mono text-staff-text-primary">
+                    {formatMoney(selectedOrder.total, currency)}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                  History
+                </h3>
+                <ul className="flex flex-col gap-1.5 text-xs text-staff-text-secondary">
+                  {selectedOrder.stateChanges.map((sc) => (
+                    <li key={sc.id} className="flex items-center justify-between gap-3">
+                      <span>{sc.state}</span>
+                      <span className="font-mono text-staff-text-muted text-[11px]">
+                        {sc.occurredAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : selectedRequest ? (
+            /* REQUEST DETAIL */
+            <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-5 flex flex-col gap-4">
+              <header className="flex items-center justify-between gap-2 border-b border-staff-border-subtle pb-3">
+                <div>
+                  <h2 className="text-lg font-bold text-staff-text-primary">
+                    {SERVICE_LABELS[selectedRequest.serviceType as HotelService] || selectedRequest.serviceType}
+                  </h2>
+                  <p className="text-xs text-staff-text-secondary">
+                    Request #{selectedRequest.id.slice(0, 8).toUpperCase()}
+                  </p>
+                </div>
+                <span className={requestBadgeClass(selectedRequest.state as RequestState)}>
+                  {selectedRequest.state}
+                </span>
+              </header>
+
+              <div className="text-xs text-staff-text-secondary flex flex-col gap-1">
+                <div>
+                  <span className="text-staff-text-muted">Place: </span>
+                  <span className="font-medium text-staff-text-primary">
+                    {selectedRequest.placeType} {selectedRequest.roomId ? roomNumberById.get(selectedRequest.roomId) : selectedRequest.tableId ? tableNumberById.get(selectedRequest.tableId) : "Counter"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-staff-text-muted">Submitted: </span>
+                  <span>{formatElapsed(selectedRequest.submittedAt, now)} ({selectedRequest.submittedAt.toLocaleTimeString()})</span>
+                </div>
+                {selectedRequest.serviceItem && (
+                  <div>
+                    <span className="text-staff-text-muted">Fee: </span>
+                    <span className="font-mono font-medium text-staff-text-primary">
+                      {formatMoney(selectedRequest.serviceItem.price.toString(), currency)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="hidden lg:block bg-staff-surface-raised border border-dashed border-staff-border-subtle rounded-xl p-6 text-center">
+              <p className="text-xs text-staff-text-muted">
+                Select an order, request, or closed session folio to view itemized records.
               </p>
-            ) : null}
-
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
-                Items
-              </h3>
-              <ul className="flex flex-col gap-2">
-                {selectedOrder.items.map((it: OrderItem) => (
-                  <li key={it.id} className="flex items-start justify-between gap-3 text-sm">
-                    <span className="text-staff-text-primary">
-                      {it.quantity}× {it.itemName}
-                      {it.notes ? (
-                        <span className="block text-xs italic text-staff-text-muted">
-                          {it.notes}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="font-mono text-staff-text-primary">
-                      {formatMoney(it.lineTotal, currency)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
             </div>
-
-            <div className="border-t border-staff-border-subtle pt-3 flex flex-col gap-1 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-staff-text-muted">Subtotal</span>
-                <span className="font-mono text-staff-text-primary">
-                  {formatMoney(selectedOrder.subtotal, currency)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-staff-text-muted">Tax</span>
-                <span className="font-mono text-staff-text-primary">
-                  {formatMoney(selectedOrder.taxAmount, currency)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between font-semibold">
-                <span>Total</span>
-                <span className="font-mono text-staff-text-primary">
-                  {formatMoney(selectedOrder.total, currency)}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
-                History
-              </h3>
-              <ul className="flex flex-col gap-1.5 text-xs text-staff-text-secondary">
-                {selectedOrder.stateChanges.map((sc) => (
-                  <li key={sc.id} className="flex items-center justify-between gap-3">
-                    <span>{sc.state}</span>
-                    <span className="font-mono text-staff-text-muted">
-                      {sc.occurredAt.toISOString()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-        ) : (
-          <aside className="hidden lg:block">
-            <p className="text-sm text-staff-text-muted py-6 text-center border border-dashed border-staff-border-subtle rounded-xl">
-              Select an order to view its details.
-            </p>
-          </aside>
-        )}
+          )}
+        </aside>
       </div>
     </section>
   );
