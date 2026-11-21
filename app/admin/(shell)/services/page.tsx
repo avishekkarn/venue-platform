@@ -19,6 +19,7 @@ import { MenuItemState } from "@/domain/menu/menu.repository";
 import type { ServiceItemView } from "@/domain/services/service.repository";
 import { AddServiceButton } from "./_add-service-button";
 import { EditServiceSheet } from "./_edit-service-sheet";
+import { ServiceRowActions } from "@/components/staff/service-row-actions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -153,30 +154,7 @@ export default async function ServicesPage({
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="inline-flex gap-2">
-                                <Link
-                                  href={`/admin/services?id=${item.id}`}
-                                  className="h-8 px-2 rounded text-xs font-medium inline-flex items-center justify-center bg-staff-surface-raised hover:bg-staff-surface-sunken text-staff-text-primary border border-staff-border-subtle"
-                                >
-                                  Edit
-                                </Link>
-                                <button
-                                  type="button"
-                                  disabled
-                                  title="Available in 8.4.5"
-                                  className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-                                >
-                                  Toggle
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled
-                                  title="Available in 8.4.5"
-                                  className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-                                >
-                                  Hide
-                                </button>
-                              </div>
+                              <ServiceRowActions item={item} />
                             </TableCell>
                           </TableRow>
                         );
