@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import Link from "next/link";
+import { MenuRowActions } from "./menu-row-actions";
 import {
   type MenuItemView,
   MenuItemState,
@@ -83,44 +83,7 @@ export function MenuItemRow({
         </Badge>
       </TableCell>
       <TableCell className="text-right">
-        <div className="inline-flex gap-2">
-          {editHref ? (
-            <Link
-              href={editHref}
-              className="h-8 px-2 rounded text-xs font-medium inline-flex items-center justify-center bg-staff-surface-raised hover:bg-staff-surface-sunken text-staff-text-primary border border-staff-border-subtle"
-            >
-              Edit
-            </Link>
-          ) : (
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              title="Available in 8.3.3"
-              className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-            >
-              Edit
-            </button>
-          )}
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Available in 8.3.4"
-            className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-          >
-            Toggle
-          </button>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Available in 8.3.4"
-            className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-          >
-            Hide
-          </button>
-        </div>
+        <MenuRowActions item={item} editHref={editHref} />
       </TableCell>
     </TableRow>
   );

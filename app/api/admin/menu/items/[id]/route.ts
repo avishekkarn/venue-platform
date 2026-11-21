@@ -360,3 +360,91 @@ export const PATCH = withAuditedDynamicRoute<{ id: string }>(
   meta,
   withCsrf(patchHandler)
 );
+
+const deleteHandler = async (
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> => {
+  const db = testDbClient ?? prisma;
+
+  const sessionToken = await getSessionCookie();
+  if (!sessionToken) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.UNAUTHORIZED, message: "No active session" } },
+      { status: 401 }
+    );
+  }
+
+  const session = await validateSession(db, sessionToken);
+  if (!session) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.UNAUTHORIZED, message: "No active session" } },
+      { status: 401 }
+    );
+  }
+
+  const venueRepo = createPrismaVenueRepository(db);
+  const venueResult = await venueRepo.findBySlug(getVenueSlug());
+  if (!venueResult.ok) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.INTERNAL, message: "Venue not configured" } },
+      { status: 500 }
+    );
+  }
+  const venue = venueResult.value;
+
+  const staffRepo = createPrismaStaffRepository(db);
+  const staffResult = await staffRepo.findById(venue.id, session.staffMemberId);
+  if (!staffResult.ok || staffResult.value.state === StaffState.DEACTIVATED) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.UNAUTHORIZED, message: "No active session" } },
+      { status: 401 }
+    );
+  }
+
+  const staff = staffResult.value;
+  if (!canAccess(staff.roles, "admin")) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.FORBIDDEN, message: "Insufficient permissions" } },
+      { status: 403 }
+    );
+  }
+
+  const { id } = await context.params;
+  if (!id || typeof id !== "string" || !UUID_REGEX.test(id.trim())) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "Invalid menu item id format" } },
+      { status: 400 }
+    );
+  }
+  const itemId = id.trim();
+
+  const existing = await db.menuItem.findUnique({
+    where: { id: itemId },
+    select: { id: true, venueId: true },
+  });
+
+  if (!existing || existing.venueId !== venue.id) {
+    return NextResponse.json(
+      { error: { code: DomainErrorCode.NOT_FOUND, message: "Menu item not found" } },
+      { status: 404 }
+    );
+  }
+
+  await db.menuItem.delete({
+    where: { id: itemId },
+  });
+
+  return new NextResponse(null, { status: 204 });
+};
+
+const deleteMeta: AuditMeta = {
+  route: "/api/admin/menu/items/[id]",
+  method: "DELETE",
+};
+
+export const DELETE = withAuditedDynamicRoute<{ id: string }>(
+  resolvers,
+  deleteMeta,
+  withCsrf(deleteHandler)
+);

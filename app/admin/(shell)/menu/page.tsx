@@ -16,6 +16,7 @@ import { MenuItemRow } from "@/components/staff/menu-item-row";
 import { EditSheet } from "./_edit-sheet";
 import { CategoriesSheetTrigger } from "./_categories-sheet-trigger";
 import { CollectionsSheetTrigger } from "./_collections-sheet-trigger";
+import { AddItemButton } from "./_add-item-button";
 
 /**
  * The admin menu list screen (8.3.1, 8.3.3, DESIGN.md §4.10.8).
@@ -85,7 +86,7 @@ export default async function MenuPage({
         <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
           Menu
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4">
           <p className="text-sm text-staff-text-muted">
             {itemCount} item{itemCount === 1 ? "" : "s"}
           </p>
@@ -111,15 +112,10 @@ export default async function MenuPage({
               sortOrder: c.order,
             }))}
           />
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Available in 8.3.2a"
-            className="h-9 px-3 rounded-md text-sm font-medium bg-staff-surface-sunken text-staff-text-muted cursor-not-allowed"
-          >
-            Add item
-          </button>
+          <AddItemButton
+            categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+            currency={currency}
+          />
         </div>
       </header>
 
@@ -172,6 +168,7 @@ export default async function MenuPage({
 
       {selectedItem ? (
         <EditSheet
+          key={selectedItem.id}
           item={selectedItem}
           initialCategoryIds={selectedCategoryIds}
           categories={categories}

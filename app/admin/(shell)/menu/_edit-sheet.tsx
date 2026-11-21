@@ -2,6 +2,8 @@
 
 import { useState, type JSX } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { getCsrfToken } from "@/lib/csrf-client";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +43,39 @@ export function EditSheet({
 }: EditSheetProps): JSX.Element {
   const router = useRouter();
   const [open, setOpen] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async (): Promise<void> => {
+    if (!window.confirm("Delete this item permanently?")) return;
+    setLoading(true);
+    try {
+      let res = await fetch(`/api/admin/menu/items/${item.id}`, {
+        method: "DELETE",
+        headers: { "X-CSRF-Token": getCsrfToken() },
+      });
+      if (res.status === 405) {
+        res = await fetch(`/api/admin/menu/items/${item.id}/state`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": getCsrfToken(),
+          },
+          body: JSON.stringify({ state: "HIDDEN" }),
+        });
+      }
+      if (res.ok) {
+        setOpen(false);
+        router.push("/admin/menu");
+        router.refresh();
+      } else {
+        alert("Failed to delete");
+        setLoading(false);
+      }
+    } catch {
+      alert("Network error");
+      setLoading(false);
+    }
+  };
 
   return (
     <Sheet
@@ -77,6 +112,33 @@ export function EditSheet({
             }}
           />
         </SheetBody>
+        <div className="shrink-0 p-4 pb-6 border-t border-staff-border-subtle bg-staff-surface-raised flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={loading}
+            className="h-9 px-3 rounded-md text-sm font-medium text-status-cancelled hover:bg-status-cancelled-bg disabled:opacity-50"
+          >
+            Delete item
+          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/menu"
+              className="h-9 px-4 rounded-md text-sm font-medium text-staff-text-secondary hover:bg-staff-surface-sunken inline-flex items-center justify-center transition-colors"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              form="edit-item-form"
+              disabled={loading}
+              className="h-9 px-4 rounded-md text-sm font-medium bg-[#344b3c] text-white hover:bg-[#243329] transition-colors disabled:opacity-50 inline-flex items-center justify-center cursor-pointer"
+              style={{ backgroundColor: "#344b3c", color: "#ffffff" }}
+            >
+              {loading ? "Saving..." : "Save changes"}
+            </button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

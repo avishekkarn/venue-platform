@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, type JSX, type FormEvent } from "react";
+import { useState, useEffect, type JSX, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { getCsrfToken } from "@/lib/csrf-client";
 import { PhotoBox } from "./_photo-box";
 import { MenuItemState, type MenuItemView } from "@/domain/menu/menu.repository";
@@ -50,6 +49,17 @@ export function EditForm({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setName(item.name);
+    setDescription(item.description ?? "");
+    setPrice(item.price);
+    setCategoryIds([...initialCategoryIds]);
+    setState(item.state);
+    setPhotoUrl(item.photoUrl);
+    setPhotoBlurData(item.photoBlurData ?? null);
+    setError(null);
+  }, [item, initialCategoryIds]);
 
   const handlePhotoUploaded = (url: string, blurData: string): void => {
     setPhotoUrl(url);
@@ -169,7 +179,7 @@ export function EditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form id="edit-item-form" onSubmit={handleSubmit} className="flex flex-col gap-5 w-full">
       {error ? (
         <div
           role="alert"
@@ -226,7 +236,7 @@ export function EditForm({
             )
           }
           disabled={loading}
-          className="p-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-staff-brand"
+          className="w-full p-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-staff-brand"
         >
           {categories.map((c) => (
             <option key={c.id} value={c.id} className="py-1 px-1">
@@ -304,22 +314,6 @@ export function EditForm({
           placeholder="Optional item description..."
           className="px-3 py-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised text-staff-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-staff-brand resize-y"
         />
-      </div>
-
-      <div className="flex items-center justify-end gap-3 pt-3 border-t border-staff-border-subtle sticky bottom-0 bg-staff-surface-raised pb-2 mt-2">
-        <Link
-          href="/admin/menu"
-          className="h-9 px-4 rounded-md text-sm font-medium text-staff-text-secondary hover:bg-staff-surface-sunken inline-flex items-center justify-center"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={loading}
-          className="h-9 px-4 rounded-md text-sm font-medium bg-staff-brand text-white hover:bg-staff-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Saving..." : "Save changes"}
-        </button>
       </div>
     </form>
   );
