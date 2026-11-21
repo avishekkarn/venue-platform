@@ -127,6 +127,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0243 | 2026-11-21 | Milestone 8.5 closed (Tables & Rooms Management, Reserved Enforcement, Room Pricing, Reporting & Verification) | PASS | Milestone 8.5 | §5.3 |
+| ENTRY-0242 | 2026-11-21 | Milestone 8.5 Task 8.5.8 closed (Batch QR Print View) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0241 | 2026-11-21 | Milestone 8.5 Task 8.5.7 closed (Admin Rooms Screen & Daily Reporting) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0240 | 2026-11-21 | Milestone 8.5 Task 8.5.6 closed (Admin Tables Screen & Daily Reporting) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0239 | 2026-11-21 | Milestone 8.5 Task 8.5.5 closed (Room Stay Pricing Integration into Folio & Billing) | PASS | Milestone 8.5 | §5.3 |
@@ -141,13 +143,64 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0242
+Next entry number: 0244
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.8 — Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.6 (Staff Management). Current task: Task 8.6.1 — `GET /api/admin/staff`.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0243 — 2026-11-21 — Milestone 8.5 closed: Tables & Rooms Management, Reserved Enforcement, Room Pricing, Reporting & Verification
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.9).
+
+**Summary:**
+Milestone 8.5 is officially CLOSED (✅) after complete end-to-end operational loop verification and production build certification:
+1. **Tables & Room Categories Foundation (Tasks 8.5.1, 8.5.2, 8.5.4)**:
+   - Added `TableCategory` and `RoomCategory` models to Prisma schema with migration and seed.
+   - Built full CRUD endpoints for tables, rooms, and categories under `/api/admin/tables` and `/api/admin/rooms` with `withAudit` and `withCsrf`.
+   - Built `POST /api/admin/tables/[id]/end-session` and `POST /api/admin/rooms/[id]/end-session` giving managers full termination authority.
+   - Comprehensive test suites verified in `tests/integration/api/admin-tables.test.ts` (5 tests) and `tests/integration/api/admin-rooms.test.ts` (4 tests).
+2. **Customer Protection for Reserved Tables (Task 8.5.3)**:
+   - Built dedicated `/qr/reserved` page with emergency dialer button (`tel:+97714200000`).
+   - QR token landing dynamically routes walk-in customers scanning a reserved table to `/qr/reserved` while permitting seated active guests to access `/menu`.
+   - Verified with 4 integration tests in `tests/integration/guest/qr-landing.test.ts`.
+3. **Room Nightly Pricing Integration into Folio & Billing (Task 8.5.5)**:
+   - Integrated room category base pricing in NPR into `GET /api/guest/bill`, guest bill modals on `/menu` and `/services`, staff checkout, and admin active & completed folios.
+   - Verified with integration test suite `tests/integration/api/guest-bill.test.ts` (4 tests).
+4. **Admin Shell Hubs & Daily Reporting (Tasks 8.5.6 & 8.5.7)**:
+   - Built interactive screens `app/admin/(shell)/tables/page.tsx` and `app/admin/(shell)/rooms/page.tsx` with "← Back to Dashboard" navigation, category tabs, state filters, metric overviews, rich cards displaying today's sessions/orders/revenue, and force-end session authority.
+   - Built interactive sheets for adding/editing tables, rooms, and managing category pricing.
+5. **Batch QR Print Sheets (Task 8.5.8)**:
+   - Built `app/admin/(shell)/qr/print/batch/page.tsx` with high-contrast printable cards, category badges, reserved tags, and crisp QR image rendering with `@media print` layout.
+6. **Production Standards & Verification**:
+   - `pnpm typecheck` passed with 0 errors (`tsc --noEmit`).
+   - Unit test suite passed 41/41 test files, 282/282 tests.
+   - Integration test suites passed 100% across all 17 tests.
+   - `pnpm build` passed with exit code 0 (`next build`), compiling all 59 static and dynamic routes.
+
+### ENTRY-0242 — 2026-11-21 — Milestone 8.5 Task 8.5.8 closed: Batch QR Print View
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.8).
+
+**Summary:**
+Milestone 8.5 Task 8.5.8 is completed, tested, and verified.
+1. **Batch QR Print Route & Layout (`app/admin/(shell)/qr/print/batch/page.tsx`)**:
+   - Implemented high-contrast, multi-column printable layout protected by `requireRole(["admin"])`.
+   - Aggregated venue data, all tables with categories, all rooms with categories, and mapped active QR tokens.
+   - Rendered printable cards featuring venue branding (`Juniper House`), prominent place identifiers (`Table 1`, `Room 401`), zone/type category badges with special reserved indicators, high-resolution scannable QR images, and polite guest instructions.
+   - Designed with print-specific CSS rules (`print:break-inside-avoid`, `print:page-break-inside-avoid`, `print:p-6`) for seamless multi-page sheet printing.
+2. **Interactive Controls & Hub Integration**:
+   - `_batch-print-actions.tsx`: Non-printable top action bar featuring filter tabs for "All Placards", "Tables Only", and "Rooms Only" plus a one-click "🖨️ Print Batch Sheets" trigger (`window.print()`).
+   - Updated QR Codes Hub (`app/admin/(shell)/qr/page.tsx`) with a direct "🖨️ Batch Print Placards ↗" header button.
+3. **Quality Verification**:
+   - `pnpm typecheck` passed with 0 errors.
+   - Unit tests (282 tests) and integration suites (17 tests) passed with 100% success rate.
 
 ### ENTRY-0241 — 2026-11-21 — Milestone 8.5 Task 8.5.7 closed: Admin Rooms Screen & Daily Reporting
 
@@ -1313,7 +1366,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, 8.5.4, 8.5.5, 8.5.6, and 8.5.7 are CLOSED (✅). The next active task is **Task 8.5.8 (Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.5 (and 8.4.8, 8.4.9) are CLOSED (✅). The next active milestone is **Milestone 8.6 (Staff Management)**, starting with **Task 8.6.1 (`GET /api/admin/staff`)**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed, next build passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.

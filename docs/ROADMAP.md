@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, and 8.4.8 are ✅ closed. Milestone 8.5 (Tables Management) is next.
+**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, and 8.5 are ✅ closed. Milestone 8.6 (Staff Management) is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
@@ -1045,8 +1045,8 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 | **8.5.5** | **Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`)** — Integrate room category `basePrice` into active room sessions; update `GET /api/guest/bill`, staff checkout (`POST /api/staff/rooms/[id]/checkout`), and admin completed session folios to itemize the room charge alongside food orders, hotel services, and taxes. | ✅ | 8.5.4 |
 | **8.5.6** | **Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`)** — Build the tables management screen in `(shell)` with category tabs (All, Indoor, Patio, VIP, Reserved), state filter, table cards with today's metrics (session count, orders, revenue), QR preview & print button, interactive Add/Edit Table sheet, and force "End Session" action. | ✅ | 8.5.5 |
 | **8.5.7** | **Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`)** — Build the rooms management screen in `(shell)` with category tabs (Deluxe, Super Deluxe, Non AC, Suites), state filter, room cards with configured room price, occupancy state (Vacant/Occupied/Cleaning/DND), active guest bill total, interactive Add/Edit Room & Category Pricing sheet, and force "End Session / Checkout" action. | ✅ | 8.5.6 |
-| **8.5.8** | **Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`)** — Build printable layout rendering high-contrast printable cards for all tables and rooms with venue branding, place name, category badge, and scannable QR code. | ⬜ | 8.5.7 |
-| **8.5.9** | **Verify:** Full multi-role operational loop verification (Admin creates table in Reserved category → customer scans QR and lands on `/qr/reserved`; Admin creates room with Super Deluxe rate NPR 3,500 → guest session checks bill and confirms room rate inclusion; Admin inspects daily table/room reporting, force-ends session, and prints batch QRs). Production build, zero-error typecheck, unit and integration suites. | ⬜ | 8.5.8 |
+| **8.5.8** | **Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`)** — Build printable layout rendering high-contrast printable cards for all tables and rooms with venue branding, place name, category badge, and scannable QR code. | ✅ | 8.5.7 |
+| **8.5.9** | **Verify:** Full multi-role operational loop verification (Admin creates table in Reserved category → customer scans QR and lands on `/qr/reserved`; Admin creates room with Super Deluxe rate NPR 3,500 → guest session checks bill and confirms room rate inclusion; Admin inspects daily table/room reporting, force-ends session, and prints batch QRs). Production build, zero-error typecheck, unit and integration suites. | ✅ | 8.5.8 |
 
 ---
 

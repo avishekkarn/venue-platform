@@ -187,6 +187,13 @@ export default async function AdminQrPage(): Promise<JSX.Element> {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/admin/qr/print/batch"
+              target="_blank"
+              className="px-3.5 py-2 text-xs font-medium border border-staff-border-subtle rounded-lg text-staff-text-secondary hover:text-staff-text-primary hover:bg-staff-surface-raised transition-colors inline-flex items-center gap-1.5"
+            >
+              <span>🖨️ Batch Print Placards ↗</span>
+            </Link>
             <GenerateButton placesByType={placesByType} />
           </div>
         </header>
