@@ -26,6 +26,7 @@ export interface RoomMapCellProps {
   readonly isOccupied: boolean;
   readonly canCheckout?: boolean;
   readonly isDoNotDisturb?: boolean;
+  readonly activeCallType?: "WAITER" | "BILL" | null;
 }
 
 export function RoomMapCell({
@@ -33,6 +34,7 @@ export function RoomMapCell({
   isOccupied,
   canCheckout = true,
   isDoNotDisturb = false,
+  activeCallType = null,
 }: RoomMapCellProps): JSX.Element {
   return (
     <article
@@ -40,6 +42,7 @@ export function RoomMapCell({
       data-room-number={room.number}
       data-room-status={isOccupied ? "OCCUPIED" : "FREE"}
       data-room-dnd={isDoNotDisturb ? "true" : "false"}
+      data-room-call={activeCallType ?? ""}
       className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
     >
       <div className="flex items-center justify-between gap-2">
@@ -48,6 +51,15 @@ export function RoomMapCell({
           <div className="text-[11px] uppercase text-staff-text-muted">Room</div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {activeCallType === "WAITER" ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-500 text-white animate-pulse shadow-xs">
+              🔔 Waiter Call
+            </span>
+          ) : activeCallType === "BILL" ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-sky-600 text-white animate-pulse shadow-xs">
+              🧾 Bill Requested
+            </span>
+          ) : null}
           {isDoNotDisturb ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />

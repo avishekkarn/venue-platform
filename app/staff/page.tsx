@@ -167,11 +167,6 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
   const visibleAreas = visibleAreasFor(staff.roles);
 
-  // A staff member sees the "Requests" tab if their role maps to any of the
-  // request-handling areas. TABLE_SERVICE (grace) is intentionally excluded
-  // from the Requests tab — table service handles CALL_WAITER and REQUEST_BILL
-  // via the orders queue, not a separate requests queue. (The API still
-  // allows the caller; the UI is the source of truth for what is shown.)
   const canSeeRequests =
     visibleAreas.includes("front-desk") ||
     visibleAreas.includes("housekeeping") ||
@@ -179,7 +174,8 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     visibleAreas.includes("concierge") ||
     visibleAreas.includes("laundry") ||
     visibleAreas.includes("spa") ||
-    visibleAreas.includes("room-service");
+    visibleAreas.includes("room-service") ||
+    visibleAreas.includes("table-service");
 
   const hasAccess = visibleAreas.some((area) => area !== "admin" && area !== "kitchen");
 
@@ -258,6 +254,21 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   for (const [roomId, req] of Object.entries(dndRequestsByRoom)) {
     if (req.state !== RequestState.CANCELLED && (req.details as Record<string, unknown>)?.["state"] !== "Off") {
       dndRoomIds.add(roomId);
+    }
+  }
+
+  const tableCallMap: Record<string, "WAITER" | "BILL"> = {};
+  const roomCallMap: Record<string, "WAITER" | "BILL"> = {};
+  const urgentCalls: ServiceRequest[] = [];
+  for (const req of rawRequests) {
+    if (
+      req.state === RequestState.SUBMITTED &&
+      (req.serviceType === HotelService.CALL_WAITER || req.serviceType === HotelService.REQUEST_BILL)
+    ) {
+      const callType = req.serviceType === HotelService.CALL_WAITER ? "WAITER" : "BILL";
+      if (req.tableId) tableCallMap[req.tableId] = callType;
+      if (req.roomId) roomCallMap[req.roomId] = callType;
+      urgentCalls.push(req);
     }
   }
 
@@ -419,6 +430,9 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
   var currentDndRoomIds = ` + JSON.stringify(Array.from(dndRoomIds)) + `;
+  var currentTableCalls = ` + JSON.stringify(tableCallMap) + `;
+  var currentRoomCalls = ` + JSON.stringify(roomCallMap) + `;
+  var previousUrgentCount = ` + urgentCalls.length + `;
 
   function getCsrfToken() {
     // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
@@ -519,26 +533,57 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     '</article>';
   }
 
-  function tableCardHtml(table, isOccupied) {
+  function playAlertSound() {
+    try {
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      var ctx = new AudioCtx();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
+  }
+
+  function tableCardHtml(table, isOccupied, callType) {
+    var callTag = '';
+    if (callType === 'WAITER') {
+      callTag = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-500 text-white animate-pulse shadow-xs">🔔 Waiter Call</span>';
+    } else if (callType === 'BILL') {
+      callTag = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-sky-600 text-white animate-pulse shadow-xs">🧾 Bill Requested</span>';
+    }
     var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Free</span>';
     var action = (isOccupied && CAN_CLOSE) ? '<button type="button" data-action="close-table" data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Close Table</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
-    return '<article data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" data-table-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+    return '<article data-table-id="' + escapeHtml(table.id) + '" data-table-number="' + escapeHtml(table.number) + '" data-table-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" data-table-call="' + (callType || '') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
       '<div class="flex items-center justify-between gap-2">' +
         '<div><div class="text-[28px] font-bold">' + escapeHtml(table.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Table</div></div>' +
-        badge +
+        '<div class="flex items-center gap-1.5 flex-wrap justify-end">' + callTag + badge + '</div>' +
       '</div>' +
       '<div class="pt-2 border-t border-staff-border-subtle">' + action + '</div>' +
     '</article>';
   }
 
-  function roomCardHtml(room, isOccupied, isDnd) {
+  function roomCardHtml(room, isOccupied, isDnd, callType) {
+    var callTag = '';
+    if (callType === 'WAITER') {
+      callTag = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-500 text-white animate-pulse shadow-xs">🔔 Waiter Call</span>';
+    } else if (callType === 'BILL') {
+      callTag = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-sky-600 text-white animate-pulse shadow-xs">🧾 Bill Requested</span>';
+    }
     var dndTag = isDnd ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>Do Not Disturb</span>' : '';
     var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Vacant</span>';
     var action = (isOccupied && CAN_CHECKOUT) ? '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Checkout Room</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
-    return '<article data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" data-room-dnd="' + (isDnd ? 'true' : 'false') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+    return '<article data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" data-room-dnd="' + (isDnd ? 'true' : 'false') + '" data-room-call="' + (callType || '') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
       '<div class="flex items-center justify-between gap-2">' +
         '<div><div class="text-[28px] font-bold">' + escapeHtml(room.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Room</div></div>' +
-        '<div class="flex items-center gap-1.5 flex-wrap justify-end">' + dndTag + badge + '</div>' +
+        '<div class="flex items-center gap-1.5 flex-wrap justify-end">' + callTag + dndTag + badge + '</div>' +
       '</div>' +
       '<div class="pt-2 border-t border-staff-border-subtle">' + action + '</div>' +
     '</article>';
@@ -567,7 +612,8 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     for (var i = 0; i < TABLES.length; i++) {
       var t = TABLES[i];
       var occ = currentActiveTableIds.indexOf(t.id) !== -1;
-      container.insertAdjacentHTML('beforeend', tableCardHtml(t, occ));
+      var callType = currentTableCalls[t.id] || null;
+      container.insertAdjacentHTML('beforeend', tableCardHtml(t, occ, callType));
     }
   }
 
@@ -579,8 +625,42 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
       var r = ROOMS[i];
       var occ = currentActiveRoomIds.indexOf(r.id) !== -1;
       var dnd = currentDndRoomIds.indexOf(r.id) !== -1;
-      container.insertAdjacentHTML('beforeend', roomCardHtml(r, occ, dnd));
+      var callType = currentRoomCalls[r.id] || null;
+      container.insertAdjacentHTML('beforeend', roomCardHtml(r, occ, dnd, callType));
     }
+  }
+
+  function renderUrgentCalls(urgentCalls) {
+    var banner = document.getElementById('urgent-calls-banner');
+    if (!banner) return;
+    if (!urgentCalls || urgentCalls.length === 0) {
+      banner.innerHTML = '';
+      banner.style.display = 'none';
+      return;
+    }
+    banner.style.display = 'flex';
+    var html = '';
+    for (var u = 0; u < urgentCalls.length; u++) {
+      var call = urgentCalls[u];
+      var isBill = call.serviceType === 'REQUEST_BILL';
+      var icon = isBill ? '🧾' : '🔔';
+      var title = isBill ? 'Bill Requested!' : 'Waiter Assistance Requested!';
+      var placeType = call.placeType === 'ROOM' ? 'Room' : 'Table';
+      var placeNum = call.placeType === 'ROOM' ? (ROOM_MAP[call.roomId] || '—') : (TABLE_MAP[call.tableId] || '—');
+      var timeStr = call.submittedAt ? new Date(call.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      html += '<div class="bg-amber-50 border-2 border-amber-400 rounded-xl p-3 sm:p-4 flex items-center justify-between shadow-xs animate-in fade-in">' +
+        '<div class="flex items-center gap-3">' +
+          '<span class="text-2xl animate-bounce">' + icon + '</span>' +
+          '<div>' +
+            '<p class="font-bold text-amber-950 text-sm sm:text-base">' + title + '</p>' +
+            '<p class="text-xs sm:text-sm text-amber-800">' + escapeHtml(placeType) + ' ' + escapeHtml(placeNum) + ' · <span class="font-medium text-amber-900">' + escapeHtml(timeStr) + '</span></p>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" data-action="request-advance" data-request-id="' + escapeHtml(call.id) + '" data-to-state="ACKNOWLEDGED" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded-lg text-xs sm:text-sm shadow-xs transition-colors cursor-pointer">Acknowledge</button>' +
+      '</div>';
+    }
+    banner.innerHTML = html;
   }
 
   function formatDetailsSummary(details) {
@@ -732,6 +812,10 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
 
         var requests = requestsBody.data || [];
         var dndMap = {};
+        var newTableCalls = {};
+        var newRoomCalls = {};
+        var urgentCalls = [];
+
         for (var d = 0; d < requests.length; d++) {
           var rk = requests[d];
           if (rk.serviceType === 'DO_NOT_DISTURB' && rk.roomId && rk.state !== 'CANCELLED') {
@@ -741,14 +825,28 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
               dndMap[rk.roomId] = true;
             }
           }
+          if (rk.state === 'SUBMITTED' && (rk.serviceType === 'CALL_WAITER' || rk.serviceType === 'REQUEST_BILL')) {
+            var cType = rk.serviceType === 'CALL_WAITER' ? 'WAITER' : 'BILL';
+            if (rk.tableId) newTableCalls[rk.tableId] = cType;
+            if (rk.roomId) newRoomCalls[rk.roomId] = cType;
+            urgentCalls.push(rk);
+          }
         }
         currentDndRoomIds = Object.keys(dndMap);
+        currentTableCalls = newTableCalls;
+        currentRoomCalls = newRoomCalls;
 
+        renderUrgentCalls(urgentCalls);
         renderOrderQueue(tableOrders, 'table-orders-container');
         renderOrderQueue(roomOrders, 'room-orders-container');
         renderTableMap();
         renderRoomMap();
         renderRequests(requests);
+
+        if (urgentCalls.length > previousUrgentCount) {
+          playAlertSound();
+        }
+        previousUrgentCount = urgentCalls.length;
 
         var tableTab = document.querySelector('[data-tab="table-orders"]');
         if (tableTab) {
@@ -760,7 +858,11 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
         }
         var reqTab = document.querySelector('[data-tab="requests"]');
         if (reqTab) {
-          reqTab.textContent = 'Requests (' + requests.length + ')';
+          if (urgentCalls.length > 0) {
+            reqTab.innerHTML = 'Requests (' + requests.length + ') <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse">' + urgentCalls.length + '</span>';
+          } else {
+            reqTab.textContent = 'Requests (' + requests.length + ')';
+          }
         }
       })
       .catch(function() {});
@@ -1007,6 +1109,54 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
       </nav>
 
       <section className="flex-1 p-4 md:p-6 max-w-5xl w-full mx-auto">
+        {/* Urgent Guest Calls Alert Banner */}
+        <div
+          id="urgent-calls-banner"
+          className="flex flex-col gap-2 mb-4"
+          style={{ display: urgentCalls.length > 0 ? "flex" : "none" }}
+        >
+          {urgentCalls.map((req) => (
+            <div
+              key={req.id}
+              className="bg-amber-50 border-2 border-amber-400 rounded-xl p-3 sm:p-4 flex items-center justify-between shadow-xs animate-in fade-in"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl animate-bounce">
+                  {req.serviceType === HotelService.REQUEST_BILL ? "🧾" : "🔔"}
+                </span>
+                <div>
+                  <p className="font-bold text-amber-950 text-sm sm:text-base">
+                    {req.serviceType === HotelService.REQUEST_BILL
+                      ? "Bill Requested!"
+                      : "Waiter Assistance Requested!"}
+                  </p>
+                  <p className="text-xs sm:text-sm text-amber-800">
+                    {req.placeType === "ROOM" ? "Room" : "Table"}{" "}
+                    {req.placeType === "ROOM"
+                      ? (roomMap[req.roomId ?? ""] ?? "—")
+                      : (tableMap[req.tableId ?? ""] ?? "—")}
+                    {" · "}
+                    <span className="font-medium text-amber-900">
+                      {new Date(req.submittedAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                data-action="request-advance"
+                data-request-id={req.id}
+                data-to-state="ACKNOWLEDGED"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded-lg text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              >
+                Acknowledge
+              </button>
+            </div>
+          ))}
+        </div>
         <div
           id="table-orders-container"
           className="flex flex-col gap-3"
@@ -1049,7 +1199,13 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
           style={{ display: defaultActiveTab === "table-map" ? "grid" : "none" }}
         >
           {tables.map((t) => (
-            <TableMapCell key={t.id} table={t} isOccupied={activeTableIds.has(t.id)} canClose={canClose} />
+            <TableMapCell
+              key={t.id}
+              table={t}
+              isOccupied={activeTableIds.has(t.id)}
+              canClose={canClose}
+              activeCallType={tableCallMap[t.id] ?? null}
+            />
           ))}
         </div>
 
@@ -1065,6 +1221,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
               isOccupied={activeRoomIds.has(r.id)}
               canCheckout={canCheckout}
               isDoNotDisturb={dndRoomIds.has(r.id)}
+              activeCallType={roomCallMap[r.id] ?? null}
             />
           ))}
         </div>

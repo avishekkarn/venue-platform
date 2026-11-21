@@ -36,18 +36,21 @@ export interface TableMapCellProps {
   readonly table: Table;
   readonly isOccupied: boolean;
   readonly canClose?: boolean;
+  readonly activeCallType?: "WAITER" | "BILL" | null;
 }
 
 export function TableMapCell({
   table,
   isOccupied,
   canClose = true,
+  activeCallType = null,
 }: TableMapCellProps): JSX.Element {
   return (
     <article
       data-table-id={table.id}
       data-table-number={table.number}
       data-table-status={isOccupied ? "OCCUPIED" : "FREE"}
+      data-table-call={activeCallType ?? ""}
       className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
     >
       <div className="flex items-center justify-between gap-2">
@@ -55,15 +58,26 @@ export function TableMapCell({
           <div className="text-[28px] font-bold">{table.number}</div>
           <div className="text-[11px] uppercase text-staff-text-muted">Table</div>
         </div>
-        {isOccupied ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-            Occupied
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-            Free
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {activeCallType === "WAITER" ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-500 text-white animate-pulse shadow-xs">
+              🔔 Waiter Call
+            </span>
+          ) : activeCallType === "BILL" ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-sky-600 text-white animate-pulse shadow-xs">
+              🧾 Bill Requested
+            </span>
+          ) : null}
+          {isOccupied ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+              Occupied
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+              Free
+            </span>
+          )}
+        </div>
       </div>
       <div className="pt-2 border-t border-staff-border-subtle">
         {isOccupied && canClose ? (
