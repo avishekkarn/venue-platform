@@ -1,0 +1,72 @@
+import type { Metadata } from "next";
+import type { JSX } from "react";
+import { redirect } from "next/navigation";
+import { getGuestCookie } from "@/infrastructure/guest/cookies";
+import { getGuestSession } from "@/domain/guest/guest-session.service";
+import { createPrismaGuestSessionRepository } from "@/infrastructure/db/repositories/guest-session.repo";
+import { createPrismaVenueRepository } from "@/infrastructure/db/repositories/organization.repo";
+import { createPrismaOrderRepository } from "@/infrastructure/db/repositories/order.repo";
+import { prisma } from "@/infrastructure/db/client";
+import { PlaceType } from "@/domain/guest/guest-session.repository";
+import { OrdersClient } from "@/components/guest/orders-client";
+
+export const metadata: Metadata = {
+  title: "Orders",
+  robots: { index: false },
+};
+
+export default async function GuestOrdersPage(): Promise<JSX.Element> {
+  const cookie = await getGuestCookie();
+  if (!cookie) redirect("/");
+
+  const guestRepo = createPrismaGuestSessionRepository(prisma);
+  const session = await getGuestSession({ repo: guestRepo }, cookie);
+  if (!session.ok) redirect("/");
+
+  const venueRepo = createPrismaVenueRepository(prisma);
+  const venue = await venueRepo.findBySlug(
+    process.env["VENUE_SLUG"] ?? "juniper-house"
+  );
+  if (!venue.ok) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center px-4 text-center">
+        <p className="text-base text-guest-text-muted">
+          We couldn&apos;t load the venue.
+        </p>
+      </div>
+    );
+  }
+
+  let placeContext: string | null = null;
+  if (session.value.placeType === PlaceType.ROOM) {
+    const room = await prisma.room.findUnique({
+      where: { id: session.value.placeId },
+    });
+    if (room) placeContext = `Room ${room.number}`;
+  } else if (session.value.placeType === PlaceType.TABLE) {
+    const table = await prisma.table.findUnique({
+      where: { id: session.value.placeId },
+    });
+    if (table) placeContext = `Table ${table.number}`;
+  }
+
+  const orderRepo = createPrismaOrderRepository(prisma);
+  const ordersResult = await orderRepo.listForGuestSession(
+    venue.value.id,
+    session.value.id
+  );
+  const initialOrders = ordersResult.ok ? ordersResult.value : [];
+
+  const locale = venue.value.language === "en" ? "en-US" : venue.value.language;
+  const currency = venue.value.currency || "NPR";
+
+  return (
+    <OrdersClient
+      initialOrders={initialOrders}
+      placeContext={placeContext}
+      venueName={venue.value.name}
+      currency={currency}
+      locale={locale}
+    />
+  );
+}

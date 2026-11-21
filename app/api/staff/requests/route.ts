@@ -145,6 +145,13 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     REQUEST_BILL: "table-service",
   };
 
+  function resolveAreaForRequest(r: { serviceType: HotelService; roomId?: string | null }): Area {
+    if (r.serviceType === "CALL_WAITER" || r.serviceType === "REQUEST_BILL") {
+      return r.roomId ? "room-service" : "table-service";
+    }
+    return serviceTypeToArea[r.serviceType];
+  }
+
   // Fetch active guest sessions for this venue. Requests whose guestSessionId
   // is not in this set are excluded from the active queue — they belong to a
   // session that has already been closed by staff (checkout or table close).
@@ -165,7 +172,8 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
       r.guestSessionId !== null &&
       r.guestSessionId !== undefined &&
       activeSessionIds.has(r.guestSessionId) &&
-      visibleAreas.includes(serviceTypeToArea[r.serviceType])
+      (visibleAreas.includes(resolveAreaForRequest(r)) ||
+        (Boolean(r.roomId) && resolveAreaForRequest(r) === "room-service" && visibleAreas.includes("front-desk")))
   );
 
   return NextResponse.json({ data: combined }, { status: 200 });

@@ -25,18 +25,21 @@ export interface RoomMapCellProps {
   readonly room: Room;
   readonly isOccupied: boolean;
   readonly canCheckout?: boolean;
+  readonly isDoNotDisturb?: boolean;
 }
 
 export function RoomMapCell({
   room,
   isOccupied,
   canCheckout = true,
+  isDoNotDisturb = false,
 }: RoomMapCellProps): JSX.Element {
   return (
     <article
       data-room-id={room.id}
       data-room-number={room.number}
       data-room-status={isOccupied ? "OCCUPIED" : "FREE"}
+      data-room-dnd={isDoNotDisturb ? "true" : "false"}
       className="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3"
     >
       <div className="flex items-center justify-between gap-2">
@@ -44,15 +47,23 @@ export function RoomMapCell({
           <div className="text-[28px] font-bold">{room.number}</div>
           <div className="text-[11px] uppercase text-staff-text-muted">Room</div>
         </div>
-        {isOccupied ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-            Occupied
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-            Vacant
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {isDoNotDisturb ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+              Do Not Disturb
+            </span>
+          ) : null}
+          {isOccupied ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+              Occupied
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+              Vacant
+            </span>
+          )}
+        </div>
       </div>
       <div className="pt-2 border-t border-staff-border-subtle">
         {isOccupied && canCheckout ? (

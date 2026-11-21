@@ -230,6 +230,15 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
   // Serialize each order/request to plain JSON. Dates → ISO strings;
   // enums → their string values (already strings); money → strings.
   // The poll's string builders read this shape.
+  const dndRoomIds = new Set<string>();
+  for (const r of openRequests) {
+    if (r.serviceType === HotelService.DO_NOT_DISTURB && r.roomId) {
+      if ((r.details as Record<string, unknown>)?.["state"] !== "Off") {
+        dndRoomIds.add(r.roomId);
+      }
+    }
+  }
+
   const serializeOrder = (o: Order) => ({
     id: o.id,
     state: o.state,
@@ -273,6 +282,7 @@ const routeHandler: AuditedRouteHandler = async (_request: NextRequest) => {
         rooms: rooms.map((r) => ({ id: r.id, number: r.number, state: r.state })),
         activeTableIds: [...activeTableIds],
         activeRoomIds: [...activeRoomIds],
+        dndRoomIds: [...dndRoomIds],
       },
     },
     { status: 200 }

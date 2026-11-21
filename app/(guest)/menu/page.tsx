@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bell, Receipt, History, X } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getGuestCookie } from "@/infrastructure/guest/cookies";
 import { getGuestSession } from "@/domain/guest/guest-session.service";
@@ -146,19 +146,39 @@ export default async function MenuPage(): Promise<JSX.Element> {
         </a>
         {activeOrder ? (
           <Link href={`/order/${activeOrder.id}/track`}>
-            <Button size="md" variant="secondary">
-              Track Order
-            </Button>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-guest-brand text-guest-brand-contrast shadow-sm hover:brightness-95 transition-all">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Track Active Order ({activeOrder.state.toLowerCase()}) →
+            </span>
           </Link>
         ) : null}
       </div>
-      <div className="mt-2 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
-        <Button variant="ghost" size="sm">
-          Call a waiter
-        </Button>
-        <Button variant="ghost" size="sm">
-          Request the bill
-        </Button>
+      <div className="mt-3 flex items-center justify-center gap-2 flex-wrap px-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
+        <button
+          type="button"
+          id="btn-call-waiter"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold bg-guest-surface-raised border border-guest-border-subtle text-guest-text-primary hover:border-guest-brand hover:text-guest-brand transition-all shadow-xs"
+        >
+          <Bell className="w-3.5 h-3.5 text-guest-brand" />
+          <span>Call Waiter</span>
+        </button>
+
+        <button
+          type="button"
+          id="btn-request-bill"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold bg-guest-surface-raised border border-guest-border-subtle text-guest-text-primary hover:border-guest-brand hover:text-guest-brand transition-all shadow-xs"
+        >
+          <Receipt className="w-3.5 h-3.5 text-guest-brand" />
+          <span>Request Bill</span>
+        </button>
+
+        <Link
+          href="/orders"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold bg-guest-surface-raised border border-guest-border-subtle text-guest-text-primary hover:border-guest-brand hover:text-guest-brand transition-all shadow-xs"
+        >
+          <History className="w-3.5 h-3.5 text-guest-brand" />
+          <span>View Orders</span>
+        </Link>
       </div>
       <SpecialEventsStrip
         collections={collections}
@@ -228,6 +248,84 @@ export default async function MenuPage(): Promise<JSX.Element> {
           />
         )}
       </section>
+      {/* Notification Toast */}
+      <div
+        id="guest-notification-toast"
+        style={{ display: "none" }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-[90%] rounded-xl bg-guest-brand text-guest-brand-contrast px-4 py-3 text-xs sm:text-sm font-semibold shadow-lg text-center animate-in fade-in slide-in-from-top-4 duration-300"
+      />
+
+      {/* Bill Folio Modal */}
+      <div
+        id="bill-folio-modal"
+        style={{ display: "none" }}
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bill-folio-title"
+      >
+        <div className="relative w-full max-w-lg rounded-t-2xl sm:rounded-2xl bg-guest-surface-raised border border-guest-border-subtle p-5 sm:p-6 shadow-xl flex flex-col gap-4 max-h-[85dvh] overflow-y-auto">
+          <button
+            type="button"
+            id="close-bill-modal"
+            className="absolute top-4 right-4 p-1.5 rounded-full text-guest-text-muted hover:text-guest-text-primary hover:bg-guest-surface-sunken transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-guest-brand/10 text-guest-brand flex items-center justify-center">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 id="bill-folio-title" className="font-display text-lg font-semibold text-guest-text-primary">
+                Current Bill Summary
+              </h3>
+              <p id="bill-folio-place" className="text-xs text-guest-text-secondary">
+                {venue.value.name}
+              </p>
+            </div>
+          </div>
+
+          <div
+            id="bill-status-banner"
+            className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 font-medium text-center"
+          >
+            ✓ Bill requested! A staff member is preparing your printed receipt.
+          </div>
+
+          <div id="bill-folio-content" className="flex flex-col gap-3 divide-y divide-guest-border-subtle/60 text-sm">
+            <div className="text-center py-4 text-xs text-guest-text-muted">
+              Loading bill details…
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-guest-border-subtle flex flex-col gap-1.5">
+            <div className="flex justify-between text-xs text-guest-text-secondary">
+              <span>Subtotal</span>
+              <span id="bill-subtotal" className="font-medium text-guest-text-primary">0.00</span>
+            </div>
+            <div className="flex justify-between text-xs text-guest-text-secondary">
+              <span>Tax</span>
+              <span id="bill-tax" className="font-medium text-guest-text-primary">0.00</span>
+            </div>
+            <div className="flex justify-between text-base font-bold text-guest-text-primary pt-1 border-t border-guest-border-subtle/60">
+              <span>Grand Total</span>
+              <span id="bill-grand-total" className="text-guest-brand">0.00</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="dismiss-bill-btn"
+            className="w-full mt-2 inline-flex items-center justify-center rounded-lg px-4 py-2 text-xs font-semibold bg-guest-surface-sunken border border-guest-border-subtle text-guest-text-primary hover:bg-guest-surface-raised transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
       <footer className="mt-6 mb-4 text-center text-xs text-guest-text-muted">
         <p className="font-display text-guest-text-secondary">{venue.value.name}</p>
         <p className="mt-1 text-[10px]">Open daily. Powered by IronMan.</p>
@@ -430,6 +528,134 @@ export default async function MenuPage(): Promise<JSX.Element> {
   }
 
   setInterval(checkStates, 5000);
+
+  function getCsrfToken() {
+    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
+  function showToast(msg) {
+    var toast = document.getElementById('guest-notification-toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(function() {
+      toast.style.display = 'none';
+    }, 4000);
+  }
+
+  var waiterBtn = document.getElementById('btn-call-waiter');
+  if (waiterBtn) {
+    waiterBtn.addEventListener('click', function() {
+      waiterBtn.disabled = true;
+      var originalText = waiterBtn.innerHTML;
+      waiterBtn.innerHTML = '<span>Calling…</span>';
+
+      fetch('/api/guest/call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken(),
+        },
+        body: JSON.stringify({ type: 'WAITER' }),
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Failed');
+        showToast('✓ Waiter requested. A staff member is on their way!');
+        waiterBtn.innerHTML = '<span>Waiter Called ✓</span>';
+        setTimeout(function() {
+          waiterBtn.disabled = false;
+          waiterBtn.innerHTML = originalText;
+        }, 15000);
+      })
+      .catch(function() {
+        showToast('Could not notify staff. Please try again.');
+        waiterBtn.disabled = false;
+        waiterBtn.innerHTML = originalText;
+      });
+    });
+  }
+
+  var billBtn = document.getElementById('btn-request-bill');
+  var billModal = document.getElementById('bill-folio-modal');
+  var closeBillBtn = document.getElementById('close-bill-modal');
+  var dismissBillBtn = document.getElementById('dismiss-bill-btn');
+
+  function closeBillModal() {
+    if (billModal) billModal.style.display = 'none';
+  }
+  if (closeBillBtn) closeBillBtn.addEventListener('click', closeBillModal);
+  if (dismissBillBtn) dismissBillBtn.addEventListener('click', closeBillModal);
+  if (billModal) {
+    billModal.addEventListener('click', function(e) {
+      if (e.target === billModal) closeBillModal();
+    });
+  }
+
+  function loadAndRenderBill() {
+    var contentEl = document.getElementById('bill-folio-content');
+    var subtotalEl = document.getElementById('bill-subtotal');
+    var taxEl = document.getElementById('bill-tax');
+    var totalEl = document.getElementById('bill-grand-total');
+    var placeEl = document.getElementById('bill-folio-place');
+
+    fetch('/api/guest/bill')
+      .then(function(res) { return res.json(); })
+      .then(function(json) {
+        if (!json || !json.data) return;
+        var d = json.data;
+        if (placeEl && d.placeLabel) placeEl.textContent = d.placeLabel;
+        if (subtotalEl) subtotalEl.textContent = (d.currency || '') + ' ' + (d.summary.subtotal || '0.00');
+        if (taxEl) taxEl.textContent = (d.currency || '') + ' ' + (d.summary.tax || '0.00');
+        if (totalEl) totalEl.textContent = (d.currency || '') + ' ' + (d.summary.total || '0.00');
+
+        if (!contentEl) return;
+        var html = '';
+
+        if (d.orders && d.orders.length > 0) {
+          html += '<div class="pt-2"><h4 class="font-semibold text-xs text-guest-text-secondary uppercase tracking-wider mb-2">Food & Beverages</h4><div class="flex flex-col gap-1.5">';
+          d.orders.forEach(function(ord) {
+            ord.items.forEach(function(it) {
+              html += '<div class="flex justify-between text-xs text-guest-text-primary"><span>' + it.quantity + '× ' + it.name + '</span><span class="font-medium">' + (d.currency || '') + ' ' + it.lineTotal + '</span></div>';
+            });
+          });
+          html += '</div></div>';
+        }
+
+        if (d.payableServices && d.payableServices.length > 0) {
+          html += '<div class="pt-2"><h4 class="font-semibold text-xs text-guest-text-secondary uppercase tracking-wider mb-2">Hotel Services</h4><div class="flex flex-col gap-1.5">';
+          d.payableServices.forEach(function(srv) {
+            html += '<div class="flex justify-between text-xs text-guest-text-primary"><span>' + srv.serviceName + '</span><span class="font-medium">' + (d.currency || '') + ' ' + srv.price + '</span></div>';
+          });
+          html += '</div></div>';
+        }
+
+        if (!d.orders.length && !d.payableServices.length) {
+          html = '<div class="text-center py-4 text-xs text-guest-text-muted">No billable items on your folio yet.</div>';
+        }
+
+        contentEl.innerHTML = html;
+      })
+      .catch(function() {
+        if (contentEl) contentEl.innerHTML = '<div class="text-center py-4 text-xs text-status-cancelled">Failed to load bill items.</div>';
+      });
+  }
+
+  if (billBtn) {
+    billBtn.addEventListener('click', function() {
+      fetch('/api/guest/call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken(),
+        },
+        body: JSON.stringify({ type: 'BILL' }),
+      }).catch(function() {});
+
+      if (billModal) billModal.style.display = 'flex';
+      loadAndRenderBill();
+    });
+  }
 })();
 `,
         }}

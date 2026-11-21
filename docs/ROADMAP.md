@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, and 8.4 are ✅ closed. Milestone 8.4.8 (Enhanced Guest-Staff-Admin Operational Loop) is in progress.
+**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, and 8.4.8 are ✅ closed. Milestone 8.5 (Tables Management) is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
@@ -998,12 +998,12 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 | ID | Task | Status | Depends on |
 |---|---|---|---|
-| **8.4.8a** | **Menu Page Mobile Experience & Luxury Redesign (`app/(guest)/menu/page.tsx`)** — Re-architect mobile menu cards (`_menu-item-card.tsx`) for mobile screens (refined aspect ratios, typography, prices, and tactile `+` quick-add controls); upgrade header quick-action bar with responsive high-contrast buttons; wire `/services` "Call the front desk" to direct native dialer (`tel:${phone}`) and informative modal. | ⬜ | 8.4.7 |
-| **8.4.8b** | **Guest Orders History Page (`/orders`) & Menu Linkage** — Build `app/(guest)/orders/page.tsx` and `_orders-client.tsx` (mirroring `/requests`) querying `GET /api/guest/orders` with live polling, itemized breakdown, and status steppers; add "View Orders" button to `/menu` quick-action bar for all guests. | ⬜ | 8.4.8a |
-| **8.4.8c** | **Instant "Call Waiter" Notification & Route Dispatch (`Table` + `Room`)** — Wire "Call a waiter" on `/menu` to `POST /api/guest/call` (`type: "WAITER"`); update area routing in `app/api/staff/requests/route.ts` and `app/staff/page.tsx` so room calls route to `room-service` & `front-desk` and table calls route to `table-service`; add instant staff alert and guest confirmation toast. | ⬜ | 8.4.8b |
-| **8.4.8d** | **Consolidated Billing & Folio System (Room vs Table)** — Implement `GET /api/guest/bill` computing cumulative totals (food & drink orders for tables; orders + payable services like Spa, Laundry, Late Checkout for rooms); wire "Request Bill" on `/menu` to dispatch `POST /api/guest/call` (`type: "BILL"`), alert staff, and render live on-screen itemized bill folio. | ⬜ | 8.4.8c |
-| **8.4.8e** | **"Do Not Disturb" (DND) Badge on Room Maps (`Staff` & `Admin`)** — Track active DND state per room from latest `DO_NOT_DISTURB` requests; update `RoomMapCell` in `src/components/staff/room-map-cell.tsx`, the client polling renderer in `app/staff/page.tsx`, and admin room overview to render a prominent "Do Not Disturb" tag. | ⬜ | 8.4.8d |
-| **8.4.8** | **Verify:** Multi-role end-to-end verification (Mobile guest menu browsing → Waiter call to staff → Order history tracking → Bill requesting with consolidated folio → DND room map tag sync). Production build, zero-error typecheck, unit and integration suites. | ⬜ | 8.4.8e |
+| **8.4.8a** | **Menu Page Mobile Experience & Luxury Redesign (`app/(guest)/menu/page.tsx`)** — Re-architect mobile menu cards (`_menu-item-card.tsx`) for mobile screens (refined aspect ratios, typography, prices, and tactile `+` quick-add controls); upgrade header quick-action bar with responsive high-contrast buttons; wire `/services` "Call the front desk" to direct native dialer (`tel:${phone}`) and informative modal. | ✅ | 8.4.7 |
+| **8.4.8b** | **Guest Orders History Page (`/orders`) & Menu Linkage** — Build `app/(guest)/orders/page.tsx` and `_orders-client.tsx` (mirroring `/requests`) querying `GET /api/guest/orders` with live polling, itemized breakdown, and status steppers; add "View Orders" button to `/menu` quick-action bar for all guests. | ✅ | 8.4.8a |
+| **8.4.8c** | **Instant "Call Waiter" Notification & Route Dispatch (`Table` + `Room`)** — Wire "Call a waiter" on `/menu` to `POST /api/guest/call` (`type: "WAITER"`); update area routing in `app/api/staff/requests/route.ts` and `app/staff/page.tsx` so room calls route to `room-service` & `front-desk` and table calls route to `table-service`; add instant staff alert and guest confirmation toast. | ✅ | 8.4.8b |
+| **8.4.8d** | **Consolidated Billing & Folio System (Room vs Table)** — Implement `GET /api/guest/bill` computing cumulative totals (food & drink orders for tables; orders + payable services like Spa, Laundry, Late Checkout for rooms); wire "Request Bill" on `/menu` to dispatch `POST /api/guest/call` (`type: "BILL"`), alert staff, and render live on-screen itemized bill folio. | ✅ | 8.4.8c |
+| **8.4.8e** | **"Do Not Disturb" (DND) Badge on Room Maps (`Staff` & `Admin`)** — Track active DND state per room from latest `DO_NOT_DISTURB` requests; update `RoomMapCell` in `src/components/staff/room-map-cell.tsx`, the client polling renderer in `app/staff/page.tsx`, and admin room overview to render a prominent "Do Not Disturb" tag. | ✅ | 8.4.8d |
+| **8.4.8** | **Verify:** Multi-role end-to-end verification (Mobile guest menu browsing → Waiter call to staff → Order history tracking → Bill requesting with consolidated folio → DND room map tag sync). Production build, zero-error typecheck, unit and integration suites. | ✅ | 8.4.8e |
 
 ---
 

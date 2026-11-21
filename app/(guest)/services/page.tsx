@@ -14,6 +14,7 @@ import { getVenueSlug } from "@/infrastructure/config/venue";
 import { GuestHero } from "@/components/guest/hero";
 import { JoinRequestScript } from "@/components/guest/join-request-script";
 import { Button } from "@/components/ui/button";
+import { PhoneCall, Clock, X } from "lucide-react";
 import { ServiceList } from "./_service-list";
 
 export const metadata: Metadata = {
@@ -90,15 +91,66 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           Explore Services
         </Button>
       </div>
-      <div className="mt-2 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
-        <Button variant="ghost" size="sm">
-          Call the front desk
-        </Button>
-        <Link href="/requests">
-          <Button variant="ghost" size="sm">
-            View requests
-          </Button>
+      <div className="mt-3 flex items-center justify-center gap-2 flex-wrap px-4 animate-in fade-in duration-700 delay-700 ease-guest-entrance">
+        <button
+          type="button"
+          id="btn-call-front-desk"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold bg-guest-surface-raised border border-guest-border-subtle text-guest-text-primary hover:border-guest-brand hover:text-guest-brand transition-all shadow-xs"
+        >
+          <PhoneCall className="w-3.5 h-3.5 text-guest-brand" />
+          <span>Call Front Desk</span>
+        </button>
+        <Link
+          href="/requests"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold bg-guest-surface-raised border border-guest-border-subtle text-guest-text-primary hover:border-guest-brand hover:text-guest-brand transition-all shadow-xs"
+        >
+          <Clock className="w-3.5 h-3.5 text-guest-brand" />
+          <span>View Requests</span>
         </Link>
+      </div>
+
+      {/* Front desk dialer modal */}
+      <div
+        id="front-desk-modal"
+        style={{ display: "none" }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="front-desk-modal-title"
+      >
+        <div className="relative w-full max-w-sm rounded-2xl bg-guest-surface-raised border border-guest-border-subtle p-6 shadow-xl flex flex-col items-center text-center gap-4">
+          <button
+            type="button"
+            id="close-front-desk-modal"
+            className="absolute top-4 right-4 p-1.5 rounded-full text-guest-text-muted hover:text-guest-text-primary hover:bg-guest-surface-sunken transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="w-12 h-12 rounded-full bg-guest-brand/10 text-guest-brand flex items-center justify-center">
+            <PhoneCall className="w-6 h-6" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <h3 id="front-desk-modal-title" className="font-display text-lg font-semibold text-guest-text-primary">
+              Front Desk Assistance
+            </h3>
+            <p className="text-xs text-guest-text-secondary">
+              Our front desk team is on duty 24/7 to assist with any request or inquiry.
+            </p>
+          </div>
+          <div className="w-full flex flex-col gap-2 pt-2">
+            <a
+              href="tel:+97714200000"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold bg-guest-brand text-guest-brand-contrast hover:brightness-95 transition-all shadow-sm"
+            >
+              <PhoneCall className="w-4 h-4" />
+              <span>Dial Now (+977 1-4200000)</span>
+            </a>
+            <div className="rounded-lg bg-guest-surface-sunken border border-guest-border-subtle/50 p-2.5 text-xs text-guest-text-secondary">
+              From your in-room telephone: <span className="font-semibold text-guest-text-primary">Dial 0</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {categories.length > 0 ? (
@@ -149,6 +201,28 @@ export default async function ServicesPage(): Promise<JSX.Element> {
 (function() {
   var currentSignature = ${JSON.stringify(initialSignature)};
   var lastReloadTime = 0;
+
+  var openModalBtn = document.getElementById('btn-call-front-desk');
+  var closeModalBtn = document.getElementById('close-front-desk-modal');
+  var frontDeskModal = document.getElementById('front-desk-modal');
+
+  if (openModalBtn && frontDeskModal) {
+    openModalBtn.addEventListener('click', function() {
+      frontDeskModal.style.display = 'flex';
+    });
+  }
+  if (closeModalBtn && frontDeskModal) {
+    closeModalBtn.addEventListener('click', function() {
+      frontDeskModal.style.display = 'none';
+    });
+  }
+  if (frontDeskModal) {
+    frontDeskModal.addEventListener('click', function(e) {
+      if (e.target === frontDeskModal) {
+        frontDeskModal.style.display = 'none';
+      }
+    });
+  }
 
   function checkServiceStates() {
     if (document.visibilityState !== 'visible') return;

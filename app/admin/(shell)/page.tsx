@@ -172,6 +172,15 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
     if (r.state === RoomState.OCCUPIED) activeRoomIds.add(r.id);
   }
 
+  const dndRoomIds = new Set<string>();
+  for (const r of openRequests) {
+    if (r.serviceType === HotelService.DO_NOT_DISTURB && r.roomId) {
+      if ((r.details as Record<string, unknown>)?.["state"] !== "Off") {
+        dndRoomIds.add(r.roomId);
+      }
+    }
+  }
+
   // --- Elapsed-time helper (short human format) ---
   function elapsedLabel(from: Date): string {
     const ms = Date.now() - from.getTime();
@@ -358,6 +367,7 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
               room={r}
               isOccupied={activeRoomIds.has(r.id)}
               canCheckout={false}
+              isDoNotDisturb={dndRoomIds.has(r.id)}
             />
           ))}
         </div>
@@ -545,20 +555,25 @@ const DASHBOARD_SCRIPT = `
     el.innerHTML = html;
   }
 
-  function renderRoomMap(rooms, activeIds) {
+  function renderRoomMap(rooms, activeIds, dndIds) {
     var el = document.getElementById('dashboard-room-map');
     if (!el) return;
     var html = '';
+    dndIds = dndIds || [];
     for (var i = 0; i < rooms.length; i++) {
       var r = rooms[i];
       var occ = activeIds.indexOf(r.id) !== -1;
+      var isDnd = dndIds.indexOf(r.id) !== -1;
+      var dndTag = isDnd
+        ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>Do Not Disturb</span>'
+        : '';
       var badge = occ
         ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>'
         : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Vacant</span>';
-      html += '<article data-room-id="' + escapeHtml(r.id) + '" data-room-number="' + escapeHtml(r.number) + '" data-room-status="' + (occ ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+      html += '<article data-room-id="' + escapeHtml(r.id) + '" data-room-number="' + escapeHtml(r.number) + '" data-room-status="' + (occ ? 'OCCUPIED' : 'FREE') + '" data-room-dnd="' + (isDnd ? 'true' : 'false') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
         '<div class="flex items-center justify-between gap-2">' +
           '<div><div class="text-[28px] font-bold">' + escapeHtml(r.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Room</div></div>' +
-          badge +
+          '<div class="flex items-center gap-1.5 flex-wrap justify-end">' + dndTag + badge + '</div>' +
         '</div>' +
         '<div class="pt-2 border-t border-staff-border-subtle"><span class="text-xs text-staff-text-muted">\\u2014</span></div>' +
       '</article>';
@@ -592,7 +607,7 @@ const DASHBOARD_SCRIPT = `
         renderOrderList(d.recentRoomOrders, 'dashboard-room-orders', 'No active room orders.');
         renderRequestList(d.recentRoomRequests);
         renderTableMap(sortByNumber(d.tables), d.activeTableIds);
-        renderRoomMap(sortByNumber(d.rooms), d.activeRoomIds);
+        renderRoomMap(sortByNumber(d.rooms), d.activeRoomIds, d.dndRoomIds);
       })
       .catch(function() {});
   }

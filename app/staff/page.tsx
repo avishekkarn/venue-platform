@@ -12,8 +12,8 @@ import { visibleAreasFor, type Area } from "@/domain/auth/can-access";
 import { OrderState, PlaceType, type Order } from "@/domain/orders/order.repository";
 import {
   RequestState,
+  HotelService,
   type ServiceRequest,
-  type HotelService,
 } from "@/domain/requests/request.repository";
 import { type Table } from "@/domain/organization/table.repository";
 import { type Room } from "@/domain/organization/room.repository";
@@ -244,6 +244,23 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     if (r.state === "OCCUPIED") activeRoomIds.add(r.id);
   }
 
+  const rawRequests = requestsRes.ok ? requestsRes.value : [];
+  const dndRoomIds = new Set<string>();
+  const dndRequestsByRoom: Record<string, ServiceRequest> = {};
+  for (const req of rawRequests) {
+    if (req.serviceType === HotelService.DO_NOT_DISTURB && req.roomId) {
+      const existing = dndRequestsByRoom[req.roomId];
+      if (!existing || new Date(req.submittedAt).getTime() > new Date(existing.submittedAt).getTime()) {
+        dndRequestsByRoom[req.roomId] = req;
+      }
+    }
+  }
+  for (const [roomId, req] of Object.entries(dndRequestsByRoom)) {
+    if (req.state !== RequestState.CANCELLED && (req.details as Record<string, unknown>)?.["state"] !== "Off") {
+      dndRoomIds.add(roomId);
+    }
+  }
+
   // Filter completed orders to the last 4 hours
   const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
   const recentCompleted = (completedRes.ok ? completedRes.value : []).filter(
@@ -347,12 +364,24 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     REQUEST_BILL: "table-service",
   };
 
+  function resolveAreaForRequest(r: ServiceRequest): Area {
+    if (r.serviceType === HotelService.CALL_WAITER || r.serviceType === HotelService.REQUEST_BILL) {
+      return r.roomId ? "room-service" : "table-service";
+    }
+    return serviceToArea[r.serviceType];
+  }
+
   const requests: ServiceRequest[] = (requestsRes.ok ? requestsRes.value : []).filter((r) => {
     const isActive =
       r.state === RequestState.SUBMITTED ||
       r.state === RequestState.ACKNOWLEDGED ||
       r.state === RequestState.IN_PROGRESS;
-    return isActive && visibleAreas.includes(serviceToArea[r.serviceType]);
+    const targetArea = resolveAreaForRequest(r);
+    return (
+      isActive &&
+      (visibleAreas.includes(targetArea) ||
+        (Boolean(r.roomId) && targetArea === "room-service" && visibleAreas.includes("front-desk")))
+    );
   });
 
   const showTableOrders = visibleAreas.includes("table-service");
@@ -389,6 +418,7 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
   var SERVICE_LABELS = ` + JSON.stringify(SERVICE_LABELS) + `;
   var currentActiveTableIds = ` + JSON.stringify(Array.from(activeTableIds)) + `;
   var currentActiveRoomIds = ` + JSON.stringify(Array.from(activeRoomIds)) + `;
+  var currentDndRoomIds = ` + JSON.stringify(Array.from(dndRoomIds)) + `;
 
   function getCsrfToken() {
     // The CSRF cookie (D-20.1) is NOT HttpOnly, so the client can read it.
@@ -501,13 +531,14 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     '</article>';
   }
 
-  function roomCardHtml(room, isOccupied) {
+  function roomCardHtml(room, isOccupied, isDnd) {
+    var dndTag = isDnd ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>Do Not Disturb</span>' : '';
     var badge = isOccupied ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Occupied</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Vacant</span>';
     var action = (isOccupied && CAN_CHECKOUT) ? '<button type="button" data-action="checkout-room" data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium text-staff-text-muted border border-staff-border-subtle hover:bg-staff-surface-sunken w-full">Checkout Room</button>' : '<span class="text-xs text-staff-text-muted">—</span>';
-    return '<article data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
+    return '<article data-room-id="' + escapeHtml(room.id) + '" data-room-number="' + escapeHtml(room.number) + '" data-room-status="' + (isOccupied ? 'OCCUPIED' : 'FREE') + '" data-room-dnd="' + (isDnd ? 'true' : 'false') + '" class="bg-staff-surface-raised rounded-xl p-4 border border-staff-border-subtle flex flex-col gap-3">' +
       '<div class="flex items-center justify-between gap-2">' +
         '<div><div class="text-[28px] font-bold">' + escapeHtml(room.number) + '</div><div class="text-[11px] uppercase text-staff-text-muted">Room</div></div>' +
-        badge +
+        '<div class="flex items-center gap-1.5 flex-wrap justify-end">' + dndTag + badge + '</div>' +
       '</div>' +
       '<div class="pt-2 border-t border-staff-border-subtle">' + action + '</div>' +
     '</article>';
@@ -547,7 +578,8 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
     for (var i = 0; i < ROOMS.length; i++) {
       var r = ROOMS[i];
       var occ = currentActiveRoomIds.indexOf(r.id) !== -1;
-      container.insertAdjacentHTML('beforeend', roomCardHtml(r, occ));
+      var dnd = currentDndRoomIds.indexOf(r.id) !== -1;
+      container.insertAdjacentHTML('beforeend', roomCardHtml(r, occ, dnd));
     }
   }
 
@@ -698,12 +730,24 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
           }
         }
 
+        var requests = requestsBody.data || [];
+        var dndMap = {};
+        for (var d = 0; d < requests.length; d++) {
+          var rk = requests[d];
+          if (rk.serviceType === 'DO_NOT_DISTURB' && rk.roomId && rk.state !== 'CANCELLED') {
+            if (rk.details && rk.details.state === 'Off') {
+              // off
+            } else {
+              dndMap[rk.roomId] = true;
+            }
+          }
+        }
+        currentDndRoomIds = Object.keys(dndMap);
+
         renderOrderQueue(tableOrders, 'table-orders-container');
         renderOrderQueue(roomOrders, 'room-orders-container');
         renderTableMap();
         renderRoomMap();
-
-        var requests = requestsBody.data || [];
         renderRequests(requests);
 
         var tableTab = document.querySelector('[data-tab="table-orders"]');
@@ -1015,7 +1059,13 @@ export default async function StaffDashboardPage(): Promise<JSX.Element> {
           style={{ display: defaultActiveTab === "room-map" ? "grid" : "none" }}
         >
           {rooms.map((r) => (
-            <RoomMapCell key={r.id} room={r} isOccupied={activeRoomIds.has(r.id)} canCheckout={canCheckout} />
+            <RoomMapCell
+              key={r.id}
+              room={r}
+              isOccupied={activeRoomIds.has(r.id)}
+              canCheckout={canCheckout}
+              isDoNotDisturb={dndRoomIds.has(r.id)}
+            />
           ))}
         </div>
 
