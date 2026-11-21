@@ -29,8 +29,49 @@ export interface Table {
   updatedAt: Date;
 }
 
+export interface TableCategory {
+  id: string;
+  venueId: string;
+  name: string;
+  description: string | null;
+  isReserved: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateTableCategoryInput {
+  name: string;
+  description?: string | null;
+  isReserved?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateTableCategoryInput {
+  name?: string;
+  description?: string | null;
+  isReserved?: boolean;
+  sortOrder?: number;
+}
+
+export interface TableView extends Table {
+  category: TableCategory | null;
+  activeSession?: {
+    id: string;
+    startedAt: Date;
+    ordersCount: number;
+    totalAmount: string;
+  } | null;
+}
+
 export interface CreateTableInput {
   number: string;
+  categoryId?: string | null;
+  state?: TableState;
+}
+
+export interface UpdateTableInput {
+  number?: string;
   categoryId?: string | null;
   state?: TableState;
 }
@@ -39,7 +80,18 @@ export interface TableRepository {
   findById(venueId: string, id: string): Promise<Result<Table>>;
   findByNumber(venueId: string, number: string): Promise<Result<Table>>;
   listForVenue(venueId: string): Promise<Result<Table[]>>;
+  listTablesWithDetails(venueId: string): Promise<Result<TableView[]>>;
   create(venueId: string, input: CreateTableInput): Promise<Result<Table>>;
+  update(venueId: string, id: string, input: UpdateTableInput): Promise<Result<Table>>;
+  delete(venueId: string, id: string): Promise<Result<void>>;
   setState(venueId: string, id: string, state: TableState): Promise<Result<Table>>;
   setStatus(venueId: string, tableId: string, status: TableState): Promise<Result<void>>;
+  endSession(venueId: string, id: string): Promise<Result<void>>;
+
+  // Categories
+  listCategories(venueId: string): Promise<Result<TableCategory[]>>;
+  findCategoryById(venueId: string, id: string): Promise<Result<TableCategory>>;
+  createCategory(venueId: string, input: CreateTableCategoryInput): Promise<Result<TableCategory>>;
+  updateCategory(venueId: string, id: string, input: UpdateTableCategoryInput): Promise<Result<TableCategory>>;
+  deleteCategory(venueId: string, id: string): Promise<Result<void>>;
 }

@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0236 | 2026-11-21 | Milestone 8.5 Tasks 8.5.1 & 8.5.2 closed (Table & Room Categories Schema, Migration, Seed, Table Management API & Tests) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0235 | 2026-11-21 | Milestones 8.4, 8.4.8 & 8.4.9 closed (Services, Operations Loop & Unified Admin Hub) | PASS | Milestone 8.4, 8.4.8, 8.4.9 | §5.3 |
 | ENTRY-0234 | 2026-11-21 | Milestone 8.3 closed (Menu Management & sync); Milestone 8.4.1 foundation complete | PASS | Milestone 8.3 & 8.4 | §5.3 |
 | ENTRY-0233 | 2026-11-16 | 8.3.5b.B committed at 1070693; F-0005 discharged (env); baselines re-recorded | PASS | Milestone 8.3 | §5.3 |
@@ -135,13 +136,63 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0236
+Next entry number: 0237
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.1 — GET / POST / PATCH /api/admin/tables.
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.3 — Reserved Table Customer Protection & Scan Routing (`/qr/reserved`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0236 — 2026-11-21 — Milestone 8.5 Tasks 8.5.1 & 8.5.2 closed: Table & Room Categories Schema, Migration, Seed, Table Management API, End Session Authority & Route Tests
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Tasks 8.5.1 & 8.5.2).
+
+**Summary:**
+Milestone 8.5 Tasks 8.5.1 and 8.5.2 are completed, tested, and verified.
+1. **Schema & Migration (8.5.1)**: Added `TableCategory` (`id`, `venueId`, `name`, `description`, `isReserved`, `sortOrder`) and `RoomCategory` (`id`, `venueId`, `name`, `description`, `basePrice`, `sortOrder`) to `prisma/schema.prisma`. Linked optional `categoryId` foreign key to `Table` and `Room`. Generated migration `20261121161942_add_table_and_room_categories`.
+2. **Seed (8.5.1)**: Updated `prisma/seed.ts` with 4 table categories ("Indoor Dining", "Patio & Garden", "VIP Lounge", "Reserved") and 8 room categories ("NON AC", "AC", "DELUXE", "SUPER DELUXE", "DOUBLE BED ROOM NON AC", "DOUBLE BED ROOM AC", "ROOM FOR GROUP", "NIGHT SUITES" with NPR rates). Mapped all 12 seed tables and 8 seed rooms to categories. `pnpm prisma db seed` succeeded.
+3. **Domain & Repositories (8.5.1)**: Extended `TableRepository` and `RoomRepository` contracts with category CRUD and table management methods (`listCategories`, `findCategoryById`, `createCategory`, `updateCategory`, `deleteCategory`, `listTablesWithDetails`, `update`, `delete`, `endSession`). Implemented methods in `src/infrastructure/db/repositories/table.repo.ts`. Updated unit test mocks in `tests/unit/staff/close-table.test.ts`.
+4. **Table Categories & Table Management API (8.5.2)**: Implemented full CRUD with `withAudit` and `withCsrf`:
+   - `GET` & `POST /api/admin/tables/categories`: List and create table categories.
+   - `PATCH` & `DELETE /api/admin/tables/categories/[id]`: Update category and delete category with re-assignment safeguard.
+   - `GET` & `POST /api/admin/tables`: List tables with categories and active session details; create table with custom number/name and category.
+   - `PATCH` & `DELETE /api/admin/tables/[id]`: Update table name, category, or state (with 409 conflict guard when session is active); delete table with active session and historical order protections.
+   - `POST /api/admin/tables/[id]/end-session`: Admin authority endpoint to force-close active table sessions, free table, and record audit event.
+5. **Integration Tests (8.5.2)**: Created `tests/integration/api/admin-tables.test.ts` verifying category creation, duplicate number rejection, table updating, conflict on active session state change, and admin end-session authority. All 5 integration tests pass against PostgreSQL.
+
+**Files changed:**
+- `prisma/schema.prisma` (added TableCategory and RoomCategory models)
+- `prisma/migrations/20261121161942_add_table_and_room_categories/migration.sql` (schema migration)
+- `prisma/seed.ts` (seeded table and room categories with relations)
+- `src/domain/organization/table.repository.ts` (extended table repo contract)
+- `src/domain/organization/room.repository.ts` (extended room repo contract)
+- `src/infrastructure/db/repositories/table.repo.ts` (implemented category CRUD, table queries, and endSession)
+- `tests/unit/staff/close-table.test.ts` (mock repo contract alignment)
+- `app/api/admin/tables/route.ts` (GET / POST tables)
+- `app/api/admin/tables/[id]/route.ts` (PATCH / DELETE table)
+- `app/api/admin/tables/categories/route.ts` (GET / POST table categories)
+- `app/api/admin/tables/categories/[id]/route.ts` (PATCH / DELETE table category)
+- `app/api/admin/tables/[id]/end-session/route.ts` (POST admin end table session)
+- `tests/integration/api/admin-tables.test.ts` (5 integration tests)
+- `docs/ROADMAP.md` (marked 8.5.1 and 8.5.2 complete)
+- `docs/PROGRESS.md` (this entry, ledger, and §7 snapshot)
+
+**Verification:**
+- `pnpm exec tsc --noEmit`: 0 errors.
+- `pnpm test` (Unit Tests): 41 test files, 282 tests passed.
+- `pnpm vitest run --config vitest.integration.config.ts tests/integration/api/admin-tables.test.ts`: 5 passed.
+- Commits: `e0f38fe` pushed to `origin/main`.
+
+**Contradiction Check:** None found. `withAudit` and `withCsrf` are enforced on all admin mutations. Session termination properly invalidates guest sessions and frees tables.
+
+**Next:** Task 8.5.3 — Reserved Table Customer Protection & Scan Routing (`/qr/reserved`).
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0235 — 2026-11-21 — Milestones 8.4, 8.4.8 & 8.4.9 closed: Services Management, 3-Layer Operations Loop, Unified Staff & Admin Hub, Collapsible Progress Tracking
 
@@ -1087,7 +1138,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 (Dashboard), 8.2 (Order Management), 8.3 (Menu Management), 8.4 (Services Management), 8.4.8 (Enhanced Guest-Staff-Admin Operational Loop), and 8.4.9 (Unified Staff & Admin Operations Hub) are ALL CLOSED (✅). The next active milestone is **Milestone 8.5 (Tables and Rooms)**, starting with Task 8.5.1 (`GET` / `POST` / `PATCH /api/admin/tables`). Baselines as of 2026-11-21 (commit `110a648`): tsc 0 errors, unit 41 test files / 282 tests passed, integration 28 API suites / 220 tests passed, production build succeeded (54 routes).
+**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1 and 8.5.2 are CLOSED (✅). The next active task is **Task 8.5.3 (Reserved Table Customer Protection & Scan Routing (`/qr/reserved`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration admin-tables passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
