@@ -1007,13 +1007,33 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 ---
 
+### Milestone 8.4.9 — The Unified Staff & Admin Operations Hub
+
+**Goal:** Bridge all operational, navigation, and folio gaps across the Staff Operations screen and the Admin Management suite.
+1. **Staff Notifications**: Active bill requests and waiter calls trigger instant visual banners, audible cues, pulsating tab badges, and map badges on Table/Room cells so staff can acknowledge and resolve them immediately.
+2. **Admin Shell Layout & Back Navigation**: Move `/admin/orders/active` and `/admin/orders/completed` under the `(shell)` route group to inherit the 240px sidebar, header, and persistent navigation; add explicit "← Back to Dashboard" breadcrumb navigation across all admin views.
+3. **Admin Active Sessions**: Re-architect `/admin/orders/active` into an Active Sessions Hub unifying all active tables and rooms, displaying their elapsed time, active food orders, and open hotel service requests in a consolidated card layout.
+4. **Admin Completed Orders, Requests & Closed Folios**: Re-architect `/admin/orders/completed` into a consolidated ledger rendering completed food orders, completed service requests, and closed guest session bills (with itemized breakdown: orders subtotal + services subtotal + tax = total bill).
+5. **Admin Dashboard Collections**: Upgrade `GET /api/admin/dashboard` and the admin dashboard metrics to consolidate revenue from both completed food orders AND payable hotel services, displaying clear collection breakdowns (Total Revenue, F&B, Hotel Services).
+
+| ID | Task | Status | Depends on |
+|---|---|---|---|
+| **8.4.9a** | **Admin Shell Navigation & Hierarchy Alignment** — Move `orders/active` and `orders/completed` inside `app/admin/(shell)/orders/` so they inherit the persistent navigation sidebar and header; add explicit "← Back to Dashboard" navigation header breadcrumb to all admin sections (`active`, `completed`, `menu`, `services`, `tables`, `rooms`, `qr`, `staff`). | ⬜ | 8.4.8 |
+| **8.4.9b** | **Staff Instant Notification & Visual Dispatch for Bill / Waiter Calls** — Grant table-service staff access to call requests in `app/api/staff/requests/route.ts`; add persistent high-priority alert banner at top of staff screen when active `CALL_WAITER` or `REQUEST_BILL` requests exist with instant Acknowledge action; add pulsating badge on Requests tab and map cell callout tags on `TableMapCell` & `RoomMapCell`. | ⬜ | 8.4.9a |
+| **8.4.9c** | **Admin Active Sessions & Unified Operations View (`/admin/orders/active`)** — Redesign Active Orders into an Active Sessions Hub showing all active table and room sessions with elapsed time, active food orders, open service requests, running folio total, and interactive side-panel detail inspector. | ⬜ | 8.4.9b |
+| **8.4.9d** | **Admin Completed Orders, Requests & Closed Session Folios (`/admin/orders/completed`)** — Redesign Completed view into a consolidated ledger rendering completed food orders, completed service requests, and closed session folios with itemized billing breakdowns (F&B + Services); update CSV export to reflect the unified dataset. | ⬜ | 8.4.9c |
+| **8.4.9e** | **Admin Dashboard Consolidated Collections & Service Revenue** — Update `app/api/admin/dashboard/route.ts` and `app/admin/(shell)/page.tsx` to compute revenue today across both completed orders and completed payable services; display itemized collections breakdown card (Total Collections, F&B Revenue, Services Revenue). | ⬜ | 8.4.9d |
+| **8.4.9** | **Verify:** End-to-end verification across Staff and Admin (Staff bill/waiter alert banner → Admin active sessions view → Admin completed session folios → Dashboard collections breakdown → Admin navigation back-link). Production build, zero-error typecheck, unit and integration suites. | ⬜ | 8.4.9e |
+
+---
+
 ### Milestone 8.5 — Tables and Rooms
 
 **Goal:** The operator manages the venue's tables and rooms — adding, editing, setting state, generating and printing QRs — from the admin panel.
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.5.1** | **`GET` / `POST` / `PATCH /api/admin/tables`**. All `withAudit` + `withCsrf`. `GET` returns the venue's tables. `POST` creates (number, state default FREE). `PATCH` updates (number, state). If the table has an active session, the state change is rejected with `CONFLICT`. Four route tests. | ⬜ | 8.4.8 |
+| **8.5.1** | **`GET` / `POST` / `PATCH /api/admin/tables`**. All `withAudit` + `withCsrf`. `GET` returns the venue's tables. `POST` creates (number, state default FREE). `PATCH` updates (number, state). If the table has an active session, the state change is rejected with `CONFLICT`. Four route tests. | ⬜ | 8.4.9 |
 | **8.5.2** | **`GET` / `POST` / `PATCH /api/admin/rooms`**. Same shape as 8.5.1 (state default VACANT). Four route tests. | ⬜ | 8.5.1 |
 | **8.5.3** | **The Tables/Rooms screens** (`app/admin/tables/page.tsx`, `app/admin/rooms/page.tsx`): a grid of `QrCodeCard`s, each with the number, the state, the QR preview, and two actions (Print QR, Revoke QR). The "Add Table" / "Add Room" form opens in the right panel. | ⬜ | 8.5.2 |
 | **8.5.4** | **The batch QR print view** (`app/admin/qr/print/batch/page.tsx`): a Server Component that fetches the venue's tables and rooms, renders their QRs in a printable grid, and offers a "Print" button. | ⬜ | 8.5.3 |
