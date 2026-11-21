@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0238 | 2026-11-21 | Milestone 8.5 Task 8.5.4 closed (Room Categories, Room Management API, Dedicated Pricing & Tests) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0237 | 2026-11-21 | Milestone 8.5 Task 8.5.3 closed (Reserved Table Customer Protection & Scan Routing) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0236 | 2026-11-21 | Milestone 8.5 Tasks 8.5.1 & 8.5.2 closed (Table & Room Categories Schema, Migration, Seed, Table Management API & Tests) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0235 | 2026-11-21 | Milestones 8.4, 8.4.8 & 8.4.9 closed (Services, Operations Loop & Unified Admin Hub) | PASS | Milestone 8.4, 8.4.8, 8.4.9 | §5.3 |
@@ -137,13 +138,62 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0238
+Next entry number: 0239
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.4 — Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.5 — Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0238 — 2026-11-21 — Milestone 8.5 Task 8.5.4 closed: Room Categories, Room Management API, Dedicated Pricing & Tests
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.4).
+
+**Summary:**
+Milestone 8.5 Task 8.5.4 is completed, tested, and verified.
+1. **Domain Contract & Repositories (`src/domain/organization/room.repository.ts` & `src/infrastructure/db/repositories/room.repo.ts`)**:
+   - Added `RoomCategory`, `CreateRoomCategoryInput`, `UpdateRoomCategoryInput`, `RoomView`, and `UpdateRoomInput` domain types.
+   - Implemented Category CRUD (`listCategories`, `findCategoryById`, `createCategory`, `updateCategory`, `deleteCategory`) with decimal `basePrice` stored and edited in NPR.
+   - Implemented Room CRUD (`listRoomsWithDetails`, `create`, `update`, `delete`, `endSession`) with active guest session aggregation (order totals, service request totals, room rates, and DND status detection).
+   - Enforced 409 conflict protection when attempting to change the state of an occupied room while a guest session is active or deleting a room with active sessions.
+   - Implemented `endSession` for rooms: invalidates all active guest sessions on the room, completes open service requests, and resets room state to `VACANT`.
+2. **Room Management API Routes (`app/api/admin/rooms/*`)**:
+   - `GET` & `POST /api/admin/rooms/categories`: List and create room categories with custom names and configurable base price in NPR (`withAudit` + `withCsrf`).
+   - `PATCH` & `DELETE /api/admin/rooms/categories/[id]`: Update category details / pricing, and delete category with automatic room unlinking (`withAuditedDynamicRoute` + `withCsrf`).
+   - `GET` & `POST /api/admin/rooms`: List rooms with category details and active session totals; create room with custom numbers/names and category assignment (`withAudit` + `withCsrf`).
+   - `PATCH` & `DELETE /api/admin/rooms/[id]`: Update room number, category, or occupancy state; delete room with active session conflict safeguard (`withAuditedDynamicRoute` + `withCsrf`).
+   - `POST /api/admin/rooms/[id]/end-session`: Admin authority endpoint to force check out active room sessions, clear DND, and set room to VACANT (`withAuditedDynamicRoute` + `withCsrf`).
+3. **Integration Tests (`tests/integration/api/admin-rooms.test.ts`)**:
+   - Added 4 integration tests verifying 401 unauthorized on missing session, 403 forbidden for non-admin staff (LEADER), 409 conflict on duplicate room numbers, and full operational CRUD lifecycle (category creation with NPR 3,500 base price, room creation, list with details, active session conflict guard, admin end-session authority, price update to NPR 4,200, and cleanup). All 4 tests pass against PostgreSQL.
+
+**Files changed:**
+- `src/domain/organization/room.repository.ts` (extended room repository domain contract)
+- `src/infrastructure/db/repositories/room.repo.ts` (implemented category CRUD, room details query, and endSession)
+- `tests/unit/staff/checkout-room.test.ts` (updated mock repo stubs)
+- `app/api/admin/rooms/route.ts` (GET / POST rooms)
+- `app/api/admin/rooms/[id]/route.ts` (PATCH / DELETE room)
+- `app/api/admin/rooms/categories/route.ts` (GET / POST room categories)
+- `app/api/admin/rooms/categories/[id]/route.ts` (PATCH / DELETE room category)
+- `app/api/admin/rooms/[id]/end-session/route.ts` (POST admin force checkout)
+- `tests/integration/api/admin-rooms.test.ts` (4 integration tests)
+- `docs/ROADMAP.md` (marked Task 8.5.4 complete)
+- `docs/PROGRESS.md` (this entry, ledger, and §7 snapshot)
+
+**Verification:**
+- `pnpm exec tsc --noEmit`: 0 errors.
+- `pnpm test` (Unit Tests): 41 test files, 282 tests passed.
+- `pnpm vitest run --config vitest.integration.config.ts tests/integration/api/admin-rooms.test.ts`: 4 passed.
+
+**Contradiction Check:** None found. Money values handled as decimal strings per BUILD.md §7.1. CSRF and audit enforced on all mutation routes.
+
+**Next:** Task 8.5.5 — Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`).
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0237 — 2026-11-21 — Milestone 8.5 Task 8.5.3 closed: Reserved Table Customer Protection & Scan Routing (/qr/reserved)
 
@@ -1177,7 +1227,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, and 8.5.3 are CLOSED (✅). The next active task is **Task 8.5.4 (Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration qr-landing passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, and 8.5.4 are CLOSED (✅). The next active task is **Task 8.5.5 (Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.

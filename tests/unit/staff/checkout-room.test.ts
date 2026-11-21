@@ -25,9 +25,18 @@ describe("checkoutRoom domain action", () => {
       findById: vi.fn(),
       findByNumber: vi.fn(),
       listForVenue: vi.fn(),
+      listRoomsWithDetails: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
       setState: vi.fn(),
       setStatus: vi.fn().mockResolvedValue(ok(undefined)),
+      endSession: vi.fn().mockResolvedValue(ok(undefined)),
+      listCategories: vi.fn(),
+      findCategoryById: vi.fn(),
+      createCategory: vi.fn(),
+      updateCategory: vi.fn(),
+      deleteCategory: vi.fn(),
     };
 
     mockGuestRepo = {

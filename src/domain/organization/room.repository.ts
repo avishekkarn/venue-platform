@@ -30,8 +30,52 @@ export interface Room {
   updatedAt: Date;
 }
 
+export interface RoomCategory {
+  id: string;
+  venueId: string;
+  name: string;
+  description: string | null;
+  basePrice: string; // Decimal representation as string in NPR
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateRoomCategoryInput {
+  name: string;
+  description?: string | null;
+  basePrice?: string | number;
+  sortOrder?: number;
+}
+
+export interface UpdateRoomCategoryInput {
+  name?: string;
+  description?: string | null;
+  basePrice?: string | number;
+  sortOrder?: number;
+}
+
+export interface RoomView extends Room {
+  category: RoomCategory | null;
+  activeSession?: {
+    id: string;
+    startedAt: Date;
+    ordersCount: number;
+    requestsCount: number;
+    roomRate: string;
+    totalAmount: string;
+    dndActive: boolean;
+  } | null;
+}
+
 export interface CreateRoomInput {
   number: string;
+  categoryId?: string | null;
+  state?: RoomState;
+}
+
+export interface UpdateRoomInput {
+  number?: string;
   categoryId?: string | null;
   state?: RoomState;
 }
@@ -40,7 +84,18 @@ export interface RoomRepository {
   findById(venueId: string, id: string): Promise<Result<Room>>;
   findByNumber(venueId: string, number: string): Promise<Result<Room>>;
   listForVenue(venueId: string): Promise<Result<Room[]>>;
+  listRoomsWithDetails(venueId: string): Promise<Result<RoomView[]>>;
   create(venueId: string, input: CreateRoomInput): Promise<Result<Room>>;
+  update(venueId: string, id: string, input: UpdateRoomInput): Promise<Result<Room>>;
+  delete(venueId: string, id: string): Promise<Result<void>>;
   setState(venueId: string, id: string, state: RoomState): Promise<Result<Room>>;
   setStatus(venueId: string, roomId: string, status: RoomState): Promise<Result<void>>;
+  endSession(venueId: string, id: string): Promise<Result<void>>;
+
+  // Categories
+  listCategories(venueId: string): Promise<Result<RoomCategory[]>>;
+  findCategoryById(venueId: string, id: string): Promise<Result<RoomCategory>>;
+  createCategory(venueId: string, input: CreateRoomCategoryInput): Promise<Result<RoomCategory>>;
+  updateCategory(venueId: string, id: string, input: UpdateRoomCategoryInput): Promise<Result<RoomCategory>>;
+  deleteCategory(venueId: string, id: string): Promise<Result<void>>;
 }
