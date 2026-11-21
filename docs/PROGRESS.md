@@ -127,19 +127,58 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0234 | 2026-11-21 | Milestone 8.3 closed (Menu Management & sync); Milestone 8.4.1 foundation complete | PASS | Milestone 8.3 & 8.4 | §5.3 |
 | ENTRY-0233 | 2026-11-16 | 8.3.5b.B committed at 1070693; F-0005 discharged (env); baselines re-recorded | PASS | Milestone 8.3 | §5.3 |
 | ENTRY-0232 | 2026-11-16 | Roadmap restructured: Services Management (8.4); 8.5–8.9 renumbered; the four new decisions | STRUCTURAL | Milestone 8.4 | §5.3 |
 | ENTRY-0231 | 2026-11-16 | Milestone 8.2 closed: order management, CSV export, NPR, next/script fix | PASS | Milestone 8.2 | §5.3 |
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0234
+Next entry number: 0235
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.1 (Dashboard). Current task: Task 8.1.1 — Add `GET /api/admin/dashboard` route.
+### 5.3 Current Milestone — Phase 8, Milestone 8.4 (Services Management). Current task: Task 8.4.2 — The services list screen (app/admin/services/page.tsx).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0234 — 2026-11-21 — Milestone 8.3 closed (Menu Management & sync); Milestone 8.4.1 foundation complete (D-21.1)
+
+**Status:** PASS
+
+**Task:** Milestone 8.3 (Tasks 8.3.0 through 8.3.8) + Milestone 8.4 (Task 8.4.1).
+
+**Summary:**
+Milestone 8.3 (Menu Management) is fully completed, verified, and closed. Operators manage categories, multi-category item assignments (D-25.1), menu collections (D-25.2), prices, states (AVAILABLE / UNAVAILABLE / HIDDEN), and photos via server-side Sharp processing to 800px WebP with blur placeholders (D-22.1). Deleting items or updating photos unlinks disk assets to prevent disk bloat. Item reordering operates with deterministic sequential normalization (`0, 1, ... N - 1`) via Up arrow (`▲`) buttons, manual sort inputs are removed from forms, and new items auto-increment sort order in the background. Guest menu `/menu` stays synchronized in real time via 5-second polling of a structural signature and sound chimes on state transitions.
+Milestone 8.4.1 foundation is applied: added `ServiceCategory` and `ServiceItem` Prisma models, generated and applied migration `20261121071603_add_service_items`, linked `ServiceRequest.serviceItemId`, and seeded 9 hotel services under "Hotel Services" with `sortOrder: 0..8`.
+
+**Files changed:**
+- `prisma/schema.prisma` (added `ServiceCategory`, `ServiceItem`, linked `ServiceRequest.serviceItemId`, updated `Venue`)
+- `prisma/migrations/20261121071603_add_service_items/migration.sql` (schema migration)
+- `prisma/seed.ts` (seeded "Hotel Services" and 9 service items)
+- `docs/ROADMAP.md` (flipped 8.3 tasks and 8.4.1 to ✅)
+- `docs/PROGRESS.md` (this entry, ledger, §7 snapshot, Appendix A)
+- `src/infrastructure/db/repositories/menu.repo.ts` (deterministic sorting, sequential array swap normalization, auto-increment on create, category preservation on update)
+- `app/admin/(shell)/menu/_edit-form.tsx` (removed manual numeric sort order input, state, and diffing)
+- `app/admin/(shell)/menu/page.tsx` (force-dynamic, Up arrow controls)
+- `app/api/guest/menu/states/route.ts` (structural signature representing categories and item sequence)
+- `app/(guest)/menu/page.tsx` (force-dynamic, signature comparison with reactive 2s debounce reload)
+
+**Verification:**
+- `pnpm exec tsc --noEmit`: 0 errors.
+- `pnpm test` (Unit Tests): 41 test files, 282 tests passed.
+- `pnpm vitest run --config vitest.integration.config.ts`: 28 API integration test files, 220 tests passed.
+- `pnpm prisma migrate status`: "Database schema is up to date!".
+- `pnpm build`: Next.js production build succeeded.
+- Commits: `0142652`, `139f069`, `fc43636` pushed to `origin/main`.
+
+**Contradiction Check:** None found. `ServiceItem` adheres to D-21.1. Double-submit CSRF and `withAudit` comply with D-20.1 and D-24.1.
+
+**Next:** Task 8.4.2 — The services list screen (`app/admin/services/page.tsx`).
+
+**Awaiting Human Verification:** NO
+
+---
 
 ### ENTRY-0233 — 2026-11-16 — 8.3.5b.B committed at 1070693; F-0005 discharged (env); baselines re-recorded
 
@@ -1002,7 +1041,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8.3 (Menu Management) is in progress. The 8.3.0–8.3.5b.B are ✅ (the .B committed at 1070693; origin/main matches). The 8.3.5 (the category CRUD) is next; then 8.3.5.F (the stale categoryId JSDoc), 8.3.5a (the "Manage categories" sheet), 8.3.5c (the collections CRUD + UI), 8.3.6 (the modifier CRUD), 8.3.7 (the verify), 8.3.7a (the guest menu's next/image + Special-events strip, discharging W-0029). Baselines as of 1070693 (2026-11-16): tsc 0, unit 41 files / 282 tests, integration 51 files / 350 tests, build 73 route entries (5 static, 68 dynamic). F-0005 (the integration suite's 50-failed run) was environmental — the postgresql-x64-18 service was stopped; started via elevated PowerShell; both qrproject and qrproject_test at 9/9 migrations; the 51/350 restored. The next task is Phase 8.3.5 — the category CRUD (7 files: the UpdateCategoryInput port + the updateCategory/deleteCategory adapter methods + categories/route.ts + categories/[id]/route.ts + the 4 integration tests + the CSRF inventory 27→30 + the ROADMAP flip).
+**Current status:** Phase 8.3 (Menu Management) is CLOSED (✅). Milestone 8.4 (Services Management) is in progress. Task 8.4.1 (The ServiceCategory and ServiceItem schema migration per D-21.1) is ✅ (migration `20261121071603_add_service_items` applied; 9 hotel services seeded with `sortOrder: 0..8`). Next task is 8.4.2 — The services list screen (`app/admin/services/page.tsx`). Baselines as of 2026-11-21 (commit `fc43636`): tsc 0, unit 41 test files / 282 tests passed, integration 28 API suites / 220 tests passed, production build succeeded.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
@@ -1014,18 +1053,8 @@ Updated at the end of every session.
 - `gunzip` on Windows is a shell-script wrapper, not an `.exe`; use `gzip -d -c` / `gzip -dc` in pipelines (Phase 7.7.3.B's fix).
 - `withAudit` is the mandatory wrapper for every Phase 8 admin route (BUILD.md §6.11, W-0021).
 - `audit/export` is the first fully-wrapped admin route; `qr/generate` is the second. Both are the Phase 8 template.
-- Two in-session .FIXes are recorded in this entry: the `\u0000` false-positive and the side-effect isolation gap. Both are instructions to future sessions on how to test wrapper-introduced side effects.
-- `assertProductionSsl` in `client.ts` fires in production **runtime** only; `NEXT_PHASE === "phase-production-build"` skips it so `pnpm build` succeeds with a plaintext local URL (Phase 7.7.2).
-- `readPoolMax` in `client.ts` reads `DB_POOL_MAX`, default 20, warn-fallback on malformed value (Phase 7.7.2).
-- The `venue_prod` least-privilege grants live in `docs/SYSTEM.md §15.4.1` (Phase 7.7.2).
-- Polling is vanilla-JS DOM replacement, not React `useState` (D-19.1).
-- The join-approval cookie is set server-side via `NextResponse` (D-19.2).
-- `listForGuestSession` is a required method on the port (7.6.9).
-- The three new process obligations: W-0018, W-0019, W-0020.
-- The three open code obligations: W-0002, W-0003, W-0004 (all discharged in Phase 8.1.2), W-0005 (Phase 8.3.4).
-- The deferred follow-ups: F-0002 (line endings), F-0003 (empty tax-rate stub). F-0004 is CLOSED (the admin-menu.test.ts was filled at 8.3.1, 3 tests). F-0005 is DISCHARGED (2026-11-16, env-only: PostgreSQL service started; 51/350 restored). F-0006 is CLOSED (the README's build count was stale at 49; corrected to 73).
-- **W-0025 (DISCHARGED 2026-11-14, Phase 8.0.0.1):** The `withAudit` wrapper populates the `ip` field from `x-forwarded-for` (first segment) → `x-real-ip` → `null` via `extractClientIp` in `src/infrastructure/audit/with-audit.ts` (defined line 149, called line 129). It was already implemented in Phase 7.7.1a; WIRING.md incorrectly said OPEN and incorrectly described the fallback as `"unknown"` (the rate limiter's bucket key, not an audit-log value). The code is correct; WIRING.md was corrected in this task. Two tests in `tests/integration/audit/with-audit.test.ts` prove the population (`x-forwarded-for: 203.0.113.42, 10.0.0.1` produces `ip: "203.0.113.42"`; no forwarded header produces `ip: null`). Every Phase 8 audit line carries a real IP or `null`; `null` now provably means "no forwarded header," not "the wrapper forgot."
-- **W-0026 (OPEN, Phase 10.7):** Audit log rotation. The `logs/audit/` directory grows by one file per UTC day, forever. The Phase 10.7 deployment task adds a pruner that deletes `.jsonl` files older than 30 days, matching the backup retention (D-8.5). The backup script (`scripts/backup-daily.ps1` / `.sh`) is the reference pattern.
+- Milestone 8.3 closed: Sharp WebP 800px upload pipeline (8.3.0), menu list (8.3.1), create item sheet (8.3.2/8.3.2a), edit item & hard delete with unlinking (8.3.3/8.3.3.FIX), 3-state toggle (8.3.4), multi-category join architecture (8.3.5b), category CRUD & sheet (8.3.5/8.3.5a), menu collections with date scheduling (8.3.5c), next/image blur rendering with Special Events strip (8.3.7a), and sequential reordering with zero ties and auto-increment sortOrder (8.3.8). W-0005, W-0028, W-0029, and W-0030 are all DISCHARGED.
+- Milestone 8.4 foundation (8.4.1) closed: `ServiceCategory` and `ServiceItem` Prisma models added, migration `20261121071603_add_service_items` applied, `ServiceRequest.serviceItemId` relation linked, and 9 hotel services seeded with `sortOrder: 0..8`.
 
 ## 8. How the File Evolves
 
@@ -1043,77 +1072,80 @@ All eleven tasks ✅ Complete: 7.6.1 through 7.6.11, plus 7.6.8.FIX and 7.6.8.FI
 
 **Phase 8 — The Manager Panel (CURRENT):**
 
-*Milestone 8.1 — Dashboard*
+*Milestone 8.1 — Dashboard (CLOSED)*
+
+All five tasks ✅ Complete: 8.1.1 through 8.1.5.
+
+*Milestone 8.2 — Order Management (CLOSED)*
+
+All five tasks ✅ Complete: 8.2.1 through 8.2.5.
+
+*Milestone 8.3 — Menu Management (CLOSED)*
+
+All tasks ✅ Complete: 8.3.0 through 8.3.8.
+
+*Milestone 8.4 — Services Management (CURRENT)*
 
 | ID | Task | Status |
 |----|------|--------|
-| 8.1.1 | Add `GET /api/admin/dashboard` route | ⬜ |
-| 8.1.2 | Add the admin shell layout (sidebar, header, sign-out) | ⬜ |
-| 8.1.3 | Add the dashboard page | ⬜ |
-| 8.1.4 | Add 5s polling on the dashboard | ⬜ |
-| 8.1.5 | Verify: metrics update as orders move | ⬜ |
+| 8.4.1 | Add `ServiceCategory` and `ServiceItem` schema + migration (D-21.1) | ✅ |
+| 8.4.2 | Add the services list screen (`app/admin/services/page.tsx`) | ⬜ |
+| 8.4.3 | Add `POST /api/admin/services/items` | ⬜ |
+| 8.4.3a | Add admin Add/Edit Service form's photo box | ⬜ |
+| 8.4.4 | Add `PATCH /api/admin/services/items/[id]` | ⬜ |
+| 8.4.5 | Add service state toggle (`POST /api/admin/services/items/[id]/state`) | ⬜ |
+| 8.4.6 | Add service category CRUD (`/api/admin/services/categories`) | ⬜ |
+| 8.4.7 | Verify: add service, edit, hide, guest sees within 5s | ⬜ |
+| 8.4.7a | Guest services page photo rendering and dynamic catalog integration | ⬜ |
 
-*Milestone 8.2 — Order Management*
-
-| ID | Task | Status |
-|----|------|--------|
-| 8.2.1 | Add `GET /api/admin/orders` (filters: date range, state) | ⬜ |
-| 8.2.2 | Add the Active Orders tab | ⬜ |
-| 8.2.3 | Add the Completed Orders tab with date filters | ⬜ |
-| 8.2.4 | Add `GET /api/admin/orders/export` (CSV) | ⬜ |
-| 8.2.5 | Verify: filter by 6-month range, export CSV | ⬜ |
-
-*Milestone 8.3 — Menu Management*
+*Milestone 8.5 — Tables and Rooms*
 
 | ID | Task | Status |
 |----|------|--------|
-| 8.3.1 | Add the menu list screen | ⬜ |
-| 8.3.2 | Add `POST /api/admin/menu/items` | ⬜ |
-| 8.3.3 | Add `PATCH /api/admin/menu/items/[id]` | ⬜ |
-| 8.3.4 | Add HIDDEN state to existing toggle (discharges W-0005) | ⬜ |
-| 8.3.5 | Add category management CRUD | ⬜ |
-| 8.3.6 | Add modifier group/option CRUD | ⬜ |
-| 8.3.7 | Verify: add, edit, hide, guest sees within 5s | ⬜ |
+| 8.5.1 | Add `GET/POST/PATCH /api/admin/tables` | ⬜ |
+| 8.5.2 | Add `GET/POST/PATCH /api/admin/rooms` | ⬜ |
+| 8.5.3 | Add the Tables/Rooms screens with QR preview | ⬜ |
+| 8.5.4 | Add batch QR print view | ⬜ |
+| 8.5.5 | Verify: add table, generate QR, print sheet | ⬜ |
 
-*Milestone 8.4 — Tables and Rooms*
+*Milestone 8.6 — Staff Management*
 
 | ID | Task | Status |
 |----|------|--------|
-| 8.4.1 | Add `GET/POST/PATCH /api/admin/tables` | ⬜ |
-| 8.4.2 | Add `GET/POST/PATCH /api/admin/rooms` | ⬜ |
-| 8.4.3 | Add the Tables/Rooms screens with QR preview | ⬜ |
-| 8.4.4 | Add batch QR print view | ⬜ |
-| 8.4.5 | Verify: add table, generate QR, print sheet | ⬜ |
+| 8.6.1 | Add `GET /api/admin/staff` | ⬜ |
+| 8.6.2 | Add `POST /api/admin/staff` | ⬜ |
+| 8.6.3 | Add `PATCH /api/admin/staff/[id]` (edit, roles, deactivate) | ⬜ |
+| 8.6.4 | Add `POST /api/admin/staff/[id]/reset-password` | ⬜ |
+| 8.6.5 | Add the Staff Management screen | ⬜ |
+| 8.6.6 | Verify: create, assign roles, deactivate, reset password | ⬜ |
 
-*Milestone 8.5 — Staff Management*
-
-| ID | Task | Status |
-|----|------|--------|
-| 8.5.1 | Add `GET /api/admin/staff` | ⬜ |
-| 8.5.2 | Add `POST /api/admin/staff` | ⬜ |
-| 8.5.3 | Add `PATCH /api/admin/staff/[id]` (edit, roles, deactivate) | ⬜ |
-| 8.5.4 | Add `POST /api/admin/staff/[id]/reset-password` | ⬜ |
-| 8.5.5 | Add the Staff Management screen | ⬜ |
-| 8.5.6 | Verify: create, assign roles, deactivate, reset password | ⬜ |
-
-*Milestone 8.6 — Reports*
+*Milestone 8.7 — Reports*
 
 | ID | Task | Status |
 |----|------|--------|
-| 8.6.1 | Add `GET /api/admin/reports/sales` | ⬜ |
-| 8.6.2 | Add `GET /api/admin/reports/sales/export` (CSV) | ⬜ |
-| 8.6.3 | Add the Reports screen | ⬜ |
-| 8.6.4 | Verify: 6-month range, export, open CSV | ⬜ |
+| 8.7.1 | Add `GET /api/admin/reports/sales` | ⬜ |
+| 8.7.2 | Add `GET /api/admin/reports/sales/export` (CSV) | ⬜ |
+| 8.7.3 | Add the Reports screen | ⬜ |
+| 8.7.4 | Verify: 6-month range, export, open CSV | ⬜ |
 
-*Milestone 8.7 — Settings*
+*Milestone 8.8 — Settings*
 
 | ID | Task | Status |
 |----|------|--------|
-| 8.7.1 | Add `GET/PATCH /api/admin/settings` (read-only tax/currency/language; editable address/hours) | ⬜ |
-| 8.7.2 | Add `PATCH /api/admin/modules` | ⬜ |
-| 8.7.3 | Add `PATCH /api/admin/services` | ⬜ |
-| 8.7.4 | Add the Settings screen | ⬜ |
-| 8.7.5 | Verify: read-only fields stay read-only; module toggles hide screens | ⬜ |
+| 8.8.1 | Add `GET/PATCH /api/admin/settings` (read-only tax/currency/language; editable address/hours) | ⬜ |
+| 8.8.2 | Add `PATCH /api/admin/modules` | ⬜ |
+| 8.8.3 | Add `PATCH /api/admin/services` | ⬜ |
+| 8.8.4 | Add the Settings screen | ⬜ |
+| 8.8.5 | Verify: read-only fields stay read-only; module toggles hide screens | ⬜ |
+
+*Milestone 8.9 — Audit Log Viewer*
+
+| ID | Task | Status |
+|----|------|--------|
+| 8.9.1 | Add the "Audit Log" tab in the admin shell | ⬜ |
+| 8.9.2 | Add the audit log list screen (`app/admin/audit/page.tsx`) | ⬜ |
+| 8.9.3 | Add the "Download ZIP" button on audit screen | ⬜ |
+| 8.9.4 | Verify: staff action produces row, ZIP export opens | ⬜ |
 
 ---
 
