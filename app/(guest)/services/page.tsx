@@ -365,7 +365,11 @@ export default async function ServicesPage(): Promise<JSX.Element> {
           html += '</div></div>';
         }
 
-        if (!d.orders.length && !d.payableServices.length) {
+        if (d.summary && d.summary.roomStayCharge) {
+          html += '<div class="pt-2"><h4 class="font-semibold text-xs text-guest-text-secondary uppercase tracking-wider mb-2">Room Accommodation</h4><div class="flex flex-col gap-1.5"><div class="flex justify-between text-xs text-guest-text-primary"><span>' + d.summary.roomStayCharge.categoryName + ' Room Rate</span><span class="font-medium">' + (d.currency || '') + ' ' + d.summary.roomStayCharge.basePrice + '</span></div></div></div>';
+        }
+
+        if (!d.orders.length && !d.payableServices.length && (!d.summary || !d.summary.roomStayCharge)) {
           html = '<div class="text-center py-4 text-xs text-guest-text-muted">No billable items on your folio yet.</div>';
         }
 

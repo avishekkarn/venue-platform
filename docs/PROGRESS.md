@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0239 | 2026-11-21 | Milestone 8.5 Task 8.5.5 closed (Room Stay Pricing Integration into Folio & Billing) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0238 | 2026-11-21 | Milestone 8.5 Task 8.5.4 closed (Room Categories, Room Management API, Dedicated Pricing & Tests) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0237 | 2026-11-21 | Milestone 8.5 Task 8.5.3 closed (Reserved Table Customer Protection & Scan Routing) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0236 | 2026-11-21 | Milestone 8.5 Tasks 8.5.1 & 8.5.2 closed (Table & Room Categories Schema, Migration, Seed, Table Management API & Tests) | PASS | Milestone 8.5 | §5.3 |
@@ -138,13 +139,38 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0239
+Next entry number: 0240
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.5 — Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.6 — Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0239 — 2026-11-21 — Milestone 8.5 Task 8.5.5 closed: Room Stay Pricing Integration into Folio & Billing
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.5).
+
+**Summary:**
+Milestone 8.5 Task 8.5.5 is completed, tested, and verified.
+1. **Folio API (`app/api/guest/bill/route.ts`)**:
+   - Integrated room category base rate lookup via `prisma.room.findUnique({ where: { id: guestSession.roomId }, include: { category: true } })`.
+   - When a room category exists with `basePrice > 0`, itemizes `roomStayCharge: { categoryName, basePrice: formatMoney(...) }` into the bill JSON payload.
+   - Calculates subtotal as `ordersSubtotal + servicesTotal + roomStayPrice` and grand total as `subtotal + tax`.
+2. **Guest Bill Modal UI (`app/(guest)/menu/page.tsx` & `app/(guest)/services/page.tsx`)**:
+   - Updated client-side DOM modal renderer to check for `data.roomStayCharge` and render dedicated "Room Accommodation" line item showing category name and nightly rate in NPR alongside food & drink items and payable hotel services.
+3. **Admin Shell Active & Completed Folios (`app/admin/(shell)/orders/active/page.tsx` & `app/admin/(shell)/orders/completed/page.tsx`)**:
+   - Retrieved room categories across the venue using `roomRepo.listRoomsWithDetails(staff.venueId)`.
+   - Constructed fast room-to-category mapping `roomCategoryByRoomId`.
+   - Itemized room stay pricing in session summary cards and the consolidated folio detail inspector alongside F&B orders and hotel service requests.
+4. **Integration Testing (`tests/integration/api/guest-bill.test.ts`)**:
+   - Added Test 4: "includes room category base price in bill when session is associated with a room".
+   - Verified that room stay charges appear accurately in the subtotal and grand total. All 4 tests in suite pass.
+5. **Quality Verification**:
+   - `pnpm typecheck` passed cleanly with 0 errors.
+   - `pnpm test` passed cleanly with 282/282 tests passing.
 
 ### ENTRY-0238 — 2026-11-21 — Milestone 8.5 Task 8.5.4 closed: Room Categories, Room Management API, Dedicated Pricing & Tests
 
@@ -1227,7 +1253,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, and 8.5.4 are CLOSED (✅). The next active task is **Task 8.5.5 (Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, 8.5.4, and 8.5.5 are CLOSED (✅). The next active task is **Task 8.5.6 (Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.

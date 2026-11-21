@@ -57,12 +57,31 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
   // 2. Resolve place context
   let placeLabel = "Guest";
+  let roomStayCharge: {
+    categoryName: string;
+    basePrice: string;
+  } | null = null;
+  let roomSubtotal = new Prisma.Decimal(0);
+
   if (session.placeType === PlaceType.TABLE && session.placeId) {
     const table = await db.table.findUnique({ where: { id: session.placeId } });
     if (table) placeLabel = `Table ${table.number}`;
   } else if (session.placeType === PlaceType.ROOM && session.placeId) {
-    const room = await db.room.findUnique({ where: { id: session.placeId } });
-    if (room) placeLabel = `Room ${room.number}`;
+    const room = await db.room.findUnique({
+      where: { id: session.placeId },
+      include: { category: true },
+    });
+    if (room) {
+      placeLabel = `Room ${room.number}`;
+      if (room.category && room.category.basePrice.gt(0)) {
+        const rate = new Prisma.Decimal(room.category.basePrice);
+        roomSubtotal = rate;
+        roomStayCharge = {
+          categoryName: room.category.name,
+          basePrice: rate.toFixed(2),
+        };
+      }
+    }
   }
 
   // 3. Fetch active non-cancelled food & drink orders
@@ -140,7 +159,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  const grandSubtotal = ordersSubtotal.add(servicesSubtotal);
+  const grandSubtotal = ordersSubtotal.add(servicesSubtotal).add(roomSubtotal);
   const grandTax = ordersTax;
   const grandTotal = grandSubtotal.add(grandTax);
 
@@ -157,6 +176,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
           ordersTotal: ordersTotal.toFixed(2),
           payableServicesCount: payableServices.length,
           payableServicesTotal: servicesSubtotal.toFixed(2),
+          roomStayCharge,
           subtotal: grandSubtotal.toFixed(2),
           tax: grandTax.toFixed(2),
           total: grandTotal.toFixed(2),

@@ -122,7 +122,7 @@ export default async function ActiveOrdersPage({
     orderRepo.listForVenue(staff.venueId),
     requestRepo.listOpenForVenue(staff.venueId),
     tableRepo.listForVenue(staff.venueId),
-    roomRepo.listForVenue(staff.venueId),
+    roomRepo.listRoomsWithDetails(staff.venueId),
     prisma.guestSession.findMany({
       where: { venueId: staff.venueId, endedAt: null },
       include: {
@@ -147,6 +147,15 @@ export default async function ActiveOrdersPage({
   for (const t of tables) tableNumberById.set(t.id, t.number);
   const roomNumberById = new Map<string, string>();
   for (const r of rooms) roomNumberById.set(r.id, r.number);
+  const roomCategoryByRoomId = new Map<string, { name: string; basePrice: number }>();
+  for (const r of rooms) {
+    if (r.category && Number(r.category.basePrice) > 0) {
+      roomCategoryByRoomId.set(r.id, {
+        name: r.category.name,
+        basePrice: Number(r.category.basePrice),
+      });
+    }
+  }
 
   const activeOrders = allOrders
     .filter((o) => ACTIVE_ORDER_STATES.includes(o.state))
@@ -316,6 +325,10 @@ export default async function ActiveOrdersPage({
 
                   const isSelected = selectedSessionId === sess.id;
 
+                  const roomRateInfo = sess.roomId ? roomCategoryByRoomId.get(sess.roomId) : null;
+                  const sessionRoomRate = roomRateInfo ? roomRateInfo.basePrice : 0;
+                  const sessionGrandTotal = sessionOrderTotal + sessionServiceTotal + sessionRoomRate;
+
                   return (
                     <Link
                       key={sess.id}
@@ -358,10 +371,11 @@ export default async function ActiveOrdersPage({
 
                         <div className="text-right">
                           <span className="text-base font-bold text-staff-text-primary block font-mono">
-                            {formatMoney((sessionOrderTotal + sessionServiceTotal).toFixed(2), currency)}
+                            {formatMoney(sessionGrandTotal.toFixed(2), currency)}
                           </span>
                           <span className="text-[11px] text-staff-text-muted">
-                            {sess.orders.length} order{sess.orders.length === 1 ? "" : "s"} · {sess.serviceRequests.length} request{sess.serviceRequests.length === 1 ? "" : "s"}
+                            F&B: {formatMoney(sessionOrderTotal.toFixed(2), currency)} · Services: {formatMoney(sessionServiceTotal.toFixed(2), currency)}
+                            {sessionRoomRate > 0 ? ` · Room: ${formatMoney(sessionRoomRate.toFixed(2), currency)}` : ""}
                           </span>
                         </div>
                       </div>
@@ -472,101 +486,165 @@ export default async function ActiveOrdersPage({
         {/* RIGHT DETAIL INSPECTOR */}
         <aside className="self-start sticky top-4 flex flex-col gap-4">
           {/* SESSION INSPECTOR */}
-          {selectedSession ? (
-            <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-5 flex flex-col gap-4">
-              <header className="flex items-center justify-between gap-2 border-b border-staff-border-subtle pb-3">
-                <div>
-                  <h2 className="text-lg font-bold text-staff-text-primary">
-                    {sessionPlaceLabel(selectedSession).type} {sessionPlaceLabel(selectedSession).number} Folio
-                  </h2>
-                  <p className="text-xs text-staff-text-secondary">
-                    Active Session #{selectedSession.id.slice(0, 8).toUpperCase()}
-                  </p>
-                </div>
-                <span className="text-xs px-2 py-0.5 rounded font-medium bg-amber-100 text-amber-800">
-                  {formatElapsed(selectedSession.createdAt, now)}
-                </span>
-              </header>
+          {selectedSession ? (() => {
+            const selOrdersTotal = selectedSession.orders.reduce(
+              (acc, o) => acc + (o.state !== OrderState.CANCELLED ? Number(o.total) : 0),
+              0
+            );
+            const selServicesTotal = selectedSession.serviceRequests.reduce(
+              (acc, r) => acc + (r.state !== RequestState.CANCELLED && r.serviceItem ? Number(r.serviceItem.price) : 0),
+              0
+            );
+            const selRoomRateInfo = selectedSession.roomId ? roomCategoryByRoomId.get(selectedSession.roomId) : null;
+            const selRoomRate = selRoomRateInfo ? selRoomRateInfo.basePrice : 0;
+            const selGrandTotal = selOrdersTotal + selServicesTotal + selRoomRate;
 
-              {/* Food & Drink Orders */}
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
-                  Food & Beverage Orders ({selectedSession.orders.length})
-                </h3>
-                {selectedSession.orders.length === 0 ? (
-                  <p className="text-xs text-staff-text-muted italic">No orders yet</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {selectedSession.orders.map((ord) => (
-                      <div
-                        key={ord.id}
-                        className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex flex-col gap-1.5"
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-staff-text-primary">
-                            #{ord.id.slice(0, 8).toUpperCase()}
-                          </span>
-                          <span className={badgeClass(ord.state as OrderState)}>
-                            {ord.state}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-staff-text-secondary">
-                          {ord.items.map((it) => (
-                            <div key={it.id} className="flex justify-between">
-                              <span>{it.quantity}× {it.itemName}</span>
-                              <span className="font-mono">{formatMoney(it.lineTotal.toString(), currency)}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex justify-between font-medium pt-1 border-t border-staff-border-subtle/60 text-staff-text-primary">
-                          <span>Order Total</span>
-                          <span className="font-mono">{formatMoney(ord.total.toString(), currency)}</span>
-                        </div>
-                      </div>
-                    ))}
+            return (
+              <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-xl p-5 flex flex-col gap-4">
+                <header className="flex items-center justify-between gap-2 border-b border-staff-border-subtle pb-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-staff-text-primary">
+                      {sessionPlaceLabel(selectedSession).type} {sessionPlaceLabel(selectedSession).number} Folio
+                    </h2>
+                    <p className="text-xs text-staff-text-secondary">
+                      Active Session #{selectedSession.id.slice(0, 8).toUpperCase()}
+                    </p>
                   </div>
-                )}
-              </div>
+                  <span className="text-xs px-2 py-0.5 rounded font-medium bg-amber-100 text-amber-800">
+                    {formatElapsed(selectedSession.createdAt, now)}
+                  </span>
+                </header>
 
-              {/* Hotel Service Requests */}
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
-                  Hotel Services ({selectedSession.serviceRequests.length})
-                </h3>
-                {selectedSession.serviceRequests.length === 0 ? (
-                  <p className="text-xs text-staff-text-muted italic">No service requests yet</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {selectedSession.serviceRequests.map((req) => (
-                      <div
-                        key={req.id}
-                        className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex flex-col gap-1"
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-staff-text-primary">
-                            {SERVICE_LABELS[req.serviceType as HotelService] || req.serviceType}
-                          </span>
-                          <span className={requestBadgeClass(req.state as RequestState)}>
-                            {req.state}
-                          </span>
-                        </div>
-                        {req.serviceItem && Number(req.serviceItem.price) > 0 ? (
-                          <div className="flex justify-between text-staff-text-secondary pt-0.5">
-                            <span>Service Charge</span>
-                            <span className="font-mono font-medium text-staff-text-primary">
-                              {formatMoney(req.serviceItem.price.toString(), currency)}
+                {/* Food & Drink Orders */}
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                    Food & Beverage Orders ({selectedSession.orders.length})
+                  </h3>
+                  {selectedSession.orders.length === 0 ? (
+                    <p className="text-xs text-staff-text-muted italic">No orders yet</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {selectedSession.orders.map((ord) => (
+                        <div
+                          key={ord.id}
+                          className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex flex-col gap-1.5"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-staff-text-primary">
+                              #{ord.id.slice(0, 8).toUpperCase()}
+                            </span>
+                            <span className={badgeClass(ord.state as OrderState)}>
+                              {ord.state}
                             </span>
                           </div>
-                        ) : (
-                          <span className="text-[11px] text-staff-text-muted italic">Complimentary service</span>
-                        )}
+                          <div className="flex flex-col gap-1 text-staff-text-secondary">
+                            {ord.items.map((it) => (
+                              <div key={it.id} className="flex justify-between">
+                                <span>{it.quantity}× {it.itemName}</span>
+                                <span className="font-mono">{formatMoney(it.lineTotal.toString(), currency)}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex justify-between font-medium pt-1 border-t border-staff-border-subtle/60 text-staff-text-primary">
+                            <span>Order Total</span>
+                            <span className="font-mono">{formatMoney(ord.total.toString(), currency)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Hotel Service Requests */}
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                    Hotel Services ({selectedSession.serviceRequests.length})
+                  </h3>
+                  {selectedSession.serviceRequests.length === 0 ? (
+                    <p className="text-xs text-staff-text-muted italic">No service requests yet</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {selectedSession.serviceRequests.map((req) => (
+                        <div
+                          key={req.id}
+                          className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex flex-col gap-1"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-staff-text-primary">
+                              {SERVICE_LABELS[req.serviceType as HotelService] || req.serviceType}
+                            </span>
+                            <span className={requestBadgeClass(req.state as RequestState)}>
+                              {req.state}
+                            </span>
+                          </div>
+                          {req.serviceItem && Number(req.serviceItem.price) > 0 ? (
+                            <div className="flex justify-between text-staff-text-secondary pt-0.5">
+                              <span>Service Charge</span>
+                              <span className="font-mono font-medium text-staff-text-primary">
+                                {formatMoney(req.serviceItem.price.toString(), currency)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-staff-text-muted italic">Complimentary service</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Room Accommodation */}
+                {selRoomRateInfo ? (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-staff-text-muted mb-2">
+                      Room Accommodation
+                    </h3>
+                    <div className="p-2.5 rounded-lg border border-staff-border-subtle bg-staff-surface text-xs flex justify-between items-center">
+                      <div>
+                        <span className="font-semibold text-staff-text-primary block">
+                          {selRoomRateInfo.name} Room Stay
+                        </span>
+                        <span className="text-[11px] text-staff-text-secondary">Base nightly rate</span>
                       </div>
-                    ))}
+                      <span className="font-mono font-medium text-staff-text-primary">
+                        {formatMoney(selRoomRate.toFixed(2), currency)}
+                      </span>
+                    </div>
                   </div>
-                )}
+                ) : null}
+
+                {/* Consolidated Folio Financial Summary */}
+                <div className="pt-3 border-t border-staff-border-subtle flex flex-col gap-1.5 text-xs">
+                  <div className="flex justify-between text-staff-text-secondary">
+                    <span>Food & Beverage Total</span>
+                    <span className="font-mono font-medium text-staff-text-primary">
+                      {formatMoney(selOrdersTotal.toFixed(2), currency)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-staff-text-secondary">
+                    <span>Hotel Services Total</span>
+                    <span className="font-mono font-medium text-staff-text-primary">
+                      {formatMoney(selServicesTotal.toFixed(2), currency)}
+                    </span>
+                  </div>
+                  {selRoomRate > 0 ? (
+                    <div className="flex justify-between text-staff-text-secondary">
+                      <span>Room Accommodation</span>
+                      <span className="font-mono font-medium text-staff-text-primary">
+                        {formatMoney(selRoomRate.toFixed(2), currency)}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex justify-between text-sm font-bold text-staff-text-primary pt-2 border-t border-staff-border-subtle/80">
+                    <span>Current Active Folio Total</span>
+                    <span className="font-mono text-staff-brand">
+                      {formatMoney(selGrandTotal.toFixed(2), currency)}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : selectedOrder ? (
+            );
+          })() : selectedOrder ? (
             /* ORDER INSPECTOR */
             <div
               id="order-detail-panel"

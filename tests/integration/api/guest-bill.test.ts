@@ -206,4 +206,125 @@ describe("Guest Consolidated Billing Integration Tests", () => {
       expect(body.data.summary.total).toBe("1360.00");
     });
   });
+
+  it("Test 4: Room session dynamically incorporates RoomCategory basePrice into folio and grand total (Milestone 8.5.5)", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+      const guestRepo = createPrismaGuestSessionRepository(tx);
+
+      const venue = await tx.venue.create({
+        data: {
+          name: "Room Rate Pricing Hotel",
+          slug: `room-rate-${Date.now()}`,
+          taxRate: "0.1000",
+        },
+      });
+
+      // 1. Create a RoomCategory with basePrice NPR 3,500.00
+      const roomCat = await tx.roomCategory.create({
+        data: {
+          venueId: venue.id,
+          name: "Super Deluxe Suite",
+          basePrice: "3500.00",
+          sortOrder: 1,
+        },
+      });
+
+      // 2. Create room assigned to this category
+      const room = await tx.room.create({
+        data: {
+          venueId: venue.id,
+          number: "501",
+          categoryId: roomCat.id,
+        },
+      });
+
+      const sessionResult = await guestRepo.create({
+        venueId: venue.id,
+        placeType: PlaceType.ROOM,
+        placeId: room.id,
+      });
+      if (!sessionResult.ok) throw new Error("Failed to create session");
+      vi.mocked(getGuestCookie).mockResolvedValue(sessionResult.value.token);
+
+      // 3. Add food order: Subtotal 500, Tax 50, Total 550
+      await tx.order.create({
+        data: {
+          venueId: venue.id,
+          guestSessionId: sessionResult.value.id,
+          placeType: "ROOM",
+          roomId: room.id,
+          state: "COMPLETED",
+          idempotencyKey: `order-room-rate-${Date.now()}`,
+          subtotal: "500.00",
+          taxRate: "0.1000",
+          taxAmount: "50.00",
+          total: "550.00",
+          items: {
+            create: [
+              {
+                itemName: "Chef Dinner",
+                itemPrice: "500.00",
+                quantity: 1,
+                lineTotal: "500.00",
+              },
+            ],
+          },
+        },
+      });
+
+      // 4. Add payable service: Price 150
+      const srvCat = await tx.serviceCategory.create({
+        data: {
+          venueId: venue.id,
+          name: "Laundry",
+          sortOrder: 1,
+        },
+      });
+
+      const laundryItem = await tx.serviceItem.create({
+        data: {
+          venueId: venue.id,
+          categoryId: srvCat.id,
+          name: "Express Laundry",
+          price: "150.00",
+          state: MenuItemState.AVAILABLE,
+          estimatedMinutes: 120,
+        },
+      });
+
+      await tx.serviceRequest.create({
+        data: {
+          venueId: venue.id,
+          guestSessionId: sessionResult.value.id,
+          roomId: room.id,
+          serviceItemId: laundryItem.id,
+          serviceType: "LAUNDRY",
+          state: "COMPLETED",
+          detailsJson: { pieces: 3 },
+        },
+      });
+
+      // 5. Call GET /api/guest/bill
+      const req = new NextRequest("http://localhost/api/guest/bill");
+      const res = await getBill(req);
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.data.placeType).toBe("ROOM");
+      expect(body.data.placeLabel).toBe("Room 501");
+      expect(body.data.summary.roomStayCharge).toEqual({
+        categoryName: "Super Deluxe Suite",
+        basePrice: "3500.00",
+      });
+      expect(body.data.summary.ordersTotal).toBe("550.00");
+      expect(body.data.summary.payableServicesTotal).toBe("150.00");
+
+      // subtotal = 500 (orders) + 150 (services) + 3500 (room rate) = 4150.00
+      expect(body.data.summary.subtotal).toBe("4150.00");
+      expect(body.data.summary.tax).toBe("50.00");
+      // grand total = 4150.00 + 50.00 = 4200.00
+      expect(body.data.summary.total).toBe("4200.00");
+    });
+  });
 });
