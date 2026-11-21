@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /**
  * The admin shell's navigation list (DESIGN.md §4.10.4).
  *
- * Ten items, each a Link. The active item is highlighted with the staff
+ * Eleven items, each a Link. The active item is highlighted with the staff
  * world's raised/sunken surfaces — no brand color, no motion (DESIGN.md
  * §4.10.14, §4.10.15).
  *
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  * Tables and Rooms are rendered unconditionally in 8.1.2. A future task
  * (likely 8.7.5, when the module toggles are live) will hide them when
  * the venue's table or room module is off. Until then, the nav shows all
- * ten items; a click on a not-yet-built page 404s honestly.
+ * eleven items; a click on a not-yet-built page 404s honestly.
  */
 interface NavItem {
   readonly label: string;
@@ -31,6 +31,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: "Active Orders", href: "/admin/orders/active" },
   { label: "Completed Orders", href: "/admin/orders/completed" },
   { label: "Menu", href: "/admin/menu" },
+  { label: "Services", href: "/admin/services" },
   { label: "Tables", href: "/admin/tables" },
   { label: "Rooms", href: "/admin/rooms" },
   { label: "QR Codes", href: "/admin/qr" },
