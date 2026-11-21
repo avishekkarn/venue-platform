@@ -274,6 +274,12 @@ export interface MenuRepository {
     venueId: string,
     itemId: string
   ): Promise<Result<void>>;
+  reorderItemInCategory(
+    venueId: string,
+    itemId: string,
+    categoryId: string,
+    direction: "up" | "down"
+  ): Promise<Result<void>>;
   setItemState(
     venueId: string,
     itemId: string,

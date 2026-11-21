@@ -733,7 +733,15 @@ export function createPrismaMenuRepository(
           if (input.state !== undefined) {
             data.state = DOMAIN_TO_PRISMA_MENU_ITEM_STATE[input.state];
           }
-          if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+          if (input.sortOrder !== undefined) {
+            data.sortOrder = input.sortOrder;
+            if (input.categoryIds === undefined) {
+              await tx.menuItemCategory.updateMany({
+                where: { menuItemId: itemId },
+                data: { sortOrder: input.sortOrder },
+              });
+            }
+          }
 
           if (input.categoryIds !== undefined) {
             await tx.menuItemCategory.deleteMany({
@@ -806,6 +814,58 @@ export function createPrismaMenuRepository(
           DomainErrorCode.INTERNAL,
           "Database write operation failed"
         );
+      }
+    },
+
+    async reorderItemInCategory(
+      venueId: string,
+      itemId: string,
+      categoryId: string,
+      direction: "up" | "down"
+    ): Promise<Result<void>> {
+      try {
+        const mics = await client.menuItemCategory.findMany({
+          where: { venueId, categoryId },
+          orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+        });
+
+        const idx = mics.findIndex((m) => m.menuItemId === itemId);
+        if (idx === -1) {
+          return fail(DomainErrorCode.NOT_FOUND, "Item not in category");
+        }
+
+        const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (targetIdx < 0 || targetIdx >= mics.length) {
+          return ok(undefined);
+        }
+
+        const current = mics[idx];
+        const neighbor = mics[targetIdx];
+        if (!current || !neighbor) return ok(undefined);
+
+        let currentNewOrder = neighbor.sortOrder;
+        let neighborNewOrder = current.sortOrder;
+        if (currentNewOrder === neighborNewOrder) {
+          currentNewOrder =
+            direction === "up" ? neighbor.sortOrder - 1 : neighbor.sortOrder + 1;
+        }
+
+        await client.menuItemCategory.update({
+          where: { id: current.id },
+          data: { sortOrder: currentNewOrder },
+        });
+        await client.menuItemCategory.update({
+          where: { id: neighbor.id },
+          data: { sortOrder: neighborNewOrder },
+        });
+        await client.menuItem.update({
+          where: { id: current.menuItemId },
+          data: { sortOrder: currentNewOrder },
+        });
+
+        return ok(undefined);
+      } catch {
+        return fail(DomainErrorCode.INTERNAL, "Could not reorder item");
       }
     },
 

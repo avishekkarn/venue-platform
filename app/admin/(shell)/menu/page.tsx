@@ -148,13 +148,15 @@ export default async function MenuPage({
                     {category.items.length === 0 ? (
                       <TableEmpty colSpan={6}>No items in this category.</TableEmpty>
                     ) : (
-                      category.items.map((item) => (
+                      category.items.map((item, idx) => (
                         <MenuItemRow
-                          key={item.id}
+                          key={`${category.id}-${item.id}`}
                           item={item}
+                          categoryId={category.id}
                           categoryName={category.name}
                           currency={currency}
                           editHref={`/admin/menu?id=${item.id}`}
+                          canMoveUp={idx > 0}
                         />
                       ))
                     )}

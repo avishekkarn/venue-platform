@@ -436,9 +436,13 @@ export function CollectionsSheet({
             <button
               type="submit"
               disabled={busyId !== null || newName.trim().length === 0}
-              className="h-10 px-4 rounded-md text-sm font-medium bg-staff-brand text-white hover:bg-staff-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 px-4 rounded-md text-sm font-semibold shadow-sm transition-colors shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: newName.trim().length === 0 ? "#cbd5e1" : "#344b3c",
+                color: newName.trim().length === 0 ? "#475569" : "#ffffff",
+              }}
             >
-              Add
+              {busyId === "add" ? "Creating..." : "Create"}
             </button>
           </form>
 
@@ -669,9 +673,13 @@ export function CollectionsSheet({
                           busyId !== null || !selectedItemByCol[col.id]
                         }
                         aria-label={`Add item to ${col.name}`}
-                        className="h-8 px-3 rounded text-xs font-medium bg-staff-brand text-white hover:bg-staff-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 px-3.5 rounded text-xs font-semibold shadow-sm transition-colors shrink-0 cursor-pointer disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: !selectedItemByCol[col.id] ? "#cbd5e1" : "#344b3c",
+                          color: !selectedItemByCol[col.id] ? "#475569" : "#ffffff",
+                        }}
                       >
-                        Add
+                        {busyId === `item-add-${col.id}` ? "Adding..." : "Add to collection"}
                       </button>
                     </div>
                   </li>

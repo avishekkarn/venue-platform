@@ -27,9 +27,11 @@ import { formatMoney } from "@/lib/money";
  */
 interface MenuItemRowProps {
   readonly item: MenuItemView;
+  readonly categoryId?: string;
   readonly categoryName: string;
   readonly currency: string;
   readonly editHref?: string;
+  readonly canMoveUp?: boolean;
 }
 
 function stateToBadge(state: MenuItemState): { status: BadgeStatus; label: string } {
@@ -45,9 +47,11 @@ function stateToBadge(state: MenuItemState): { status: BadgeStatus; label: strin
 
 export function MenuItemRow({
   item,
+  categoryId,
   categoryName,
   currency,
   editHref,
+  canMoveUp,
 }: MenuItemRowProps): JSX.Element {
   const badge = stateToBadge(item.state);
   const priceLabel = formatMoney(item.price, currency);
@@ -83,7 +87,12 @@ export function MenuItemRow({
         </Badge>
       </TableCell>
       <TableCell className="text-right">
-        <MenuRowActions item={item} editHref={editHref} />
+        <MenuRowActions
+          item={item}
+          editHref={editHref}
+          categoryId={categoryId}
+          canMoveUp={canMoveUp}
+        />
       </TableCell>
     </TableRow>
   );

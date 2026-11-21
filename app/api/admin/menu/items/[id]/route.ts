@@ -60,6 +60,8 @@ const ALLOWED_FIELDS = new Set([
   "categoryIds",
   "state",
   "sortOrder",
+  "categoryId",
+  "direction",
 ]);
 
 function domainErrorToStatus(code: DomainErrorCode): number {
@@ -278,6 +280,37 @@ const patchHandler = async (
       );
     }
     (updateInput as { sortOrder?: number }).sortOrder = sortOrder;
+  }
+
+  if (body["direction"] !== undefined) {
+    const direction = body["direction"];
+    if (direction !== "up" && direction !== "down") {
+      return NextResponse.json(
+        { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "direction must be 'up' or 'down'" } },
+        { status: 400 }
+      );
+    }
+    const catId = body["categoryId"];
+    if (typeof catId !== "string" || !UUID_REGEX.test(catId.trim())) {
+      return NextResponse.json(
+        { error: { code: DomainErrorCode.VALIDATION_FAILED, message: "categoryId must be a valid UUID" } },
+        { status: 400 }
+      );
+    }
+    const menuRepo = createPrismaMenuRepository(db);
+    const reorderResult = await menuRepo.reorderItemInCategory(
+      venue.id,
+      itemId,
+      catId.trim(),
+      direction
+    );
+    if (!reorderResult.ok) {
+      return NextResponse.json(
+        { error: { code: reorderResult.error.code, message: reorderResult.error.message } },
+        { status: domainErrorToStatus(reorderResult.error.code) }
+      );
+    }
+    return NextResponse.json({ data: { success: true } }, { status: 200 });
   }
 
   const menuRepo = createPrismaMenuRepository(db);

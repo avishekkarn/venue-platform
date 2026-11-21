@@ -341,9 +341,13 @@ export function CategoriesSheet({
             <button
               type="submit"
               disabled={busyId !== null || newName.trim().length === 0}
-              className="h-10 px-4 rounded-md text-sm font-medium bg-staff-brand text-white hover:bg-staff-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 px-4 rounded-md text-sm font-semibold shadow-sm transition-colors shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: newName.trim().length === 0 ? "#cbd5e1" : "#344b3c",
+                color: newName.trim().length === 0 ? "#475569" : "#ffffff",
+              }}
             >
-              Add
+              {busyId === "add" ? "Creating..." : "Create"}
             </button>
           </form>
 

@@ -7,9 +7,44 @@ import { getCsrfToken } from "@/lib/csrf-client";
 import type { MenuItemView } from "@/domain/menu/menu.repository";
 import { MenuItemState } from "@/domain/menu/menu.repository";
 
-export function MenuRowActions({ item, editHref }: { item: MenuItemView; editHref?: string }) {
+export function MenuRowActions({
+  item,
+  editHref,
+  categoryId,
+  canMoveUp,
+}: {
+  item: MenuItemView;
+  editHref?: string;
+  categoryId?: string;
+  canMoveUp?: boolean;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  const handleMoveUp = async () => {
+    if (!categoryId || !canMoveUp || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/menu/items/${item.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": getCsrfToken(),
+        },
+        body: JSON.stringify({ categoryId, direction: "up" }),
+      });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => null);
+        alert(data?.error?.message ?? "Failed to move item up");
+      }
+    } catch {
+      alert("Network error moving item up");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const setState = async (newState: MenuItemState) => {
     setLoading(true);
@@ -54,6 +89,18 @@ export function MenuRowActions({ item, editHref }: { item: MenuItemView; editHre
 
   return (
     <div className="inline-flex gap-2">
+      {categoryId ? (
+        <button
+          type="button"
+          onClick={handleMoveUp}
+          disabled={loading || !canMoveUp}
+          aria-label={`Move ${item.name} up`}
+          title={canMoveUp ? "Move item up in category" : "Already at top of category"}
+          className="h-8 w-8 rounded text-xs font-bold inline-flex items-center justify-center bg-staff-surface-raised hover:bg-staff-surface-sunken text-staff-text-primary border border-staff-border-subtle disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          ▲
+        </button>
+      ) : null}
       {editHref ? (
         <Link href={editHref} className={btnClass}>
           Edit

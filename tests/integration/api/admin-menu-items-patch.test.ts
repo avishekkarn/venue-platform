@@ -315,4 +315,104 @@ describe("PATCH /api/admin/menu/items/[id] Route Tests (8.3.3)", () => {
       }
     });
   });
+
+  it("reorders item up in a category when direction: 'up' is provided", async () => {
+    await withTransaction(async (tx) => {
+      setTestDbClient(tx);
+
+      const venueRepo = createPrismaVenueRepository(tx);
+      const venueSlug = `venue_${Date.now()}`;
+      process.env["VENUE_SLUG"] = venueSlug;
+
+      const venueResult = await venueRepo.create({
+        name: "Test Venue",
+        slug: venueSlug,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const staffRepo = createPrismaStaffRepository(tx);
+      const hash = await hashPassword("password123");
+      const staffResult = await staffRepo.create({
+        venueId,
+        name: "Admin User",
+        username: `admin_${Date.now()}`,
+        passwordHash: hash,
+        roles: [StaffRole.MANAGER],
+      });
+      expect(staffResult.ok).toBe(true);
+      if (!staffResult.ok) return;
+      const staffId = staffResult.value.id;
+
+      const session = await createSession(tx, staffId);
+      vi.mocked(getSessionCookie).mockResolvedValue(session.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("test-csrf-token");
+
+      const menuRepo = createPrismaMenuRepository(tx);
+      const catResult = await menuRepo.createCategory({
+        venueId,
+        name: `Reorder Cat ${Date.now()}`,
+      });
+      expect(catResult.ok).toBe(true);
+      if (!catResult.ok) return;
+      const catId = catResult.value.id;
+
+      const item1 = await menuRepo.createItem({
+        venueId,
+        categoryIds: [catId],
+        name: "Item 1",
+        price: "10.00",
+        state: MenuItemState.AVAILABLE,
+      });
+      const item2 = await menuRepo.createItem({
+        venueId,
+        categoryIds: [catId],
+        name: "Item 2",
+        price: "15.00",
+        state: MenuItemState.AVAILABLE,
+      });
+      expect(item1.ok && item2.ok).toBe(true);
+      if (!item1.ok || !item2.ok) return;
+
+      // Ensure item2 has higher or equal sortOrder initially
+      await tx.menuItemCategory.updateMany({
+        where: { menuItemId: item1.value.id },
+        data: { sortOrder: 0 },
+      });
+      await tx.menuItemCategory.updateMany({
+        where: { menuItemId: item2.value.id },
+        data: { sortOrder: 1 },
+      });
+
+      const request = new NextRequest(`http://localhost/api/admin/menu/items/${item2.value.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "test-csrf-token",
+          "x-forwarded-for": "127.0.0.1",
+        },
+        body: JSON.stringify({
+          categoryId: catId,
+          direction: "up",
+        }),
+      });
+
+      const response = await PATCH(request, { params: Promise.resolve({ id: item2.value.id }) });
+      expect(response.status).toBe(200);
+
+      // Verify full menu now has item2 before item1 in this category
+      const fullMenuResult = await menuRepo.getFullMenu(venueId);
+      expect(fullMenuResult.ok).toBe(true);
+      if (fullMenuResult.ok) {
+        const cat = fullMenuResult.value.find((c) => c.id === catId);
+        expect(cat).toBeDefined();
+        if (cat) {
+          expect(cat.items[0]?.id).toBe(item2.value.id);
+          expect(cat.items[1]?.id).toBe(item1.value.id);
+        }
+      }
+    });
+  });
 });
