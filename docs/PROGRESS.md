@@ -1144,15 +1144,19 @@ All tasks ✅ Complete: 8.4.8a through 8.4.8.
 
 All tasks ✅ Complete: 8.4.9a through 8.4.9.
 
-*Milestone 8.5 — Tables and Rooms (CURRENT)*
+*Milestone 8.5 — Tables and Rooms Management (CURRENT)*
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| 8.5.1 | Add `GET/POST/PATCH /api/admin/tables` | ⬜ | 8.4.9 |
-| 8.5.2 | Add `GET/POST/PATCH /api/admin/rooms` | ⬜ | 8.5.1 |
-| 8.5.3 | Add the Tables/Rooms screens with QR preview | ⬜ | 8.5.2 |
-| 8.5.4 | Add batch QR print view | ⬜ | 8.5.3 |
-| 8.5.5 | Verify: add table, generate QR, print sheet | ⬜ | 8.5.4 |
+| 8.5.1 | Table & Room Categories Schema + Migration (`TableCategory` & `RoomCategory`) | ⬜ | 8.4.9 |
+| 8.5.2 | Table Categories & Table Management API (`/api/admin/tables`) | ⬜ | 8.5.1 |
+| 8.5.3 | Reserved Table Customer Protection & Scan Routing (`/qr/reserved`) | ⬜ | 8.5.2 |
+| 8.5.4 | Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`) | ⬜ | 8.5.3 |
+| 8.5.5 | Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`) | ⬜ | 8.5.4 |
+| 8.5.6 | Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`) | ⬜ | 8.5.5 |
+| 8.5.7 | Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`) | ⬜ | 8.5.6 |
+| 8.5.8 | Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`) | ⬜ | 8.5.7 |
+| 8.5.9 | Verify: multi-role table & room management loop, reserved block, room billing, batch QRs | ⬜ | 8.5.8 |
 
 *Milestone 8.6 — Staff Management*
 
