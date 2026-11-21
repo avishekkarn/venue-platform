@@ -64,6 +64,11 @@ export function CollectionsSheet({
     ...initialCollections,
   ]);
   const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editFrom, setEditFrom] = useState("");
+  const [editTo, setEditTo] = useState("");
+  const [editOrder, setEditOrder] = useState<number>(0);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedItemByCol, setSelectedItemByCol] = useState<
@@ -230,6 +235,38 @@ export function CollectionsSheet({
     } finally {
       setBusyId(null);
     }
+  };
+
+  const startEditing = (col: CollectionItem) => {
+    setEditingId(col.id);
+    setEditName(col.name);
+    setEditFrom(toDateInputValue(col.featuredFrom));
+    setEditTo(toDateInputValue(col.featuredTo));
+    setEditOrder(col.sortOrder);
+    setError(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditFrom("");
+    setEditTo("");
+    setEditOrder(0);
+  };
+
+  const handleSaveCollection = async (id: string) => {
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      setError("Collection name is required");
+      return;
+    }
+    await handlePatch(id, {
+      name: trimmed,
+      featuredFrom: editFrom.trim().length > 0 ? editFrom.trim() : null,
+      featuredTo: editTo.trim().length > 0 ? editTo.trim() : null,
+      sortOrder: editOrder,
+    });
+    cancelEditing();
   };
 
   const handleAddItem = async (collectionId: string) => {
@@ -420,107 +457,154 @@ export function CollectionsSheet({
                     key={col.id}
                     className="flex flex-col gap-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised p-3"
                   >
-                    {/* Top row: name + delete */}
-                    <div className="flex items-center gap-2">
-                      <label htmlFor={`col-name-${col.id}`} className="sr-only">
-                        Collection name
-                      </label>
-                      <input
-                        id={`col-name-${col.id}`}
-                        type="text"
-                        defaultValue={col.name}
-                        onBlur={(e) => {
-                          const val = e.target.value.trim();
-                          if (val !== col.name && val.length > 0) {
-                            handlePatch(col.id, { name: val });
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") e.currentTarget.blur();
-                        }}
-                        aria-label={`Rename collection ${col.name}`}
-                        className="flex-1 bg-transparent border-0 text-sm font-semibold text-staff-text-primary focus:outline-none focus:ring-2 focus:ring-staff-brand rounded px-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCollection(col.id, col.name)}
-                        disabled={busyId !== null}
-                        aria-label={`Delete collection ${col.name}`}
-                        className="size-8 rounded-md text-sm text-status-cancelled bg-staff-surface-sunken hover:bg-status-cancelled-bg disabled:opacity-40"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    {/* Top row: name + actions */}
+                    {editingId === col.id ? (
+                      <div className="flex items-center gap-2">
+                        <label htmlFor={`col-name-${col.id}`} className="sr-only">
+                          Collection name
+                        </label>
+                        <input
+                          id={`col-name-${col.id}`}
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="Collection name"
+                          aria-label={`Collection name for ${col.name}`}
+                          className="flex-1 h-8 px-2 rounded border border-staff-brand bg-staff-surface-sunken text-sm font-semibold text-staff-text-primary focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveCollection(col.id)}
+                          disabled={busyId !== null || editName.trim().length === 0}
+                          className="h-8 px-3 rounded text-xs font-semibold bg-staff-brand text-white hover:bg-staff-brand/90 flex items-center justify-center transition-colors disabled:opacity-50"
+                          title="Save changes"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditing}
+                          disabled={busyId !== null}
+                          className="h-8 px-2 rounded text-xs font-medium bg-staff-surface-sunken text-staff-text-secondary hover:bg-staff-border-subtle flex items-center justify-center transition-colors"
+                          title="Cancel"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span
+                          onClick={() => startEditing(col)}
+                          className="flex-1 font-semibold text-sm text-staff-text-primary cursor-pointer hover:underline truncate"
+                          title="Click to edit collection"
+                        >
+                          {col.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => startEditing(col)}
+                          disabled={busyId !== null}
+                          aria-label={`Edit collection ${col.name}`}
+                          className="h-7 px-2.5 rounded text-xs font-medium text-staff-text-secondary hover:text-staff-text-primary bg-staff-surface-sunken hover:bg-staff-border-subtle flex items-center justify-center transition-colors"
+                          title="Edit dates, order, or name"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCollection(col.id, col.name)}
+                          disabled={busyId !== null}
+                          aria-label={`Delete collection ${col.name}`}
+                          className="size-7 rounded text-sm text-status-cancelled bg-staff-surface-sunken hover:bg-status-cancelled-bg flex items-center justify-center disabled:opacity-40"
+                          title="Delete collection"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
 
                     {/* Second row: dates + sortOrder */}
-                    <div className="grid grid-cols-5 gap-2 items-center text-xs">
-                      <div className="col-span-2 flex flex-col gap-1">
-                        <label
-                          htmlFor={`col-from-${col.id}`}
-                          className="text-staff-text-muted"
-                        >
-                          From
-                        </label>
-                        <input
-                          id={`col-from-${col.id}`}
-                          type="date"
-                          value={toDateInputValue(col.featuredFrom)}
-                          onChange={(e) => {
-                            const val = e.target.value.trim();
-                            handlePatch(col.id, {
-                              featuredFrom: val.length > 0 ? val : null,
-                            });
-                          }}
-                          aria-label={`Featured from date for ${col.name}`}
-                          className="h-8 px-2 rounded border border-staff-border-subtle bg-staff-surface-sunken text-staff-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-staff-brand"
-                        />
-                      </div>
-                      <div className="col-span-2 flex flex-col gap-1">
-                        <label
-                          htmlFor={`col-to-${col.id}`}
-                          className="text-staff-text-muted"
-                        >
-                          To
-                        </label>
-                        <input
-                          id={`col-to-${col.id}`}
-                          type="date"
-                          value={toDateInputValue(col.featuredTo)}
-                          onChange={(e) => {
-                            const val = e.target.value.trim();
-                            handlePatch(col.id, {
-                              featuredTo: val.length > 0 ? val : null,
-                            });
-                          }}
-                          aria-label={`Featured to date for ${col.name}`}
-                          className="h-8 px-2 rounded border border-staff-border-subtle bg-staff-surface-sunken text-staff-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-staff-brand"
-                        />
-                      </div>
-                      <div className="col-span-1 flex flex-col gap-1">
-                        <label
-                          htmlFor={`col-order-${col.id}`}
-                          className="text-staff-text-muted"
-                        >
-                          Order
-                        </label>
-                        <input
-                          id={`col-order-${col.id}`}
-                          type="number"
-                          defaultValue={col.sortOrder}
-                          onBlur={(e) => {
-                            const n = parseInt(e.target.value, 10);
-                            if (!isNaN(n) && n !== col.sortOrder) {
-                              handlePatch(col.id, { sortOrder: n });
+                    {editingId === col.id ? (
+                      <div className="grid grid-cols-5 gap-2 items-center text-xs">
+                        <div className="col-span-2 flex flex-col gap-1">
+                          <label
+                            htmlFor={`col-from-${col.id}`}
+                            className="text-staff-text-muted"
+                          >
+                            From
+                          </label>
+                          <input
+                            id={`col-from-${col.id}`}
+                            type="date"
+                            value={editFrom}
+                            onChange={(e) => setEditFrom(e.target.value)}
+                            aria-label={`Featured from date for ${col.name}`}
+                            className="h-8 px-2 rounded border border-staff-brand bg-staff-surface-sunken text-staff-text-primary text-xs focus:outline-none"
+                          />
+                        </div>
+                        <div className="col-span-2 flex flex-col gap-1">
+                          <label
+                            htmlFor={`col-to-${col.id}`}
+                            className="text-staff-text-muted"
+                          >
+                            To
+                          </label>
+                          <input
+                            id={`col-to-${col.id}`}
+                            type="date"
+                            value={editTo}
+                            onChange={(e) => setEditTo(e.target.value)}
+                            aria-label={`Featured to date for ${col.name}`}
+                            className="h-8 px-2 rounded border border-staff-brand bg-staff-surface-sunken text-staff-text-primary text-xs focus:outline-none"
+                          />
+                        </div>
+                        <div className="col-span-1 flex flex-col gap-1">
+                          <label
+                            htmlFor={`col-order-${col.id}`}
+                            className="text-staff-text-muted"
+                          >
+                            Order
+                          </label>
+                          <input
+                            id={`col-order-${col.id}`}
+                            type="number"
+                            value={editOrder}
+                            onChange={(e) =>
+                              setEditOrder(parseInt(e.target.value, 10) || 0)
                             }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                          }}
-                          aria-label={`Sort order for ${col.name}`}
-                          className="h-8 px-2 rounded border border-staff-border-subtle bg-staff-surface-sunken text-staff-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-staff-brand"
-                        />
+                            aria-label={`Sort order for ${col.name}`}
+                            className="h-8 px-2 rounded border border-staff-brand bg-staff-surface-sunken text-staff-text-primary text-xs focus:outline-none"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="grid grid-cols-5 gap-2 items-center text-xs bg-staff-surface-sunken/40 rounded p-1.5 border border-staff-border-subtle/50">
+                        <div className="col-span-2 flex flex-col">
+                          <span className="text-[10px] uppercase font-medium text-staff-text-muted">
+                            From
+                          </span>
+                          <span className="text-xs font-mono text-staff-text-secondary truncate">
+                            {col.featuredFrom ? toDateInputValue(col.featuredFrom) : "Immediate"}
+                          </span>
+                        </div>
+                        <div className="col-span-2 flex flex-col">
+                          <span className="text-[10px] uppercase font-medium text-staff-text-muted">
+                            To
+                          </span>
+                          <span className="text-xs font-mono text-staff-text-secondary truncate">
+                            {col.featuredTo ? toDateInputValue(col.featuredTo) : "Indefinite"}
+                          </span>
+                        </div>
+                        <div className="col-span-1 flex flex-col">
+                          <span className="text-[10px] uppercase font-medium text-staff-text-muted">
+                            Order
+                          </span>
+                          <span className="text-xs font-mono text-staff-text-secondary">
+                            #{col.sortOrder}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Third row: Items in collection */}
                     <div className="flex flex-col gap-1.5 pt-1">

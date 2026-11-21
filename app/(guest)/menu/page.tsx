@@ -227,6 +227,7 @@ export default async function MenuPage(): Promise<JSX.Element> {
 (function() {
   var STORAGE_KEY = 'guest_menu_states';
   var initialStates = ${JSON.stringify(currentItemStates)};
+  var lastReloadTime = 0;
 
   // Store host_token in localStorage for session recovery
   try {
@@ -349,6 +350,44 @@ export default async function MenuPage(): Promise<JSX.Element> {
             anyChanged = true;
             updateItemDOM(item.id, item.state);
           }
+        }
+
+        // Check if items were added or deleted from the roster
+        var now = Date.now();
+        var cards = document.querySelectorAll('[data-item-id]');
+        var domItemIds = {};
+        for (var c = 0; c < cards.length; c++) {
+          var cid = cards[c].getAttribute('data-item-id');
+          if (cid) domItemIds[cid] = true;
+        }
+
+        var rosterChanged = false;
+        // Check if any non-hidden item in API is missing from the DOM
+        for (var k = 0; k < newItems.length; k++) {
+          var itm = newItems[k];
+          if (itm.state !== 'HIDDEN' && !domItemIds[itm.id]) {
+            rosterChanged = true;
+            break;
+          }
+        }
+
+        // Check if any item in the DOM is no longer present in the API response
+        if (!rosterChanged) {
+          for (var domId in domItemIds) {
+            if (!newStatesMap[domId]) {
+              rosterChanged = true;
+              break;
+            }
+          }
+        }
+
+        if (rosterChanged && (now - lastReloadTime > 60000)) {
+          lastReloadTime = now;
+          try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStatesMap));
+          } catch (e) {}
+          window.location.reload();
+          return;
         }
 
         if (anyChanged) {

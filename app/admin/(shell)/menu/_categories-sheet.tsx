@@ -7,6 +7,7 @@ import {
   type JSX,
   type FormEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -47,8 +48,11 @@ export function CategoriesSheet({
     ...initialCategories,
   ]);
   const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const { fire } = useToast();
   const toast = useCallback(
@@ -152,7 +156,7 @@ export function CategoriesSheet({
         setCategories((prev) =>
           prev.map((c) => (c.id === id ? { ...c, name: data.data.name } : c))
         );
-        onClose();
+        router.refresh();
       } else {
         setError(data.error?.message ?? "Failed to rename category");
       }
@@ -161,6 +165,32 @@ export function CategoriesSheet({
     } finally {
       setBusyId(null);
     }
+  };
+
+  const startEditing = (cat: CategoryItem) => {
+    setEditingId(cat.id);
+    setEditName(cat.name);
+    setError(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditName("");
+  };
+
+  const handleSaveRename = async (id: string) => {
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      setError("Category name cannot be empty");
+      return;
+    }
+    const current = categories.find((c) => c.id === id);
+    if (current && current.name === trimmed) {
+      cancelEditing();
+      return;
+    }
+    await handleRename(id, trimmed);
+    cancelEditing();
   };
 
   const handleMove = async (
@@ -324,23 +354,69 @@ export function CategoriesSheet({
               .map((cat, idx, arr) => (
                 <li
                   key={cat.id}
-                  className="flex items-center gap-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised px-3 py-2"
+                  className="flex items-center gap-2 rounded-md border border-staff-border-subtle bg-staff-surface-raised px-3 py-2 min-h-12"
                 >
-                  <input
-                    type="text"
-                    defaultValue={cat.name}
-                    onBlur={(e) => {
-                      const val = e.target.value.trim();
-                      if (val !== cat.name && val.length > 0) {
-                        handleRename(cat.id, val);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") e.currentTarget.blur();
-                    }}
-                    aria-label={`Rename ${cat.name}`}
-                    className="flex-1 bg-transparent border-0 text-sm text-staff-text-primary focus:outline-none focus:ring-2 focus:ring-staff-brand rounded px-1"
-                  />
+                  {editingId === cat.id ? (
+                    <div className="flex-1 flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleSaveRename(cat.id);
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            cancelEditing();
+                          }
+                        }}
+                        autoFocus
+                        aria-label={`Rename ${cat.name}`}
+                        className="flex-1 h-8 px-2 rounded border border-staff-brand bg-staff-surface-sunken text-sm text-staff-text-primary focus:outline-none focus:ring-1 focus:ring-staff-brand"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveRename(cat.id)}
+                        disabled={busyId !== null || editName.trim().length === 0}
+                        aria-label="Save category name"
+                        className="h-8 px-2.5 rounded-md text-xs font-semibold bg-staff-brand text-white hover:bg-staff-brand/90 flex items-center justify-center disabled:opacity-50 transition-colors"
+                        title="Save changes"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditing}
+                        disabled={busyId !== null}
+                        aria-label="Cancel editing"
+                        className="h-8 px-2 rounded-md text-xs font-medium bg-staff-surface-sunken text-staff-text-secondary hover:bg-staff-border-subtle flex items-center justify-center transition-colors"
+                        title="Cancel"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center gap-2 min-w-0">
+                      <span
+                        onClick={() => startEditing(cat)}
+                        className="flex-1 text-sm font-medium text-staff-text-primary px-1 py-1 rounded hover:bg-staff-surface-sunken cursor-pointer truncate"
+                        title="Click to rename"
+                      >
+                        {cat.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => startEditing(cat)}
+                        disabled={busyId !== null}
+                        aria-label={`Edit ${cat.name}`}
+                        className="size-7 rounded text-xs text-staff-text-muted hover:text-staff-text-primary hover:bg-staff-surface-sunken flex items-center justify-center"
+                        title="Rename"
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleMove(cat.id, idx, "up")}

@@ -967,6 +967,7 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 | **8.3.7a** | **The guest menu's photo rendering and Special Events strip (D-23.1, D-25.2).** The `MenuItemCard` uses `next/image` with `photoUrl` and `photoBlurData`. The guest menu renders active collections as a "Special events" / "Featured" strip above categories. Discharges **W-0029**. `next.config.mjs` cache headers. | ✅ | 8.3.7 |
 | **8.3.7a.A** | **The photo pipeline + collections strip.** `next.config.mjs` immutable cache headers; `MenuItemCard` uses `next/image` with blur placeholder; `SpecialEventsStrip` renders active collections above categories; discharges W-0029. | ✅ | 8.3.7 |
 | **8.3.7a.B** | **Hard delete & photo lifecycle cleanup.** Adds `deleteItem` to MenuRepository port and Prisma adapter; `deleteUploadedPhoto` unlinks obsolete WebP images on photo replacement and item deletion; `DELETE /api/admin/menu/items/[id]` with full audit, CSRF, and cascade. | ✅ | 8.3.7a.A |
+| **8.3.8** | **Menu UI Polish: inline Save/Cancel, item sortOrder, and guest polling reload.** Adds explicit Save/Cancel controls for categories and collections; adds sortOrder number input to item edit form; detects added/deleted items in guest menu polling and reloads page. | ✅ | 8.3.7a.B |
 
 ---
 
@@ -976,7 +977,7 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.4.1** | **The `ServiceCategory` / `ServiceItem` schema + the migration + D-21.1.** The `ServiceCategory` (`id`, `name`, `sortOrder`); the `ServiceItem` (`id`, `name`, `description`, `photoUrl`, `photoBlurData`, `price` Decimal(10,2), `estimatedMinutes` Int?, `state` MenuItemState, `categoryId`, `category`, `updatedAt`, `createdAt`). The `ServiceConfig` is deprecated — the seed migrates the nine `services` array entries into nine `ServiceItem` rows in a seeded "Hotel Services" category. The migration. | ⬜ | 8.3.7a |
+| **8.4.1** | **The `ServiceCategory` / `ServiceItem` schema + the migration + D-21.1.** The `ServiceCategory` (`id`, `name`, `sortOrder`); the `ServiceItem` (`id`, `name`, `description`, `photoUrl`, `photoBlurData`, `price` Decimal(10,2), `estimatedMinutes` Int?, `state` MenuItemState, `categoryId`, `category`, `updatedAt`, `createdAt`). The `ServiceConfig` is deprecated — the seed migrates the nine `services` array entries into nine `ServiceItem` rows in a seeded "Hotel Services" category. The migration. | ⬜ | 8.3.8 |
 | **8.4.2** | **The services list screen** (`app/admin/services/page.tsx`): grouped by service category; columns Photo / Name / Category / Price / Estimated Minutes / State / Actions (Edit, Toggle availability, Hide). Mirrors the 8.3.1 menu list. | ⬜ | 8.4.1 |
 | **8.4.3** | **`POST /api/admin/services/items`** (`withAudit` + `withCsrf`). Body: name, description, photoUrl, photoBlurData, price (decimal string), estimatedMinutes (optional int), categoryId, state. Returns `{ data: ServiceItem }`. Four route tests (401, 403 LEADER, 400 missing fields, 201). | ⬜ | 8.4.2 |
 | **8.4.3a** | **The admin "Add/Edit Service" form's photo box.** A drag-and-drop photo box in the right panel (the same 8.3.0's upload route; the same 8.3.2a's photo-box pattern). | ⬜ | 8.4.3 |
