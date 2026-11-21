@@ -122,9 +122,17 @@ export default async function ActiveOrdersPage({
   return (
     <section className="flex flex-col gap-6">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
-          Active Orders
-        </h1>
+        <div>
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1 text-xs text-staff-text-muted hover:text-staff-text-primary transition-colors mb-1.5"
+          >
+            ← Back to Dashboard
+          </Link>
+          <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
+            Active Orders
+          </h1>
+        </div>
         <p className="text-sm text-staff-text-muted">
           {activeOrders.length} order{activeOrders.length === 1 ? "" : "s"}
         </p>

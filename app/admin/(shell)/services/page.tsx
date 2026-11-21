@@ -72,9 +72,17 @@ export default async function ServicesPage({
   return (
     <section className="flex flex-col gap-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
-          Services
-        </h1>
+        <div>
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1 text-xs text-staff-text-muted hover:text-staff-text-primary transition-colors mb-1.5"
+          >
+            ← Back to Dashboard
+          </Link>
+          <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
+            Services
+          </h1>
+        </div>
         <div className="flex items-center gap-4">
           <ServiceCategoriesSheetTrigger
             categories={categories.map((c) => ({

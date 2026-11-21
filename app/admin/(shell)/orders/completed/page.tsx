@@ -236,9 +236,17 @@ export default async function CompletedOrdersPage({
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
-            Completed Orders
-          </h1>
+          <div>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1 text-xs text-staff-text-muted hover:text-staff-text-primary transition-colors mb-1.5"
+            >
+              ← Back to Dashboard
+            </Link>
+            <h1 className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
+              Completed Orders
+            </h1>
+          </div>
           <a
             href={exportHref}
             className="inline-flex items-center justify-center rounded-md px-4 h-10 text-sm font-medium bg-staff-brand text-staff-brand-contrast hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-staff-brand"
