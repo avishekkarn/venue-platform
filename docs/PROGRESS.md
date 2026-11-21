@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0240 | 2026-11-21 | Milestone 8.5 Task 8.5.6 closed (Admin Tables Screen & Daily Reporting) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0239 | 2026-11-21 | Milestone 8.5 Task 8.5.5 closed (Room Stay Pricing Integration into Folio & Billing) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0238 | 2026-11-21 | Milestone 8.5 Task 8.5.4 closed (Room Categories, Room Management API, Dedicated Pricing & Tests) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0237 | 2026-11-21 | Milestone 8.5 Task 8.5.3 closed (Reserved Table Customer Protection & Scan Routing) | PASS | Milestone 8.5 | §5.3 |
@@ -139,13 +140,42 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0240
+Next entry number: 0241
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.6 — Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.5 (Tables and Rooms). Current task: Task 8.5.7 — Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0240 — 2026-11-21 — Milestone 8.5 Task 8.5.6 closed: Admin Tables Screen & Daily Reporting
+
+**Status:** PASS
+
+**Task:** Milestone 8.5 (Task 8.5.6).
+
+**Summary:**
+Milestone 8.5 Task 8.5.6 is completed, tested, and verified.
+1. **Admin Tables Server Component (`app/admin/(shell)/tables/page.tsx`)**:
+   - Built full screen with `requireRole(["admin"])` and venue currency resolution.
+   - Fetched table categories via `tableRepo.listCategories(staff.venueId)`.
+   - Fetched tables with details via `tableRepo.listTablesWithDetails(staff.venueId)`.
+   - Fetched active table QR tokens via `prisma.qrToken.findMany({ where: { placeType: "TABLE", state: "ACTIVE" } })`.
+   - Computed start of day boundary (`todayStart.setHours(0, 0, 0, 0)`) and aggregated today's guest sessions to calculate per-table session count, order count, and revenue today in NPR.
+2. **Interactive Tables View Client Hub (`app/admin/(shell)/tables/_tables-view.tsx`)**:
+   - High-level metric summary cards: Total Tables, Free Tables, Occupied Tables, Reserved Zone Tables, and Today's Table Sales in NPR.
+   - Category filter tabs with live item counters and reserved tags.
+   - State filter pills: All, Free, Occupied, Out of Service.
+   - Rich table card grid displaying Table number, zone category, reserved alert shield, operational state badge, active session details (started at, elapsed duration, order count, folio total), and today's performance stats.
+3. **Interactive Actions & Dialogs**:
+   - `_categories-sheet.tsx` & `_categories-sheet-trigger.tsx`: Full category management sheet allowing adding, editing, and deleting categories with reserved toggles and CSRF protection.
+   - `_add-table-sheet.tsx` & `_add-table-button.tsx`: Add Table sheet with custom number input, category dropdown, and initial state select.
+   - `_edit-table-sheet.tsx`: Edit Table sheet with number, category, state, and delete action.
+   - `_end-session-button.tsx`: Authority button to force-end active table sessions (`POST /api/admin/tables/[id]/end-session`) with confirmation prompt.
+   - `_table-qr-dialog.tsx`: Scannable QR modal preview with direct link to printable placard (`/admin/qr/print/${qrTokenId}`).
+4. **Quality Verification**:
+   - `pnpm typecheck` passed with 0 errors.
+   - `tests/integration/api/admin-tables.test.ts` (5 tests) passed with 100% success rate.
 
 ### ENTRY-0239 — 2026-11-21 — Milestone 8.5 Task 8.5.5 closed: Room Stay Pricing Integration into Folio & Billing
 
@@ -1253,7 +1283,7 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, 8.5.4, and 8.5.5 are CLOSED (✅). The next active task is **Task 8.5.6 (Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.4 (and 8.4.8, 8.4.9) are CLOSED (✅). Milestone 8.5 (Tables and Rooms) Tasks 8.5.1, 8.5.2, 8.5.3, 8.5.4, 8.5.5, and 8.5.6 are CLOSED (✅). The next active task is **Task 8.5.7 (Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`))**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed.
 
 **Key facts for a new session:**
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
