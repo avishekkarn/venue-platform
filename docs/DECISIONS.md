@@ -13,7 +13,7 @@
 
 1. Venue Identity — D-1.1 to D-1.3
 2. Guest Identity — D-2.1 to D-2.6
-3. Staff Identity — D-3.1 to D-3.12
+3. Staff Identity — D-3.1 to D-3.14
 4. Order Identity — D-4.1 to D-4.12
 5. Service Request Identity — D-5.1 to D-5.7
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
@@ -469,6 +469,30 @@ Traces to: BUILD.md §8.8, PHASE_TESTS.md §4.
 Decision: Route handlers export a setTestDbClient function. Integration tests use it to inject the transaction client.
 Context: Next.js strict build checking rejects custom arguments in the second parameter position.
 Consequences: Test isolation works exactly as before, but without breaking the production build.
+
+---
+
+### D-3.14 — A manager can force-end a staff member's active session
+
+**Decision:** A manager can force-end a staff member's active session. The endpoint (`POST /api/admin/staff/[id]/end-shift`) sets `endedAt = now()` on every un-ended session of the target staff member, writes a request-level audit event, and requires CSRF protection. The staff member is signed out of every device.
+
+**Context:** Staff work long shifts on shared or personal devices and sometimes forget to click "Sign Out" before departing. Under D-3.2, staff sessions have no automatic timeout, which would cause an un-ended session to indefinitely display as "On Duty Now" and leave an open credential risk on shared hardware. The manager requires explicit administrative authority to close out finished shifts from the staff management dashboard without resetting credentials or deactivating the account.
+
+**Alternatives considered:**
+
+- *Automatic idle timeout (e.g., 30 minutes or 12 hours):* Rejected per D-3.2 because busy service and double shifts must not be interrupted by unexpected logouts.
+- *Forcing a password reset:* Rejected because resetting a password forces the staff member to re-enter a new credential on their next shift, creating operational friction for a simple shift closure.
+- *Deactivating the staff account:* Rejected because deactivation implies suspension or departure, whereas shift termination is a routine end-of-day operational action.
+
+**Consequences:**
+
+- Managers and owners can terminate lingering or forgotten active shifts directly from the Staff Management Hub (`/admin/staff`) and the Staff Activity Drawer.
+- The staff member's active session is terminated atomically in `StaffSession`; on their next action or background poll, the device receives 401 Unauthorized and returns to the login screen.
+- Every force-end action is recorded in the immutable audit log attributing the actor, target staff member, and timestamp.
+
+**What would make us revisit:** If a venue requires granular per-session termination (e.g. terminating a POS tablet session while retaining a handheld floor session), we add session-level targeting in addition to staff-level shift ending.
+
+**Traces to:** DECISIONS.md D-3.2 ("The manager can force-log-out a staff member from the admin panel if needed"), D-3.4 (single device per staff), SYSTEM.md §15.3, BUILD.md §7.4, §10.6, §15, Task 8.6.10.
 
 ---
 

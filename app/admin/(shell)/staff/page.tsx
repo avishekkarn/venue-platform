@@ -61,10 +61,8 @@ export default async function AdminStaffPage(): Promise<JSX.Element> {
       roleCounts[r] = (roleCounts[r] || 0) + 1;
     }
 
-    // Determine online presence: has an un-ended session that is not expired (D-3.2)
-    const activeSession = m.sessions.find(
-      (s) => s.endedAt === null && (!s.expiresAt || new Date(s.expiresAt).getTime() > now.getTime())
-    );
+    // Determine online presence: has an un-ended session (D-3.2: no automatic timeout)
+    const activeSession = m.sessions.find((s) => s.endedAt === null);
     const isOnline = !!activeSession && m.state === "ACTIVE";
     if (isOnline) onlineStaff++;
 

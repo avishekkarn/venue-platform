@@ -62,7 +62,7 @@ async function authenticateAdmin(db: DbClient) {
 
 /**
  * POST /api/admin/staff/[id]/end-shift
- * Ends any active shift/session for a staff member (D-3.2: "The manager can force-log-out a staff member from the admin panel if needed").
+ * Ends any active shift/session for a staff member (D-3.2, D-3.14).
  */
 const postHandler = async (
   _request: NextRequest,

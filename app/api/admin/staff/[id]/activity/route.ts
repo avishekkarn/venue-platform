@@ -135,10 +135,8 @@ const getHandler = async (
   const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // Determine online presence: has an un-ended session that is not expired (D-3.2)
-  const activeSession = staffMember.sessions.find(
-    (s) => s.endedAt === null && (!s.expiresAt || new Date(s.expiresAt).getTime() > now.getTime())
-  );
+  // Determine online presence: has an un-ended session (D-3.2: no automatic timeout)
+  const activeSession = staffMember.sessions.find((s) => s.endedAt === null);
   const isOnline = !!activeSession && staffMember.state === "ACTIVE";
 
   let activeMinutesToday = 0;
@@ -148,7 +146,7 @@ const getHandler = async (
   const sessionRecords = staffMember.sessions.map((s) => {
     const sStart = new Date(s.createdAt);
     const sEnd = s.endedAt ? new Date(s.endedAt) : now;
-    const isLive = s.endedAt === null && (!s.expiresAt || new Date(s.expiresAt).getTime() > now.getTime());
+    const isLive = s.endedAt === null;
     const durationMs = Math.max(0, sEnd.getTime() - sStart.getTime());
     const durationMinutes = Math.round(durationMs / 60000);
 
