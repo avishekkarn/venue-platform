@@ -78,9 +78,12 @@ export default async function AdminDashboardPage(): Promise<JSX.Element> {
     if (order.state === OrderState.READY) ready += 1;
   }
 
-  const nowUtc = new Date();
-  const todayStart = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), 0, 0, 0, 0));
-  const todayEnd = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), 23, 59, 59, 999));
+  const now = new Date();
+  const localTodayStart = new Date();
+  localTodayStart.setHours(0, 0, 0, 0);
+  const utcTodayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  const todayStart = localTodayStart < utcTodayStart ? localTodayStart : utcTodayStart;
+  const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
   const [completedServicesToday, rawRoomsWithCategory, roomSessionsToday, activeSessions] = await Promise.all([
     prisma.serviceRequest.findMany({

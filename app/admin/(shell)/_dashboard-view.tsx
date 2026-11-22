@@ -163,6 +163,11 @@ export function DashboardView({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date>(new Date());
   const [mapView, setMapView] = useState<"ALL" | "ROOMS" | "TABLES">("ALL");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Lookup maps for table and room numbers
   const tableNumberById = useMemo(() => {
@@ -252,8 +257,8 @@ export function DashboardView({
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
             Live Operations
           </div>
-          <span className="text-xs text-staff-text-muted">
-            Auto-refreshing every 5s · Last synced at {lastRefreshedAt.toLocaleTimeString()}
+          <span className="text-xs text-staff-text-muted" suppressHydrationWarning>
+            Auto-refreshing every 5s{mounted ? ` · Last synced at ${lastRefreshedAt.toLocaleTimeString()}` : ""}
           </span>
         </div>
 
@@ -386,7 +391,7 @@ export function DashboardView({
                     <span className="font-bold text-staff-text-primary shrink-0">{placeNumber}</span>
                     <span className="font-medium text-amber-800 truncate">{label}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-staff-text-muted shrink-0">
+                  <span className="text-[10px] font-mono text-staff-text-muted shrink-0" suppressHydrationWarning>
                     {formatElapsed(req.submittedAt)}
                   </span>
                 </div>
@@ -441,7 +446,7 @@ export function DashboardView({
                             #{order.id.slice(0, 8).toUpperCase()}
                           </span>
                           <span className={orderBadge(order.state)}>{order.state}</span>
-                          <span className="text-xs font-mono text-staff-text-muted">
+                          <span className="text-xs font-mono text-staff-text-muted" suppressHydrationWarning>
                             {formatElapsed(order.placedAt)}
                           </span>
                         </div>
@@ -503,7 +508,7 @@ export function DashboardView({
                             #{order.id.slice(0, 8).toUpperCase()}
                           </span>
                           <span className={orderBadge(order.state)}>{order.state}</span>
-                          <span className="text-xs font-mono text-staff-text-muted">
+                          <span className="text-xs font-mono text-staff-text-muted" suppressHydrationWarning>
                             {formatElapsed(order.placedAt)}
                           </span>
                         </div>
@@ -566,7 +571,7 @@ export function DashboardView({
                         </span>
                         <span className="text-sm font-medium text-staff-text-secondary">{label}</span>
                         <span className={requestBadge(request.state)}>{request.state}</span>
-                        <span className="text-xs font-mono text-staff-text-muted">
+                        <span className="text-xs font-mono text-staff-text-muted" suppressHydrationWarning>
                           {formatElapsed(request.submittedAt)}
                         </span>
                       </div>

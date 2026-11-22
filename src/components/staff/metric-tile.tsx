@@ -21,16 +21,35 @@ export interface MetricTileProps {
 }
 
 export function MetricTile({ label, value, subtext }: MetricTileProps): JSX.Element {
+  const valueStr = String(value);
+  const isLong = valueStr.length > 10;
+  const isMedium = valueStr.length > 7;
+
   return (
-    <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-4 flex flex-col gap-1">
-      <span className="text-[12px] leading-[16px] font-medium text-staff-text-muted uppercase tracking-wide">
+    <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-4 flex flex-col gap-1 min-w-0 overflow-hidden">
+      <span
+        className="text-[12px] leading-[16px] font-medium text-staff-text-muted uppercase tracking-wide truncate"
+        title={label}
+      >
         {label}
       </span>
-      <span className="text-[28px] leading-[36px] font-semibold text-staff-text-primary">
+      <span
+        className={`font-semibold text-staff-text-primary tracking-tight whitespace-nowrap overflow-hidden text-ellipsis ${
+          isLong
+            ? "text-lg sm:text-xl lg:text-lg xl:text-xl leading-tight"
+            : isMedium
+            ? "text-xl sm:text-2xl lg:text-xl xl:text-2xl leading-tight"
+            : "text-[26px] sm:text-[28px] leading-[36px]"
+        }`}
+        title={valueStr}
+      >
         {value}
       </span>
       {subtext ? (
-        <span className="text-[11px] leading-[14px] text-staff-text-secondary mt-0.5 font-medium truncate">
+        <span
+          className="text-[11px] leading-[14px] text-staff-text-secondary mt-0.5 font-medium truncate"
+          title={subtext}
+        >
           {subtext}
         </span>
       ) : null}

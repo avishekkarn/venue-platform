@@ -15,8 +15,11 @@ export default async function AdminTablesPage(): Promise<JSX.Element> {
   const venueRepo = createPrismaVenueRepository(prisma);
   const tableRepo = createPrismaTableRepository(prisma);
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const localTodayStart = new Date();
+  localTodayStart.setHours(0, 0, 0, 0);
+  const utcTodayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  const todayStart = localTodayStart < utcTodayStart ? localTodayStart : utcTodayStart;
 
   const [
     venueResult,
@@ -24,6 +27,7 @@ export default async function AdminTablesPage(): Promise<JSX.Element> {
     tablesResult,
     activeTokens,
     todaySessions,
+    todayTableOrders,
   ] = await Promise.all([
     venueRepo.findById(staff.venueId),
     tableRepo.listCategories(staff.venueId),
@@ -43,15 +47,33 @@ export default async function AdminTablesPage(): Promise<JSX.Element> {
       where: {
         venueId: staff.venueId,
         tableId: { not: null },
-        createdAt: { gte: todayStart },
+        OR: [
+          { endedAt: null },
+          { createdAt: { gte: todayStart } },
+          { endedAt: { gte: todayStart } },
+        ],
       },
       include: {
         orders: {
           select: {
+            id: true,
             state: true,
             total: true,
           },
         },
+      },
+    }),
+    prisma.order.findMany({
+      where: {
+        venueId: staff.venueId,
+        tableId: { not: null },
+        placedAt: { gte: todayStart },
+        state: { not: OrderState.CANCELLED },
+      },
+      select: {
+        id: true,
+        tableId: true,
+        total: true,
       },
     }),
   ]);
@@ -73,6 +95,7 @@ export default async function AdminTablesPage(): Promise<JSX.Element> {
     string,
     { sessionsCount: number; ordersCount: number; revenue: number }
   >();
+  const countedOrderIds = new Set<string>();
 
   for (const sess of todaySessions) {
     if (!sess.tableId) continue;
@@ -84,12 +107,27 @@ export default async function AdminTablesPage(): Promise<JSX.Element> {
 
     existing.sessionsCount += 1;
     for (const ord of sess.orders) {
-      if (ord.state !== OrderState.CANCELLED) {
+      if (ord.state !== OrderState.CANCELLED && !countedOrderIds.has(ord.id)) {
+        countedOrderIds.add(ord.id);
         existing.ordersCount += 1;
         existing.revenue += Number(ord.total);
       }
     }
     todayMetricsByTableId.set(sess.tableId, existing);
+  }
+
+  // Also include any standalone orders placed today on tables
+  for (const ord of todayTableOrders) {
+    if (!ord.tableId || countedOrderIds.has(ord.id)) continue;
+    countedOrderIds.add(ord.id);
+    const existing = todayMetricsByTableId.get(ord.tableId) ?? {
+      sessionsCount: 0,
+      ordersCount: 0,
+      revenue: 0,
+    };
+    existing.ordersCount += 1;
+    existing.revenue += Number(ord.total);
+    todayMetricsByTableId.set(ord.tableId, existing);
   }
 
   // Prepare views

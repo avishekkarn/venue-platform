@@ -164,11 +164,14 @@ export function TablesView({
           </span>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-staff-border-subtle bg-staff-surface-raised flex flex-col gap-1 col-span-2 sm:col-span-1">
-          <span className="text-[11px] font-medium text-staff-text-muted uppercase tracking-wider">
+        <div className="p-3.5 rounded-xl border border-staff-border-subtle bg-staff-surface-raised flex flex-col gap-1 col-span-2 sm:col-span-1 min-w-0 overflow-hidden">
+          <span className="text-[11px] font-medium text-staff-text-muted uppercase tracking-wider truncate" title="Today's Table Sales">
             Today&apos;s Table Sales
           </span>
-          <span className="text-xl font-bold font-mono text-staff-brand">
+          <span
+            className="text-lg sm:text-xl font-bold font-mono text-staff-brand truncate whitespace-nowrap"
+            title={formatMoney(totalDailyRevenue.toFixed(2), currency)}
+          >
             {formatMoney(totalDailyRevenue.toFixed(2), currency)}
           </span>
         </div>
@@ -318,7 +321,7 @@ export function TablesView({
                       <span className="font-semibold text-amber-900">
                         Active Session
                       </span>
-                      <span className="text-[11px] text-amber-800">
+                      <span className="text-[11px] text-amber-800" suppressHydrationWarning>
                         {formatElapsed(new Date(t.activeSession.startedAt), new Date())}
                       </span>
                     </div>
