@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0247 | 2026-11-22 | Milestone 8.7 Task 8.7.2 closed: Reports Domain Layer (`src/domain/reports/`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0246 | 2026-11-22 | Milestone 8.7 Task 8.7.1 closed: Snapshot Migrations & Composite Performance Indexes | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0245 | 2026-11-22 | Milestone 8.7 Task 8.7.0 closed: Decision Records for Reporting Scope (D-2.6, D-12.5, D-12.6, D-12.7) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0244 | 2026-11-22 | Milestone 8.6 closed: Staff Management Hub, Roles RBAC, Active Duty Hours, Session History & Security Revocation | PASS | Milestone 8.6 | §5.3 |
@@ -146,13 +147,46 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0247
+Next entry number: 0248
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.2 — Reports Domain Layer (`src/domain/reports/`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.3 — Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0247 — 2026-11-22 — Milestone 8.7 Task 8.7.2 closed: Reports Domain Layer (`src/domain/reports/`)
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.2 (Reports domain layer: pure calculators and unit tests for all 17 report view families).
+
+**Summary:**
+- Authored pure domain calculation modules under `src/domain/reports/` with zero database or HTTP dependencies:
+  - `types.ts`: Domain models and output contracts for all 17 report views.
+  - `validate-range.ts`: Validates date range format and enforces D-12.1 (<= 180 days).
+  - `revenue.ts`: View 1 (Revenue summary by date and place type with exact decimal arithmetic).
+  - `sales.ts`: View 2 (Sales by item and category with base/modifier revenue and modifier attach rate).
+  - `funnel.ts`: View 3 (Order funnel stage counts and approval/prep/delivery/cycle latencies in seconds).
+  - `requests.ts`: View 4 (Service requests report: volume, outcomes, and resolution times by department).
+  - `utilization.ts`: View 5 (Place utilization: sessions, dwell minutes, order counts, revenue, and conversion %).
+  - `qr.ts`: View 6 (QR & session lifecycle: issuance/revocation dates, token status, and session counts).
+  - `payment.ts`: View 7 (Payment reconciliation: explicit D-7.1/D-7.7 empty-state descriptor and headers).
+  - `audit.ts`: View 8 (Per-record chronological audit export with staff attribution per D-12.4).
+  - `heatmap.ts`: View 9 (Hourly order volume and revenue distribution).
+  - `matrix.ts`: View 10 (Kasavana & Smith menu engineering matrix: Stars, Plowhorses, Puzzles, Dogs).
+  - `modifiers.ts`: View 11 (Modifier attach-rate report: add-on frequency and attach percentage).
+  - `tax.ts`: View 12 (Tax remittance report: periodic tax collected and taxable subtotals).
+  - `cancellations.ts`: View 13 (Cancellation root-cause report: reason frequency and top reason).
+  - `sla.ts`: View 14 (Service SLA dashboard: P50, P90, P99 resolution percentiles and currently open counts).
+  - `folio.ts`: View 15 (Room folio report: stays, room orders, service charges, and guest folio totals).
+  - `occupancy.ts`: View 16 (Occupancy and dwell report: table turnover, stay durations, and peak concurrency).
+  - `conversion.ts`: View 17 (QR scan-to-order conversion report: placard conversion % and revenue per session).
+  - `index.ts`: Unified barrel exports.
+- Verification:
+  - Authored comprehensive unit test suite in `tests/unit/reports/reports-domain.test.ts` (21/21 tests passed).
+  - Full project unit test suite: 42 test files, 303 tests, 100% pass rate.
+  - TypeScript: zero errors (`tsc --noEmit`). Next task: Task 8.7.3.
 
 ### ENTRY-0246 — 2026-11-22 — Milestone 8.7 Task 8.7.1 closed: Snapshot Migrations & Composite Performance Indexes
 
