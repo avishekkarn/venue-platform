@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0248 | 2026-11-22 | Milestone 8.7 Task 8.7.3 closed: Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0247 | 2026-11-22 | Milestone 8.7 Task 8.7.2 closed: Reports Domain Layer (`src/domain/reports/`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0246 | 2026-11-22 | Milestone 8.7 Task 8.7.1 closed: Snapshot Migrations & Composite Performance Indexes | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0245 | 2026-11-22 | Milestone 8.7 Task 8.7.0 closed: Decision Records for Reporting Scope (D-2.6, D-12.5, D-12.6, D-12.7) | PASS | Milestone 8.7 | §5.3 |
@@ -147,13 +148,39 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0248
+Next entry number: 0249
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.3 — Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.4 — CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0248 — 2026-11-22 — Milestone 8.7 Task 8.7.3 closed: Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`)
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.3 (Audited reports aggregation API endpoints for all 17 report views).
+
+**Summary:**
+- Built `app/api/admin/reports/[view]/route.ts` wrapped with `withAuditedDynamicRoute` (`/api/admin/reports/[view]`, method `GET`):
+  - Supported views: `revenue`, `sales`, `funnel`, `requests`, `utilization`, `qr`, `payment`, `audit`, `heatmap`, `matrix`, `modifiers`, `tax`, `cancellations`, `sla`, `folio`, `occupancy`, `conversion`.
+  - Security: Admin access check (`MANAGER` / `OWNER`), active session validation, strict venue scoping (`session.venueId === venue.id`).
+  - Validation: Date range checking (`dateTo - dateFrom <= 180 days` per D-12.1).
+  - Empty-state: View 7 (`payment`) returns `INACTIVE_V1_SCOPE` descriptor per D-7.1 and D-7.7.
+  - Test harness: Provided `setTestDbClient` for clean transactional integration testing.
+- Verification:
+  - Authored `tests/integration/api/admin-reports.test.ts` (9 tests passing):
+    - 401 unauthenticated
+    - 403 non-admin role
+    - 400 invalid view name
+    - 400 date range > 180 days
+    - 404 cross-venue isolation
+    - 200 payment reconciliation descriptor
+    - 200 happy path revenue calculation
+    - 200 happy path sales with category snapshots
+    - 200 happy path service requests
+  - Zero TypeScript errors (`tsc --noEmit`). Next task: Task 8.7.4.
 
 ### ENTRY-0247 — 2026-11-22 — Milestone 8.7 Task 8.7.2 closed: Reports Domain Layer (`src/domain/reports/`)
 
