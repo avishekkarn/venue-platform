@@ -127,6 +127,8 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0252 | 2026-11-22 | Milestone 8.7 closed: Reports & Operational Intelligence Hub (17 Views, Domain, APIs, CSV Streaming, Saved Reports, Full Sweep) | PASS | Milestone 8.7 | §5.3 |
+| ENTRY-0251 | 2026-11-22 | Milestone 8.7 Task 8.7.6 closed: The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0250 | 2026-11-22 | Milestone 8.7 Task 8.7.5 closed: Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0249 | 2026-11-22 | Milestone 8.7 Task 8.7.4 closed: CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0248 | 2026-11-22 | Milestone 8.7 Task 8.7.3 closed: Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`) | PASS | Milestone 8.7 | §5.3 |
@@ -150,13 +152,65 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0251
+Next entry number: 0253
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.6 — The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.8 (Settings). Current task: Task 8.8.1 — GET / PATCH /api/admin/settings (`withAudit`; PATCH + `withCsrf`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0252 — 2026-11-22 — Milestone 8.7 closed: Reports & Operational Intelligence Hub (17 Views, Domain, APIs, CSV Streaming, Saved Reports, Full Sweep)
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.7 (Full verification sweep and milestone closure per BUILD.md §13).
+
+**Summary:**
+- Concluded Milestone 8.7 providing venue operators with an industry-grade reporting hub spanning 17 views across financial metrics, menu profitability matrices, funnel latencies, service SLAs, place utilization, QR conversion, and anytime-access saved reports.
+- Full verification sweep completed with 100% test pass rate (740/740 tests: 306 unit tests, 434 integration tests) and 0 TypeScript compiler errors (`tsc --noEmit`).
+
+**Milestone 8.7 Acceptance Criteria & Raw Evidence:**
+
+| Criterion | Target | Result | Evidence |
+|---|---|---|---|
+| Zero TypeScript compiler errors | `tsc --noEmit` exits 0 | PASS | `$ tsc --noEmit` exited 0 with 0 diagnostics. |
+| Reports Domain Pure Calculations | 17 view families under `src/domain/reports/` with 0 DB/HTTP dependencies | PASS | `tests/unit/reports/reports-domain.test.ts` (21/21 tests passed). |
+| Unit Test Suite Pass Rate | 100% across all unit suites | PASS | Vitest unit run: 43 test files passed, 306 tests passed. |
+| Aggregation API Route Coverage | Audited `GET /api/admin/reports/[view]` with role checks and 180-day cap | PASS | `tests/integration/api/admin-reports.test.ts` (9/9 tests passed). |
+| RFC 4180 CSV Streaming & UTF-8 BOM | Strict BOM byte sequence `[0xEF, 0xBB, 0xBF]` + Content-Disposition | PASS | `tests/integration/api/admin-reports-export.test.ts` (4/4 tests passed). |
+| Saved Reports & ReportRun Audit | Audited persistence and automatic run logging | PASS | `tests/integration/api/admin-saved-reports.test.ts` (3/3 tests passed). |
+| Full Integration Test Suite | 100% pass across entire database test suite | PASS | Vitest integration run: 66 test files passed, 434 tests passed. |
+| Zero Guest PII (D-2.1, D-2.6) | Zero guest emails or phone numbers exposed | PASS | Verified in schema, reports domain serializers, and CSV exporters. |
+| No Aggregate Staff Surveillance (D-12.4) | Strictly chronological per-record audit export | PASS | View 8 (`audit`) outputs raw unaggregated event records only. |
+
+**Deviations:** None.
+**Limitations:** Cash-only in v1 per D-7.7 (tips 0.00, method CASH); Payment reconciliation View 7 rendered as informative empty-state panel activating in Phase 10 with payment provider bridge (D-7.1).
+**Next:** Milestone 8.8 Task 8.8.1 (`GET / PATCH /api/admin/settings`).
+
+---
+
+### ENTRY-0251 — 2026-11-22 — Milestone 8.7 Task 8.7.6 closed: The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`)
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.6 (The Admin Reports Dashboard Screen).
+
+**Summary:**
+- Built the Admin Reports Dashboard Screen inside the admin shell (`app/admin/(shell)/reports/page.tsx` and `_reports-dashboard-view.tsx`):
+  - Strict security: Server-side `requireRole(['admin'])` access guard with venue resolution.
+  - Controls header: 180-day capped date-range filter (`min`, `max`), quick horizon presets (Today, 7D, 30D, 90D, 180D), live "Save Current Query" dialog, and Saved Reports drawer trigger.
+  - Category navigation tabs: Financial & Revenue, Menu & Items, Operations & Latency, Place & Footfall, Integrity & Audits.
+  - 17 modular view chips with live summary KPI cards.
+  - Dynamic responsive tabular grid rendering formatted money (`NPR 0.00`), percentages, status badges, and empty-state placeholders.
+  - View 7 (`payment`) informative empty-state banner explaining activation in Phase 10 per D-7.1 and D-7.7.
+  - 1-click RFC 4180 CSV export downloading direct from `/api/admin/reports/[view]/export`.
+  - Saved Reports slide-over drawer displaying saved configurations with 1-click execution and deletion.
+- Verification:
+  - TypeScript compilation check (`tsc --noEmit`) passes with 0 errors.
+  - Next task: Task 8.7.7.
+
+---
 
 ### ENTRY-0250 — 2026-11-22 — Milestone 8.7 Task 8.7.5 closed: Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`)
 
@@ -1631,41 +1685,23 @@ All tasks ✅ Complete: 8.4.8a through 8.4.8.
 
 All tasks ✅ Complete: 8.4.9a through 8.4.9.
 
-*Milestone 8.5 — Tables and Rooms Management (CURRENT)*
+*Milestone 8.5 — Tables and Rooms Management (CLOSED)*
 
-| ID | Task | Status | Depends on |
-|----|------|--------|------------|
-| 8.5.1 | Table & Room Categories Schema + Migration (`TableCategory` & `RoomCategory`) | ✅ | 8.4.9 |
-| 8.5.2 | Table Categories & Table Management API (`/api/admin/tables`) | ⬜ | 8.5.1 |
-| 8.5.3 | Reserved Table Customer Protection & Scan Routing (`/qr/reserved`) | ⬜ | 8.5.2 |
-| 8.5.4 | Room Categories, Room Management API & Dedicated Pricing (`/api/admin/rooms`) | ⬜ | 8.5.3 |
-| 8.5.5 | Room Stay Pricing Integration into Folio & Billing (`GET /api/guest/bill`) | ⬜ | 8.5.4 |
-| 8.5.6 | Admin Tables Screen & Daily Table Reporting (`app/admin/(shell)/tables/page.tsx`) | ⬜ | 8.5.5 |
-| 8.5.7 | Admin Rooms Screen & Daily Room Reporting (`app/admin/(shell)/rooms/page.tsx`) | ⬜ | 8.5.6 |
-| 8.5.8 | Batch QR Print View (`app/admin/(shell)/qr/print/batch/page.tsx`) | ⬜ | 8.5.7 |
-| 8.5.9 | Verify: multi-role table & room management loop, reserved block, room billing, batch QRs | ⬜ | 8.5.8 |
+All tasks ✅ Complete: 8.5.1 through 8.5.9.
 
-*Milestone 8.6 — Staff Management*
+*Milestone 8.5.10 — The Unified QR, Counter & Place Management Hub (CLOSED)*
 
-| ID | Task | Status |
-|----|------|--------|
-| 8.6.1 | Add `GET /api/admin/staff` | ⬜ |
-| 8.6.2 | Add `POST /api/admin/staff` | ⬜ |
-| 8.6.3 | Add `PATCH /api/admin/staff/[id]` (edit, roles, deactivate) | ⬜ |
-| 8.6.4 | Add `POST /api/admin/staff/[id]/reset-password` | ⬜ |
-| 8.6.5 | Add the Staff Management screen | ⬜ |
-| 8.6.6 | Verify: create, assign roles, deactivate, reset password | ⬜ |
+All tasks ✅ Complete: 8.5.10a through 8.5.10.
 
-*Milestone 8.7 — Reports*
+*Milestone 8.6 — Staff Management & Operational Activity Hub (CLOSED)*
 
-| ID | Task | Status |
-|----|------|--------|
-| 8.7.1 | Add `GET /api/admin/reports/sales` | ⬜ |
-| 8.7.2 | Add `GET /api/admin/reports/sales/export` (CSV) | ⬜ |
-| 8.7.3 | Add the Reports screen | ⬜ |
-| 8.7.4 | Verify: 6-month range, export, open CSV | ⬜ |
+All tasks ✅ Complete: 8.6.1 through 8.6.9.
 
-*Milestone 8.8 — Settings*
+*Milestone 8.7 — Reports & Operational Intelligence Hub (CLOSED)*
+
+All tasks ✅ Complete: 8.7.0 through 8.7.7.
+
+*Milestone 8.8 — Settings (CURRENT)*
 
 | ID | Task | Status |
 |----|------|--------|
