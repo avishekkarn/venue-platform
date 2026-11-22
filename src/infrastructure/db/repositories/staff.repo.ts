@@ -27,6 +27,7 @@ import {
   type StaffMember,
   type StaffMemberWithCredentials,
   type CreateStaffInput,
+  type UpdateStaffInput,
   type ListStaffFilter,
   StaffRole,
   StaffState,
@@ -189,6 +190,48 @@ export function createPrismaStaffRepository(
             `Staff member with username '${input.username}' already exists in venue '${input.venueId}'`
           );
         }
+        return fail(
+          DomainErrorCode.INTERNAL,
+          "Database write operation failed"
+        );
+      }
+    },
+
+    async update(
+      venueId: string,
+      id: string,
+      patch: UpdateStaffInput
+    ): Promise<Result<StaffMember>> {
+      try {
+        const existing = await client.staffMember.findFirst({
+          where: { id, venueId },
+        });
+
+        if (!existing) {
+          return fail(
+            DomainErrorCode.NOT_FOUND,
+            `Staff member with id '${id}' not found in venue '${venueId}'`
+          );
+        }
+
+        const dataToUpdate: Prisma.StaffMemberUpdateInput = {};
+        if (patch.name !== undefined) {
+          dataToUpdate.name = patch.name;
+        }
+        if (patch.roles !== undefined) {
+          dataToUpdate.roles = patch.roles.map((r) => DOMAIN_TO_PRISMA_ROLE[r]);
+        }
+        if (patch.state !== undefined) {
+          dataToUpdate.state = patch.state as unknown as PrismaStaffState;
+        }
+
+        const updated = await client.staffMember.update({
+          where: { id },
+          data: dataToUpdate,
+        });
+
+        return ok(mapStaffMember(updated));
+      } catch {
         return fail(
           DomainErrorCode.INTERNAL,
           "Database write operation failed"

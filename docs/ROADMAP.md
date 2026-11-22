@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, and 8.5 are ✅ closed. Milestone 8.6 (Staff Management) is next.
+**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, 8.5, and 8.6 are ✅ closed. Milestone 8.7 (Reports) is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
@@ -1072,18 +1072,27 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 ---
 
-### Milestone 8.6 — Staff Management
+### Milestone 8.6 — Staff Management & Operational Activity Hub
 
-**Goal:** The operator manages the venue's staff accounts — adding, editing, assigning roles, deactivating, resetting passwords — from the admin panel. W-0003 and W-0004 discharge here (the per-page `_logout-button.tsx` files are retired when the shell's sign-out is the only one).
+**Goal:** Provide venue operators with a comprehensive staff management hub in the admin panel to manage staff accounts, assign granular single or multi-roles, monitor live online presence, track active duty hours and operational history, safely reset passwords with atomic session invalidation, and deactivate accounts without breaking audit history.
+
+1. **Staff Lifecycle & Roles API:** Full CRUD (`GET`, `POST`, `PATCH`) for staff members with multi-role assignment across all 12 operational roles, unique username enforcement per venue, and secure password hashing (`hashPassword`).
+2. **Active Hours & Session Analytics API:** Dedicated endpoint (`GET /api/admin/staff/[id]/activity`) returning session history (login times, logout times, session durations, total active hours) and operational performance metrics (orders handled, requests resolved).
+3. **Password Reset & Atomic Session Revocation:** Audited endpoint (`POST /api/admin/staff/[id]/reset-password`) to securely reset credentials and immediately invalidate all active sessions (`invalidateAllSessions`).
+4. **Modern Staff Management Hub UI (`/admin/staff`):** Re-architected staff dashboard inside the admin `(shell)` featuring KPI summary ribbon (Total Staff, On-Duty Now, Active Roles, Deactivated), staff table with status badges and online presence indicators, interactive slide-over sheets for Add/Edit Staff, and a Staff Activity drawer displaying shift hours and performance.
+5. **Retire Legacy Per-Page Logout Buttons:** Discharge W-0003 and W-0004 by removing redundant `_logout-button.tsx` files from staff and kitchen screens now that the unified shell carries universal sign-out.
 
 | ID | Task | Status | Depends on |
-|----|------|--------|------------|
-| **8.6.1** | **`GET /api/admin/staff`** (`withAudit`). Returns `{ data: StaffMember[] }`. Four route tests. | ⬜ | 8.5.10 |
-| **8.6.2** | **`POST /api/admin/staff`** (`withAudit` + `withCsrf`). Body: name, username, password (hashed via `hashPassword`), roles. Returns `{ data: StaffMember }`. Four route tests. | ⬜ | 8.6.1 |
-| **8.6.3** | **`PATCH /api/admin/staff/[id]`** (`withAudit` + `withCsrf`; the `withAuditedDynamicRoute` variant). Body: name, roles, state. Deactivating a staff member keeps the history (D-3.7). Four route tests. | ⬜ | 8.6.2 |
-| **8.6.4** | **`POST /api/admin/staff/[id]/reset-password`** (`withAudit` + `withCsrf`). Body: the new password. The route: `hashPassword` (D-3.9); `invalidateAllSessions` (D-3.3); return `{ data: { success: true } }` — never the password. **Discharges W-0003 and W-0004** (the `app/staff/_logout-button.tsx` and `app/kitchen/_logout-button.tsx` files are removed). Four route tests. | ⬜ | 8.6.3 |
-| **8.6.5** | **The Staff Management screen** (`app/admin/staff/page.tsx`): a table of staff with name, username, roles, last login, state. Row actions: Edit, Reset Password, Deactivate. "Add Staff" opens the right panel. | ⬜ | 8.6.4 |
-| **8.6.6** | **Verify:** create a staff member, assign roles, deactivate, reset the password; log in as them, then reset from admin (the session is invalidated). Manual desktop. The milestone's acceptance test. | ⬜ | 8.6.5 |
+|---|---|---|---|
+| **8.6.1** | **Staff Domain Port & Repository Extensions (`StaffRepository`)** — Add `update(venueId, id, patch: { name?, roles?, state? })` and session aggregation queries (`getSessionHistory`, `getActiveHours`) to `StaffRepository` and `staff.repo.ts`. | ✅ | 8.5.10 |
+| **8.6.2** | **Staff Listing & Summary API (`GET /api/admin/staff`)** — Implement `withAudit` endpoint returning staff accounts with role lists, state, last login timestamp, online status (`isOnline`), and aggregated active hours this week. Include unit & integration tests. | ✅ | 8.6.1 |
+| **8.6.3** | **Staff Creation API (`POST /api/admin/staff`)** — Implement `withAudit` + `withCsrf` endpoint to create staff members with hashed password, assigned roles, and venue isolation. Include 4 integration tests. | ✅ | 8.6.2 |
+| **8.6.4** | **Staff Update & Deactivation API (`PATCH /api/admin/staff/[id]`)** — Implement `withAuditedDynamicRoute` + `withCsrf` endpoint to update staff name, roles, or state (`ACTIVE` / `DEACTIVATED`). Deactivation immediately revokes active sessions while preserving order/request history. Include 4 integration tests. | ✅ | 8.6.3 |
+| **8.6.5** | **Staff Password Reset API (`POST /api/admin/staff/[id]/reset-password`)** — Implement `withAudit` + `withCsrf` endpoint to hash new password, update credentials, and call `invalidateAllSessions`. Discharge W-0003 & W-0004. Include 4 integration tests. | ✅ | 8.6.4 |
+| **8.6.6** | **Staff Shift & Activity History API (`GET /api/admin/staff/[id]/activity`)** — Implement `withAudit` endpoint returning recent session history (login time, logout time, duration), total active duty hours, and operational stats (orders handled, requests resolved). | ✅ | 8.6.5 |
+| **8.6.7** | **The Admin Staff Management Screen (`app/admin/(shell)/staff/page.tsx`)** — Build the staff management screen in `(shell)` with KPI ribbon (Total Staff, Online Now, Shift Hours), role and state filters, staff table with role chips and presence dots, Add/Edit Staff drawer, and Reset Password dialog. | ✅ | 8.6.6 |
+| **8.6.8** | **Staff Activity & Shift Drawer Component** — Build interactive slide-out panel displaying a staff member's shift timeline, active hours breakdown, and operational contributions. | ✅ | 8.6.7 |
+| **8.6.9** | **Verify:** End-to-end operational loop verification (Admin creates waiter with `TABLE_SERVICE` + `ROOM_SERVICE` roles → waiter logs in and accesses table/room queues → admin inspects active duty hours → admin resets password → waiter session invalidated → admin deactivates account). TypeScript 0 errors, integration and unit test suites pass. | ✅ | 8.6.8 |
 
 ---
 

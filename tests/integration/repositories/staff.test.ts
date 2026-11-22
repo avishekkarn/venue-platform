@@ -254,4 +254,57 @@ describe("StaffRepository Integration Tests", () => {
       }
     });
   });
+
+  it("updates staff member name, roles, and state via update", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+
+      const venueResult = await venueRepo.create({
+        name: "Staff Update Test Venue",
+        slug: `venue-${Date.now()}-update-staff`,
+        taxRate: "0.0825",
+      });
+      expect(venueResult.ok).toBe(true);
+      if (!venueResult.ok) return;
+
+      const venueId = venueResult.value.id;
+
+      const createResult = await staffRepo.create({
+        venueId,
+        name: "Bob Server",
+        username: "bob_server",
+        passwordHash: "$argon2id$v=19$m=65536,t=3,p=4$fakehash123",
+        roles: [StaffRole.TABLE_SERVICE],
+      });
+      expect(createResult.ok).toBe(true);
+      if (!createResult.ok) return;
+
+      const staffId = createResult.value.id;
+
+      // Update name and add ROOM_SERVICE role
+      const updateResult = await staffRepo.update(venueId, staffId, {
+        name: "Bob Senior Server",
+        roles: [StaffRole.TABLE_SERVICE, StaffRole.ROOM_SERVICE],
+      });
+      expect(updateResult.ok).toBe(true);
+      if (updateResult.ok) {
+        expect(updateResult.value.name).toBe("Bob Senior Server");
+        expect(updateResult.value.roles).toEqual([
+          StaffRole.TABLE_SERVICE,
+          StaffRole.ROOM_SERVICE,
+        ]);
+        expect(updateResult.value.state).toBe(StaffState.ACTIVE);
+      }
+
+      // Update state to DEACTIVATED
+      const deactResult = await staffRepo.update(venueId, staffId, {
+        state: StaffState.DEACTIVATED,
+      });
+      expect(deactResult.ok).toBe(true);
+      if (deactResult.ok) {
+        expect(deactResult.value.state).toBe(StaffState.DEACTIVATED);
+      }
+    });
+  });
 });

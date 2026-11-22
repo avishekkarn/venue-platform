@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0244 | 2026-11-22 | Milestone 8.6 closed: Staff Management Hub, Roles RBAC, Active Duty Hours, Session History & Security Revocation | PASS | Milestone 8.6 | §5.3 |
 | ENTRY-0243 | 2026-11-21 | Milestone 8.5 closed (Tables & Rooms Management, Reserved Enforcement, Room Pricing, Reporting & Verification) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0242 | 2026-11-21 | Milestone 8.5 Task 8.5.8 closed (Batch QR Print View) | PASS | Milestone 8.5 | §5.3 |
 | ENTRY-0241 | 2026-11-21 | Milestone 8.5 Task 8.5.7 closed (Admin Rooms Screen & Daily Reporting) | PASS | Milestone 8.5 | §5.3 |
@@ -143,13 +144,75 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0244
+Next entry number: 0245
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.6 (Staff Management). Current task: Task 8.6.1 — `GET /api/admin/staff`.
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports). Current task: Task 8.7.1 — `GET /api/admin/reports/summary`.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0244 — 2026-11-22 — Milestone 8.6 closed: Staff Management Hub, Roles RBAC, Active Duty Hours, Session History & Security Revocation
+
+**Status:** PASS
+
+**Task:** Milestone 8.6 (Tasks 8.6.1 through 8.6.9).
+
+**Summary:**
+Milestone 8.6 is officially CLOSED (✅) with the delivery of a comprehensive, production-grade Staff Management and Operational Activity Hub:
+1. **Domain & Repository Foundations (Task 8.6.1)**:
+   - Extended `StaffRepository` interface with `update(venueId, id, patch)` and defined rich activity types (`StaffSessionRecord`, `StaffActivitySummary`, `AdminStaffItem`).
+   - Implemented `update` in `src/infrastructure/db/repositories/staff.repo.ts` handling name, roles mapping, and state changes with audit preservation.
+   - Verified in `tests/integration/repositories/staff.test.ts` (6 tests passing).
+2. **Staff Listing & Summary API (`GET /api/admin/staff`, Task 8.6.2)**:
+   - Built audited endpoint returning staff members with assigned roles, state, online presence status (`isOnline`), last login timestamp, shift start, duty hours today & week, and operational contributions.
+   - Aggregates venue-wide summary metrics: total staff, active accounts, on-duty staff, deactivated accounts, and role distribution counts.
+3. **Staff Creation API (`POST /api/admin/staff`, Task 8.6.3)**:
+   - Built audited, CSRF-protected endpoint with strict validation (name length, username regex `^[a-z0-9_]{3,30}$`, password >= 8 chars, non-empty valid `StaffRole` array).
+   - Enforces unique usernames per venue, hashes credentials using Argon2id (`hashPassword`), and returns sanitized public shape.
+4. **Staff Update & Deactivation API (`PATCH /api/admin/staff/[id]`, Task 8.6.4)**:
+   - Built audited dynamic endpoint to update staff name, roles, and state.
+   - Enforces security guard preventing administrators from deactivating their own currently logged-in account.
+   - On deactivation, automatically invokes `invalidateAllSessions(staffMemberId)` to terminate all active mobile/desktop sessions immediately while preserving historical audit and order logs.
+5. **Staff Password Reset API (`POST /api/admin/staff/[id]/reset-password`, Task 8.6.5)**:
+   - Built audited, CSRF-protected endpoint to securely update credentials via Argon2id.
+   - Atomically invalidates all existing staff sessions across all devices (`invalidateAllSessions`) per D-3.3 and D-3.9. Never returns the password or hash.
+6. **Staff Shift & Activity History API (`GET /api/admin/staff/[id]/activity`, Task 8.6.6)**:
+   - Built audited endpoint returning detailed shift session timeline (login time, logout time, duration, live shift status), active duty hours (today, this week, lifetime), and recent operational contributions (`OrderStateChange` and `RequestStateChange`).
+7. **Admin Staff Management Screen (`app/admin/(shell)/staff/page.tsx`, Task 8.6.7 & 8.6.8)**:
+   - Built modern staff management screen in the admin shell with "← Back to Dashboard" navigation, 5s live polling toggle, top KPI ribbon (Total Staff, On Duty Now, Active Accounts, Deactivated), search bar, role filter dropdown, state filter, and online presence tabs.
+   - Created interactive modal dialogs:
+     - `AddStaffDialog` with multi-role assignment chips, role category descriptions, and random password generator.
+     - `EditStaffDialog` with role toggling and deactivation warning.
+     - `ResetPasswordDialog` with security session invalidation notice.
+     - `StaffActivityDrawer` slide-out inspector showing shift session history, duty duration per shift, and order/service actions timeline.
+8. **Verification & Benchmarks (Task 8.6.9)**:
+   - `pnpm typecheck` passed with 0 errors (`tsc --noEmit`).
+   - Unit tests: 41 test files, 282 passed (282).
+   - Integration tests: 5 tests passed in `tests/integration/api/admin-staff.test.ts` with 100% pass rate.
+
+**Files Changed:**
+- `docs/ROADMAP.md`: Updated Milestone 8.6 tasks with expanded, robust scope and marked 8.6.1 through 8.6.9 as complete.
+- `src/domain/auth/staff.repository.ts`: Added `update`, `UpdateStaffInput`, `StaffSessionRecord`, and `StaffActivitySummary`.
+- `src/infrastructure/db/repositories/staff.repo.ts`: Implemented `update` method.
+- `app/api/admin/staff/route.ts`: Built `GET` and `POST` handlers with `withAudit` and `withCsrf`.
+- `app/api/admin/staff/[id]/route.ts`: Built `PATCH` handler with `withAuditedDynamicRoute` and session invalidation on deactivation.
+- `app/api/admin/staff/[id]/reset-password/route.ts`: Built `POST` handler with `withAuditedDynamicRoute` and `invalidateAllSessions`.
+- `app/api/admin/staff/[id]/activity/route.ts`: Built `GET` handler returning shift session history and duty hours.
+- `app/admin/(shell)/staff/_types.ts`: Defined TypeScript types for staff management view.
+- `app/admin/(shell)/staff/_role-meta.ts`: Added metadata and badge styles for all 12 staff roles.
+- `app/admin/(shell)/staff/_add-staff-dialog.tsx`: Created Add Staff modal.
+- `app/admin/(shell)/staff/_edit-staff-dialog.tsx`: Created Edit Staff modal.
+- `app/admin/(shell)/staff/_reset-password-dialog.tsx`: Created Reset Password modal.
+- `app/admin/(shell)/staff/_staff-activity-drawer.tsx`: Created Staff Activity & Shift Drawer.
+- `app/admin/(shell)/staff/_staff-management-view.tsx`: Created interactive staff hub view.
+- `app/admin/(shell)/staff/page.tsx`: Created server component page for `/admin/staff`.
+- `tests/integration/repositories/staff.test.ts`: Added test for `StaffRepository.update`.
+- `tests/integration/api/admin-staff.test.ts`: Added comprehensive 5-test suite for staff management APIs.
+- `tests/unit/auth/login.test.ts`: Updated mock `StaffRepository` with `update`.
+
+**Next:** Milestone 8.7 — Reports.
+
 
 ### ENTRY-0243 — 2026-11-21 — Milestone 8.5 closed: Tables & Rooms Management, Reserved Enforcement, Room Pricing, Reporting & Verification
 

@@ -59,8 +59,34 @@ export interface CreateStaffInput {
   readonly roles: readonly StaffRole[];
 }
 
+export interface UpdateStaffInput {
+  readonly name?: string;
+  readonly roles?: readonly StaffRole[];
+  readonly state?: StaffState;
+}
+
 export interface ListStaffFilter {
   readonly state?: StaffState;
+}
+
+export interface StaffSessionRecord {
+  readonly id: string;
+  readonly createdAt: Date;
+  readonly endedAt: Date | null;
+  readonly durationMinutes: number;
+  readonly isLive: boolean;
+}
+
+export interface StaffActivitySummary {
+  readonly staffMemberId: string;
+  readonly isOnline: boolean;
+  readonly lastLoginAt: Date | null;
+  readonly activeHoursTodayMinutes: number;
+  readonly activeHoursWeekMinutes: number;
+  readonly totalHistoricalActiveMinutes: number;
+  readonly ordersHandledCount: number;
+  readonly requestsResolvedCount: number;
+  readonly recentSessions: readonly StaffSessionRecord[];
 }
 
 export interface StaffRepository {
@@ -74,6 +100,11 @@ export interface StaffRepository {
     filter?: ListStaffFilter
   ): Promise<Result<StaffMember[]>>;
   create(input: CreateStaffInput): Promise<Result<StaffMember>>;
+  update(
+    venueId: string,
+    id: string,
+    patch: UpdateStaffInput
+  ): Promise<Result<StaffMember>>;
   updatePasswordHash(
     venueId: string,
     id: string,

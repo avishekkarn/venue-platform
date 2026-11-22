@@ -46,6 +46,7 @@ describe("login domain function", () => {
         findByUsername: vi.fn(),
         listForVenue: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
         updatePasswordHash: vi.fn(),
         setState: vi.fn(),
       },
