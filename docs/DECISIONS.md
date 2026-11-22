@@ -1731,6 +1731,29 @@ evokeToken followed by invalidateSessionsForPlace.
 
 ---
 
+### D-11.5 — The venue's timezone is configured on Venue.timezone
+
+**Decision:** The venue's timezone is configured on `Venue.timezone` as an IANA timezone identifier (defaulting to `"Asia/Kathmandu"` for Juniper House, or `"UTC"`). It is set by the developer at onboarding per D-9.6. All operational, audit, and reporting timestamps presented to managers and staff in reports and dashboards are rendered in the venue's configured timezone.
+
+**Context:** Raw database timestamps are stored in UTC (ISO 8601 strings ending in `Z`). When reporting hourly heatmaps, order placement times, shift hours, and daily revenue to a local venue manager in Nepal (UTC+5:45), displaying UTC hours causes dinner service at 19:45 local time to appear as "Hour 14", creating operational misinterpretations. Setting the timezone at the venue level ensures that all aggregations and visualizations reflect local business operating hours.
+
+**Alternatives considered:**
+
+- Render raw UTC everywhere — rejected. Managers in non-UTC timezones misinterpret peak hours and shift transitions.
+- Client browser timezone detection (`Intl.DateTimeFormat`) — rejected for reports. Multiple staff members opening reports from different devices or remote management locations would see shifted date boundaries and mismatched daily totals. A venue's operational day must be anchored to the venue's physical location.
+
+**Consequences:**
+
+- `Venue.timezone` stores the venue's IANA timezone string (e.g. `"Asia/Kathmandu"`).
+- All report domain calculators localize dates and hourly bins to `Venue.timezone`.
+- The Hourly Heatmap renders hours labeled in venue-local time (e.g., `19:00 NPT`).
+
+**What would make us revisit:** If multi-property hospitality groups require runtime timezone adjustments per terminal.
+
+**Traces to:** D-11.1, D-11.2, D-11.4, D-9.6, BUILD.md §7.1.
+
+---
+
 ## 12. Reporting
 
 ### D-12.1 — Reports cover up to 6 months
@@ -1883,6 +1906,51 @@ evokeToken followed by invalidateSessionsForPlace.
 **What would make us revisit:** If query recalculation of 6-month ranges exceeds 100ms under high scale, we can introduce an optional query cache table.
 
 **Traces to:** D-3.7, D-10.2, D-12.1, D-12.3, BUILD.md §6.11, Task 8.7.0, Task 8.7.5.
+
+---
+
+### D-12.8 — Folio grouping: consecutive guest sessions with gaps <= 4 hours form one room stay
+
+**Decision:** A room folio groups all consecutive guest sessions at the same room where the gap between one session's `endedAt` and the next session's `createdAt` is $\le 4$ hours. Sessions separated by $> 4$ hours are classified as separate stays. A stay whose most recent session has `endedAt = null` is marked `ACTIVE`; otherwise it is `CLOSED`.
+
+**Context:** Guests staying in a hotel room over multiple days may occasionally trigger new sessions (e.g. after scanning a refreshed QR or switching devices). Conversely, when a guest checks out, a housekeeping turn typically occurs within 4 hours before the next guest checks in. Grouping consecutive sessions separated by $\le 4$ hours provides a faithful representation of a single guest stay, aggregating food & beverage orders, room service requests, and folio balances into an intuitive guest account. A gap $> 4$ hours cleanly demarcates distinct guest stays without requiring guest identity or PII.
+
+**Alternatives considered:**
+
+- One folio per individual guest session — rejected. In multi-day stays or re-scans, the manager would see fragmented folios for the same stay.
+- Arbitrary calendar day splitting — rejected. Stays spanning midnight would be artificially split.
+- Requiring guest name/account for folio grouping — rejected. Violates D-2.1 (guest anonymity).
+
+**Consequences:**
+
+- `generateRoomFolio` implements the $\le 4$-hour session walking algorithm.
+- Room folio reports display `Stay Start`, `Stay End` (or `ACTIVE`), `Orders`, `Requests`, `Order Revenue`, and `Stale Session` warning (if active $> 4$ hours).
+- The 4-hour rule is documented in the folio report header comment and applied identically in UI and CSV exports.
+
+**What would make us revisit:** If a resort with extended vacant intervals or same-day day-use rooms requests configurable housekeeping thresholds.
+
+**Traces to:** D-2.1, D-2.5, D-12.1, D-12.5.
+
+---
+
+### D-12.9 — withAuditedDynamicRoute for dynamic route context pass-through
+
+**Decision:** Dynamic routes requiring audit trail logging (such as `/api/admin/reports/[view]`, `/api/admin/reports/[view]/export`, and `/api/admin/reports/saved/[id]`) are wrapped with `withAuditedDynamicRoute<TParams>`, a specialized variant of `withAudit` that accepts and passes the Next.js `context.params` object through to the underlying audited route handler.
+
+**Context:** BUILD.md §6.11 anticipated this need: *"When Phase 8 needs to wrap a dynamic route, it introduces a variant ... a new decision record if warranted, a new test"*. Next.js App Router dynamic routes deliver URL parameters inside `{ params: Promise<T> | T }` as the second argument to route handlers. Wrapping dynamic routes with the standard 2-argument `withAudit` causes `context.params` to be dropped or typed incompatibly.
+
+**Alternatives considered:**
+
+- Parsing the URL path manually via `new URL(request.url).pathname` — rejected. Fragile and breaks when basePath or route structures change.
+- Altering the existing `withAudit` export signature — rejected. Breaking change for existing static routes.
+
+**Consequences:**
+
+- `src/infrastructure/audit/with-audit.ts` exports `withAuditedDynamicRoute<TParams>`.
+- Dynamic routes preserve strict audit logging, actor resolution, and type safety for URL parameters.
+- Verified by integration tests asserting audit row emission alongside parameter extraction.
+
+**Traces to:** BUILD.md §6.11, D-3.7, D-10.2.
 
 ---
 

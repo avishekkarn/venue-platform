@@ -39,6 +39,7 @@ function mapVenue(
     welcomeMessage: raw.welcomeMessage,
     language: raw.language,
     currency: raw.currency,
+    timezone: raw.timezone ?? "Asia/Kathmandu",
     taxRate: raw.taxRate.toString(),
     isActive: raw.isActive,
     createdAt: raw.createdAt,
@@ -125,6 +126,7 @@ export function createPrismaVenueRepository(
             welcomeMessage: input.welcomeMessage,
             language: input.language,
             currency: input.currency,
+            timezone: input.timezone ?? "Asia/Kathmandu",
             taxRate: input.taxRate,
             isActive: input.isActive,
             modules: input.modules?.length

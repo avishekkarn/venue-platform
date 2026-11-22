@@ -5,6 +5,10 @@
  * - DECISIONS.md D-12.2, D-12.5 (CSV-only export in v1; UTF-8 BOM encoding).
  * - DECISIONS.md D-12.1 (date range <= 180 days).
  * - DECISIONS.md D-10.2 (strict venue scoping).
+ * - DECISIONS.md D-11.5 (venue timezone localization).
+ * - DECISIONS.md D-12.6 (snapshotted categoryName).
+ * - DECISIONS.md D-12.7 (report run execution audit).
+ * - DECISIONS.md D-12.8 (4-hour folio stay grouping rule).
  * - BUILD.md §7.1 (decimal money precision preserved).
  * - BUILD.md §6.11 (withAuditedDynamicRoute audit trail).
  */
@@ -18,7 +22,7 @@ import { getSessionCookie } from "@/infrastructure/auth/cookies";
 import { validateSession } from "@/infrastructure/auth/session";
 import { getVenueSlug } from "@/infrastructure/config/venue";
 import { canAccess } from "@/domain/auth/can-access";
-import { StaffRole, StaffState } from "@/domain/auth/staff.repository";
+import { StaffState } from "@/domain/auth/staff.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
 import {
   withAuditedDynamicRoute,
@@ -32,9 +36,9 @@ import {
   generateRevenueSummary,
   generateItemSales,
   generateOrderFunnel,
-  generateServiceRequestsReport,
+  generateServiceRequests,
   generatePlaceUtilization,
-  generateQrLifecycleReport,
+  generateQrLifecycle,
   generateAuditExport,
   generateHourlyHeatmap,
   generateMenuMatrix,
@@ -42,9 +46,10 @@ import {
   generateTaxRemittance,
   generateCancellationRootCause,
   generateServiceSla,
-  generateRoomFolioReport,
+  generateRoomFolio,
   generateOccupancyDwell,
-  generateQrConversionReport,
+  generateConversionReport,
+  generatePaymentReconciliationStatus,
 } from "@/domain/reports";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -152,19 +157,34 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     );
   }
 
-  // Special case: Payment Reconciliation empty CSV in v1 per D-7.1 and D-7.7
+  // Special case: Payment Reconciliation in v1 per D-7.1 and D-7.7
   if (view === "payment") {
+    const orders = await db.order.findMany({
+      where: { venueId: venue.id, state: "COMPLETED" },
+      select: { total: true },
+    });
+    const totalCash = orders.reduce((sum, o) => sum + parseFloat(o.total.toString()), 0);
+    const status = generatePaymentReconciliationStatus({
+      totalCashCollected: totalCash.toFixed(2),
+      completedOrdersCount: orders.length,
+      currency: venue.currency,
+    });
+
     const headers = [
-      "Ticket ID",
-      "Order ID",
-      "Amount",
-      "Currency",
-      "Method",
-      "Provider",
+      "Payment Method",
       "Status",
-      "Verified At",
+      "Orders",
+      "Amount Collected",
+      "Discrepancies",
     ];
-    const csvContent = serializeCsv(headers, []);
+    const dataRows = [
+      ["CASH", "ACTIVE", status.completedOrdersCount, status.totalCashCollected, "0.00"],
+    ];
+    const comments = [
+      "# Payment Reconciliation inactive in v1 (cash-only, D-7.1, D-7.7). Cash collection summary above.",
+    ];
+
+    const csvContent = serializeCsv(headers, dataRows, comments);
     return new NextResponse(csvContent, {
       status: 200,
       headers: {
@@ -196,6 +216,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
   let headers: readonly string[] = [];
   let dataRows: (readonly unknown[])[] = [];
+  const comments: string[] = [];
 
   switch (view) {
     case "revenue": {
@@ -249,13 +270,12 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
     case "sales": {
       headers = [
-        "Category",
         "Item Name",
+        "Category",
         "Units Sold",
-        "Base Revenue",
+        "Avg Unit Price",
         "Modifier Revenue",
         "Line Revenue",
-        "Modifier Attach Rate %",
       ];
       const items = await db.orderItem.findMany({
         where: {
@@ -288,14 +308,16 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         }))
       );
       if (res.ok) {
-        dataRows = res.value.map((r) => [
-          r.category,
+        comments.push(
+          `# Uncategorized item percentage: ${res.value.uncategorizedItemPct.toFixed(1)}% (catalog category missing at order time)`
+        );
+        dataRows = res.value.rows.map((r) => [
           r.itemName,
+          r.category,
           r.unitsSold,
-          r.baseRevenue,
+          r.unitsSold > 0 ? (parseFloat(r.lineRevenue) / r.unitsSold).toFixed(2) : "0.00",
           r.modifierRevenue,
           r.lineRevenue,
-          r.modifierAttachRate,
         ]);
       }
       break;
@@ -303,19 +325,32 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
     case "funnel": {
       headers = [
-        "Date",
+        "Period",
         "Orders Placed",
-        "Approved",
-        "Preparing",
-        "Ready",
-        "Delivered",
-        "Completed",
-        "Cancelled",
-        "Avg Approval (s)",
-        "Avg Prep (s)",
-        "Avg Delivery (s)",
-        "Avg Cycle (s)",
+        "Orders Completed",
+        "Approval P50 (s)",
+        "Approval P90 (s)",
+        "Approval Max (s)",
+        "Prep P50 (s)",
+        "Prep P90 (s)",
+        "Prep Max (s)",
+        "Delivery P50 (s)",
+        "Delivery P90 (s)",
+        "Delivery Max (s)",
+        "Close-Out P50 (s)",
+        "Close-Out P90 (s)",
+        "Close-Out Max (s)",
+        "Cycle P50 (s)",
+        "Cycle P90 (s)",
+        "Cycle Max (s)",
       ];
+      comments.push(
+        "# Cycle Time = Approval + Prep + Delivery + Close-Out (|Cycle - sum| <= 1s per D-4.9)"
+      );
+      comments.push(
+        "# Latency P50/P90/Max across completed orders. Outliers (> 3x P90) listed in anomalies panel."
+      );
+
       const orders = await db.order.findMany({
         where: {
           venueId: venue.id,
@@ -340,19 +375,25 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         }))
       );
       if (res.ok) {
-        dataRows = res.value.map((r) => [
+        dataRows = res.value.rows.map((r) => [
           r.date,
           r.ordersPlaced,
-          r.approved,
-          r.preparing,
-          r.ready,
-          r.delivered,
           r.completed,
-          r.cancelled,
-          r.avgApprovalSec,
-          r.avgPrepSec,
-          r.avgDeliverySec,
-          r.avgCycleSec,
+          r.p50ApprovalSec,
+          r.p90ApprovalSec,
+          r.maxApprovalSec,
+          r.p50PrepSec,
+          r.p90PrepSec,
+          r.maxPrepSec,
+          r.p50DeliverySec,
+          r.p90DeliverySec,
+          r.maxDeliverySec,
+          r.p50CloseOutSec,
+          r.p90CloseOutSec,
+          r.maxCloseOutSec,
+          r.p50CycleSec,
+          r.p90CycleSec,
+          r.maxCycleSec,
         ]);
       }
       break;
@@ -365,8 +406,12 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         "Completed",
         "Declined",
         "Cancelled",
-        "Avg Resolution (min)",
+        "Avg Resolution Min (completed only)",
       ];
+      comments.push(
+        '# Avg Resolution is computed over completed only. "—" when no completions.'
+      );
+
       const requests = await db.serviceRequest.findMany({
         where: {
           venueId: venue.id,
@@ -379,7 +424,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const res = generateServiceRequestsReport(
+      const res = generateServiceRequests(
         requests.map((r) => ({
           id: r.id,
           serviceType: r.serviceType,
@@ -398,7 +443,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
           r.completed,
           r.declined,
           r.cancelled,
-          r.avgResolutionMin,
+          r.avgResolutionMin !== null ? r.avgResolutionMin : "—",
         ]);
       }
       break;
@@ -409,13 +454,19 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         "Place Type",
         "Place Number",
         "Category",
-        "Sessions",
-        "Avg Dwell (min)",
+        "Sessions (closed)",
+        "Active Sessions",
+        "Avg Dwell Min",
+        "Max Dwell Min",
         "Orders",
         "Revenue",
         "Conversion %",
       ];
-      const [tables, rooms, sessions] = await Promise.all([
+      comments.push(
+        "# Active sessions counted separately; excluded from Avg Dwell (D-12.8)."
+      );
+
+      const [tables, rooms, counters, sessions] = await Promise.all([
         db.table.findMany({
           where: { venueId: venue.id },
           include: { category: true },
@@ -423,6 +474,9 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         db.room.findMany({
           where: { venueId: venue.id },
           include: { category: true },
+        }),
+        db.counter.findMany({
+          where: { venueId: venue.id },
         }),
         db.guestSession.findMany({
           where: {
@@ -441,34 +495,53 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       const placesInput = [
         ...tables.map((t) => {
           const tableSessions = sessions.filter((s) => s.tableId === t.id);
-          const totals = tableSessions.flatMap((s) => s.orders.map((o) => o.total.toFixed(2)));
           return {
             placeType: "TABLE",
             placeNumber: t.number,
-            category: t.category?.name ?? null,
+            category: t.category?.name ?? "Standard",
             sessions: tableSessions.map((s) => ({
               id: s.id,
               createdAt: s.createdAt,
               endedAt: s.endedAt,
-              hasOrders: s.orders.length > 0,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
             })),
-            orderTotals: totals,
           };
         }),
         ...rooms.map((r) => {
           const roomSessions = sessions.filter((s) => s.roomId === r.id);
-          const totals = roomSessions.flatMap((s) => s.orders.map((o) => o.total.toFixed(2)));
           return {
             placeType: "ROOM",
             placeNumber: r.number,
-            category: r.category?.name ?? null,
+            category: r.category?.name ?? "Standard",
             sessions: roomSessions.map((s) => ({
               id: s.id,
               createdAt: s.createdAt,
               endedAt: s.endedAt,
-              hasOrders: s.orders.length > 0,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
             })),
-            orderTotals: totals,
+          };
+        }),
+        ...counters.map((c) => {
+          const counterSessions = sessions.filter((s) => s.counterId === c.id);
+          return {
+            placeType: "COUNTER",
+            placeNumber: c.name,
+            category: "Counter",
+            sessions: counterSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
           };
         }),
       ];
@@ -479,8 +552,10 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
           r.placeType,
           r.placeNumber,
           r.category,
-          r.sessions,
+          r.sessionsClosed,
+          r.activeSessions,
           r.avgDwellMin,
+          r.maxDwellMin,
           r.orders,
           r.revenue,
           r.conversionPct,
@@ -497,8 +572,14 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         "Status",
         "Issued",
         "Revoked",
+        "Revoked By",
+        "Revocation Reason",
         "Sessions Generated",
       ];
+      comments.push(
+        "# Sessions Generated is filtered by session createdAt within range."
+      );
+
       const tokens = await db.qrToken.findMany({
         where: { venueId: venue.id },
         include: {
@@ -506,13 +587,31 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
           room: true,
           counter: true,
           guestSessions: {
-            where: { createdAt: { gte: fromDate, lte: toDate } },
-            select: { id: true },
+            include: {
+              orders: {
+                where: { state: "COMPLETED" },
+                select: { total: true },
+              },
+            },
           },
         },
       });
 
-      const res = generateQrLifecycleReport(
+      const staffMap = new Map<string, string>();
+      const staffIds = tokens
+        .map((t) => t.revokedByStaffId)
+        .filter((id): id is string => !!id);
+      if (staffIds.length > 0) {
+        const staffMembers = await db.staffMember.findMany({
+          where: { id: { in: staffIds } },
+          select: { id: true, name: true },
+        });
+        for (const sm of staffMembers) {
+          staffMap.set(sm.id, sm.name);
+        }
+      }
+
+      const res = generateQrLifecycle(
         tokens.map((t) => {
           let label = "Unassigned";
           if (t.table) label = t.table.number;
@@ -521,15 +620,29 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
           return {
             tokenId: t.id,
+            token: t.token,
             placeType: t.placeType,
             placeLabel: label,
-            isRevoked: t.state === "REVOKED",
-            createdAt: t.createdAt,
+            status: t.state as "ACTIVE" | "REVOKED",
+            issuedAt: t.createdAt,
             revokedAt: t.revokedAt,
-            sessionsCount: t.guestSessions.length,
+            revokedByStaffName: t.revokedByStaffId
+              ? staffMap.get(t.revokedByStaffId) ?? null
+              : null,
+            revocationReason: t.revocationReason,
+            sessions: t.guestSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
           };
-        })
+        }),
+        { dateFrom, dateTo }
       );
+
       if (res.ok) {
         dataRows = res.value.map((r) => [
           r.tokenId,
@@ -538,6 +651,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
           r.status,
           r.issued,
           r.revoked,
+          r.revokedBy,
+          r.revocationReason,
           r.sessionsGenerated,
         ]);
       }
@@ -550,10 +665,14 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         "Record Type",
         "Entity ID",
         "Target State",
-        "Staff Name",
+        "Staff Member",
         "Staff Username",
         "Note",
       ];
+      comments.push(
+        "# Chronological order of state transitions. Venue-scoped (D-10.2). Never aggregate staff surveillance (D-12.4)."
+      );
+
       const [orderChanges, requestChanges] = await Promise.all([
         db.orderStateChange.findMany({
           where: {
@@ -608,7 +727,9 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     }
 
     case "heatmap": {
-      headers = ["Date", "Hour", "Orders", "Revenue"];
+      headers = ["Date", "Hour (Venue Time)", "Place Type", "Orders", "Revenue"];
+      comments.push("# Hours in venue local time (Venue.timezone, D-11.5).");
+
       const orders = await db.order.findMany({
         where: {
           venueId: venue.id,
@@ -617,6 +738,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
         select: {
           placedAt: true,
+          placeType: true,
           total: true,
         },
       });
@@ -624,17 +746,26 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       const res = generateHourlyHeatmap(
         orders.map((o) => ({
           placedAt: o.placedAt,
+          placeType: o.placeType,
           total: o.total.toFixed(2),
-        }))
+        })),
+        venue.timezone ?? "Asia/Kathmandu"
       );
       if (res.ok) {
-        dataRows = res.value.map((r) => [r.date, r.hour, r.orders, r.revenue]);
+        dataRows = res.value.map((r) => [
+          r.date,
+          r.hour,
+          r.placeType,
+          r.orders,
+          r.revenue,
+        ]);
       }
       break;
     }
 
     case "matrix": {
       headers = ["Item Name", "Units Sold", "Line Revenue", "Quadrant"];
+
       const items = await db.orderItem.findMany({
         where: {
           order: {
@@ -653,7 +784,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const salesRes = generateItemSales(
+      const salesResult = generateItemSales(
         items.map((i) => ({
           itemName: i.itemName,
           categoryName: i.categoryName,
@@ -664,16 +795,23 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         }))
       );
 
-      if (salesRes.ok) {
-        const matrixRes = generateMenuMatrix(
-          salesRes.value.map((s) => ({
+      if (salesResult.ok) {
+        const res = generateMenuMatrix(
+          salesResult.value.rows.map((s) => ({
             itemName: s.itemName,
+            categoryName: s.category,
             unitsSold: s.unitsSold,
             lineRevenue: s.lineRevenue,
           }))
         );
-        if (matrixRes.ok) {
-          dataRows = matrixRes.value.map((r) => [
+        if (res.ok) {
+          comments.push(
+            `# Median Volume = ${res.value.medianVolume}, Median Revenue = ${res.value.medianRevenue} ${venue.currency}, Items = ${res.value.itemCount}`
+          );
+          comments.push(
+            "# Profitability axis = line revenue (item cost not tracked in v1 per D-4.1)"
+          );
+          dataRows = res.value.rows.map((r) => [
             r.itemName,
             r.unitsSold,
             r.lineRevenue,
@@ -687,10 +825,10 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     case "modifiers": {
       headers = [
         "Modifier Group",
-        "Modifier Option",
-        "Times Selected",
-        "Revenue",
-        "Attach Rate %",
+        "Option Name",
+        "Attach Count",
+        "Attach Rate",
+        "Total Modifier Revenue",
       ];
       const items = await db.orderItem.findMany({
         where: {
@@ -719,15 +857,15 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
           r.modifierGroup,
           r.modifierOption,
           r.timesSelected,
-          r.revenue,
           r.attachRatePct,
+          r.revenue,
         ]);
       }
       break;
     }
 
     case "tax": {
-      headers = ["Period", "Tax Rate", "Taxable Subtotal", "Tax Collected", "Orders"];
+      headers = ["Tax Rate", "Taxable Subtotal", "Tax Collected", "Effective Rate"];
       const orders = await db.order.findMany({
         where: {
           venueId: venue.id,
@@ -752,11 +890,10 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       );
       if (res.ok) {
         dataRows = res.value.map((r) => [
-          r.period,
           r.taxRate,
           r.taxableSubtotal,
           r.taxCollected,
-          r.orders,
+          r.taxRatePct,
         ]);
       }
       break;
@@ -764,21 +901,35 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
     case "cancellations": {
       headers = ["Date", "Cancelled Orders", "Top Reason", "Reason Count"];
-      const events = await db.orderStateChange.findMany({
-        where: {
-          order: { venueId: venue.id },
-          state: "CANCELLED",
-          occurredAt: { gte: fromDate, lte: toDate },
-        },
-        select: {
-          occurredAt: true,
-          note: true,
-        },
-      });
 
-      const res = generateCancellationRootCause(events);
+      const [events, ordersCount] = await Promise.all([
+        db.orderStateChange.findMany({
+          where: {
+            order: { venueId: venue.id },
+            state: "CANCELLED",
+            occurredAt: { gte: fromDate, lte: toDate },
+          },
+          select: {
+            occurredAt: true,
+            note: true,
+          },
+        }),
+        db.order.count({
+          where: {
+            venueId: venue.id,
+            placedAt: { gte: fromDate, lte: toDate },
+          },
+        }),
+      ]);
+
+      const res = generateCancellationRootCause(events, ordersCount);
       if (res.ok) {
-        dataRows = res.value.map((r) => [
+        if (res.value.isCleanOperations) {
+          comments.push(
+            `# Clean Operations: No cancellations in range. 0 of ${res.value.totalOrders} orders were cancelled (${res.value.cancellationRatePct} cancellation rate).`
+          );
+        }
+        dataRows = res.value.rows.map((r) => [
           r.date,
           r.cancelledOrders,
           r.topReason,
@@ -791,11 +942,17 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     case "sla": {
       headers = [
         "Service Type",
-        "P50 Resolution (min)",
-        "P90 Resolution (min)",
-        "P99 Resolution (min)",
-        "Open Now",
+        "N",
+        "P50 Resolution Min",
+        "P90 Resolution Min",
+        "P99 Resolution Min",
+        "Max Resolution Min",
+        "Open at End of Period",
       ];
+      comments.push(
+        '# P90/P99 suppressed when N < 20; "P50 / max" shown instead.'
+      );
+
       const requests = await db.serviceRequest.findMany({
         where: {
           venueId: venue.id,
@@ -803,7 +960,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
         include: {
           stateChanges: {
-            where: { state: { in: ["COMPLETED", "DECLINED"] } },
+            where: { state: "COMPLETED" },
             orderBy: { occurredAt: "asc" },
             take: 1,
           },
@@ -812,19 +969,25 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
       const res = generateServiceSla(
         requests.map((r) => ({
+          id: r.id,
           serviceType: r.serviceType,
-          state: r.state,
           submittedAt: r.submittedAt,
-          resolvedAt: r.stateChanges[0]?.occurredAt ?? null,
+          state: r.state,
+          stateChanges: r.stateChanges.map((sc) => ({
+            state: sc.state,
+            occurredAt: sc.occurredAt,
+          })),
         }))
       );
       if (res.ok) {
         dataRows = res.value.map((r) => [
           r.serviceType,
+          r.n,
           r.p50ResolutionMin,
-          r.p90ResolutionMin,
-          r.p99ResolutionMin,
-          r.openNow,
+          r.p90ResolutionMin !== null ? r.p90ResolutionMin : "P50 / max",
+          r.p99ResolutionMin !== null ? r.p99ResolutionMin : "P50 / max",
+          r.maxResolutionMin,
+          r.openAtEndOfPeriod,
         ]);
       }
       break;
@@ -835,11 +998,18 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         "Room",
         "Stay Start",
         "Stay End",
+        "Status",
         "Orders",
         "Requests",
         "Order Revenue",
         "Request Count",
+        "Stale Session",
       ];
+      comments.push(
+        "# Folio groups consecutive sessions at the same room with a gap <= 4 hours (D-12.8)."
+      );
+      comments.push("# Billable service charges not tracked in v1.");
+
       const sessions = await db.guestSession.findMany({
         where: {
           venueId: venue.id,
@@ -862,24 +1032,29 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const res = generateRoomFolioReport(
-        sessions.map((s) => ({
-          roomNumber: s.qrToken?.room?.number ?? "Unassigned",
-          stayStart: s.createdAt,
-          stayEnd: s.endedAt,
-          orderTotals: s.orders.map((o) => o.total.toFixed(2)),
-          serviceRequestsCount: s.serviceRequests.length,
-        }))
-      );
+      const folioInputs = sessions.map((s) => ({
+        roomNumber: s.qrToken?.room?.number ?? "Unassigned",
+        createdAt: s.createdAt,
+        endedAt: s.endedAt,
+        ordersCount: s.orders.length,
+        requestsCount: s.serviceRequests.length,
+        ordersRevenue: s.orders
+          .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+          .toFixed(2),
+      }));
+
+      const res = generateRoomFolio(folioInputs);
       if (res.ok) {
         dataRows = res.value.map((r) => [
           r.room,
           r.stayStart,
-          r.stayEnd,
+          r.stayEnd ?? "—",
+          r.status,
           r.orders,
           r.requests,
           r.orderRevenue,
           r.requestCount,
+          r.staleSession ? "Yes" : "No",
         ]);
       }
       break;
@@ -888,31 +1063,107 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     case "occupancy": {
       headers = [
         "Place Type",
+        "Place Number",
         "Period",
         "Total Sessions",
-        "Avg Dwell (min)",
+        "Avg Dwell Min",
         "Peak Concurrent",
+        "Stale Sessions",
       ];
-      const sessions = await db.guestSession.findMany({
-        where: {
-          venueId: venue.id,
-          createdAt: { gte: fromDate, lte: toDate },
-        },
-        select: {
-          placeType: true,
-          createdAt: true,
-          endedAt: true,
-        },
-      });
+      comments.push(
+        "# Rows grouped per place, not aggregated by place type. Stale sessions flagged."
+      );
 
-      const res = generateOccupancyDwell(sessions);
+      const [tables, rooms, counters, sessions] = await Promise.all([
+        db.table.findMany({
+          where: { venueId: venue.id },
+          include: { category: true },
+        }),
+        db.room.findMany({
+          where: { venueId: venue.id },
+          include: { category: true },
+        }),
+        db.counter.findMany({
+          where: { venueId: venue.id },
+        }),
+        db.guestSession.findMany({
+          where: {
+            venueId: venue.id,
+            createdAt: { gte: fromDate, lte: toDate },
+          },
+          include: {
+            orders: {
+              where: { state: "COMPLETED" },
+              select: { total: true },
+            },
+          },
+        }),
+      ]);
+
+      const placesInput = [
+        ...tables.map((t) => {
+          const tableSessions = sessions.filter((s) => s.tableId === t.id);
+          return {
+            placeType: "TABLE",
+            placeNumber: t.number,
+            category: t.category?.name ?? "Standard",
+            sessions: tableSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
+          };
+        }),
+        ...rooms.map((r) => {
+          const roomSessions = sessions.filter((s) => s.roomId === r.id);
+          return {
+            placeType: "ROOM",
+            placeNumber: r.number,
+            category: r.category?.name ?? "Standard",
+            sessions: roomSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
+          };
+        }),
+        ...counters.map((c) => {
+          const counterSessions = sessions.filter((s) => s.counterId === c.id);
+          return {
+            placeType: "COUNTER",
+            placeNumber: c.name,
+            category: "Counter",
+            sessions: counterSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
+          };
+        }),
+      ];
+
+      const res = generateOccupancyDwell(placesInput, `${dateFrom} to ${dateTo}`);
       if (res.ok) {
         dataRows = res.value.map((r) => [
           r.placeType,
+          r.placeNumber,
           r.period,
           r.totalSessions,
           r.avgDwellMin,
           r.peakConcurrent,
+          r.staleSessions,
         ]);
       }
       break;
@@ -922,14 +1173,22 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       headers = [
         "Token",
         "Place Type",
+        "Place Label",
         "Sessions",
         "Orders",
         "Conversion %",
-        "Revenue per Session",
+        "Revenue Per Session",
       ];
+      comments.push(
+        "# Conversion = sessions with >= 1 order / total sessions. Zero-session tokens hidden by default."
+      );
+
       const tokens = await db.qrToken.findMany({
         where: { venueId: venue.id },
         include: {
+          table: true,
+          room: true,
+          counter: true,
           guestSessions: {
             where: { createdAt: { gte: fromDate, lte: toDate } },
             include: {
@@ -942,54 +1201,72 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const res = generateQrConversionReport(
+      const res = generateConversionReport(
         tokens.map((t) => {
-          const sessions = t.guestSessions;
-          const convertedSessions = sessions.filter((s) => s.orders.length > 0);
-          const allOrders = sessions.flatMap((s) => s.orders);
+          let label = "Unassigned";
+          if (t.table) label = t.table.number;
+          else if (t.room) label = t.room.number;
+          else if (t.counter) label = t.counter.name;
+
           return {
             tokenId: t.id,
+            token: t.token,
             placeType: t.placeType,
-            sessionsCount: sessions.length,
-            convertedSessionsCount: convertedSessions.length,
-            ordersCount: allOrders.length,
-            orderTotals: allOrders.map((o) => o.total.toFixed(2)),
+            placeLabel: label,
+            status: t.state as "ACTIVE" | "REVOKED",
+            issuedAt: t.createdAt,
+            sessions: t.guestSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
           };
         })
       );
+
       if (res.ok) {
-        dataRows = res.value.map((r) => [
-          r.token,
-          r.placeType,
-          r.sessions,
-          r.orders,
-          r.conversionPct,
-          r.revenuePerSession,
-        ]);
+        // Zero-session tokens hidden by default per Part 2 spec
+        dataRows = res.value
+          .filter((r) => r.sessions > 0)
+          .map((r) => [
+            r.token,
+            r.placeType,
+            r.placeLabel,
+            r.sessions,
+            r.orders,
+            r.conversionPct,
+            r.revenuePerSession,
+          ]);
       }
       break;
     }
-
-    default:
-      return NextResponse.json(
-        {
-          error: {
-            code: DomainErrorCode.VALIDATION_FAILED,
-            message: `Unsupported view: '${view}'`,
-          },
-        },
-        { status: 400 }
-      );
   }
 
-  const csvContent = serializeCsv(headers, dataRows);
+  // 10,000 row cap check per Part 2 spec
+  let isTruncated = false;
+  if (dataRows.length > 10000) {
+    dataRows = dataRows.slice(0, 10000);
+    isTruncated = true;
+    comments.push("# Warning: Export truncated to 10,000 rows. Narrow your date range.");
+  }
+
+  const csvContent = serializeCsv(headers, dataRows, comments);
+
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": `attachment; filename="${filename}"`,
+  };
+
+  if (isTruncated) {
+    responseHeaders["X-Report-Truncated"] = "true";
+  }
 
   return new NextResponse(csvContent, {
     status: 200,
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
+    headers: responseHeaders,
   });
 };
 

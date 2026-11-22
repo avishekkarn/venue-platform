@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0253 | 2026-11-22 | Master Report Dashboard Refinements, 10 Cross-View Invariants & Staff D-3.2 Presence Alignment | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0252 | 2026-11-22 | Milestone 8.7 closed: Reports & Operational Intelligence Hub (17 Views, Domain, APIs, CSV Streaming, Saved Reports, Full Sweep) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0251 | 2026-11-22 | Milestone 8.7 Task 8.7.6 closed: The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0250 | 2026-11-22 | Milestone 8.7 Task 8.7.5 closed: Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`) | PASS | Milestone 8.7 | §5.3 |
@@ -152,13 +153,46 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0253
+Next entry number: 0254
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.8 (Settings). Current task: Task 8.8.1 — GET / PATCH /api/admin/settings (`withAudit`; PATCH + `withCsrf`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0253 — 2026-11-22 — Master Report Dashboard Refinements, 10 Cross-View Invariants & Staff D-3.2 Presence Alignment
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Refinement & Reconciliation (Tasks 1–12, 10 Cross-View Invariants, D-3.2 Presence Alignment).
+
+**Summary:**
+- Executed the complete master 12-task reporting and operational intelligence sequence closing all 38 audit checklist items without architectural drift or dead code.
+- Reconciled all 10 cross-view invariants (revenue, orders, sessions, folio 4h grouping, service requests, tax, cycle latencies, menu matrix Kasavana & Smith medians, conversion, and dwell sanity) in `tests/integration/reports/reconciliation.test.ts`.
+- Aligned staff online presence calculation with D-3.2 un-ended active session lifecycle across both `/admin/staff` and `/api/admin/staff`.
+
+**Files Changed:**
+- `docs/DECISIONS.md`: Added D-2.6, D-11.5, D-12.5, D-12.6, D-12.7, D-12.8, D-12.9.
+- `prisma/schema.prisma`: Added `Venue.timezone`, `QrToken.revokedByStaffId`, `QrToken.revocationReason`. Applied forward migration `20261122144959_report_dashboard_refinements`.
+- `src/domain/organization/venue.repository.ts` & `src/infrastructure/db/repositories/organization.repo.ts`: Added `timezone` to `Venue` and `CreateVenueInput`.
+- `src/domain/reports/*`: Completed pure domain calculations for all 17 views with 5-segment funnel latency invariant, Kasavana & Smith single global medians, 4-hour folio stay grouping rule, service request SLA suppression when N < 20, and data quality metadata builder.
+- `app/api/admin/reports/[view]/route.ts`: Completed audited dynamic route handler for 17 views with timezone localization and data quality metadata.
+- `app/api/admin/reports/[view]/export/route.ts`: Streaming RFC 4180 CSV export with Part 2 comment blocks, exact headers, UTF-8 BOM, and 10,000 row truncation cap (`X-Report-Truncated`).
+- `app/admin/(shell)/reports/_reports-dashboard-view.tsx`: Added data quality warnings, clean operations banner, latency anomalies sub-panel, cash summary card, and active/closed/stale status badges.
+- `tests/integration/reports/reconciliation.test.ts`: Integration test suite asserting all 10 cross-view invariants in a single transactional run.
+- `tests/unit/reports/reports-domain.test.ts`: 15 unit tests verifying domain calculations.
+
+**Verification Evidence:**
+- `pnpm typecheck` (`tsc --noEmit`): 0 errors.
+- `pnpm test:unit`: 43 passed (43), 301 passed (301).
+- `pnpm test:integration`: 67 passed (67), 435 passed (435). Total tests: 736/736 (100% pass rate).
+- `pnpm build`: Next.js 16.4.4 Turbopack production build compiled successfully (63 static/dynamic routes + all 17 report endpoints).
+- Raw migration status: `20261122144959_report_dashboard_refinements` applied.
+
+**Next:** Milestone 8.8 — Settings (Task 8.8.1 `GET` / `PATCH /api/admin/settings`).
+
+---
 
 ### ENTRY-0252 — 2026-11-22 — Milestone 8.7 closed: Reports & Operational Intelligence Hub (17 Views, Domain, APIs, CSV Streaming, Saved Reports, Full Sweep)
 

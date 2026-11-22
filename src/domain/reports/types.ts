@@ -51,9 +51,33 @@ export interface OrderFunnelRow {
   readonly completed: number;
   readonly cancelled: number;
   readonly avgApprovalSec: number;
+  readonly p50ApprovalSec: number;
+  readonly p90ApprovalSec: number;
+  readonly maxApprovalSec: number;
   readonly avgPrepSec: number;
+  readonly p50PrepSec: number;
+  readonly p90PrepSec: number;
+  readonly maxPrepSec: number;
   readonly avgDeliverySec: number;
+  readonly p50DeliverySec: number;
+  readonly p90DeliverySec: number;
+  readonly maxDeliverySec: number;
+  readonly avgCloseOutSec: number;
+  readonly p50CloseOutSec: number;
+  readonly p90CloseOutSec: number;
+  readonly maxCloseOutSec: number;
   readonly avgCycleSec: number;
+  readonly p50CycleSec: number;
+  readonly p90CycleSec: number;
+  readonly maxCycleSec: number;
+}
+
+export interface OrderAnomalyRow {
+  readonly orderId: string;
+  readonly date: string;
+  readonly segment: string;
+  readonly durationSec: number;
+  readonly p90ThresholdSec: number;
 }
 
 // 4. Service Requests Report
@@ -63,7 +87,7 @@ export interface ServiceRequestsRow {
   readonly completed: number;
   readonly declined: number;
   readonly cancelled: number;
-  readonly avgResolutionMin: number;
+  readonly avgResolutionMin: number | null; // null rendered as "—" when completed = 0
 }
 
 // 5. Place Utilization
@@ -71,8 +95,10 @@ export interface PlaceUtilizationRow {
   readonly placeType: string;
   readonly placeNumber: string;
   readonly category: string;
-  readonly sessions: number;
+  readonly sessionsClosed: number;
+  readonly activeSessions: number;
   readonly avgDwellMin: number;
+  readonly maxDwellMin: number;
   readonly orders: number;
   readonly revenue: string;
   readonly conversionPct: string; // e.g. "50.0%"
@@ -86,13 +112,28 @@ export interface QrLifecycleRow {
   readonly status: "ACTIVE" | "REVOKED";
   readonly issued: string;
   readonly revoked: string;
+  readonly revokedBy: string;
+  readonly revocationReason: string;
   readonly sessionsGenerated: number;
 }
 
-// 7. Payment Reconciliation (v1 Empty-State per D-7.1, D-7.7)
+// 7. Payment Reconciliation
 export interface PaymentReconciliationStatus {
   readonly status: "INACTIVE_V1_SCOPE";
+  readonly totalCashCollected: string;
+  readonly completedOrdersCount: number;
   readonly commentary: string;
+}
+
+export interface PaymentReconciliationRow {
+  readonly paymentTicketId: string;
+  readonly orderId: string;
+  readonly amount: string;
+  readonly currency: string;
+  readonly state: string;
+  readonly paymentMethod: string;
+  readonly confirmedAt: string;
+  readonly receiptId: string;
 }
 
 // 8. Per-Record Audit Export
@@ -109,7 +150,8 @@ export interface AuditExportRow {
 // 9. Hourly Heatmap
 export interface HourlyHeatmapRow {
   readonly date: string;
-  readonly hour: number; // 0..23
+  readonly hour: number; // 0..23 in venue local time (D-11.5)
+  readonly placeType: string; // TABLE, ROOM, COUNTER
   readonly orders: number;
   readonly revenue: string;
 }
@@ -135,8 +177,10 @@ export interface ModifierAttachRow {
 
 // 12. Tax Remittance Report
 export interface TaxRemittanceRow {
-  readonly period: string;
+  readonly periodStart: string;
+  readonly periodEnd: string;
   readonly taxRate: string;
+  readonly taxRatePct: string;
   readonly taxableSubtotal: string;
   readonly taxCollected: string;
   readonly orders: number;
@@ -153,38 +197,54 @@ export interface CancellationRootCauseRow {
 // 14. Service SLA Dashboard
 export interface ServiceSlaRow {
   readonly serviceType: string;
+  readonly n: number;
   readonly p50ResolutionMin: number;
-  readonly p90ResolutionMin: number;
-  readonly p99ResolutionMin: number;
-  readonly openNow: number;
+  readonly p90ResolutionMin: number | null; // suppressed if N < 20
+  readonly p99ResolutionMin: number | null; // suppressed if N < 20
+  readonly maxResolutionMin: number;
+  readonly openAtEndOfPeriod: number;
 }
 
 // 15. Room Folio Report
 export interface RoomFolioRow {
   readonly room: string;
   readonly stayStart: string;
-  readonly stayEnd: string;
+  readonly stayEnd: string | null;
+  readonly status: "ACTIVE" | "CLOSED";
   readonly orders: number;
   readonly requests: number;
   readonly orderRevenue: string;
   readonly requestCount: number;
+  readonly staleSession: boolean;
 }
 
 // 16. Occupancy & Dwell
 export interface OccupancyDwellRow {
   readonly placeType: string;
+  readonly placeNumber: string;
   readonly period: string;
   readonly totalSessions: number;
   readonly avgDwellMin: number;
   readonly peakConcurrent: number;
+  readonly staleSessions: number;
 }
 
 // 17. QR Scan-to-Order Conversion
 export interface ConversionRow {
   readonly token: string;
   readonly placeType: string;
+  readonly placeLabel: string;
   readonly sessions: number;
   readonly orders: number;
   readonly conversionPct: string;
   readonly revenuePerSession: string;
+}
+
+// Data Quality Meta Envelope
+export interface ReportQualityMeta {
+  readonly uncategorizedItemPct: number;
+  readonly outlierOrders: number;
+  readonly tipsTracked: boolean;
+  readonly paymentMethodsTracked: boolean;
+  readonly staleSessions?: number;
 }

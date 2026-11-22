@@ -41,6 +41,7 @@ describe("createOrder domain function", () => {
     welcomeMessage: "Welcome",
     language: "en",
     currency: "USD",
+    timezone: "Asia/Kathmandu",
     taxRate: "0.1000", // 10%
     isActive: true,
     modules: ["TABLE", "COUNTER"],

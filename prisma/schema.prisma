@@ -142,6 +142,7 @@ model Venue {
   welcomeMessage String   @default("Welcome")
   language       String   @default("en")
   currency       String   @default("USD")
+  timezone       String   @default("Asia/Kathmandu")
   taxRate        Decimal  @db.Decimal(5, 4)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -353,6 +354,8 @@ model QrToken {
   state     QrTokenState @default(ACTIVE)
   createdAt DateTime     @default(now())
   revokedAt DateTime?
+  revokedByStaffId String?
+  revocationReason String?
 
   venue   Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
   table   Table?   @relation(fields: [tableId], references: [id], onDelete: SetNull)

@@ -30,11 +30,14 @@ export function toCsvRow(cells: readonly unknown[]): string {
 
 export function serializeCsv(
   headers: readonly string[],
-  rows: readonly (readonly unknown[])[]
+  rows: readonly (readonly unknown[])[],
+  comments?: readonly string[]
 ): string {
+  const commentLines = comments ? comments.map((c) => (c.startsWith("#") ? c : `# ${c}`)) : [];
   const headerLine = headers.map(escapeCsvCell).join(",");
   const dataLines = rows.map((r) => r.map(escapeCsvCell).join(","));
 
-  // UTF-8 BOM + lines separated by RFC 4180 CRLF
-  return "\uFEFF" + [headerLine, ...dataLines].join("\r\n");
+  // UTF-8 BOM + comment lines + header + lines separated by RFC 4180 CRLF
+  const allLines = [...commentLines, headerLine, ...dataLines];
+  return "\uFEFF" + allLines.join("\r\n");
 }

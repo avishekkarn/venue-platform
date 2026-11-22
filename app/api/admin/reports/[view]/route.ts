@@ -1,18 +1,15 @@
 /**
- * GET /api/admin/reports/[view] — The venue's operational reports.
+ * GET /api/admin/reports/[view] — Query and calculate reports across 17 views.
  *
- * Supports all 17 report views:
- *   - revenue, sales, funnel, requests, utilization, qr, payment, audit,
- *     heatmap, matrix, modifiers, tax, cancellations, sla, folio, occupancy, conversion.
- *
- * Security & Governance:
- *   - Admin-only (MANAGER or OWNER; D-3.1, canAccess).
- *   - Audited with withAuditedDynamicRoute (D-3.7, D-24.1).
- *   - Strict venue scoping from session (D-10.2).
- *   - Date range validation (dateTo - dateFrom <= 180 days per D-12.1).
- *   - Zero guest PII (D-2.1).
- *   - No aggregate staff surveillance (D-12.4).
- *   - Money values formatted as decimal strings (BUILD.md §7.1).
+ * Governed by:
+ * - DECISIONS.md D-12.1 (date range <= 180 days).
+ * - DECISIONS.md D-10.2 (strict venue scoping).
+ * - DECISIONS.md D-11.5 (venue timezone localization).
+ * - DECISIONS.md D-12.6 (snapshotted categoryName).
+ * - DECISIONS.md D-12.7 (report run execution audit).
+ * - DECISIONS.md D-12.8 (4-hour folio stay grouping rule).
+ * - BUILD.md §7.1 (decimal money precision preserved).
+ * - BUILD.md §6.11 (withAuditedDynamicRoute audit trail).
  */
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -24,7 +21,7 @@ import { getSessionCookie } from "@/infrastructure/auth/cookies";
 import { validateSession } from "@/infrastructure/auth/session";
 import { getVenueSlug } from "@/infrastructure/config/venue";
 import { canAccess } from "@/domain/auth/can-access";
-import { StaffRole, StaffState } from "@/domain/auth/staff.repository";
+import { StaffState } from "@/domain/auth/staff.repository";
 import { DomainErrorCode } from "@/domain/shared/result";
 import {
   withAuditedDynamicRoute,
@@ -32,14 +29,15 @@ import {
   type AuditMeta,
 } from "@/infrastructure/audit/with-audit";
 import type { ActorResolvers } from "@/infrastructure/audit/logger";
+import { buildReportMeta } from "@/lib/report-meta";
 import {
   validateReportDateRange,
   generateRevenueSummary,
   generateItemSales,
   generateOrderFunnel,
-  generateServiceRequestsReport,
+  generateServiceRequests,
   generatePlaceUtilization,
-  generateQrLifecycleReport,
+  generateQrLifecycle,
   generateAuditExport,
   generateHourlyHeatmap,
   generateMenuMatrix,
@@ -47,10 +45,10 @@ import {
   generateTaxRemittance,
   generateCancellationRootCause,
   generateServiceSla,
-  generateRoomFolioReport,
+  generateRoomFolio,
   generateOccupancyDwell,
-  generateQrConversionReport,
-  PAYMENT_RECONCILIATION_V1_STATUS,
+  generateConversionReport,
+  generatePaymentReconciliationStatus,
 } from "@/domain/reports";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -182,23 +180,43 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     );
   }
 
-  // Special case: Payment Reconciliation is an empty-state descriptor in v1 per D-7.1 and D-7.7
-  if (view === "payment") {
-    return NextResponse.json({
-      ok: true,
-      data: {
-        view: "payment",
-        status: PAYMENT_RECONCILIATION_V1_STATUS.status,
-        commentary: PAYMENT_RECONCILIATION_V1_STATUS.commentary,
-        rows: [],
-      },
-    });
-  }
-
   // 4. Validate date range params
   const { searchParams } = new URL(request.url);
   const dateFromParam = searchParams.get("dateFrom");
   const dateToParam = searchParams.get("dateTo");
+
+  // Special case: Payment Reconciliation is an empty-state descriptor in v1 per D-7.1 and D-7.7
+  if (view === "payment") {
+    const orders = await db.order.findMany({
+      where: { venueId: venue.id, state: "COMPLETED" },
+      select: { total: true },
+    });
+    const totalCash = orders.reduce((sum, o) => sum + parseFloat(o.total.toString()), 0);
+    const status = generatePaymentReconciliationStatus({
+      totalCashCollected: totalCash.toFixed(2),
+      completedOrdersCount: orders.length,
+      currency: venue.currency,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      data: {
+        view: "payment",
+        dateFrom: dateFromParam ?? "",
+        dateTo: dateToParam ?? "",
+        status: status.status,
+        totalCashCollected: status.totalCashCollected,
+        completedOrdersCount: status.completedOrdersCount,
+        commentary: status.commentary,
+        rows: [],
+        meta: buildReportMeta({
+          view: "payment",
+          dateFrom: dateFromParam ?? "",
+          dateTo: dateToParam ?? "",
+        }),
+      },
+    });
+  }
 
   const rangeResult = validateReportDateRange(dateFromParam, dateToParam);
   if (!rangeResult.ok) {
@@ -215,6 +233,10 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
   const { fromDate, toDate, dateFrom, dateTo } = rangeResult.value;
 
   let rows: unknown[] = [];
+  let uncategorizedItemPct = 0;
+  let outlierOrders = 0;
+  let staleSessions = 0;
+  const metaExtra: Record<string, unknown> = {};
 
   // 5. Query DB within venue scope and run pure domain calculator
   switch (view) {
@@ -289,7 +311,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      rows = rowsResult.value;
+      rows = rowsResult.value.rows;
+      uncategorizedItemPct = rowsResult.value.uncategorizedItemPct;
       break;
     }
 
@@ -322,7 +345,9 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      rows = rowsResult.value;
+      rows = rowsResult.value.rows;
+      outlierOrders = rowsResult.value.anomalies.length;
+      metaExtra.anomalies = rowsResult.value.anomalies;
       break;
     }
 
@@ -339,7 +364,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const rowsResult = generateServiceRequestsReport(
+      const rowsResult = generateServiceRequests(
         requests.map((r) => ({
           id: r.id,
           serviceType: r.serviceType,
@@ -361,7 +386,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     }
 
     case "utilization": {
-      const [tables, rooms, sessions] = await Promise.all([
+      const [tables, rooms, counters, sessions] = await Promise.all([
         db.table.findMany({
           where: { venueId: venue.id },
           include: { category: true },
@@ -369,6 +394,9 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         db.room.findMany({
           where: { venueId: venue.id },
           include: { category: true },
+        }),
+        db.counter.findMany({
+          where: { venueId: venue.id },
         }),
         db.guestSession.findMany({
           where: {
@@ -387,34 +415,53 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       const placesInput = [
         ...tables.map((t) => {
           const tableSessions = sessions.filter((s) => s.tableId === t.id);
-          const totals = tableSessions.flatMap((s) => s.orders.map((o) => o.total.toFixed(2)));
           return {
             placeType: "TABLE",
             placeNumber: t.number,
-            category: t.category?.name ?? null,
+            category: t.category?.name ?? "Standard",
             sessions: tableSessions.map((s) => ({
               id: s.id,
               createdAt: s.createdAt,
               endedAt: s.endedAt,
-              hasOrders: s.orders.length > 0,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
             })),
-            orderTotals: totals,
           };
         }),
         ...rooms.map((r) => {
           const roomSessions = sessions.filter((s) => s.roomId === r.id);
-          const totals = roomSessions.flatMap((s) => s.orders.map((o) => o.total.toFixed(2)));
           return {
             placeType: "ROOM",
             placeNumber: r.number,
-            category: r.category?.name ?? null,
+            category: r.category?.name ?? "Standard",
             sessions: roomSessions.map((s) => ({
               id: s.id,
               createdAt: s.createdAt,
               endedAt: s.endedAt,
-              hasOrders: s.orders.length > 0,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
             })),
-            orderTotals: totals,
+          };
+        }),
+        ...counters.map((c) => {
+          const counterSessions = sessions.filter((s) => s.counterId === c.id);
+          return {
+            placeType: "COUNTER",
+            placeNumber: c.name,
+            category: "Counter",
+            sessions: counterSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
           };
         }),
       ];
@@ -436,13 +483,31 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
           room: true,
           counter: true,
           guestSessions: {
-            where: { createdAt: { gte: fromDate, lte: toDate } },
-            select: { id: true },
+            include: {
+              orders: {
+                where: { state: "COMPLETED" },
+                select: { total: true },
+              },
+            },
           },
         },
       });
 
-      const rowsResult = generateQrLifecycleReport(
+      const staffMap = new Map<string, string>();
+      const staffIds = tokens
+        .map((t) => t.revokedByStaffId)
+        .filter((id): id is string => !!id);
+      if (staffIds.length > 0) {
+        const staffMembers = await db.staffMember.findMany({
+          where: { id: { in: staffIds } },
+          select: { id: true, name: true },
+        });
+        for (const sm of staffMembers) {
+          staffMap.set(sm.id, sm.name);
+        }
+      }
+
+      const rowsResult = generateQrLifecycle(
         tokens.map((t) => {
           let label = "Unassigned";
           if (t.table) label = t.table.number;
@@ -451,14 +516,27 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
           return {
             tokenId: t.id,
+            token: t.token,
             placeType: t.placeType,
             placeLabel: label,
-            isRevoked: t.state === "REVOKED",
-            createdAt: t.createdAt,
+            status: t.state as "ACTIVE" | "REVOKED",
+            issuedAt: t.createdAt,
             revokedAt: t.revokedAt,
-            sessionsCount: t.guestSessions.length,
+            revokedByStaffName: t.revokedByStaffId
+              ? staffMap.get(t.revokedByStaffId) ?? null
+              : null,
+            revocationReason: t.revocationReason,
+            sessions: t.guestSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
           };
-        })
+        }),
+        { dateFrom, dateTo }
       );
 
       if (!rowsResult.ok) {
@@ -526,6 +604,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
         select: {
           placedAt: true,
+          placeType: true,
           total: true,
         },
       });
@@ -533,15 +612,17 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       const rowsResult = generateHourlyHeatmap(
         orders.map((o) => ({
           placedAt: o.placedAt,
+          placeType: o.placeType,
           total: o.total.toFixed(2),
         })),
+        venue.timezone ?? "Asia/Kathmandu"
       );
 
       if (!rowsResult.ok) {
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      rows = rowsResult.value;
+      rows = [...rowsResult.value];
       break;
     }
 
@@ -580,8 +661,9 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       }
 
       const matrixResult = generateMenuMatrix(
-        salesResult.value.map((s) => ({
+        salesResult.value.rows.map((s) => ({
           itemName: s.itemName,
+          categoryName: s.category,
           unitsSold: s.unitsSold,
           lineRevenue: s.lineRevenue,
         }))
@@ -591,7 +673,10 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: matrixResult.error }, { status: 400 });
       }
 
-      rows = matrixResult.value;
+      rows = matrixResult.value.rows;
+      metaExtra.medianVolume = matrixResult.value.medianVolume;
+      metaExtra.medianRevenue = matrixResult.value.medianRevenue;
+      metaExtra.itemCount = matrixResult.value.itemCount;
       break;
     }
 
@@ -660,24 +745,36 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     }
 
     case "cancellations": {
-      const events = await db.orderStateChange.findMany({
-        where: {
-          order: { venueId: venue.id },
-          state: "CANCELLED",
-          occurredAt: { gte: fromDate, lte: toDate },
-        },
-        select: {
-          occurredAt: true,
-          note: true,
-        },
-      });
+      const [events, ordersCount] = await Promise.all([
+        db.orderStateChange.findMany({
+          where: {
+            order: { venueId: venue.id },
+            state: "CANCELLED",
+            occurredAt: { gte: fromDate, lte: toDate },
+          },
+          select: {
+            occurredAt: true,
+            note: true,
+          },
+        }),
+        db.order.count({
+          where: {
+            venueId: venue.id,
+            placedAt: { gte: fromDate, lte: toDate },
+          },
+        }),
+      ]);
 
-      const rowsResult = generateCancellationRootCause(events);
+      const rowsResult = generateCancellationRootCause(events, ordersCount);
       if (!rowsResult.ok) {
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      rows = rowsResult.value;
+      rows = rowsResult.value.rows;
+      metaExtra.totalOrders = rowsResult.value.totalOrders;
+      metaExtra.totalCancelled = rowsResult.value.totalCancelled;
+      metaExtra.cancellationRatePct = rowsResult.value.cancellationRatePct;
+      metaExtra.isCleanOperations = rowsResult.value.isCleanOperations;
       break;
     }
 
@@ -689,7 +786,7 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
         include: {
           stateChanges: {
-            where: { state: { in: ["COMPLETED", "DECLINED"] } },
+            where: { state: "COMPLETED" },
             orderBy: { occurredAt: "asc" },
             take: 1,
           },
@@ -698,10 +795,14 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
 
       const rowsResult = generateServiceSla(
         requests.map((r) => ({
+          id: r.id,
           serviceType: r.serviceType,
-          state: r.state,
           submittedAt: r.submittedAt,
-          resolvedAt: r.stateChanges[0]?.occurredAt ?? null,
+          state: r.state,
+          stateChanges: r.stateChanges.map((sc) => ({
+            state: sc.state,
+            occurredAt: sc.occurredAt,
+          })),
         }))
       );
 
@@ -736,43 +837,115 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const rowsResult = generateRoomFolioReport(
-        sessions.map((s) => ({
-          roomNumber: s.qrToken?.room?.number ?? "Unassigned",
-          stayStart: s.createdAt,
-          stayEnd: s.endedAt,
-          orderTotals: s.orders.map((o) => o.total.toFixed(2)),
-          serviceRequestsCount: s.serviceRequests.length,
-        }))
-      );
+      const folioInputs = sessions.map((s) => ({
+        roomNumber: s.qrToken?.room?.number ?? "Unassigned",
+        createdAt: s.createdAt,
+        endedAt: s.endedAt,
+        ordersCount: s.orders.length,
+        requestsCount: s.serviceRequests.length,
+        ordersRevenue: s.orders
+          .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+          .toFixed(2),
+      }));
 
+      const rowsResult = generateRoomFolio(folioInputs);
       if (!rowsResult.ok) {
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
       rows = rowsResult.value;
+      staleSessions = rowsResult.value.filter((r) => r.staleSession).length;
       break;
     }
 
     case "occupancy": {
-      const sessions = await db.guestSession.findMany({
-        where: {
-          venueId: venue.id,
-          createdAt: { gte: fromDate, lte: toDate },
-        },
-        select: {
-          placeType: true,
-          createdAt: true,
-          endedAt: true,
-        },
-      });
+      const [tables, rooms, counters, sessions] = await Promise.all([
+        db.table.findMany({
+          where: { venueId: venue.id },
+          include: { category: true },
+        }),
+        db.room.findMany({
+          where: { venueId: venue.id },
+          include: { category: true },
+        }),
+        db.counter.findMany({
+          where: { venueId: venue.id },
+        }),
+        db.guestSession.findMany({
+          where: {
+            venueId: venue.id,
+            createdAt: { gte: fromDate, lte: toDate },
+          },
+          include: {
+            orders: {
+              where: { state: "COMPLETED" },
+              select: { total: true },
+            },
+          },
+        }),
+      ]);
 
-      const rowsResult = generateOccupancyDwell(sessions);
+      const placesInput = [
+        ...tables.map((t) => {
+          const tableSessions = sessions.filter((s) => s.tableId === t.id);
+          return {
+            placeType: "TABLE",
+            placeNumber: t.number,
+            category: t.category?.name ?? "Standard",
+            sessions: tableSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
+          };
+        }),
+        ...rooms.map((r) => {
+          const roomSessions = sessions.filter((s) => s.roomId === r.id);
+          return {
+            placeType: "ROOM",
+            placeNumber: r.number,
+            category: r.category?.name ?? "Standard",
+            sessions: roomSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
+          };
+        }),
+        ...counters.map((c) => {
+          const counterSessions = sessions.filter((s) => s.counterId === c.id);
+          return {
+            placeType: "COUNTER",
+            placeNumber: c.name,
+            category: "Counter",
+            sessions: counterSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              endedAt: s.endedAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
+          };
+        }),
+      ];
+
+      const rowsResult = generateOccupancyDwell(placesInput, `${dateFrom} to ${dateTo}`);
       if (!rowsResult.ok) {
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
       rows = rowsResult.value;
+      staleSessions = rowsResult.value.reduce((sum, r) => sum + r.staleSessions, 0);
       break;
     }
 
@@ -780,6 +953,9 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
       const tokens = await db.qrToken.findMany({
         where: { venueId: venue.id },
         include: {
+          table: true,
+          room: true,
+          counter: true,
           guestSessions: {
             where: { createdAt: { gte: fromDate, lte: toDate } },
             include: {
@@ -792,18 +968,28 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         },
       });
 
-      const rowsResult = generateQrConversionReport(
+      const rowsResult = generateConversionReport(
         tokens.map((t) => {
-          const sessions = t.guestSessions;
-          const convertedSessions = sessions.filter((s) => s.orders.length > 0);
-          const allOrders = sessions.flatMap((s) => s.orders);
+          let label = "Unassigned";
+          if (t.table) label = t.table.number;
+          else if (t.room) label = t.room.number;
+          else if (t.counter) label = t.counter.name;
+
           return {
             tokenId: t.id,
+            token: t.token,
             placeType: t.placeType,
-            sessionsCount: sessions.length,
-            convertedSessionsCount: convertedSessions.length,
-            ordersCount: allOrders.length,
-            orderTotals: allOrders.map((o) => o.total.toFixed(2)),
+            placeLabel: label,
+            status: t.state as "ACTIVE" | "REVOKED",
+            issuedAt: t.createdAt,
+            sessions: t.guestSessions.map((s) => ({
+              id: s.id,
+              createdAt: s.createdAt,
+              ordersCount: s.orders.length,
+              revenue: s.orders
+                .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0)
+                .toFixed(2),
+            })),
           };
         })
       );
@@ -837,9 +1023,19 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
     staff.id
   );
 
+  const meta = buildReportMeta({
+    view,
+    dateFrom,
+    dateTo,
+    uncategorizedItemPct,
+    outlierOrders,
+    staleSessions,
+    extra: metaExtra,
+  });
+
   return NextResponse.json({
     ok: true,
-    data: { view, dateFrom, dateTo, rows },
+    data: { view, dateFrom, dateTo, rows, meta },
   });
 };
 

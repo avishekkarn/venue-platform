@@ -34,6 +34,7 @@ export interface Venue {
   welcomeMessage: string;
   language: string;
   currency: string;
+  timezone: string;
   taxRate: string; // Decimal representation as string
   isActive: boolean;
   createdAt: Date;
@@ -60,6 +61,7 @@ export interface CreateVenueInput {
   welcomeMessage?: string;
   language?: string;
   currency?: string;
+  timezone?: string;
   taxRate: string;
   isActive?: boolean;
   modules?: VenueModule[];

@@ -28,4 +28,15 @@ describe("RFC 4180 CSV Serializer with UTF-8 BOM", () => {
     expect(csv).toContain('"Burger","15.00"\r\n');
     expect(csv).toContain('"Pizza, Margherita","20.00"');
   });
+
+  it("includes header comment lines when provided", () => {
+    const headers = ["Item", "Price"];
+    const rows = [["Momo", "100.00"]];
+    const comments = ["# Tips: 0.00 in v1", "Payment method: CASH only in v1"];
+
+    const csv = serializeCsv(headers, rows, comments);
+    expect(csv).toContain("# Tips: 0.00 in v1\r\n");
+    expect(csv).toContain("# Payment method: CASH only in v1\r\n");
+    expect(csv).toContain('"Item","Price"\r\n');
+  });
 });

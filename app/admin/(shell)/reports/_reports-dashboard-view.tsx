@@ -441,21 +441,96 @@ export function ReportsDashboardView({
         </div>
       )}
 
-      {selectedView === "payment" ? (
-        <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-8 text-center space-y-4">
-          <div className="w-12 h-12 bg-amber-50 border border-amber-200 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
-            💳
+      {/* Data Quality & Anomaly Banners */}
+      {reportData?.meta?.quality?.uncategorizedItemPct > 10 && selectedView === "sales" && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs flex items-center gap-2">
+          <span>⚠️</span>
+          <span>
+            <strong>Data Quality Notice:</strong> {reportData.meta.quality.uncategorizedItemPct.toFixed(1)}% of sold items lack a snapshotted category. Run category backfill or verify menu assignments.
+          </span>
+        </div>
+      )}
+
+      {reportData?.meta?.isCleanOperations && selectedView === "cancellations" && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs flex items-center gap-2">
+          <span>✅</span>
+          <span>
+            <strong>Clean Operations:</strong> Zero cancellations in selected date range. 0 of {reportData.meta.totalOrders ?? 0} orders were cancelled ({reportData.meta.cancellationRatePct ?? "0.0%"}).
+          </span>
+        </div>
+      )}
+
+      {reportData?.meta?.anomalies && reportData.meta.anomalies.length > 0 && selectedView === "funnel" && (
+        <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-lg space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+            <span>⚡</span>
+            <span>Latency Outliers & Anomalies ({reportData.meta.anomalies.length} orders &gt; 3× P90 duration)</span>
           </div>
-          <div className="max-w-md mx-auto space-y-2">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px] text-left border-collapse">
+              <thead className="text-amber-800 font-semibold border-b border-amber-200">
+                <tr>
+                  <th className="py-1 px-2">Order ID</th>
+                  <th className="py-1 px-2">Date</th>
+                  <th className="py-1 px-2">Segment</th>
+                  <th className="py-1 px-2 text-right">Duration (s)</th>
+                  <th className="py-1 px-2 text-right">P90 Threshold (s)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-200/50 text-amber-900 font-mono">
+                {reportData.meta.anomalies.map((a: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-amber-100/40">
+                    <td className="py-1 px-2">{a.orderId.slice(0, 8)}...</td>
+                    <td className="py-1 px-2">{a.date}</td>
+                    <td className="py-1 px-2 font-sans font-medium">{a.segment}</td>
+                    <td className="py-1 px-2 text-right font-bold text-red-700">{a.durationSec}s</td>
+                    <td className="py-1 px-2 text-right">{a.p90ThresholdSec}s</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {selectedView === "payment" ? (
+        <div className="bg-staff-surface-raised border border-staff-border-subtle rounded-lg p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-amber-50 border border-amber-200 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+              💳
+            </div>
             <h3 className="text-base font-bold text-staff-text-primary">
-              Payment Reconciliation (v1 Cash Scope)
+              Payment Reconciliation & Settlement
             </h3>
-            <p className="text-xs text-staff-text-secondary leading-relaxed">
-              Payment reconciliation activates when the venue&apos;s payment provider is connected (D-7.1, D-7.7). In v1, all guest settlement is handled via cash at counter or room folio checkout.
+            <p className="text-xs text-staff-text-secondary leading-relaxed max-w-md mx-auto">
+              Cash-only settlement is active for v1 (D-7.1, D-7.7). Inactive payment gateways will show reconciliation discrepancies once the payment bridge connects in Phase 10.
             </p>
           </div>
-          <div className="inline-block px-3 py-1.5 rounded bg-staff-surface border border-staff-border-subtle text-xs font-mono text-staff-text-secondary">
-            Scope Lock: DECISIONS.md D-7.1, D-7.7 · Phase 10 Payment Bridge
+
+          {/* Cash Summary Banner */}
+          <div className="max-w-lg mx-auto bg-staff-surface p-4 rounded-lg border border-staff-border-subtle grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div className="text-[11px] text-staff-text-secondary font-medium uppercase tracking-wider">
+                Total Cash Collected
+              </div>
+              <div className="text-xl font-bold font-mono text-staff-text-primary mt-0.5">
+                {currency} {reportData?.totalCashCollected ?? "0.00"}
+              </div>
+            </div>
+            <div>
+              <div className="text-[11px] text-staff-text-secondary font-medium uppercase tracking-wider">
+                Completed Orders
+              </div>
+              <div className="text-xl font-bold font-mono text-staff-text-primary mt-0.5">
+                {reportData?.completedOrdersCount ?? 0}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <span className="inline-block px-3 py-1.5 rounded bg-staff-surface border border-staff-border-subtle text-xs font-mono text-staff-text-secondary">
+              Scope Lock: DECISIONS.md D-7.1, D-7.7 · Phase 10 Payment Bridge
+            </span>
           </div>
         </div>
       ) : isLoading ? (
@@ -520,10 +595,31 @@ export function ReportsDashboardView({
                           >
                             {v}
                           </span>
+                        ) : k === "status" ? (
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 rounded text-[10px] font-semibold uppercase",
+                              v === "ACTIVE"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                : "bg-stone-100 text-stone-700 border border-stone-200"
+                            )}
+                          >
+                            {v}
+                          </span>
+                        ) : k === "staleSession" ? (
+                          v ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                              ⚠️ STALE (&gt;4h)
+                            </span>
+                          ) : (
+                            <span className="text-stone-400">No</span>
+                          )
+                        ) : (k === "p90ResolutionMin" || k === "p99ResolutionMin") && v === null ? (
+                          <span className="text-stone-400 italic">P50 / max</span>
                         ) : typeof v === "boolean" ? (
                           v ? "YES" : "NO"
                         ) : v === null || v === undefined ? (
-                          "-"
+                          "—"
                         ) : (
                           String(v)
                         )}

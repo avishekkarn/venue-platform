@@ -1,8 +1,11 @@
 /**
- * Pure domain calculator: Cancellation Root-Cause Report (View 13).
+ * Pure domain calculator: Cancellation Root-Cause Report (View 9 / View 13).
  *
- * Headers: Date,Cancelled Orders,Top Reason,Reason Count
- * Governed by D-4.7, D-4.8.
+ * Headers:
+ * # Clean Operations: No cancellations in range. 0 of N orders were cancelled (0.0% cancellation rate).
+ * Date,Cancelled Orders,Top Reason,Reason Count
+ *
+ * Governed by D-4.7, D-4.8, D-12.2.
  */
 
 import { type Result, ok, fail, DomainErrorCode } from "@/domain/shared/result";
@@ -13,9 +16,18 @@ export interface CancellationEventInput {
   readonly note?: string | null;
 }
 
+export interface CancellationReportResult {
+  readonly rows: CancellationRootCauseRow[];
+  readonly totalOrders: number;
+  readonly totalCancelled: number;
+  readonly cancellationRatePct: string;
+  readonly isCleanOperations: boolean;
+}
+
 export function generateCancellationRootCause(
-  events: readonly CancellationEventInput[]
-): Result<CancellationRootCauseRow[]> {
+  events: readonly CancellationEventInput[],
+  totalOrders = 0
+): Result<CancellationReportResult> {
   if (!Array.isArray(events)) {
     return fail(DomainErrorCode.VALIDATION_FAILED, "Events must be an array");
   }
@@ -27,6 +39,7 @@ export function generateCancellationRootCause(
   }
 
   const map = new Map<string, Acc>();
+  let totalCancelled = 0;
 
   for (const e of events) {
     const t = e.occurredAt instanceof Date ? e.occurredAt : new Date(e.occurredAt);
@@ -42,6 +55,7 @@ export function generateCancellationRootCause(
     };
 
     current.cancelledOrders += 1;
+    totalCancelled += 1;
     current.reasonCounts.set(reason, (current.reasonCounts.get(reason) ?? 0) + 1);
 
     map.set(dateStr, current);
@@ -68,5 +82,15 @@ export function generateCancellationRootCause(
       };
     });
 
-  return ok(rows);
+  const rateNum =
+    totalOrders > 0 ? (totalCancelled / totalOrders) * 100 : 0;
+  const cancellationRatePct = rateNum.toFixed(1) + "%";
+
+  return ok({
+    rows,
+    totalOrders,
+    totalCancelled,
+    cancellationRatePct,
+    isCleanOperations: totalCancelled === 0,
+  });
 }

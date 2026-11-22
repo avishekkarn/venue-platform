@@ -1,7 +1,10 @@
 /**
- * Pure domain calculator: Tax Remittance Report (View 12).
+ * Pure domain calculator: Tax Remittance Report (View 5 / View 12).
  *
- * Headers: Period,Tax Rate,Taxable Subtotal,Tax Collected,Orders
+ * Headers:
+ * # Rate shown as both decimal and percent for accountant readability.
+ * Period Start,Period End,Tax Rate,Tax Rate %,Taxable Subtotal,Tax Collected,Orders
+ *
  * Governed by D-4.1, D-4.4, BUILD.md §7.1.
  */
 
@@ -25,8 +28,10 @@ export function generateTaxRemittance(
   }
 
   interface Acc {
-    period: string;
+    periodStart: string;
+    periodEnd: string;
     taxRate: string;
+    taxRatePct: string;
     taxableSubtotalNum: number;
     taxCollectedNum: number;
     orders: number;
@@ -39,9 +44,25 @@ export function generateTaxRemittance(
     if (isNaN(placedDate.getTime())) continue;
 
     const iso = placedDate.toISOString();
-    const period = periodType === "MONTHLY" ? iso.slice(0, 7) : iso.slice(0, 10);
+    let periodStart = "";
+    let periodEnd = "";
+
+    if (periodType === "MONTHLY") {
+      const year = placedDate.getUTCFullYear();
+      const month = String(placedDate.getUTCMonth() + 1).padStart(2, "0");
+      periodStart = `${year}-${month}-01`;
+      const lastDay = new Date(Date.UTC(year, placedDate.getUTCMonth() + 1, 0)).getUTCDate();
+      periodEnd = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+    } else {
+      periodStart = iso.slice(0, 10);
+      periodEnd = iso.slice(0, 10);
+    }
+
     const taxRate = o.taxRate || "0.0000";
-    const key = `${period}__${taxRate}`;
+    const rateNum = parseFloat(taxRate);
+    const taxRatePct = (rateNum * 100).toFixed(1) + "%";
+
+    const key = `${periodStart}__${periodEnd}__${taxRate}`;
 
     const subRes = parseDecimal(o.subtotal);
     const taxRes = parseDecimal(o.taxAmount);
@@ -54,8 +75,10 @@ export function generateTaxRemittance(
     }
 
     const current = map.get(key) ?? {
-      period,
+      periodStart,
+      periodEnd,
       taxRate,
+      taxRatePct,
       taxableSubtotalNum: 0,
       taxCollectedNum: 0,
       orders: 0,
@@ -69,10 +92,12 @@ export function generateTaxRemittance(
   }
 
   const rows: TaxRemittanceRow[] = Array.from(map.values())
-    .sort((a, b) => b.period.localeCompare(a.period) || a.taxRate.localeCompare(b.taxRate))
+    .sort((a, b) => b.periodStart.localeCompare(a.periodStart) || a.taxRate.localeCompare(b.taxRate))
     .map((item) => ({
-      period: item.period,
+      periodStart: item.periodStart,
+      periodEnd: item.periodEnd,
       taxRate: item.taxRate,
+      taxRatePct: item.taxRatePct,
       taxableSubtotal: roundToTwoDecimals(item.taxableSubtotalNum),
       taxCollected: roundToTwoDecimals(item.taxCollectedNum),
       orders: item.orders,

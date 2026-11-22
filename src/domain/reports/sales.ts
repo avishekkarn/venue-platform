@@ -2,7 +2,13 @@
  * Pure domain calculator: Sales by Item & Category (View 2).
  *
  * Headers: Category,Item Name,Units Sold,Base Revenue,Modifier Revenue,Line Revenue,Modifier Attach Rate %
- * Governed by D-4.1, D-12.6 (snapshotted categoryName), BUILD.md §7.1.
+ *
+ * Rules:
+ * - Grouped by itemName primarily so an item's volume is never split.
+ * - Category is the frozen snapshot (D-12.6). If an item spanned categories historically, displays "Mixed".
+ * - Tracks uncategorized items to feed meta.quality banner.
+ *
+ * Governed by D-4.1, D-12.6, BUILD.md §7.1.
  */
 
 import { type Result, ok, fail, DomainErrorCode } from "@/domain/shared/result";
@@ -19,16 +25,21 @@ export interface OrderItemSalesInput {
   readonly modifiersJson?: unknown;
 }
 
+export interface ItemSalesResult {
+  readonly rows: ItemSalesRow[];
+  readonly uncategorizedItemPct: number;
+}
+
 export function generateItemSales(
   items: readonly OrderItemSalesInput[]
-): Result<ItemSalesRow[]> {
+): Result<ItemSalesResult> {
   if (!Array.isArray(items)) {
     return fail(DomainErrorCode.VALIDATION_FAILED, "Items must be an array");
   }
 
   interface Acc {
-    category: string;
     itemName: string;
+    categories: Set<string>;
     unitsSold: number;
     unitsWithModifiers: number;
     baseRevenueNum: number;
@@ -37,11 +48,14 @@ export function generateItemSales(
   }
 
   const map = new Map<string, Acc>();
+  let uncategorizedUnits = 0;
+  let totalUnits = 0;
 
   for (const it of items) {
-    const category = it.categoryName?.trim() || "Uncategorized";
+    const rawCategory = it.categoryName?.trim();
+    const category = rawCategory || "Uncategorized";
     const itemName = it.itemName.trim();
-    const key = `${category}__${itemName}`;
+    if (!itemName) continue;
 
     const priceRes = parseDecimal(it.itemPrice);
     const modRes = parseDecimal(it.modifierPrice);
@@ -55,13 +69,18 @@ export function generateItemSales(
     }
 
     const qty = Math.max(0, it.quantity || 0);
+    totalUnits += qty;
+    if (!rawCategory || rawCategory.toLowerCase() === "uncategorized") {
+      uncategorizedUnits += qty;
+    }
+
     const hasModifiers =
       (Array.isArray(it.modifiersJson) && it.modifiersJson.length > 0) ||
       modRes.value > 0;
 
-    const current = map.get(key) ?? {
-      category,
+    const current = map.get(itemName) ?? {
       itemName,
+      categories: new Set<string>(),
       unitsSold: 0,
       unitsWithModifiers: 0,
       baseRevenueNum: 0,
@@ -69,6 +88,7 @@ export function generateItemSales(
       lineRevenueNum: 0,
     };
 
+    current.categories.add(category);
     current.unitsSold += qty;
     if (hasModifiers) {
       current.unitsWithModifiers += qty;
@@ -77,19 +97,30 @@ export function generateItemSales(
     current.modifierRevenueNum += modRes.value * qty;
     current.lineRevenueNum += lineRes.value;
 
-    map.set(key, current);
+    map.set(itemName, current);
   }
 
+  const uncategorizedItemPct =
+    totalUnits > 0
+      ? Number(((uncategorizedUnits / totalUnits) * 100).toFixed(1))
+      : 0;
+
   const rows: ItemSalesRow[] = Array.from(map.values())
-    .sort((a, b) => a.category.localeCompare(b.category) || b.lineRevenueNum - a.lineRevenueNum)
     .map((rec) => {
+      let finalCategory: string;
+      if (rec.categories.size === 1) {
+        finalCategory = Array.from(rec.categories)[0] ?? "Uncategorized";
+      } else {
+        finalCategory = "Mixed";
+      }
+
       const attachRate =
         rec.unitsSold > 0
           ? ((rec.unitsWithModifiers / rec.unitsSold) * 100).toFixed(1) + "%"
           : "0.0%";
 
       return {
-        category: rec.category,
+        category: finalCategory,
         itemName: rec.itemName,
         unitsSold: rec.unitsSold,
         baseRevenue: roundToTwoDecimals(rec.baseRevenueNum),
@@ -97,7 +128,8 @@ export function generateItemSales(
         lineRevenue: roundToTwoDecimals(rec.lineRevenueNum),
         modifierAttachRate: attachRate,
       };
-    });
+    })
+    .sort((a, b) => b.unitsSold - a.unitsSold || a.itemName.localeCompare(b.itemName));
 
-  return ok(rows);
+  return ok({ rows, uncategorizedItemPct });
 }

@@ -205,7 +205,8 @@ describe("Milestone 8.7 Task 8.7.4 — Reports CSV Streaming Export Integration 
       expect(bytes[1]).toBe(0xbb);
       expect(bytes[2]).toBe(0xbf);
       const csv = new TextDecoder("utf-8").decode(bytes);
-      expect(csv).toContain('"Ticket ID","Order ID","Amount","Currency","Method","Provider","Status","Verified At"');
+      expect(csv).toContain('"Payment Method","Status","Orders","Amount Collected","Discrepancies"');
+      expect(csv).toContain('# Payment Reconciliation inactive in v1');
     });
   });
 });
