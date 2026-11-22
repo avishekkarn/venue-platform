@@ -12,7 +12,7 @@
 ## Table of Contents
 
 1. Venue Identity — D-1.1 to D-1.3
-2. Guest Identity — D-2.1 to D-2.5
+2. Guest Identity — D-2.1 to D-2.6
 3. Staff Identity — D-3.1 to D-3.12
 4. Order Identity — D-4.1 to D-4.12
 5. Service Request Identity — D-5.1 to D-5.7
@@ -22,7 +22,7 @@
 9. Branding and Theming — D-9.1 to D-9.8
 10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.5
 11. Languages, Currencies, and Regions — D-11.1 to D-11.4
-12. Reporting — D-12.1 to D-12.4
+12. Reporting — D-12.1 to D-12.7
 13. Notifications — D-13.1 to D-13.3
 14. Deployment — D-14.1 to D-14.3
 15. Success Criteria for the First Production Version — D-15.1 to D-15.7
@@ -210,6 +210,29 @@
 - Any requests still open at checkout are archived and not shown to the next guest.
 
 **What would make us revisit:** Never.
+
+---
+
+### D-2.6 — Receipt.guestEmail must never be populated; removal scheduled for Phase 10
+
+**Decision:** The `guestEmail` column in the `Receipt` table must never be populated by any runtime route or service. Its removal from the database schema is scheduled for Phase 10 alongside the payment bridge integration (Task 10.1).
+
+**Context:** D-2.1 established that guests are strictly anonymous and never provide personal information. The initial schema draft included an optional `guestEmail` column on `Receipt`. However, in v1 all settlement is cash at counter or room folio checkout (D-7.7), and the `Receipt` table has zero active write routes. Dropping an unused column prematurely during Phase 8 violates BUILD.md §12.3 rule 6 (never combine structural removals with behavioural feature work) and BUILD.md §10.6. The column is inactive and harmless; formally locking it as unpopulated preserves strict zero-PII compliance while keeping Phase 8 focused on reporting.
+
+**Alternatives considered:**
+
+- Drop the column immediately in Phase 8 — rejected. There are no active write routes or populated rows; running an unneeded schema deletion violates BUILD.md §12.3.
+- Leave it undocumented — rejected. An audit correctly identified that guest email violates D-2.1 and D-13.1, so a formal locking decision is required.
+
+**Consequences:**
+
+- Zero guest email or PII is ever collected or written in v1.
+- No migration churn in Phase 8 for an unwritten table.
+- Scheduled for clean removal in Phase 10 (Payments).
+
+**What would make us revisit:** Never. Zero guest PII is constitutional.
+
+**Traces to:** D-2.1, D-13.1, BUILD.md §10.6, BUILD.md §12.3, Task 8.7.0.
 
 ---
 
@@ -1790,6 +1813,76 @@ evokeToken followed by invalidateSessionsForPlace.
 - The staff do not feel surveilled by an aggregate view.
 
 **What would make us revisit:** If a venue asks for staff activity reporting, we add it.
+
+---
+
+### D-12.5 — Report dashboard is CSV-only in v1; PDF deferred to Phase 9
+
+**Decision:** All 17 report views in the Admin Reports Hub export strictly as RFC 4180-compliant CSV files with UTF-8 BOM encoding. PDF and spreadsheet binary exports (.xlsx) are deferred to Phase 9.
+
+**Context:** D-12.2 established CSV as the universal, accountant-ready export format. Generating server-side PDFs introduces significant headless rendering dependencies, layout fragility, and font bundle overhead that are unnecessary for data verification and accounting export in v1. CSV streaming with UTF-8 BOM opens seamlessly in Microsoft Excel, Apple Numbers, and Google Sheets while keeping memory and processing overhead minimal.
+
+**Alternatives considered:**
+
+- Server-side PDF generation via Puppeteer/Chromium — rejected. Adds massive container size, memory bloat, and operational complexity.
+- Client-side canvas/PDF export — rejected. Fragile across mobile and desktop browsers, prone to truncation on 180-day reports.
+
+**Consequences:**
+
+- Reports export reliably and instantaneously via lightweight HTTP streaming.
+- Accountants receive clean, standard tabular data without formatting artifacts.
+- PDF generation is scheduled for Phase 9 after core operational features are hardened.
+
+**What would make us revisit:** If venue managers demonstrate that printed PDF summaries are required for external accounting submission prior to Phase 9.
+
+**Traces to:** D-12.2, BUILD.md §6.8, BUILD.md §7.1, Task 8.7.0, Task 8.7.4.
+
+---
+
+### D-12.6 — OrderItem.categoryName is snapshotted at order creation
+
+**Decision:** The `categoryName` of a menu item is snapshotted directly onto `OrderItem` at the moment an order is created (`createOrder`), alongside `itemName`, `itemPrice`, `modifiersJson`, `modifierPrice`, and `lineTotal`.
+
+**Context:** D-4.1 mandates that all order item data is frozen at placement so that subsequent price changes, modifier adjustments, or item edits never distort historical financial records. Currently, `OrderItem` references `menuItemId`, and category name was resolved dynamically via `MenuItemCategory -> MenuCategory`. If a venue manager subsequently renames a category, moves an item to another category, or deletes an item/category, historical category reporting (View 2) would shift or lose attribution. Snapshotting `categoryName` on the order item ensures 100% immutable historical sales-by-category reporting.
+
+**Alternatives considered:**
+
+- Dynamic relation join with `"Uncategorized"` fallback — rejected. Violates the core spirit of D-4.1; renaming "Starters" to "Appetizers" in 2027 would rewrite 2026 accounting records.
+- Storing only `categoryId` — rejected. If the category itself is renamed or deleted, the snapshot is broken.
+
+**Consequences:**
+
+- A non-breaking forward migration adds `categoryName String?` to `OrderItem`.
+- `createOrder` writes the category name snapshot in the same transaction as the item.
+- Historical category sales reports remain 100% faithful to the menu structure as it existed when the guest placed the order.
+
+**What would make us revisit:** Never. Frozen snapshots are a core architectural discipline of the platform.
+
+**Traces to:** D-4.1, SYSTEM.md §9.7, BUILD.md §7.1, Task 8.7.0, Task 8.7.1.
+
+---
+
+### D-12.7 — Saved reports and report-run history are venue-scoped, staff-attributed, and audited
+
+**Decision:** The Admin Reports Hub provides anytime access to custom report queries via a `SavedReport` table, and maintains a strict compliance audit trail of all generated exports via a `ReportRun` table. Saved reports store query parameters only (never data snapshots), while report runs record the timestamp, view, date range, row count, and the staff member who executed or downloaded the report.
+
+**Context:** Venue managers frequently re-run specific query parameters (e.g. "Last Month Dinner Shift", "Weekend Breakfast Latency"). Because all underlying operational tables (`Order`, `OrderItem`, `OrderStateChange`, `ServiceRequest`, `RequestStateChange`, `GuestSession`) are append-only state ledgers per D-4.6 and D-4.8, past reports are 100% reproducible on demand. Storing data snapshots would duplicate storage and risk stale data. Furthermore, security compliance requires knowing which staff member downloaded operational and financial records.
+
+**Alternatives considered:**
+
+- Pre-computing and saving static CSV snapshots — rejected. Wastes database storage and violates single-source-of-truth principles; recomputing from immutable ledgers is fast and exact.
+- Client-side localStorage for saved queries — rejected. Lost when staff switch devices or clear browser data; shared management requires venue-scoped persistence.
+- No report execution logging — rejected. Violates the platform's audit defense standard (BUILD.md §6.11).
+
+**Consequences:**
+
+- `SavedReport` stores `(venueId, name, view, paramsJson, createdByStaffId)`.
+- `ReportRun` records `(venueId, view, paramsJson, rowCount, ranAt, ranByStaffId)` on every view calculation and CSV download.
+- Full compliance and security traceability without storing redundant copies of raw data.
+
+**What would make us revisit:** If query recalculation of 6-month ranges exceeds 100ms under high scale, we can introduce an optional query cache table.
+
+**Traces to:** D-3.7, D-10.2, D-12.1, D-12.3, BUILD.md §6.11, Task 8.7.0, Task 8.7.5.
 
 ---
 
