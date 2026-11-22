@@ -102,6 +102,28 @@ export function StaffManagementView({
     return `${h}h ${m}m`;
   };
 
+  const formatShiftStart = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (isToday) {
+      return `Shift started: ${timeStr}`;
+    }
+    return `Shift started: ${d.toLocaleDateString([], { month: "short", day: "numeric" })}, ${timeStr}`;
+  };
+
+  const formatLastSeen = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (isToday) {
+      return `Last seen today at ${timeStr}`;
+    }
+    return `Last seen: ${d.toLocaleDateString([], { month: "short", day: "numeric" })}`;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Back to Dashboard Breadcrumb */}
@@ -352,9 +374,9 @@ export function StaffManagementView({
                         )}
                         <span className="text-[10px] text-staff-text-muted" suppressHydrationWarning>
                           {staff.isOnline && staff.shiftStartedAt
-                            ? `Shift started: ${new Date(staff.shiftStartedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                            ? formatShiftStart(staff.shiftStartedAt)
                             : staff.lastLoginAt
-                            ? `Last seen: ${new Date(staff.lastLoginAt).toLocaleDateString()}`
+                            ? formatLastSeen(staff.lastLoginAt)
                             : "Never logged in"}
                         </span>
                       </div>

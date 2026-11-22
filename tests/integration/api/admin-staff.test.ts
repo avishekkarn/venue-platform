@@ -82,7 +82,7 @@ describe("Admin Staff Management API Integration Tests (Milestone 8.6)", () => {
       expect(adminStaff.ok).toBe(true);
       if (!adminStaff.ok) return;
 
-      // Create Waiter Staff Member
+      // Create Waiter Staff Member (ended shift)
       const waiterStaff = await staffRepo.create({
         venueId,
         name: "Waiter Bob",
@@ -93,12 +93,34 @@ describe("Admin Staff Management API Integration Tests (Milestone 8.6)", () => {
       expect(waiterStaff.ok).toBe(true);
       if (!waiterStaff.ok) return;
 
+      // Create Shift Leader Staff Member (session started > 24 hours ago, still active per D-3.2)
+      const leaderStaff = await staffRepo.create({
+        venueId,
+        name: "Charlie Leader",
+        username: "charlie_leader",
+        passwordHash: await hashPassword("LeaderSecret123"),
+        roles: [StaffRole.LEADER],
+      });
+      expect(leaderStaff.ok).toBe(true);
+      if (!leaderStaff.ok) return;
+
       // Create active session for admin (live now)
       const adminSession = await tx.staffSession.create({
         data: {
           staffMemberId: adminStaff.value.id,
           token: "admin-session-token",
           createdAt: new Date(),
+        },
+      });
+
+      // Create active session for leader from 30 hours ago (still active per D-3.2)
+      const thirtyHoursAgo = new Date(Date.now() - 30 * 60 * 60 * 1000);
+      await tx.staffSession.create({
+        data: {
+          staffMemberId: leaderStaff.value.id,
+          token: "leader-session-token",
+          createdAt: thirtyHoursAgo,
+          endedAt: null,
         },
       });
 
@@ -124,14 +146,18 @@ describe("Admin Staff Management API Integration Tests (Milestone 8.6)", () => {
 
       const body = await res.json();
       expect(body.data).toBeDefined();
-      expect(body.data.summary.totalStaff).toBe(2);
-      expect(body.data.summary.activeStaff).toBe(2);
-      expect(body.data.summary.onlineStaff).toBe(1); // Alice is online
-      expect(body.data.staff).toHaveLength(2);
+      expect(body.data.summary.totalStaff).toBe(3);
+      expect(body.data.summary.activeStaff).toBe(3);
+      expect(body.data.summary.onlineStaff).toBe(2); // Alice and Charlie are online
+      expect(body.data.staff).toHaveLength(3);
 
       const alice = body.data.staff.find((s: { username: string }) => s.username === "alice_admin");
       expect(alice.isOnline).toBe(true);
       expect(alice.roles).toContain(StaffRole.OWNER);
+
+      const charlie = body.data.staff.find((s: { username: string }) => s.username === "charlie_leader");
+      expect(charlie.isOnline).toBe(true);
+      expect(charlie.roles).toEqual([StaffRole.LEADER]);
 
       const bob = body.data.staff.find((s: { username: string }) => s.username === "waiter_bob");
       expect(bob.isOnline).toBe(false);

@@ -101,7 +101,6 @@ const getHandler: AuditedRouteHandler = async (request: NextRequest): Promise<Ne
   const now = new Date();
   const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   const roleCounts: Record<string, number> = {};
   for (const r of Object.values(StaffRole)) {
@@ -122,9 +121,9 @@ const getHandler: AuditedRouteHandler = async (request: NextRequest): Promise<Ne
       roleCounts[r] = (roleCounts[r] || 0) + 1;
     }
 
-    // Determine online presence: has an un-ended session created within last 24h
+    // Determine online presence: has an un-ended session that is not expired (D-3.2)
     const activeSession = m.sessions.find(
-      (s) => s.endedAt === null && new Date(s.createdAt).getTime() >= twentyFourHoursAgo.getTime()
+      (s) => s.endedAt === null && (!s.expiresAt || new Date(s.expiresAt).getTime() > now.getTime())
     );
     const isOnline = !!activeSession && m.state === "ACTIVE";
     if (isOnline) onlineStaff++;
