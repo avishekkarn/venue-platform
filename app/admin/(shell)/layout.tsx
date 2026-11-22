@@ -38,9 +38,9 @@ export default async function AdminShellLayout({
   const venueSlug = getVenueSlug();
 
   return (
-    <div data-world="staff" className="min-h-dvh bg-staff-surface">
-      <div className="flex min-h-dvh">
-        <aside className="fixed left-0 top-0 h-dvh w-60 bg-staff-surface-raised border-r border-staff-border-subtle flex flex-col">
+    <div data-world="staff" className="min-h-dvh bg-staff-surface print:bg-white print:min-h-0">
+      <div className="flex min-h-dvh print:block print:min-h-0">
+        <aside className="fixed left-0 top-0 h-dvh w-60 bg-staff-surface-raised border-r border-staff-border-subtle flex flex-col print:hidden">
           <div className="h-14 flex items-center px-4 border-b border-staff-border-subtle">
             <span className="text-sm font-semibold text-staff-text-primary truncate">
               {venueSlug}
@@ -51,8 +51,8 @@ export default async function AdminShellLayout({
           </div>
         </aside>
 
-        <div className="ml-60 flex flex-1 flex-col">
-          <header className="h-14 bg-staff-surface-raised border-b border-staff-border-subtle flex items-center justify-between px-6">
+        <div className="ml-60 flex flex-1 flex-col print:ml-0 print:p-0 print:m-0 print:block print:w-full">
+          <header className="h-14 bg-staff-surface-raised border-b border-staff-border-subtle flex items-center justify-between px-6 print:hidden">
             <AdminShellTitle />
             <div className="flex items-center gap-4">
               <span className="text-sm text-staff-text-secondary">
@@ -62,7 +62,7 @@ export default async function AdminShellLayout({
             </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 print:p-0 print:m-0 print:overflow-visible print:block">
             <Toaster position="bottom-center">
               {children}
             </Toaster>

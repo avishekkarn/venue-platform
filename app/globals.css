@@ -629,33 +629,57 @@ body {
 }
 
 @media print {
-  [data-staff-hide="true"] { display: none !important; }
-  body { 
-    background: white !important; 
-    margin: 0 !important; 
-    padding: 0 !important;
-  }
-  main { 
-    display: block !important;
-    padding: 0 !important; 
-    margin: 0 !important; 
-  }
-  .print-poster { 
-    width: 100% !important; 
-    max-width: 100% !important;
-    height: 100vh !important;
-    border: none !important; 
-    box-shadow: none !important; 
-    padding: 4rem !important; 
-    page-break-after: avoid !important; 
-    page-break-inside: avoid !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-  }
   @page {
-    size: A4 portrait;
-    margin: 0;
+    size: portrait;
+    margin: 10mm;
+  }
+
+  /* Completely hide all staff navigation, sidebars, headers, floating bars, and interactive buttons */
+  aside,
+  header,
+  nav,
+  [data-staff-hide="true"],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  main {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    background: transparent !important;
+  }
+
+  /* Single & Batch Placard Container Rules */
+  .print-placard-page {
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 auto !important;
+    background: white !important;
+  }
+
+  .print-page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .last-print-page {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 }

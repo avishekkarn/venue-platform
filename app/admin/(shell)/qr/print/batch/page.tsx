@@ -117,8 +117,10 @@ export default async function BatchQrPrintPage({
     displayedPlacards = [...counterPlacards, ...tablePlacards, ...roomPlacards];
   }
 
+  const welcomeMessage = venue.welcomeMessage || "Scan to view menu, place orders & request service";
+
   return (
-    <div className="min-h-screen bg-staff-surface">
+    <div className="min-h-screen bg-staff-surface print:bg-white print:min-h-0">
       <PrintTrigger shouldPrint={shouldPrint} />
 
       {/* Screen-only top action & filter bar */}
@@ -130,71 +132,108 @@ export default async function BatchQrPrintPage({
         roomsCount={roomPlacards.length}
       />
 
-      {/* Printable Sheet Content */}
-      <main className="p-6 md:p-10 max-w-6xl mx-auto print:p-0 print:max-w-none">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-2 print:gap-6 print:m-0">
-          {displayedPlacards.map((item) => (
-            <div
-              key={`${item.type}-${item.id}`}
-              className="bg-white border-2 border-stone-800 rounded-2xl p-8 flex flex-col items-center text-center justify-between shadow-xs print:shadow-none print:border-2 print:border-black print:break-inside-avoid print:page-break-inside-avoid print:p-6"
-              style={{ minHeight: "360px" }}
-            >
-              {/* Header Branding */}
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xs uppercase tracking-widest text-stone-500 font-semibold">
-                  Welcome to
-                </span>
-                <h2 className="text-2xl font-serif font-bold text-stone-900 tracking-tight">
-                  {venue.name}
-                </h2>
-              </div>
+      {/* Printable Sheet Content — exactly 1 placard per printed page */}
+      <main className="p-6 md:p-10 max-w-5xl mx-auto print:p-0 print:m-0 print:max-w-none print:block">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:block print:space-y-0 print:m-0">
+          {displayedPlacards.map((item, index) => {
+            const placeLabel =
+              item.type === "COUNTER"
+                ? item.number
+                : `${item.type === "TABLE" ? "Table" : "Room"} ${item.number}`;
+            const isLast = index === displayedPlacards.length - 1;
 
-              {/* QR Image Container */}
-              <div className="my-4 p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-center print:bg-white print:border-none">
-                {item.qrTokenId ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={`/api/admin/qr/${item.qrTokenId}/image`}
-                    alt={`QR Code for ${item.type === "COUNTER" ? item.number : `${item.type === "TABLE" ? "Table" : "Room"} ${item.number}`}`}
-                    className="w-48 h-48 object-contain rounded-md"
-                  />
-                ) : (
-                  <div className="w-48 h-48 flex flex-col items-center justify-center p-4 text-center bg-stone-100 rounded-md text-stone-400 text-xs">
-                    <span>No active QR generated</span>
-                    <span className="text-[10px] mt-1 text-stone-500">
-                      Generate in admin QR hub
-                    </span>
-                  </div>
-                )}
-              </div>
+            return (
+              <div
+                key={`${item.type}-${item.id}`}
+                className={`print-placard-page ${
+                  isLast ? "last-print-page" : "print-page-break print:break-after-page print:page-break-after-always"
+                } print:break-inside-avoid print:page-break-inside-avoid w-full max-w-md mx-auto bg-white border-2 border-stone-800 rounded-3xl p-8 md:p-10 flex flex-col items-center text-center shadow-lg print:shadow-none print:border-2 print:border-black print:rounded-2xl print:p-8 print:max-w-none print:w-[92%] print:m-0`}
+              >
+                {/* Venue Branding Header */}
+                <div className="flex flex-col items-center gap-1.5 w-full">
+                  <span className="text-[11px] uppercase tracking-widest text-stone-500 font-semibold">
+                    Welcome to
+                  </span>
+                  <h2 className="text-3xl md:text-4xl font-serif font-bold text-stone-900 tracking-tight">
+                    {venue.name}
+                  </h2>
+                  <p className="text-xs text-stone-600 max-w-xs mt-0.5">
+                    {welcomeMessage}
+                  </p>
+                </div>
 
-              {/* Place Identifier & Category */}
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-3xl font-extrabold text-stone-900 tracking-tight">
-                    {item.type === "COUNTER" ? item.number : `${item.type === "TABLE" ? "Table" : "Room"} ${item.number}`}
+                {/* QR Image Container */}
+                <div className="my-6 p-4 bg-white border-2 border-stone-200 rounded-2xl shadow-2xs flex items-center justify-center print:border-2 print:border-stone-400 print:shadow-none">
+                  {item.qrTokenId ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={`/api/admin/qr/${item.qrTokenId}/image`}
+                      alt={`QR Code for ${placeLabel}`}
+                      className="w-56 h-56 md:w-60 md:h-60 object-contain rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-56 h-56 md:w-60 md:h-60 flex flex-col items-center justify-center p-6 text-center bg-stone-100 rounded-lg text-stone-500">
+                      <span className="text-sm font-semibold">No Active QR Generated</span>
+                      <span className="text-xs mt-1 text-stone-400">
+                        Generate QR in admin QR Codes hub
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Place Identifier & Category Badge */}
+                <div className="flex flex-col items-center gap-2">
+                  <h3 className="text-3xl md:text-4xl font-serif font-extrabold text-stone-900 tracking-tight">
+                    {placeLabel}
                   </h3>
-                  {item.isReserved && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300 print:border-black">
-                      Reserved
+                  {item.categoryName && (
+                    <span
+                      className={`inline-flex items-center px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                        item.isReserved
+                          ? "bg-amber-100 text-amber-800 border border-amber-300"
+                          : "bg-stone-100 text-stone-800 border border-stone-200"
+                      }`}
+                    >
+                      {item.isReserved ? "Reserved Table" : item.categoryName}
                     </span>
                   )}
                 </div>
 
-                {item.categoryName && (
-                  <span className="text-xs font-medium text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded-md print:border print:border-stone-400">
-                    {item.categoryName}
-                  </span>
-                )}
-
-                <p className="text-xs text-stone-500 mt-2 max-w-xs">
-                  {item.type === "TABLE"
-                    ? "Scan to explore our menu, place orders, and call for service."
-                    : "Scan to order dining, request housekeeping, and manage your stay."}
-                </p>
+                {/* 3-Step Guest Instructions */}
+                <div className="mt-6 pt-5 border-t border-stone-200 w-full flex flex-col items-center gap-3 print:border-stone-300">
+                  <div className="grid grid-cols-3 gap-2 w-full text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="w-6 h-6 rounded-full bg-stone-900 text-white text-xs font-bold flex items-center justify-center">
+                        1
+                      </span>
+                      <span className="text-[11px] font-semibold text-stone-800">
+                        Open Camera
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="w-6 h-6 rounded-full bg-stone-900 text-white text-xs font-bold flex items-center justify-center">
+                        2
+                      </span>
+                      <span className="text-[11px] font-semibold text-stone-800">
+                        Scan QR Code
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="w-6 h-6 rounded-full bg-stone-900 text-white text-xs font-bold flex items-center justify-center">
+                        3
+                      </span>
+                      <span className="text-[11px] font-semibold text-stone-800">
+                        Order & Enjoy
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-stone-400 mt-0.5">
+                    No app download required · Instant digital ordering & service
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
     </div>
