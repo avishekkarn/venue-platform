@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0249 | 2026-11-22 | Milestone 8.7 Task 8.7.4 closed: CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0248 | 2026-11-22 | Milestone 8.7 Task 8.7.3 closed: Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0247 | 2026-11-22 | Milestone 8.7 Task 8.7.2 closed: Reports Domain Layer (`src/domain/reports/`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0246 | 2026-11-22 | Milestone 8.7 Task 8.7.1 closed: Snapshot Migrations & Composite Performance Indexes | PASS | Milestone 8.7 | §5.3 |
@@ -148,13 +149,32 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0249
+Next entry number: 0250
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.4 — CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.5 — Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0249 — 2026-11-22 — Milestone 8.7 Task 8.7.4 closed: CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`)
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.4 (Streaming RFC 4180 CSV export endpoints with UTF-8 BOM encoding for all 17 report views).
+
+**Summary:**
+- Built `src/lib/csv.ts` serializer:
+  - RFC 4180 cell escaping (properly wrapping strings with commas, quotes, and CRLF).
+  - Prepends UTF-8 BOM byte marker (`\uFEFF` / `[0xEF, 0xBB, 0xBF]`) to guarantee instant compatibility with Microsoft Excel, Apple Numbers, and Google Sheets.
+- Built `app/api/admin/reports/[view]/export/route.ts` wrapped with `withAuditedDynamicRoute`:
+  - Implemented exact CSV header contracts and data row mappings for all 17 views.
+  - Enforced 180-day date range cap (D-12.1) and strict venue scoping (D-10.2).
+  - Empty-state View 7 (`payment`) exports standard CSV header with zero rows per D-7.1 and D-7.7.
+- Verification:
+  - Authored unit test suite in `tests/unit/lib/csv.test.ts` (3/3 tests passed).
+  - Authored integration test suite in `tests/integration/api/admin-reports-export.test.ts` (4/4 tests passed), verifying UTF-8 BOM byte sequence and HTTP Content-Disposition headers.
+  - Zero TypeScript errors (`tsc --noEmit`). Next task: Task 8.7.5.
 
 ### ENTRY-0248 — 2026-11-22 — Milestone 8.7 Task 8.7.3 closed: Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`)
 
