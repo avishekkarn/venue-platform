@@ -427,6 +427,7 @@ model GuestSession {
 
   @@index([token])
   @@index([qrTokenId])
+  @@index([venueId, createdAt])
   @@map("guest_sessions")
 }
 
@@ -607,6 +608,7 @@ model Order {
 
   @@index([venueId, state])
   @@index([venueId, placedAt])
+  @@index([venueId, state, placedAt])
   @@index([guestSessionId])
   @@index([tableId])
   @@index([roomId])
@@ -623,6 +625,7 @@ model OrderItem {
   modifiersJson Json     @default("[]")
   modifierPrice Decimal  @db.Decimal(10, 2) @default(0)
   lineTotal     Decimal  @db.Decimal(10, 2)
+  categoryName  String?
   notes         String?
 
   order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -677,6 +680,7 @@ model ServiceRequest {
   @@index([venueId, state])
   @@index([venueId, serviceType])
   @@index([venueId, submittedAt])
+  @@index([venueId, serviceType, submittedAt])
   @@index([venueId, tableId])
   @@index([venueId, counterId])
   @@index([venueId, guestSessionId])

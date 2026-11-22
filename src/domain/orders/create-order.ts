@@ -300,6 +300,7 @@ export async function createOrder(
     orderItems.push({
       menuItemId: menuItem.id,
       itemName: menuItem.name,
+      categoryName: menuItem.categoryName ?? null,
       itemPrice: menuItem.price,
       quantity: itemReq.quantity,
       modifiersJson: selectedModifiers,

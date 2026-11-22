@@ -105,12 +105,15 @@ function mapMenuCategory(raw: PrismaMenuCategory): MenuCategory {
 }
 
 function mapMenuItem(
-  raw: PrismaMenuItem & { categories?: { categoryId: string }[] }
+  raw: PrismaMenuItem & {
+    categories?: Array<{ categoryId: string; category?: { name: string } }>;
+  }
 ): MenuItem {
   return {
     id: raw.id,
     venueId: raw.venueId,
     categoryIds: raw.categories ? raw.categories.map((c) => c.categoryId) : [],
+    categoryName: raw.categories?.[0]?.category?.name ?? null,
     name: raw.name,
     description: raw.description,
     photoUrl: raw.photoUrl,
@@ -147,7 +150,10 @@ function mapModifierGroup(raw: PrismaModifierGroup): ModifierGroup {
 }
 
 type RawMenuItemWithModifiers = PrismaMenuItem & {
-  categories?: { categoryId: string }[];
+  categories?: Array<{
+    categoryId: string;
+    category?: { name: string };
+  }>;
   modifierGroups: Array<
     PrismaModifierGroup & {
       options: PrismaModifierOption[];
@@ -479,7 +485,11 @@ export function createPrismaMenuRepository(
             },
           },
           include: {
-            categories: true,
+            categories: {
+              include: {
+                category: true,
+              },
+            },
           },
           orderBy: { sortOrder: "asc" },
         });
@@ -498,7 +508,11 @@ export function createPrismaMenuRepository(
         const items = await client.menuItem.findMany({
           where: { venueId },
           include: {
-            categories: true,
+            categories: {
+              include: {
+                category: true,
+              },
+            },
           },
           orderBy: { sortOrder: "asc" },
         });
@@ -520,7 +534,11 @@ export function createPrismaMenuRepository(
         const item = await client.menuItem.findFirst({
           where: { id: itemId, venueId },
           include: {
-            categories: true,
+            categories: {
+              include: {
+                category: true,
+              },
+            },
             modifierGroups: {
               include: {
                 options: {
@@ -921,7 +939,11 @@ export function createPrismaMenuRepository(
         const existing = await client.menuItem.findFirst({
           where: { id: itemId, venueId },
           include: {
-            categories: true,
+            categories: {
+              include: {
+                category: true,
+              },
+            },
           },
         });
 
@@ -945,7 +967,11 @@ export function createPrismaMenuRepository(
             state: prismaTargetState,
           },
           include: {
-            categories: true,
+            categories: {
+              include: {
+                category: true,
+              },
+            },
           },
         });
 

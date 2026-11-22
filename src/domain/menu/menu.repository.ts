@@ -45,6 +45,7 @@ export interface MenuItem {
   readonly id: string;
   readonly venueId: string;
   readonly categoryIds: readonly string[];
+  readonly categoryName?: string | null;
   readonly name: string;
   readonly description: string | null;
   readonly photoUrl: string | null;

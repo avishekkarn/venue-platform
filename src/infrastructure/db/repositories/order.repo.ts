@@ -95,6 +95,7 @@ function mapOrderItem(raw: PrismaOrderItem): OrderItem {
     orderId: raw.orderId,
     menuItemId: raw.menuItemId,
     itemName: raw.itemName,
+    categoryName: raw.categoryName ?? null,
     itemPrice: raw.itemPrice.toFixed(2),
     quantity: raw.quantity,
     modifiersJson: raw.modifiersJson,
@@ -214,6 +215,7 @@ export function createPrismaOrderRepository(client: DbClient): OrderRepository {
                 create: input.items.map((item) => ({
                   menuItemId: item.menuItemId ?? null,
                   itemName: item.itemName,
+                  categoryName: item.categoryName ?? null,
                   itemPrice: item.itemPrice,
                   quantity: item.quantity,
                   modifiersJson: (item.modifiersJson ?? []) as Prisma.InputJsonValue,

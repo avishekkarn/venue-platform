@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0246 | 2026-11-22 | Milestone 8.7 Task 8.7.1 closed: Snapshot Migrations & Composite Performance Indexes | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0245 | 2026-11-22 | Milestone 8.7 Task 8.7.0 closed: Decision Records for Reporting Scope (D-2.6, D-12.5, D-12.6, D-12.7) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0244 | 2026-11-22 | Milestone 8.6 closed: Staff Management Hub, Roles RBAC, Active Duty Hours, Session History & Security Revocation | PASS | Milestone 8.6 | §5.3 |
 | ENTRY-0243 | 2026-11-21 | Milestone 8.5 closed (Tables & Rooms Management, Reserved Enforcement, Room Pricing, Reporting & Verification) | PASS | Milestone 8.5 | §5.3 |
@@ -145,13 +146,37 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0246
+Next entry number: 0247
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.1 — Snapshot Migrations & Composite Performance Indexes.
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.2 — Reports Domain Layer (`src/domain/reports/`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0246 — 2026-11-22 — Milestone 8.7 Task 8.7.1 closed: Snapshot Migrations & Composite Performance Indexes
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.1 (Snapshot migrations & composite performance indexes).
+
+**Summary:**
+- Executed forward migration `20261122125637_report_snapshots_and_indexes`:
+  - Added `OrderItem.categoryName String?` (G-02b).
+  - Added composite index `Order(venueId, state, placedAt)` (G-11).
+  - Added composite index `ServiceRequest(venueId, serviceType, submittedAt)` (G-12).
+  - Added composite index `GuestSession(venueId, createdAt)` (G-13).
+- Extended domain and database models:
+  - `OrderItem` and `CreateOrderItemInput` updated with `categoryName?: string | null`.
+  - `MenuItem` and `RawMenuItemWithModifiers` updated to extract `categoryName` from menu aggregate.
+  - `menu.repo.ts` updated `getItemWithModifiers`, `listItems`, and `listItemsByCategory` to include relational category name.
+  - `order.repo.ts` updated `mapOrderItem` and `create` to persist and return frozen `categoryName`.
+  - `createOrder` updated to freeze `categoryName: menuItem.categoryName ?? null` at order placement.
+- Verification:
+  - Added real PostgreSQL integration test in `tests/integration/orders/create-order.test.ts` demonstrating that mutating/renaming a `MenuCategory` does not alter the historical `OrderItem.categoryName`.
+  - Full unit test suite (282/282 tests) passed.
+  - `tests/integration/orders/create-order.test.ts` (8/8 tests) and `tests/integration/repositories/order.repo.test.ts` (14/14 tests) passed.
+  - Zero TypeScript errors (`tsc --noEmit`). Next task: Task 8.7.2.
 
 ### ENTRY-0245 — 2026-11-22 — Milestone 8.7 Task 8.7.0 closed: Decision Records for Reporting Scope (D-2.6, D-12.5, D-12.6, D-12.7)
 

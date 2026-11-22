@@ -38,6 +38,7 @@ export interface OrderItem {
   readonly orderId: string;
   readonly menuItemId: string | null;
   readonly itemName: string;
+  readonly categoryName?: string | null;
   readonly itemPrice: string;
   readonly quantity: number;
   readonly modifiersJson: unknown;
@@ -79,6 +80,7 @@ export interface Order {
 export interface CreateOrderItemInput {
   readonly menuItemId?: string | null;
   readonly itemName: string;
+  readonly categoryName?: string | null;
   readonly itemPrice: string;
   readonly quantity: number;
   readonly modifiersJson?: unknown;

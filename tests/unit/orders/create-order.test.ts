@@ -54,6 +54,7 @@ describe("createOrder domain function", () => {
     id: "item-burger",
     venueId,
     categoryIds: ["cat-mains"],
+    categoryName: "Mains",
     name: "Classic Burger",
     description: "Juicy beef burger",
     photoUrl: null,
@@ -90,6 +91,7 @@ describe("createOrder domain function", () => {
     id: "item-drink",
     venueId,
     categoryIds: ["cat-drinks"],
+    categoryName: "Beverages",
     name: "Sparkling Water",
     description: "Crisp sparkling water",
     photoUrl: null,
@@ -244,6 +246,7 @@ describe("createOrder domain function", () => {
     expect(item0).toEqual({
       menuItemId: "item-burger",
       itemName: "Classic Burger",
+      categoryName: "Mains",
       itemPrice: "15.00",
       quantity: 2,
       modifiersJson: [
@@ -260,6 +263,7 @@ describe("createOrder domain function", () => {
     expect(item1).toEqual({
       menuItemId: "item-drink",
       itemName: "Sparkling Water",
+      categoryName: "Beverages",
       itemPrice: "5.00",
       quantity: 1,
       modifiersJson: [],

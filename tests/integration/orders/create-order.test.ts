@@ -629,4 +629,108 @@ describe("Milestone 5.5 Verification — createOrder against real PostgreSQL dat
       expect(readWithVenueA.value.id).toBe(orderA.id);
     });
   });
+
+  it("Historical category snapshot immunity (Task 8.7.1, D-12.6): categoryName is frozen on OrderItem and does not mutate when menu category is renamed", async () => {
+    await withTransaction(async (tx) => {
+      const venueRepo = createPrismaVenueRepository(tx);
+      const menuRepo = createPrismaMenuRepository(tx);
+      const orderRepo = createPrismaOrderRepository(tx);
+
+      // 1. Create venue
+      const venue = await tx.venue.create({
+        data: {
+          name: "Immunity Bistro",
+          slug: `bistro-immunity-${Date.now()}`,
+          taxRate: "0.1000",
+          brandColor: "#112233",
+        },
+      });
+
+      // 2. Create category with initial name "Appetizers"
+      const category = await tx.menuCategory.create({
+        data: {
+          venueId: venue.id,
+          name: "Appetizers",
+          sortOrder: 1,
+        },
+      });
+
+      // 3. Create table
+      const table = await tx.table.create({
+        data: {
+          venueId: venue.id,
+          number: "T-IMMUNITY",
+        },
+      });
+
+      // 4. Create menu item assigned to "Appetizers"
+      const item = await tx.menuItem.create({
+        data: {
+          venueId: venue.id,
+          name: "Spring Rolls",
+          price: "8.50",
+          state: MenuItemState.AVAILABLE,
+          sortOrder: 1,
+          categories: {
+            create: {
+              venueId: venue.id,
+              categoryId: category.id,
+              sortOrder: 1,
+            },
+          },
+        },
+      });
+
+      // 5. Create order via authoritative createOrder domain orchestrator
+      const orderResult = await createOrder(
+        { orderRepo, menuRepo, venueRepo },
+        {
+          venueId: venue.id,
+          idempotencyKey: "12345678-1234-1234-1234-1234567890ab",
+          placeType: PlaceType.TABLE,
+          tableId: table.id,
+          items: [{ menuItemId: item.id, quantity: 2 }],
+        }
+      );
+
+      expect(orderResult.ok).toBe(true);
+      if (!orderResult.ok) return;
+
+      const order = orderResult.value;
+      expect(order.items).toHaveLength(1);
+      expect(order.items[0]?.categoryName).toBe("Appetizers");
+
+      // Verify directly in DB via tx.orderItem
+      const dbItemBefore = await tx.orderItem.findFirst({
+        where: { orderId: order.id },
+      });
+      expect(dbItemBefore?.categoryName).toBe("Appetizers");
+
+      // 6. Mutate the menu category: rename from "Appetizers" to "Small Plates & Tapas"
+      await tx.menuCategory.update({
+        where: { id: category.id },
+        data: { name: "Small Plates & Tapas" },
+      });
+
+      // 7. Verify category name was indeed updated in menu aggregate
+      const updatedCategory = await tx.menuCategory.findUnique({
+        where: { id: category.id },
+      });
+      expect(updatedCategory?.name).toBe("Small Plates & Tapas");
+
+      // 8. Re-read the order via orderRepo.findById
+      const readOrderResult = await orderRepo.findById(venue.id, order.id);
+      expect(readOrderResult.ok).toBe(true);
+      if (!readOrderResult.ok) return;
+
+      // The historical OrderItem categoryName MUST still be "Appetizers" per D-4.1 and D-12.6!
+      expect(readOrderResult.value.items[0]?.categoryName).toBe("Appetizers");
+
+      // Re-read directly from DB table
+      const dbItemAfter = await tx.orderItem.findFirst({
+        where: { orderId: order.id },
+      });
+      expect(dbItemAfter?.categoryName).toBe("Appetizers");
+    });
+  });
 });
