@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0250 | 2026-11-22 | Milestone 8.7 Task 8.7.5 closed: Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0249 | 2026-11-22 | Milestone 8.7 Task 8.7.4 closed: CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0248 | 2026-11-22 | Milestone 8.7 Task 8.7.3 closed: Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0247 | 2026-11-22 | Milestone 8.7 Task 8.7.2 closed: Reports Domain Layer (`src/domain/reports/`) | PASS | Milestone 8.7 | §5.3 |
@@ -149,13 +150,36 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0250
+Next entry number: 0251
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.5 — Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.6 — The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0250 — 2026-11-22 — Milestone 8.7 Task 8.7.5 closed: Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`)
+
+**Status:** PASS
+
+**Task:** Milestone 8.7 Task 8.7.5 (Anytime-access saved reports persistence and compliance report-run auditing).
+
+**Summary:**
+- Executed forward database migration `20261122133117_saved_reports_and_runs`:
+  - `SavedReport`: Venue-scoped saved report configurations storing query parameters only (`venueId`, `name`, `view`, `paramsJson`, `createdByStaffId`).
+  - `ReportRun`: Compliance execution audit logging (`venueId`, `view`, `paramsJson`, `rowCount`, `ranAt`, `ranByStaffId`).
+- Built Saved Reports API routes:
+  - `GET /api/admin/reports/saved` (`withAudit`): Lists saved reports for the authenticated venue.
+  - `POST /api/admin/reports/saved` (`withAudit` + `withCsrf`): Creates a saved query with unique name per venue and creator attribution.
+  - `DELETE /api/admin/reports/saved/[id]` (`withAuditedDynamicRoute` + `withCsrf`): Removes a saved report configuration.
+- Enhanced `app/api/admin/reports/[view]/route.ts`:
+  - Automatically records a `ReportRun` entry on every report calculation.
+- Verification:
+  - Authored `tests/integration/api/admin-saved-reports.test.ts` (3/3 tests passed):
+    - Creation, creator attribution, duplicate conflict (409) prevention, listing.
+    - Deletion of saved reports.
+    - Automatic `ReportRun` compliance logging upon view execution.
+  - Zero TypeScript errors (`tsc --noEmit`). Next task: Task 8.7.6.
 
 ### ENTRY-0249 — 2026-11-22 — Milestone 8.7 Task 8.7.4 closed: CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`)
 

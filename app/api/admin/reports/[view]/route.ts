@@ -83,6 +83,29 @@ const SUPPORTED_VIEWS = new Set<string>([
 
 type RouteParams = { view: string };
 
+async function recordReportRun(
+  db: DbClient,
+  venueId: string,
+  view: string,
+  params: Record<string, unknown>,
+  rowCount: number,
+  staffId: string
+): Promise<void> {
+  try {
+    await db.reportRun.create({
+      data: {
+        venueId,
+        view,
+        paramsJson: params as Prisma.InputJsonValue,
+        rowCount,
+        ranByStaffId: staffId,
+      },
+    });
+  } catch {
+    // Audit run logging is non-blocking
+  }
+}
+
 const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
   request: NextRequest,
   context: { params: Promise<RouteParams> }
@@ -191,6 +214,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
   }
   const { fromDate, toDate, dateFrom, dateTo } = rangeResult.value;
 
+  let rows: unknown[] = [];
+
   // 5. Query DB within venue scope and run pure domain calculator
   switch (view) {
     case "revenue": {
@@ -224,10 +249,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "sales": {
@@ -266,10 +289,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "funnel": {
@@ -301,10 +322,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "requests": {
@@ -337,10 +356,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "utilization": {
@@ -407,10 +424,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "qr": {
@@ -450,10 +465,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "audit": {
@@ -500,10 +513,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "heatmap": {
@@ -530,10 +541,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "matrix": {
@@ -582,10 +591,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: matrixResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: matrixResult.value },
-      });
+      rows = matrixResult.value;
+      break;
     }
 
     case "modifiers": {
@@ -616,10 +623,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "tax": {
@@ -650,10 +655,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "cancellations": {
@@ -674,10 +677,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "sla": {
@@ -708,10 +709,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "folio": {
@@ -751,10 +750,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "occupancy": {
@@ -775,10 +772,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     case "conversion": {
@@ -817,10 +812,8 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         return NextResponse.json({ error: rowsResult.error }, { status: 400 });
       }
 
-      return NextResponse.json({
-        ok: true,
-        data: { view, dateFrom, dateTo, rows: rowsResult.value },
-      });
+      rows = rowsResult.value;
+      break;
     }
 
     default:
@@ -834,6 +827,20 @@ const dynamicHandler: AuditedDynamicRouteHandler<RouteParams> = async (
         { status: 400 }
       );
   }
+
+  await recordReportRun(
+    db,
+    venue.id,
+    view,
+    { dateFrom, dateTo },
+    rows.length,
+    staff.id
+  );
+
+  return NextResponse.json({
+    ok: true,
+    data: { view, dateFrom, dateTo, rows },
+  });
 };
 
 const resolvers: ActorResolvers = {

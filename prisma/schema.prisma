@@ -163,6 +163,8 @@ model Venue {
   orders         Order[]
   requests       ServiceRequest[]
   payments       PaymentTicket[]
+  savedReports   SavedReport[]
+  reportRuns     ReportRun[]
 
   @@map("venues")
 }
@@ -385,6 +387,8 @@ model StaffMember {
   sessions       StaffSession[]
   orderChanges   OrderStateChange[]
   requestChanges RequestStateChange[]
+  savedReports   SavedReport[]
+  reportRuns     ReportRun[]
 
   @@unique([venueId, username])
   @@index([venueId])
@@ -747,4 +751,43 @@ model Receipt {
 
   @@index([orderId])
   @@map("receipts")
+}
+
+// ------------------------------------------------------------
+// Reporting & Intelligence — Saved Reports & Audit Runs (Task 8.7.5, D-12.7)
+// ------------------------------------------------------------
+
+model SavedReport {
+  id               String   @id @default(uuid())
+  venueId          String
+  name             String
+  view             String
+  paramsJson       Json     @default("{}")
+  createdByStaffId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  venue          Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdByStaff StaffMember? @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+
+  @@unique([venueId, name])
+  @@index([venueId, view])
+  @@map("saved_reports")
+}
+
+model ReportRun {
+  id           String   @id @default(uuid())
+  venueId      String
+  view         String
+  paramsJson   Json     @default("{}")
+  rowCount     Int      @default(0)
+  ranAt        DateTime @default(now())
+  ranByStaffId String?
+
+  venue      Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  ranByStaff StaffMember? @relation(fields: [ranByStaffId], references: [id], onDelete: SetNull)
+
+  @@index([venueId, ranAt])
+  @@index([venueId, view])
+  @@map("report_runs")
 }
