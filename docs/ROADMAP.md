@@ -1093,6 +1093,7 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 | **8.6.7** | **The Admin Staff Management Screen (`app/admin/(shell)/staff/page.tsx`)** — Build the staff management screen in `(shell)` with KPI ribbon (Total Staff, Online Now, Shift Hours), role and state filters, staff table with role chips and presence dots, Add/Edit Staff drawer, and Reset Password dialog. | ✅ | 8.6.6 |
 | **8.6.8** | **Staff Activity & Shift Drawer Component** — Build interactive slide-out panel displaying a staff member's shift timeline, active hours breakdown, and operational contributions. | ✅ | 8.6.7 |
 | **8.6.9** | **Verify:** End-to-end operational loop verification (Admin creates waiter with `TABLE_SERVICE` + `ROOM_SERVICE` roles → waiter logs in and accesses table/room queues → admin inspects active duty hours → admin resets password → waiter session invalidated → admin deactivates account). TypeScript 0 errors, integration and unit test suites pass. | ✅ | 8.6.8 |
+| **8.6.10** | **Staff Presence Alignment & Force End-Shift API (`POST /api/admin/staff/[id]/end-shift`)** — Align online presence detection with `D-3.2` active session lifecycle (`endedAt: null`). Add audited and CSRF-protected endpoint and UI action buttons ("End Shift") in the staff table and shift drawer allowing managers to force-sign-out active shifts. Verified by 6 integration tests. | ✅ | 8.6.9 |
 
 ---
 

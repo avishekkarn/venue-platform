@@ -22,6 +22,10 @@ import {
   GET as getActivityHandler,
   setTestDbClient as setActivityTestDb,
 } from "@/../app/api/admin/staff/[id]/activity/route";
+import {
+  POST as endShiftHandler,
+  setTestDbClient as setEndShiftTestDb,
+} from "@/../app/api/admin/staff/[id]/end-shift/route";
 
 vi.mock("@/infrastructure/auth/cookies", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/infrastructure/auth/cookies")>();
@@ -52,6 +56,7 @@ describe("Admin Staff Management API Integration Tests (Milestone 8.6)", () => {
     setPatchTestDb(null);
     setResetTestDb(null);
     setActivityTestDb(null);
+    setEndShiftTestDb(null);
   });
 
   it("GET /api/admin/staff returns staff accounts, summary metrics, and active hours", async () => {
@@ -461,6 +466,86 @@ describe("Admin Staff Management API Integration Tests (Milestone 8.6)", () => {
       expect(body.data.activity).toBeDefined();
       expect(body.data.activity.isOnline).toBe(true);
       expect(body.data.activity.recentSessions).toHaveLength(1);
+    });
+  });
+
+  it("POST /api/admin/staff/[id]/end-shift terminates active staff shifts per D-3.2", async () => {
+    await withTransaction(async (tx) => {
+      setEndShiftTestDb(tx);
+
+      const venueRepo = createPrismaVenueRepository(tx);
+      const staffRepo = createPrismaStaffRepository(tx);
+      const venueSlug = process.env["VENUE_SLUG"] ?? "juniper-house";
+
+      const venueResult = await venueRepo.create({
+        name: "End Shift Venue",
+        slug: venueSlug,
+        taxRate: "0.13",
+      });
+      if (!venueResult.ok) return;
+      const venueId = venueResult.value.id;
+
+      const adminStaff = await staffRepo.create({
+        venueId,
+        name: "Admin Alice",
+        username: "admin_shift_ender",
+        passwordHash: await hashPassword("AdminPass123"),
+        roles: [StaffRole.OWNER],
+      });
+      if (!adminStaff.ok) return;
+
+      const adminSession = await tx.staffSession.create({
+        data: {
+          staffMemberId: adminStaff.value.id,
+          token: "admin-end-shift-token",
+        },
+      });
+
+      const workerStaff = await staffRepo.create({
+        venueId,
+        name: "Charlie Worker",
+        username: "charlie_worker",
+        passwordHash: await hashPassword("WorkerPass123"),
+        roles: [StaffRole.LEADER],
+      });
+      if (!workerStaff.ok) return;
+
+      const workerSession = await tx.staffSession.create({
+        data: {
+          staffMemberId: workerStaff.value.id,
+          token: "worker-active-shift-token",
+          createdAt: new Date(),
+          endedAt: null,
+        },
+      });
+
+      vi.mocked(getSessionCookie).mockResolvedValue(adminSession.token);
+      vi.mocked(getCsrfCookie).mockResolvedValue("valid-csrf-token");
+
+      const req = new NextRequest(
+        `http://localhost:3000/api/admin/staff/${workerStaff.value.id}/end-shift`,
+        {
+          method: "POST",
+          headers: {
+            "x-csrf-token": "valid-csrf-token",
+          },
+        }
+      );
+
+      const res = await endShiftHandler(req, {
+        params: Promise.resolve({ id: workerStaff.value.id }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.data.success).toBe(true);
+      expect(body.data.endedSessionsCount).toBe(1);
+
+      // Verify session is now ended in DB
+      const updatedSession = await tx.staffSession.findUnique({
+        where: { id: workerSession.id },
+      });
+      expect(updatedSession?.endedAt).not.toBeNull();
     });
   });
 });

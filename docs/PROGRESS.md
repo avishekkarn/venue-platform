@@ -171,6 +171,7 @@ New entries go immediately below the ▼ marker, newest first.
 - Executed the complete master 12-task reporting and operational intelligence sequence closing all 38 audit checklist items without architectural drift or dead code.
 - Reconciled all 10 cross-view invariants (revenue, orders, sessions, folio 4h grouping, service requests, tax, cycle latencies, menu matrix Kasavana & Smith medians, conversion, and dwell sanity) in `tests/integration/reports/reconciliation.test.ts`.
 - Aligned staff online presence calculation with D-3.2 un-ended active session lifecycle across both `/admin/staff` and `/api/admin/staff`.
+- Implemented Task 8.6.10: Built `POST /api/admin/staff/[id]/end-shift` audited dynamic route and UI action buttons ("End Shift") in the Staff Management Hub table and Shift Activity Drawer, giving managers immediate control to terminate active shifts (fulfilling D-3.2: "The manager can force-log-out a staff member from the admin panel if needed"). Supported by 6 integration tests in `tests/integration/api/admin-staff.test.ts`.
 
 **Files Changed:**
 - `docs/DECISIONS.md`: Added D-2.6, D-11.5, D-12.5, D-12.6, D-12.7, D-12.8, D-12.9.

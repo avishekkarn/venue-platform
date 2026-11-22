@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, type JSX } from "react";
+import { useState, useEffect, useCallback, type JSX } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getCsrfToken } from "@/lib/csrf-client";
 import { ROLE_METAS } from "./_role-meta";
 import type { AdminStaffItem, StaffActivityDetails } from "./_types";
 
@@ -14,44 +15,69 @@ interface StaffActivityDrawerProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly staff: AdminStaffItem | null;
+  readonly onShiftEnded?: () => void;
 }
 
 export function StaffActivityDrawer({
   open,
   onOpenChange,
   staff,
+  onShiftEnded,
 }: StaffActivityDrawerProps): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState<StaffActivityDetails | null>(null);
   const [activeTab, setActiveTab] = useState<"SHIFTS" | "ORDERS" | "REQUESTS">("SHIFTS");
+  const [endingShift, setEndingShift] = useState(false);
+
+  const fetchActivity = useCallback(() => {
+    if (!staff) return;
+    setLoading(true);
+    fetch(`/api/admin/staff/${staff.id}/activity`, { credentials: "same-origin" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.data?.activity) {
+          setDetails(json.data.activity);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [staff]);
 
   useEffect(() => {
     if (!open || !staff) {
       setDetails(null);
       return;
     }
+    fetchActivity();
+  }, [open, staff, fetchActivity]);
 
-    let active = true;
-    setLoading(true);
+  const handleEndShift = async () => {
+    if (!staff) return;
+    if (!window.confirm(`Are you sure you want to end active shift for ${staff.name}? This will log out their session.`)) {
+      return;
+    }
 
-    fetch(`/api/admin/staff/${staff.id}/activity`, { credentials: "same-origin" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (active && json?.data?.activity) {
-          setDetails(json.data.activity);
-        }
-      })
-      .catch(() => {
-        // Network error handled
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+    setEndingShift(true);
+    try {
+      const res = await fetch(`/api/admin/staff/${staff.id}/end-shift`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": getCsrfToken(),
+        },
       });
-
-    return () => {
-      active = false;
-    };
-  }, [open, staff]);
+      if (res.ok) {
+        fetchActivity();
+        onShiftEnded?.();
+      }
+    } catch {
+      // Handled silently
+    } finally {
+      setEndingShift(false);
+    }
+  };
 
   if (!staff) return <></>;
 
@@ -220,11 +246,25 @@ export function StaffActivityDrawer({
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end">
-                          <span className="font-mono font-bold text-staff-text-primary">
-                            {formatMins(session.durationMinutes)}
-                          </span>
-                          <span className="text-[10px] text-staff-text-muted">Duty Duration</span>
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col items-end">
+                            <span className="font-mono font-bold text-staff-text-primary">
+                              {formatMins(session.durationMinutes)}
+                            </span>
+                            <span className="text-[10px] text-staff-text-muted">Duty Duration</span>
+                          </div>
+
+                          {session.isLive && (
+                            <button
+                              type="button"
+                              disabled={endingShift}
+                              onClick={handleEndShift}
+                              className="px-2.5 py-1 text-xs font-semibold rounded-md border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1 disabled:opacity-50"
+                              title="End this active shift"
+                            >
+                              <span>🚪</span> {endingShift ? "Ending..." : "End Shift"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))

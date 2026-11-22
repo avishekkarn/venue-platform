@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback, type JSX } from "react";
 import Link from "next/link";
 import { StaffRole, StaffState } from "@/domain/auth/staff.repository";
+import { getCsrfToken } from "@/lib/csrf-client";
 import { ROLE_METAS } from "./_role-meta";
 import type { AdminStaffItem, StaffPlacesData } from "./_types";
 import { AddStaffDialog } from "./_add-staff-dialog";
@@ -25,6 +26,7 @@ export function StaffManagementView({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date>(new Date());
   const [mounted, setMounted] = useState(false);
+  const [endingShiftStaffId, setEndingShiftStaffId] = useState<string | null>(null);
 
   // Dialog & Drawer states
   const [addOpen, setAddOpen] = useState(false);
@@ -122,6 +124,33 @@ export function StaffManagementView({
       return `Last seen today at ${timeStr}`;
     }
     return `Last seen: ${d.toLocaleDateString([], { month: "short", day: "numeric" })}`;
+  };
+
+  const handleEndShift = async (staff: AdminStaffItem) => {
+    if (!window.confirm(`Are you sure you want to end active shift for ${staff.name}? This will immediately log out their active session.`)) {
+      return;
+    }
+
+    setEndingShiftStaffId(staff.id);
+    try {
+      const res = await fetch(`/api/admin/staff/${staff.id}/end-shift`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": getCsrfToken(),
+        },
+      });
+      if (res.ok) {
+        await poll(true);
+      } else {
+        const json = await res.json();
+        alert(json?.error?.message || "Failed to end staff shift.");
+      }
+    } catch {
+      alert("Network error ending staff shift.");
+    } finally {
+      setEndingShiftStaffId(null);
+    }
   };
 
   return (
@@ -456,6 +485,18 @@ export function StaffManagementView({
                         >
                           🔑 Reset
                         </button>
+
+                        {staff.isOnline && (
+                          <button
+                            type="button"
+                            disabled={endingShiftStaffId === staff.id}
+                            onClick={() => handleEndShift(staff)}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-md border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1 disabled:opacity-50"
+                            title="End active shift (force logout)"
+                          >
+                            <span>🚪</span> {endingShiftStaffId === staff.id ? "Ending..." : "End Shift"}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -494,6 +535,7 @@ export function StaffManagementView({
         open={activityOpen}
         onOpenChange={setActivityOpen}
         staff={activityTarget}
+        onShiftEnded={() => poll(true)}
       />
     </div>
   );
