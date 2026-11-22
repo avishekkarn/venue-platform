@@ -1050,13 +1050,35 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 ---
 
+### Milestone 8.5.10 — The Unified QR, Counter & Place Management Hub
+
+**Goal:** Re-architect the QR Codes section into an interactive, place-centric operations hub allowing operators to manage physical and service places (Tables, Rooms, Counters), dynamically add or remove places, atomically regenerate QR codes, print individual or batch placards, and exercise full authority to monitor and terminate active sessions across all places (including Counter sessions).
+
+1. **Universal Session Termination:** Provide dedicated endpoint (`POST /api/admin/sessions/[id]/end`) and place-specific handlers to terminate active guest sessions for Counters, Tables, and Rooms directly from the QR hub.
+2. **Atomic QR Regeneration & Quick Generation:** Provide `POST /api/admin/qr/regenerate` to atomically revoke the old token and generate a fresh scannable QR in one transaction, immediately updating UI and print assets, plus 1-click batch generation for any missing QRs.
+3. **Dynamic Place Creation & Deletion:** Enable operators to add new Tables, Rooms, or Counters (with instant auto-QR generation) and safely delete unneeded places with zero active dependencies.
+4. **Modern Operations Hub UI:** Redesign `/admin/qr` with place filtering (All, Counters, Tables, Rooms), live session badges with running folios, scannable QR previews, one-click print actions, and real-time 5s polling.
+5. **High-Resolution Placard Print Engine:** Unified single and batch placard print views supporting high-contrast scannable layouts for Counters, Tables, and Rooms with venue branding and instructions.
+
+| ID | Task | Status | Depends on |
+|----|------|--------|------------|
+| **8.5.10a** | **Universal Session Termination API (`/api/admin/sessions/[id]/end`)** — Implement audited, CSRF-protected session termination for Counters, Tables, and Rooms; frees place occupancy, closes folio, and emits audit log. | ✅ | 8.5.9 |
+| **8.5.10b** | **Atomic QR Regeneration & Quick Generation API (`/api/admin/qr/regenerate`)** — Implement atomic transaction to revoke existing active token and create fresh QR for any place; support auto-generating missing QRs across all unassigned places in one click. | ✅ | 8.5.10a |
+| **8.5.10c** | **Dynamic Place Lifecycle API (Create & Delete for Tables, Rooms, Counters)** — Implement unified place creation and safe deletion handlers (`/api/admin/places/create` and `/api/admin/places/delete`) with integrity checks. | ✅ | 8.5.10b |
+| **8.5.10d** | **Redesigned Place-Centric QR Management Hub (`app/admin/(shell)/qr/page.tsx`)** — Build modern interactive hub with KPI summary ribbon, type tabs (Counters, Tables, Rooms), live session status with running folio, 1-click End Session, Regenerate QR, Print Placard, and 5s auto-refresh. | ✅ | 8.5.10c |
+| **8.5.10e** | **Unified "Add Place" & "Delete Place" Modals** — Add responsive dialogs to create new tables, rooms, or counters with instant QR generation, and confirmation dialogs for safe place deletion. | ✅ | 8.5.10d |
+| **8.5.10f** | **Placard Print Engine Upgrades** — Ensure single placard (`/admin/qr/print/[id]`) and batch placard (`/admin/qr/print/batch`) views support Counters, Tables, and Rooms with venue branding, place name, and scannable QR graphics. | ✅ | 8.5.10e |
+| **8.5.10** | **Verify:** Full operational loop verification (Create counter → scan QR to start session → verify live session on QR hub → force-end counter session → atomically regenerate QR → print placard → add/delete place). Zero TypeScript errors, production build, integration tests pass. | ✅ | 8.5.10f |
+
+---
+
 ### Milestone 8.6 — Staff Management
 
 **Goal:** The operator manages the venue's staff accounts — adding, editing, assigning roles, deactivating, resetting passwords — from the admin panel. W-0003 and W-0004 discharge here (the per-page `_logout-button.tsx` files are retired when the shell's sign-out is the only one).
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.6.1** | **`GET /api/admin/staff`** (`withAudit`). Returns `{ data: StaffMember[] }`. Four route tests. | ⬜ | 8.5.9 |
+| **8.6.1** | **`GET /api/admin/staff`** (`withAudit`). Returns `{ data: StaffMember[] }`. Four route tests. | ⬜ | 8.5.10 |
 | **8.6.2** | **`POST /api/admin/staff`** (`withAudit` + `withCsrf`). Body: name, username, password (hashed via `hashPassword`), roles. Returns `{ data: StaffMember }`. Four route tests. | ⬜ | 8.6.1 |
 | **8.6.3** | **`PATCH /api/admin/staff/[id]`** (`withAudit` + `withCsrf`; the `withAuditedDynamicRoute` variant). Body: name, roles, state. Deactivating a staff member keeps the history (D-3.7). Four route tests. | ⬜ | 8.6.2 |
 | **8.6.4** | **`POST /api/admin/staff/[id]/reset-password`** (`withAudit` + `withCsrf`). Body: the new password. The route: `hashPassword` (D-3.9); `invalidateAllSessions` (D-3.3); return `{ data: { success: true } }` — never the password. **Discharges W-0003 and W-0004** (the `app/staff/_logout-button.tsx` and `app/kitchen/_logout-button.tsx` files are removed). Four route tests. | ⬜ | 8.6.3 |

@@ -18,7 +18,7 @@ interface BatchPrintPageProps {
 
 interface PlacardItem {
   id: string;
-  type: "TABLE" | "ROOM";
+  type: "TABLE" | "ROOM" | "COUNTER";
   number: string;
   categoryName: string | null;
   isReserved?: boolean;
@@ -41,7 +41,7 @@ export default async function BatchQrPrintPage({
   }
   const venue = venueResult.value;
 
-  const [tables, rooms, activeTokens] = await Promise.all([
+  const [tables, rooms, counters, activeTokens] = await Promise.all([
     prisma.table.findMany({
       where: { venueId: staff.venueId },
       include: { category: true },
@@ -52,6 +52,10 @@ export default async function BatchQrPrintPage({
       include: { category: true },
       orderBy: { number: "asc" },
     }),
+    prisma.counter.findMany({
+      where: { venueId: staff.venueId },
+      orderBy: { createdAt: "asc" },
+    }),
     prisma.qrToken.findMany({
       where: {
         venueId: staff.venueId,
@@ -61,6 +65,7 @@ export default async function BatchQrPrintPage({
         id: true,
         tableId: true,
         roomId: true,
+        counterId: true,
         placeType: true,
       },
     }),
@@ -68,10 +73,12 @@ export default async function BatchQrPrintPage({
 
   const qrByTableId = new Map<string, string>();
   const qrByRoomId = new Map<string, string>();
+  const qrByCounterId = new Map<string, string>();
 
   for (const tok of activeTokens) {
     if (tok.tableId) qrByTableId.set(tok.tableId, tok.id);
     if (tok.roomId) qrByRoomId.set(tok.roomId, tok.id);
+    if (tok.counterId) qrByCounterId.set(tok.counterId, tok.id);
   }
 
   const tablePlacards: PlacardItem[] = tables.map((t) => ({
@@ -91,13 +98,23 @@ export default async function BatchQrPrintPage({
     qrTokenId: qrByRoomId.get(r.id) ?? null,
   }));
 
+  const counterPlacards: PlacardItem[] = counters.map((c) => ({
+    id: c.id,
+    type: "COUNTER",
+    number: c.name || "Counter",
+    categoryName: "Pickup & Service",
+    qrTokenId: qrByCounterId.get(c.id) ?? null,
+  }));
+
   let displayedPlacards: PlacardItem[] = [];
   if (currentType === "tables") {
     displayedPlacards = tablePlacards;
   } else if (currentType === "rooms") {
     displayedPlacards = roomPlacards;
+  } else if (currentType === "counters") {
+    displayedPlacards = counterPlacards;
   } else {
-    displayedPlacards = [...tablePlacards, ...roomPlacards];
+    displayedPlacards = [...counterPlacards, ...tablePlacards, ...roomPlacards];
   }
 
   return (
@@ -107,7 +124,8 @@ export default async function BatchQrPrintPage({
       {/* Screen-only top action & filter bar */}
       <BatchPrintActions
         currentType={currentType}
-        totalCount={tablePlacards.length + roomPlacards.length}
+        totalCount={counterPlacards.length + tablePlacards.length + roomPlacards.length}
+        countersCount={counterPlacards.length}
         tablesCount={tablePlacards.length}
         roomsCount={roomPlacards.length}
       />
@@ -137,7 +155,7 @@ export default async function BatchQrPrintPage({
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={`/api/admin/qr/${item.qrTokenId}/image`}
-                    alt={`QR Code for ${item.type === "TABLE" ? "Table" : "Room"} ${item.number}`}
+                    alt={`QR Code for ${item.type === "COUNTER" ? item.number : `${item.type === "TABLE" ? "Table" : "Room"} ${item.number}`}`}
                     className="w-48 h-48 object-contain rounded-md"
                   />
                 ) : (
@@ -154,7 +172,7 @@ export default async function BatchQrPrintPage({
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-2">
                   <h3 className="text-3xl font-extrabold text-stone-900 tracking-tight">
-                    {item.type === "TABLE" ? "Table" : "Room"} {item.number}
+                    {item.type === "COUNTER" ? item.number : `${item.type === "TABLE" ? "Table" : "Room"} ${item.number}`}
                   </h3>
                   {item.isReserved && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300 print:border-black">

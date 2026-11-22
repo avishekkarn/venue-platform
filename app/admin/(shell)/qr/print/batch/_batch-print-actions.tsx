@@ -8,6 +8,7 @@ interface BatchPrintActionsProps {
   readonly totalCount: number;
   readonly tablesCount: number;
   readonly roomsCount: number;
+  readonly countersCount: number;
 }
 
 export function BatchPrintActions({
@@ -15,6 +16,7 @@ export function BatchPrintActions({
   totalCount,
   tablesCount,
   roomsCount,
+  countersCount,
 }: BatchPrintActionsProps): JSX.Element {
   return (
     <div
@@ -29,7 +31,7 @@ export function BatchPrintActions({
           ← Back to QR Codes
         </Link>
         <span className="text-staff-border">|</span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <Link
             href="/admin/qr/print/batch?type=all"
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
@@ -39,6 +41,16 @@ export function BatchPrintActions({
             }`}
           >
             All Placards ({totalCount})
+          </Link>
+          <Link
+            href="/admin/qr/print/batch?type=counters"
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              currentType === "counters"
+                ? "bg-staff-brand text-white shadow-2xs"
+                : "bg-staff-surface text-staff-text-secondary hover:text-staff-text-primary"
+            }`}
+          >
+            Counters ({countersCount})
           </Link>
           <Link
             href="/admin/qr/print/batch?type=tables"

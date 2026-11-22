@@ -15,3 +15,34 @@ export interface PlacesByType {
   readonly ROOM: readonly PlaceOption[];
   readonly COUNTER: readonly PlaceOption[];
 }
+
+export interface PlaceItemView {
+  id: string;
+  type: "TABLE" | "ROOM" | "COUNTER";
+  name: string;
+  identifier: string;
+  categoryName: string | null;
+  isReserved?: boolean;
+  state?: string;
+  activeQr: {
+    id: string;
+    token: string;
+    createdAt: string;
+  } | null;
+  activeSession: {
+    id: string;
+    startedAt: string;
+    ordersCount: number;
+    requestsCount: number;
+    totalAmount: string;
+  } | null;
+}
+
+export interface QrPlacesResponse {
+  places: PlaceItemView[];
+  totalPlaces: number;
+  activeQrsCount: number;
+  revokedOrMissingCount: number;
+  activeSessionsCount: number;
+  currency: string;
+}

@@ -58,7 +58,11 @@ export default async function PrintQrPage({
     });
     placeLabel = room ? `Room ${room.number}` : "Room";
   } else if (token.placeType === PlaceType.COUNTER && token.counterId) {
-    placeLabel = "Counter";
+    const counter = await prisma.counter.findUnique({
+      where: { id: token.counterId },
+      select: { name: true },
+    });
+    placeLabel = counter?.name || "Counter";
   }
 
   const welcomeMessage = venue.welcomeMessage || "Welcome";
