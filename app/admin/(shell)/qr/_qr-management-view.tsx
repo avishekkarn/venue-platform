@@ -518,34 +518,17 @@ export function QrManagementView({
 
                 {/* Place Footer Actions */}
                 <div className="pt-2 border-t border-staff-border-subtle flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRegenerateTargetPlace(place);
-                        setRegenerateOpen(true);
-                      }}
-                      className="text-xs font-medium text-staff-text-secondary hover:text-staff-brand transition-colors cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <span>🔄</span>
-                      {hasQr ? "Regenerate QR" : "Generate QR"}
-                    </button>
-
-                    {hasQr && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRevokeTargetPlace(place);
-                          setRevokeOpen(true);
-                        }}
-                        className="text-xs font-medium text-rose-600 hover:text-rose-800 transition-colors cursor-pointer inline-flex items-center gap-1"
-                        title="Revoke compromised QR"
-                      >
-                        <span>🚫</span>
-                        Revoke QR
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRegenerateTargetPlace(place);
+                      setRegenerateOpen(true);
+                    }}
+                    className="text-xs font-medium text-staff-text-secondary hover:text-staff-brand transition-colors cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <span>🔄</span>
+                    {hasQr ? "Regenerate QR" : "Generate QR"}
+                  </button>
 
                   <button
                     type="button"
