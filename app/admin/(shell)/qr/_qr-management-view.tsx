@@ -8,6 +8,7 @@ import type { PlaceItemView, QrPlacesResponse } from "./_types";
 import { AddPlaceDialog } from "./_add-place-dialog";
 import { EndSessionDialog } from "./_end-session-dialog";
 import { RegenerateQrDialog } from "./_regenerate-qr-dialog";
+import { RevokeQrDialog } from "./_revoke-qr-dialog";
 import { DeletePlaceDialog } from "./_delete-place-dialog";
 import { getCsrfToken } from "@/lib/csrf-client";
 
@@ -41,6 +42,8 @@ export function QrManagementView({
   const [endSessionOpen, setEndSessionOpen] = useState(false);
   const [regenerateTargetPlace, setRegenerateTargetPlace] = useState<PlaceItemView | null>(null);
   const [regenerateOpen, setRegenerateOpen] = useState(false);
+  const [revokeTargetPlace, setRevokeTargetPlace] = useState<PlaceItemView | null>(null);
+  const [revokeOpen, setRevokeOpen] = useState(false);
   const [deleteTargetPlace, setDeleteTargetPlace] = useState<PlaceItemView | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -431,13 +434,26 @@ export function QrManagementView({
                         </div>
                       </div>
 
-                      <Link
-                        href={`/admin/qr/print/${place.activeQr!.id}?print=true`}
-                        target="_blank"
-                        className="px-2.5 py-1 text-xs font-medium rounded-md border border-staff-border-subtle bg-staff-surface hover:bg-staff-surface-raised text-staff-text-primary transition-colors shrink-0 shadow-2xs"
-                      >
-                        🖨️ Print
-                      </Link>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Link
+                          href={`/admin/qr/print/${place.activeQr!.id}?print=true`}
+                          target="_blank"
+                          className="px-2.5 py-1 text-xs font-medium rounded-md border border-staff-border-subtle bg-staff-surface hover:bg-staff-surface-raised text-staff-text-primary transition-colors inline-flex items-center gap-1 shadow-2xs"
+                        >
+                          🖨️ Print
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRevokeTargetPlace(place);
+                            setRevokeOpen(true);
+                          }}
+                          className="px-2.5 py-1 text-xs font-semibold rounded-md border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors inline-flex items-center gap-1 shadow-2xs cursor-pointer"
+                          title="Revoke compromised QR code immediately"
+                        >
+                          🚫 Revoke
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <div className="flex items-center justify-between gap-2 w-full py-1">
@@ -502,17 +518,34 @@ export function QrManagementView({
 
                 {/* Place Footer Actions */}
                 <div className="pt-2 border-t border-staff-border-subtle flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRegenerateTargetPlace(place);
-                      setRegenerateOpen(true);
-                    }}
-                    className="text-xs font-medium text-staff-text-secondary hover:text-staff-brand transition-colors cursor-pointer inline-flex items-center gap-1"
-                  >
-                    <span>🔄</span>
-                    {hasQr ? "Regenerate QR" : "Generate QR"}
-                  </button>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegenerateTargetPlace(place);
+                        setRegenerateOpen(true);
+                      }}
+                      className="text-xs font-medium text-staff-text-secondary hover:text-staff-brand transition-colors cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <span>🔄</span>
+                      {hasQr ? "Regenerate QR" : "Generate QR"}
+                    </button>
+
+                    {hasQr && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRevokeTargetPlace(place);
+                          setRevokeOpen(true);
+                        }}
+                        className="text-xs font-medium text-rose-600 hover:text-rose-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+                        title="Revoke compromised QR"
+                      >
+                        <span>🚫</span>
+                        Revoke QR
+                      </button>
+                    )}
+                  </div>
 
                   <button
                     type="button"
@@ -555,6 +588,14 @@ export function QrManagementView({
         onOpenChange={setRegenerateOpen}
         place={regenerateTargetPlace}
         onQrRegenerated={() => poll(true)}
+      />
+
+      {/* Revoke QR Dialog */}
+      <RevokeQrDialog
+        open={revokeOpen}
+        onOpenChange={setRevokeOpen}
+        place={revokeTargetPlace}
+        onQrRevoked={() => poll(true)}
       />
 
       {/* Delete Place Dialog */}
