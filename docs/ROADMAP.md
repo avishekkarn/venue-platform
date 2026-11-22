@@ -1096,16 +1096,39 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 ---
 
-### Milestone 8.7 — Reports
+### Milestone 8.7 — Reports & Operational Intelligence Hub
 
-**Goal:** The operator sees the venue's sales reports — daily revenue, orders per day, top-selling items, by category — and exports them as CSV.
+**Goal:** Provide venue operators with an industry-grade reporting and operational intelligence suite spanning 17 analytical views across financial revenue, menu engineering matrices, workflow funnel latency, hotel service SLAs, place utilization, QR placard conversion, and anytime-access saved reports with audited per-record CSV streaming. Governed strictly by D-2.1, D-10.2, D-12.1–D-12.7.
+
+**The 17 Industry Report Views:**
+1. **Revenue Summary:** Gross, net subtotal, tax liability, place type breakdown (`TABLE`, `ROOM`, `COUNTER`). (v1 tips: 0.00 per D-7.4; method: CASH per D-7.7).
+2. **Sales by Item:** Item volume, base revenue, modifier revenue, line total, and modifier attach rate %.
+3. **Order Funnel & Latency:** Funnel counts per state, average approval, prep, delivery, and cycle times in seconds.
+4. **Service Requests:** Volume, completion, decline, cancellation counts, and average resolution time by `HotelService`.
+5. **Place Utilization:** Table turns, room stays, average dwell minutes, order counts, revenue, and conversion %.
+6. **QR & Session Lifecycle:** Token status, issuance, revocation dates, and guest sessions generated per placard.
+7. **Payment Reconciliation (v1 Empty-State):** Status panel indicating provider connection activates in Phase 10 per D-7.1/D-7.7.
+8. **Per-Record Audit Export:** Raw chronological event mutations with staff attribution per D-4.9 and D-3.7 (no aggregate surveillance per D-12.4).
+9. **Hourly Heatmap:** Order volume and revenue distribution by day-of-week and hour-of-day.
+10. **Menu Engineering Matrix:** Profitability quadrant classification (Stars, Plowhorses, Puzzles, Dogs) derived from volume × revenue medians.
+11. **Modifier Attach-Rate:** Granular add-on velocity and upsell revenue across modifier groups and options.
+12. **Tax Remittance Report:** Periodic tax collected, frozen tax rates applied, taxable subtotals for accountant filing.
+13. **Cancellation Root-Cause:** State-change audit notes and reason frequency for cancelled orders.
+14. **Service SLA Dashboard:** Percentile resolution times (P50, P90, P99) and currently open requests per department.
+15. **Room Folio Report:** Room stay dates, aggregate room orders, guest service charges, and folio totals.
+16. **Occupancy & Dwell:** Table turnover frequency, stay durations, and peak concurrent guest sessions.
+17. **QR Scan-to-Order Conversion:** Conversion funnel from QR placard scan to placed order with revenue per session.
 
 | ID | Task | Status | Depends on |
-|----|------|--------|------------|
-| **8.7.1** | **`GET /api/admin/reports/sales`** (`withAudit`). Query params: `dateFrom`, `dateTo` (up to 6 months per D-12.1). Returns `{ data: { dailyTotals, topItems, byCategory } }`. All money as decimal strings. Four route tests. | ⬜ | 8.6.6 |
-| **8.7.2** | **`GET /api/admin/reports/sales/export`** (CSV, `withAudit`). One CSV per report type via `?type=daily|items|categories`. Four route tests. | ⬜ | 8.7.1 |
-| **8.7.3** | **The Reports screen** (`app/admin/reports/page.tsx`): a date range picker, a line chart of daily revenue, a bar chart of orders per day, a table of top-selling items, three "Export CSV" buttons. | ⬜ | 8.7.2 |
-| **8.7.4** | **Verify:** a 6-month range, export the daily CSV, open it; the daily totals sum to the same sum from the DB. Manual desktop. The milestone's acceptance test. | ⬜ | 8.7.3 |
+|---|---|---|---|
+| **8.7.0** | **Decision Records for Reporting Scope (`docs/DECISIONS.md`)** — Author locked decisions: `D-2.6` (receipt guestEmail unpopulated in v1, removed in Phase 10), `D-12.5` (CSV-only v1, PDF in Phase 9), `D-12.6` (snapshot `OrderItem.categoryName` at creation), `D-12.7` (anytime-access saved reports & report-run audit). No code. | ⬜ | 8.6.9 |
+| **8.7.1** | **Snapshot Migrations & Composite Performance Indexes** — Forward migration adding `OrderItem.categoryName` (G-02b) and composite indexes on `Order(venueId, state, placedAt)` (G-11), `ServiceRequest(venueId, serviceType, submittedAt)` (G-12), and `GuestSession(venueId, createdAt)` (G-13). Update `createOrder` to snapshot category name. Integration test proves historical category immunity. | ⬜ | 8.7.0 |
+| **8.7.2** | **Reports Domain Layer (`src/domain/reports/`)** — Pure domain functions for all 17 report view families (`revenue.ts`, `sales.ts`, `funnel.ts`, `requests.ts`, `utilization.ts`, `qr.ts`, `audit.ts`, `tax.ts`, `sla.ts`, `folio.ts`, `occupancy.ts`, `conversion.ts`). All money as decimal strings; zero DB imports (BUILD.md §5.4). Unit tests with fixture data for every view. | ⬜ | 8.7.1 |
+| **8.7.3** | **Reports Aggregation API Routes (`app/api/admin/reports/[view]/route.ts`)** — Audited endpoints with `withAudit`. Enforce venue scoping from session, date range validation (`dateTo - dateFrom <= 180 days` per D-12.1). Integration tests + negative tests (unauthenticated → 401, >180 days → VALIDATION_FAILED, cross-venue → 404). | ⬜ | 8.7.2 |
+| **8.7.4** | **CSV Streaming Export Routes (`app/api/admin/reports/[view]/export/route.ts`)** — Streaming CSV endpoint with UTF-8 BOM (`\uFEFF`), RFC 4180 quoting, decimal money strings, and exact column contracts. Wrapped with `withAudit`. Integration tests verify byte-identical header contracts and negative auth guards. | ⬜ | 8.7.3 |
+| **8.7.5** | **Saved Reports & Report-Run Audit (`SavedReport`, `ReportRun`)** — Forward migration for `SavedReport` (query params only) and `ReportRun` (audit trail of ran reports). Domain service + `GET/POST/DELETE /api/admin/reports/saved` with `withAudit`. Integration tests verify saved queries, rerun by ID, and run history. | ⬜ | 8.7.4 |
+| **8.7.6** | **The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`)** — High-contrast staff-token dashboard inside admin shell: date range picker (capped at 180 days), view category switcher, metric cards, 17 modular view tables/charts under `_views/`, CSV download buttons, and Saved Reports drawer. View 7 renders an informative empty-state panel per D-7.7. Manual desktop check. | ⬜ | 8.7.5 |
+| **8.7.7** | **Verify:** Full verification sweep across production benchmarks (`tsc --noEmit` 0 errors, 100% unit and integration test pass rate, manual desktop walkthrough, CSV validation in spreadsheet). Produce BUILD.md §13 milestone closure report. | ⬜ | 8.7.6 |
 
 ---
 
@@ -1115,7 +1138,7 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.8.1** | **`GET` / `PATCH /api/admin/settings`** (`withAudit`; PATCH + `withCsrf`). `GET` returns the venue's settings: address, contact, hours (editable), taxRate / currency / language (read-only). `PATCH` accepts only address, contact, hours. **Rejects writes to taxRate / currency / language with `VALIDATION_FAILED`** (D-9.6). Four route tests. | ⬜ | 8.7.4 |
+| **8.8.1** | **`GET` / `PATCH /api/admin/settings`** (`withAudit`; PATCH + `withCsrf`). `GET` returns the venue's settings: address, contact, hours (editable), taxRate / currency / language (read-only). `PATCH` accepts only address, contact, hours. **Rejects writes to taxRate / currency / language with `VALIDATION_FAILED`** (D-9.6). Four route tests. | ⬜ | 8.7.7 |
 | **8.8.2** | **`PATCH /api/admin/modules`** (`withAudit` + `withCsrf`). Body: the module toggles. The operator can turn off a module the developer enabled; cannot turn on a disabled module (D-9.6). A request that tries to enable a disabled module returns `FORBIDDEN`. Four route tests. | ⬜ | 8.8.1 |
 | **8.8.3** | **`PATCH /api/admin/services`** (`withAudit` + `withCsrf`). Same as 8.8.2 for the service-catalog enablement. Four route tests. | ⬜ | 8.8.2 |
 | **8.8.4** | **The Settings screen** (`app/admin/settings/page.tsx`): the venue's address / contact / hours (editable form), the read-only taxRate / currency / language, the module toggles, the service toggles. | ⬜ | 8.8.3 |

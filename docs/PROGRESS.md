@@ -146,7 +146,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 Next entry number: 0245
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports). Current task: Task 8.7.1 — `GET /api/admin/reports/summary`.
+### 5.3 Current Milestone — Phase 8, Milestone 8.7 (Reports & Operational Intelligence Hub). Current task: Task 8.7.0 — Decision records for reporting scope (D-2.6, D-12.5, D-12.6, D-12.7).
 
 New entries go immediately below the ▼ marker, newest first.
 
