@@ -14,14 +14,14 @@
 1. Venue Identity — D-1.1 to D-1.3
 2. Guest Identity — D-2.1 to D-2.6
 3. Staff Identity — D-3.1 to D-3.14
-4. Order Identity — D-4.1 to D-4.12
+4. Order Identity — D-4.1 to D-4.13
 5. Service Request Identity — D-5.1 to D-5.7
 6. Kitchen and Fulfilment — D-6.1 to D-6.6
 7. Payments — D-7.1 to D-7.8
-8. Real-Time, Offline, and Reliability — D-8.1 to D-8.5
-9. Branding and Theming — D-9.1 to D-9.8
+8. Real-Time, Offline, and Reliability — D-8.1 to D-8.7
+9. Branding and Theming — D-9.1 to D-9.18
 10. Multi-Venue and Multi-Tenant — D-10.1 to D-10.5
-11. Languages, Currencies, and Regions — D-11.1 to D-11.4
+11. Languages, Currencies, and Regions — D-11.1 to D-11.6
 12. Reporting — D-12.1 to D-12.7
 13. Notifications — D-13.1 to D-13.3
 14. Deployment — D-14.1 to D-14.3
@@ -551,7 +551,9 @@ Historical orders keep the item's name and price as they were when the order was
 
 ### D-4.3 — One tax rate for the whole venue
 
-**Decision:** The venue has a single tax rate applied to the subtotal of every order. There are no per-item or per-section tax rates in the first version.
+**SUPERSEDED BY D-4.13** on 2026-11-23. See D-4.13 for the hierarchical 3-tier tax model.
+
+**Decision (Superseded):** The venue has a single tax rate applied to the subtotal of every order. There are no per-item or per-section tax rates in the first version.
 
 **Context:** Most venues have one tax rate. Handling multiple rates adds complexity to the menu, the order, and the reports without benefit for the first version.
 
@@ -771,6 +773,37 @@ No additional states are introduced in the first version.
 - The kitchen sees one ticket. The bill reflects one order.
 
 **What would make us revisit:** Never. This is a correctness requirement for the queued-retry flow D-8.2 already promises.
+
+---
+
+### D-4.13 — Hierarchical 3-tier tax model (Venue default, Category override, Item override)
+
+**Decision:** The venue supports a three-tier hierarchical tax model:
+1. **Venue default rate:** The baseline tax rate applied across all menu items by default (`Venue.taxRateId`).
+2. **Category override:** An optional tax rate assigned to a menu category (`MenuCategory.taxRateId`), overriding the venue default for all items in that category.
+3. **Item override:** An optional tax rate assigned directly to a specific menu item (`MenuItem.taxRateId`), overriding both the category rate and venue default.
+
+Resolution order for any order line item is most-specific-first:
+`MenuItem.taxRateId` ?? `MenuCategory.taxRateId` ?? `Venue.taxRateId` ?? `Venue.taxRate` (legacy fallback).
+
+Tax rates are defined as named entities (`TaxRate`: `name`, `rate`, `isInclusive`, `isDefault`, `isActive`). Once created, a `TaxRate.rate` is immutable. To change a rate, the manager deactivates the existing rate and creates a new one, reassigning categories or items. Historical orders preserve the frozen snapshot of `effectiveTaxRate` and `taxAmount` per line per D-4.1 and D-4.4.
+
+**Context:** Hospitality venues frequently sell products subject to different statutory tax rules (e.g., standard food VAT at 13%, alcohol excise at 20%, or tax-exempt essentials). A single flat rate for the entire venue prevents legally compliant operations in multi-tier jurisdictions.
+
+**Alternatives considered:**
+- Flat venue-wide rate (D-4.3) — superseded because it fails to support alcohol versus food tax variance.
+- Item-only tax assignments — rejected because manually assigning tax to hundreds of items is error-prone; category inheritance provides scalable defaults.
+- Mutable tax rates with inline recalculation — rejected per D-4.1 and D-4.4 because mutating past rates corrupts financial and historical tax reporting.
+
+**Consequences:**
+- The venue operator can define multiple named tax rates in Settings (`/admin/settings`).
+- Overrides are assigned where menu attributes belong: on Category sheets and Item sheets in Menu Management (`/admin/menu`).
+- The order creation pipeline evaluates the effective tax rate per item using pure domain resolution (`src/domain/tax/resolve.ts`) and snapshots it to `OrderItem.taxRate` and `OrderItem.taxAmount`.
+- Historical revenue reports remain 100% immune to subsequent tax rate additions or deactivations.
+
+**What would make us revisit:** If a region mandates compound multi-jurisdiction taxes (e.g., separate municipal and state taxes calculated on separate bases).
+
+**Traces to:** DECISIONS.md D-4.1, D-4.4, D-9.6, D-11.3, BUILD.md §7.1, Milestone 8.8 (Settings).
 
 ---
 
@@ -1344,6 +1377,59 @@ The bridge is designed so that a specific provider can be plugged in later by wr
 
 ---
 
+### D-8.6 — Seedable disaster-recovery reference snapshot policy
+
+**Decision:** A lightweight, self-contained reference snapshot is generated to `backups/seed/seed-snapshot.json` automatically after every administrative settings change (`PATCH /api/admin/settings`), and on a scheduled 7-day cycle. The snapshot captures reference data required to re-establish an operational venue from scratch:
+- The venue record and operational parameters (contact, timezone, currency, tax rates, module and service toggles).
+- All place definitions (tables, rooms, counters, categories) and their active QR tokens.
+- All menu categories, items, modifier groups, and tax assignments.
+- All active staff accounts, roles, and password hashes (excluding transient session cookies).
+
+Running `pnpm seed:from-snapshot backups/seed/seed-snapshot.json` on a clean database restores an operational venue in under 60 seconds without developer intervention.
+
+**Context:** While full binary PostgreSQL backups (`pg_dump`) protect infrastructure and long-term order history (D-8.5), operators require a resilient, human-readable, and git/filesystem-portable restore point. In the event of catastrophic local storage corruption or cold deployment to a new machine, the venue must recover its operating configuration immediately.
+
+**Alternatives considered:**
+- Full database replication only (D-8.5) — retained for disaster recovery, but unsuited for rapid environment duplication or portable config portability.
+- Snapshotting after every operational mutation (every order, session, or request) — rejected as excessive filesystem I/O and risk of lock contention.
+
+**Consequences:**
+- Administrative updates asynchronously trigger `writeSeedSnapshot()` debounced to at most once per minute.
+- Operators can download the JSON snapshot file directly from `/admin/settings`.
+- The snapshot never contains guest PII, payment tokens, or historical order ledgers.
+
+**What would make us revisit:** If snapshot payload size exceeds 25 MB in high-volume enterprise franchises.
+
+**Traces to:** DECISIONS.md D-8.5, D-10.1, D-14.1, SYSTEM.md §18.5, Milestone 8.8.
+
+---
+
+### D-8.7 — Data archival and retention policy for historical orders and audit logs
+
+**Decision:** The platform enforces a predictable data retention and offline archival policy:
+- **Orders, Order Items, and State Changes:** Retained in live PostgreSQL for 24 months. Orders older than 24 months are archived to venue-scoped RFC 4180 CSV and JSON files in `exports/orders/YYYY-MM/` and can be purged from the active OLTP tables.
+- **Service Requests and Request State Changes:** Retained for 24 months, matching the order lifecycle.
+- **Audit Logs:** Active JSON-lines files in `logs/audit/` are retained for 12 months. Files older than 12 months are compressed and archived to `exports/audit/YYYY-MM/` per W-0026 and Phase 10.7.6.
+- **Guest Sessions:** Closed guest sessions are pruned after 90 days.
+
+All archives are venue-isolated, deterministic, and strictly free of guest PII (D-2.1).
+
+**Context:** High-turnover restaurant operations generate hundreds of thousands of order and state-change rows annually. Unbounded growth degrades query execution times for daily active queue operations. Clear retention boundaries ensure predictable database performance while preserving statutory accounting records in portable formats.
+
+**Alternatives considered:**
+- Indefinite live storage in PostgreSQL — rejected due to index bloat and vacuum overhead.
+- Immediate deletion after financial year close — rejected because tax compliance requires multi-year access to historical invoices.
+
+**Consequences:**
+- Reports querying dates beyond 180 days are prevented in the live dashboard (D-12.1); historical auditing relies on the deterministic archive.
+- Archive files are structured consistently with live CSV export formats.
+
+**What would make us revisit:** If legal regulations in a venue's jurisdiction mandate a longer live retention period (e.g. 7 years for specific financial audits).
+
+**Traces to:** DECISIONS.md D-2.1, D-8.5, D-12.1, D-12.7, SYSTEM.md §18.5, BUILD.md §7.1.
+
+---
+
 ## 9. Branding and Theming
 
 ### D-9.1 — Every branding element is developer-controlled, per venue, in code
@@ -1560,6 +1646,82 @@ evokeToken followed by invalidateSessionsForPlace.
 
 ---
 
+### D-9.16 — Venue contact and counter pickup phone configuration
+
+**Decision:** The venue's public contact details and counter dispatch coordination phone are editable by the manager and owner in `/admin/settings`:
+- `Venue.contactName`: Official establishment contact person or front-of-house desk.
+- `Venue.contactPhone`: Primary public telephone number.
+- `Venue.contactEmail`: Public operational email address.
+- `Venue.counterPhone`: Dedicated counter phone number for pickup callouts and order coordination.
+
+These fields are strictly display-only. They are rendered on receipts, guest portals, and order pickup notices. In adherence with D-13.1 and D-13.3, the system never triggers automated SMS, email, or outbound guest notifications to these addresses.
+
+**Context:** Operators regularly update telephone numbers, shift duty contacts, or counter desk lines without requiring developer code changes. Making these fields editable in Settings provides essential operational autonomy without opening outbound communication security risks.
+
+**Alternatives considered:**
+- Hardcoding contact details in developer seed (D-9.6) — superseded for contact details because phone numbers change frequently in hospitality.
+- Allowing contact details to trigger SMS notifications — strictly rejected per D-13.1 and D-13.3.
+
+**Consequences:**
+- `contactName`, `contactPhone`, `contactEmail`, and `counterPhone` can be modified via `PATCH /api/admin/settings`.
+- Changes are tracked with `SETTINGS_CHANGED` in the audit log.
+- All four fields are display-only and cannot be used for authentication.
+
+**What would make us revisit:** Never.
+
+**Traces to:** DECISIONS.md D-9.6, D-13.1, D-13.3, Milestone 8.8 (Settings).
+
+---
+
+### D-9.17 — Audit log audience segmentation and export
+
+**Decision:** Every audit log event written by `withAudit` carries an explicit `audience` classification:
+- `USER`: Guest-originated interactions (order placement, join requests, service requests, QR scans).
+- `STAFF`: Operational actions performed by floor, kitchen, or front-desk staff (approving, preparing, delivering, completing, closing places).
+- `ADMIN`: Managerial and administrative mutations (settings changes, staff account CRUD, role changes, QR revocation, menu pricing).
+- `SYSTEM`: Background jobs, automated maintenance, and data archival tasks.
+
+The Settings screen provides an audited **Audit Export** utility allowing managers to download RFC 4180 CSV extracts filtered by date range (≤ 180 days) and audience (`USER`, `STAFF`, `ADMIN`, `SYSTEM`, or `ALL`). Every export generation is recorded in the `ReportRun` table (`reportType: "audit_export"`).
+
+**Context:** Blended audit logs mix high-frequency guest events with security-critical administrative actions. Operators auditing cash, staff shifts, or administrative changes need targeted extracts without sifting through millions of guest menu scans.
+
+**Alternatives considered:**
+- Single unsegmented audit stream — rejected because operational reviews require audience separation.
+- Free-text logging — rejected; structured audit lines with actor, route, method, status, latency, and audience are required.
+
+**Consequences:**
+- `withAudit` automatically assigns audience based on the actor resolver (guest actor → `USER`, staff actor on `/api/admin/*` → `ADMIN`, staff actor on `/api/staff/*` or `/api/kitchen/*` → `STAFF`, background process → `SYSTEM`).
+- Audit CSV streaming export endpoint: `GET /api/admin/settings/audit-export`.
+- Exports are strictly venue-scoped and subject to manager-level authentication and CSRF protection.
+
+**What would make us revisit:** If regulatory compliance requires streaming audit events to external SIEM tools (e.g. Datadog, Splunk).
+
+**Traces to:** DECISIONS.md D-12.7, D-9.6, BUILD.md §6.11, SYSTEM.md §12.5, Milestone 8.8.
+
+---
+
+### D-9.18 — Receipt header and footer text customization
+
+**Decision:** The venue manager can configure custom text lines for receipt headers and footers (`Venue.receiptHeader` and `Venue.receiptFooter`) in Settings. These fields allow venues to specify business registration numbers (e.g., PAN / VAT numbers), physical address lines, Wi-Fi passwords, or hospitality courtesy notes ("Thank you for dining with us!").
+
+Core visual branding elements (logo, brand color, typography, hero image) remain developer-controlled per D-9.1. D-9.1 is narrowed solely to grant operators control over printed receipt metadata and courtesy text.
+
+**Context:** Tax regulations in many jurisdictions require displaying the establishment's VAT/PAN registration number and physical address on customer receipts. Requiring a developer deployment to change a receipt greeting or address is an operational bottleneck.
+
+**Alternatives considered:**
+- Full receipt template editor with HTML/CSS — rejected; complex and introduces formatting breakage across thermal printers.
+- Hardcoded receipt layout without custom text — rejected because tax compliance requires registration number printouts.
+
+**Consequences:**
+- `receiptHeader` (e.g. "Juniper House · PAN: 601234567 · Lakeside Pokhara") and `receiptFooter` (e.g. "Visit us again soon!") are editable via `PATCH /api/admin/settings`.
+- Rendered on customer receipts, digital bills, and print formats.
+
+**What would make us revisit:** If venues demand multi-language receipt headers.
+
+**Traces to:** DECISIONS.md D-7.8, D-9.1, D-9.6, Milestone 8.8.
+
+---
+
 ## 10. Multi-Venue and Multi-Tenant
 
 ### D-10.1 — One venue per installation in the first version
@@ -1715,7 +1877,9 @@ evokeToken followed by invalidateSessionsForPlace.
 
 ### D-11.3 — One tax rule per venue
 
-**Decision:** The venue has one tax rule, applied to the subtotal of every order. See D-4.3.
+**SUPERSEDED BY D-4.13** on 2026-11-23. See D-4.13 for the 3-tier hierarchical tax model.
+
+**Decision (Superseded):** The venue has one tax rule, applied to the subtotal of every order. See D-4.3.
 
 **Context:** Same as D-4.3.
 
@@ -1775,6 +1939,34 @@ evokeToken followed by invalidateSessionsForPlace.
 **What would make us revisit:** If multi-property hospitality groups require runtime timezone adjustments per terminal.
 
 **Traces to:** D-11.1, D-11.2, D-11.4, D-9.6, BUILD.md §7.1.
+
+---
+
+### D-11.6 — Operator-controlled regional parameters: currency immutability lock, timezone, and time format
+
+**Decision:** Regional parameters on `Venue` are managed under strict integrity rules:
+1. **Currency (`Venue.currency`):** The operator can select the venue's currency from a validated list of ISO 4217 currency codes (`USD`, `NPR`, `EUR`, `GBP`, `INR`, `AUD`, `CAD`, `JPY`) during initial setup. However, once the first order has been placed in the venue (`Order.count(venueId) > 0`), the currency field becomes permanently **IMMUTABLE**. Any subsequent PATCH attempting to change `currency` is rejected with `400 VALIDATION_FAILED` (`code: FIELD_IMMUTABLE`).
+2. **Timezone (`Venue.timezone`):** Editable by the venue Owner/Manager in Settings. Because modifying the timezone alters the calendar day boundaries and hourly bins of historical reports, the admin UI displays a mandatory confirmation warning ("Changing timezone affects how all past transaction timestamps are displayed in reports."). Every timezone update logs an explicit `SETTINGS_CHANGED` audit record containing both prior and new timezone identifiers.
+3. **Time Format (`Venue.timeFormat`):** A display preference setting (`"12h"` | `"24h"`, default `"12h"`). Controls user-facing timestamp formatting in dashboards and customer receipts. All timestamps in the database and audit logs remain stored strictly in ISO 8601 UTC.
+
+This decision amends D-9.6, D-11.2, and D-11.5, transferring controlled regional display authority to the venue operator while mathematically safeguarding historical financial integrity.
+
+**Context:** Forcing a developer code change merely to initialize a venue's currency or set the local timezone is an impediment to self-sufficient deployment. However, allowing currency changes after transactions are recorded would corrupt all accounting history and revenue aggregation invariants. Locking currency upon the first transaction is the universal standard in enterprise point-of-sale systems.
+
+**Alternatives considered:**
+- Currency editable at any time — rejected. Incompatible with historical accounting; changing currency from USD to NPR would inflate historical revenue 135x.
+- Developer-only timezone setting (D-11.5) — superseded because venue operators need to align operating hours when daylight saving time or regional boundaries shift.
+- Per-terminal time format — rejected as unnecessary complexity; venue-level setting ensures consistent operations across staff and guest devices.
+
+**Consequences:**
+- `GET /api/admin/settings` returns `isCurrencyLocked: boolean` (`ordersCount > 0`).
+- The admin UI disables the currency dropdown with a tooltip when locked.
+- `PATCH /api/admin/settings` enforces the immutability check.
+- Time format is reflected across order tracking, staff queue clocks, and reports.
+
+**What would make us revisit:** If a venue undergoes a formal multi-currency financial migration authorized by an institutional administrator.
+
+**Traces to:** DECISIONS.md D-9.6, D-11.2, D-11.5, D-4.1, D-12.1, Milestone 8.8.
 
 ---
 
