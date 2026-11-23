@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0254 | 2026-11-23 | Task 8.6.10 closed: Staff Presence D-3.2 Realignment, Manager Force End-Shift API, Decision D-3.14 & Prep for Milestone 8.8 | PASS | Milestone 8.6 | §5.3 |
 | ENTRY-0253 | 2026-11-22 | Master Report Dashboard Refinements, 10 Cross-View Invariants & Staff D-3.2 Presence Alignment | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0252 | 2026-11-22 | Milestone 8.7 closed: Reports & Operational Intelligence Hub (17 Views, Domain, APIs, CSV Streaming, Saved Reports, Full Sweep) | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0251 | 2026-11-22 | Milestone 8.7 Task 8.7.6 closed: The Admin Reports Dashboard Screen (`app/admin/(shell)/reports/page.tsx`) | PASS | Milestone 8.7 | §5.3 |
@@ -153,13 +154,44 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0254
+Next entry number: 0255
 
 ### 5.3 Current Milestone — Phase 8, Milestone 8.8 (Settings). Current task: Task 8.8.1 — GET / PATCH /api/admin/settings (`withAudit`; PATCH + `withCsrf`).
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0254 — 2026-11-23 — Staff Presence Realignment with D-3.2, Manager Force End-Shift API, Decision D-3.14 & Milestone 8.8 Readiness
+
+**Status:** PASS
+
+**Task:** Milestone 8.6 Task 8.6.10 (Staff Presence Realignment, Force End-Shift API, D-3.14 Authoring & Milestone 8.8 Readiness).
+
+**Summary:**
+- Realigned staff online presence detection across all surfaces (`/admin/staff`, `/api/admin/staff`, `/api/admin/staff/[id]/activity`) to evaluate `s.endedAt === null && m.state === "ACTIVE"` in pure adherence with DECISIONS.md D-3.2 (no automatic timeout). Resolved the issue where Charlie Server was marked offline after 24 hours of login.
+- Authored and locked Decision Record `D-3.14` ("A manager can force-end a staff member's active session") per BUILD.md §10.6 and §15.
+- Implemented and verified `POST /api/admin/staff/[id]/end-shift` with `withAuditedDynamicRoute` and `withCsrf`, complete with manager UI controls in the staff table and shift drawer. Verified by 6 integration tests in `tests/integration/api/admin-staff.test.ts`.
+- Formally closed Milestone 8.6 (Staff Management) and Milestone 8.7 (Reports). Advanced the project to Milestone 8.8 (Settings, Task 8.8.1).
+
+**Files Changed:**
+- `docs/DECISIONS.md`: Added D-3.14, updated Table of Contents Section 3 (D-3.1 to D-3.14).
+- `docs/ROADMAP.md`: Updated Phase 8 status to indicate Milestones 8.1–8.7 are closed; added Task 8.6.10; Milestone 8.8 (Settings) active.
+- `docs/PROGRESS.md`: Added ENTRY-0254, updated entry table, updated Section 7 Current State Snapshot to Milestone 8.8.
+- `app/api/admin/staff/[id]/end-shift/route.ts`: Built audited and CSRF-protected endpoint to force-end active shifts per D-3.14.
+- `app/admin/(shell)/staff/_staff-management-view.tsx` & `_staff-activity-drawer.tsx`: Added "End Shift" action button with confirmation and live refresh.
+- `app/admin/(shell)/staff/page.tsx`, `app/api/admin/staff/route.ts`, `app/api/admin/staff/[id]/activity/route.ts`: Simplified presence logic to `s.endedAt === null`.
+- `tests/integration/api/admin-staff.test.ts`: Added integration test for `POST /api/admin/staff/[id]/end-shift`.
+
+**Verification Evidence:**
+- `pnpm typecheck` (`tsc --noEmit`): 0 errors.
+- `pnpm test:unit`: 43 test files passed, 301/301 tests passed.
+- `pnpm test:integration`: All 6 tests in `tests/integration/api/admin-staff.test.ts` passed.
+- `pnpm build`: Next.js 16.4.4 production build compiled successfully across all 64 routes.
+
+**Next:** Milestone 8.8 — Settings (Task 8.8.1 `GET` / `PATCH /api/admin/settings`).
+
+---
 
 ### ENTRY-0253 — 2026-11-22 — Master Report Dashboard Refinements, 10 Cross-View Invariants & Staff D-3.2 Presence Alignment
 
@@ -1663,9 +1695,12 @@ Result: 39 routes, build succeeds.
 
 Updated at the end of every session.
 
-**Current status:** Phase 8 Milestones 8.1 through 8.5 (and 8.4.8, 8.4.9) are CLOSED (✅). The next active milestone is **Milestone 8.6 (Staff Management)**, starting with **Task 8.6.1 (`GET /api/admin/staff`)**. Baselines as of 2026-11-21: tsc 0 errors, unit 41 test files / 282 tests passed, integration suites passed, next build passed.
+**Current status:** Phase 8 Milestones 8.1 through 8.7 (and 8.4.8, 8.4.9) are CLOSED (✅). The next active milestone is **Milestone 8.8 (Settings)**, starting with **Task 8.8.1 (`GET / PATCH /api/admin/settings`)**. Baselines as of 2026-11-23: tsc 0 errors, unit 43 test files / 301 tests passed, integration suites passed, Next.js build 64 routes passed.
 
 **Key facts for a new session:**
+- Milestone 8.6 closed: Staff management hub (`/admin/staff`), full CRUD API, Argon2id passwords, multi-role RBAC, D-3.2 presence lifecycle (un-ended sessions `s.endedAt === null`), force-end shift capability (`POST /api/admin/staff/[id]/end-shift`, D-3.14), and activity history.
+- Milestone 8.7 closed: 17 industry report view families, RFC 4180 streaming CSV exports with UTF-8 BOM, saved reports and report-run auditing, 10 cross-view invariants mathematically reconciled in `reconciliation.test.ts`.
+- Milestone 8.8 (Settings) is next: 8.8.1 (`GET / PATCH /api/admin/settings`), 8.8.2 (`PATCH /api/admin/modules`), 8.8.3 (`PATCH /api/admin/services`), 8.8.4 (Settings screen `app/admin/(shell)/settings/page.tsx`), 8.8.5 (Verification).
 - 7.7.4's CSRF is fully closed at 084414c. Part B passed. The client sends the header on all 15 staff/kitchen/admin fetches plus the 9 guest fetches.
 - Login rate limiting is closed: 5 failed attempts / 15 minutes per IP, in-memory, RATE_LIMITED 429. The helper is src/infrastructure/auth/rate-limiter.ts. The route is withCsrf(loginHandler) (no withAudit, D-20.1). The resetRateLimiter() is in beforeEach of tests/integration/auth/login-route.test.ts. A 400 (VALIDATION_FAILED) does NOT count against the limit; only a 401 (UNAUTHORIZED) does.
 - The login landing is server-computed: getLandingRouteForRoles(roles) returns /admin (OWNER/MANAGER), /kitchen (CHEF), /staff (every other role). The client never picks allowedAreas[0]. The login form uses window.location.href (hard navigation) — never router.push — so the cookie jar commits before the next request. The venue_staff cookie is set on the NextResponse (not cookies().set()), because cookies().set() silently fails in a route handler when the response is created after it.

@@ -791,6 +791,7 @@ The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, 
 | POST | `/api/admin/qr/[id]/revoke` | Revoke a QR token |
 | GET, POST, PATCH, DELETE | `/api/admin/staff` | Manage staff |
 | POST | `/api/admin/staff/[id]/reset-password` | Reset a staff member's password |
+| POST | `/api/admin/staff/[id]/end-shift` | Force-end a staff member's active shift (D-3.14) |
 | GET | `/api/admin/orders` | Read orders with filters |
 | GET | `/api/admin/orders/export` | Export orders as CSV |
 | GET | `/api/admin/requests` | Read service requests |
@@ -798,7 +799,7 @@ The menu itself is fetched by the Server Component `app/(guest)/menu/page.tsx`, 
 | GET | `/api/admin/reports/sales/export` | Export a sales report as CSV |
 | PATCH | `/api/admin/modules` | Turn modules on or off |
 | PATCH | `/api/admin/services` | Turn services on or off |
-| PATCH | `/api/admin/settings` | Update venue settings |
+| GET, PATCH | `/api/admin/settings` | Read or update venue settings |
 | PATCH | `/api/admin/payments` | Configure the payment bridge |
 | GET | `/api/admin/audit/export` | Download every audit log file as a single ZIP (admin-only; 7.7.1b) |
 

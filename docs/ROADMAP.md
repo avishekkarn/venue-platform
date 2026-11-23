@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, 8.5, and 8.6 are ✅ closed. Milestone 8.7 (Reports) is next.
+**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, 8.5, 8.6, and 8.7 are ✅ closed. Milestone 8.8 (Settings) is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
