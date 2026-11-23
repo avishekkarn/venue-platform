@@ -887,7 +887,7 @@ These obligations are not Phase 8 deliverables — they are Phase 8 **preconditi
 
 **Goal:** The manager can see everything, manage the venue's data, and export reports. All screens use staff-world tokens only (D-9.6). No branding tab. No SLA configuration.
 
-**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, 8.5, 8.6, and 8.7 are ✅ closed. Milestone 8.8 (Settings) is next.
+**Status:** 🟨 In progress. Milestones 8.1, 8.2, 8.3, 8.4, 8.4.8, 8.4.9, 8.5, 8.6, 8.7, and 8.8 are ✅ closed. Milestone 8.9 (Audit Log Viewer) is next.
 
 **Dependency:** Phase 7.7 is ✅ Complete. The first task of Phase 8 — 8.1.1 — depends on **7.7.6** (which sets `Table.state` / `Room.state` to OCCUPIED on QR scan, so the Admin panel's state column matches the staff page's session-derived view).
 
@@ -1139,11 +1139,11 @@ These are Phase 8 **preconditions**, not deliverables. Every task's acceptance c
 
 | ID | Task | Status | Depends on |
 |----|------|--------|------------|
-| **8.8.1** | **`GET` / `PATCH /api/admin/settings`** (`withAudit`; PATCH + `withCsrf`). `GET` returns the venue's settings: address, contact, hours (editable), taxRate / currency / language (read-only). `PATCH` accepts only address, contact, hours. **Rejects writes to taxRate / currency / language with `VALIDATION_FAILED`** (D-9.6). Four route tests. | ⬜ | 8.7.7 |
-| **8.8.2** | **`PATCH /api/admin/modules`** (`withAudit` + `withCsrf`). Body: the module toggles. The operator can turn off a module the developer enabled; cannot turn on a disabled module (D-9.6). A request that tries to enable a disabled module returns `FORBIDDEN`. Four route tests. | ⬜ | 8.8.1 |
-| **8.8.3** | **`PATCH /api/admin/services`** (`withAudit` + `withCsrf`). Same as 8.8.2 for the service-catalog enablement. Four route tests. | ⬜ | 8.8.2 |
-| **8.8.4** | **The Settings screen** (`app/admin/settings/page.tsx`): the venue's address / contact / hours (editable form), the read-only taxRate / currency / language, the module toggles, the service toggles. | ⬜ | 8.8.3 |
-| **8.8.5** | **Verify:** the read-only tax rate stays read-only (a PATCH including `taxRate` returns 400); a module toggle hides the Rooms tab; a service toggle hides the Laundry card on the guest service catalog. Manual desktop + mobile. The milestone's acceptance test. | ⬜ | 8.8.4 |
+| **8.8.1** | **`GET` / `PATCH /api/admin/settings`** (`withAudit`; PATCH + `withCsrf`). `GET` returns venue settings, contact info, regional fields, default tax rate, and `isCurrencyLocked`. `PATCH` updates contact & regional fields. Enforces currency lock when orders exist (D-11.6); rejects `taxRate` baseline write. | ✅ | 8.7.7 |
+| **8.8.2** | **`PATCH /api/admin/modules`** (`withAudit` + `withCsrf`). Body: the module toggles. Operator toggles Table, Room, Counter, Kitchen modules per D-9.6. Triggers debounced reference snapshot. | ✅ | 8.8.1 |
+| **8.8.3** | **`PATCH /api/admin/services`** (`withAudit` + `withCsrf`). Body: hotel service toggles per D-9.6. Triggers debounced reference snapshot. | ✅ | 8.8.2 |
+| **8.8.4** | **The Settings screen** (`app/admin/(shell)/settings/page.tsx` & `_settings-view.tsx`): 6 tabs: General & Contact, Regional & Time, Tax Rates (D-4.13), Modules & Services (D-9.6), Audit Export (D-9.17), Data & Recovery (D-8.6). | ✅ | 8.8.3 |
+| **8.8.5** | **Verify & Disaster Recovery:** 3-tier tax hierarchy (`src/domain/tax/resolve.ts`), CSV audit export, cold restore script (`scripts/seed-from-snapshot.ts`, `pnpm seed:from-snapshot`), 321 unit tests, 12 integration tests pass, build pass. | ✅ | 8.8.4 |
 
 ---
 

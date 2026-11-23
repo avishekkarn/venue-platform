@@ -36,6 +36,15 @@ export interface Venue {
   currency: string;
   timezone: string;
   taxRate: string; // Decimal representation as string
+  taxRateId?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  counterPhone?: string | null;
+  timeFormat?: string;
+  receiptHeader?: string | null;
+  receiptFooter?: string | null;
+  currencyLockedAt?: Date | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

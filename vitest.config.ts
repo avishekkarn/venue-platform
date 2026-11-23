@@ -37,6 +37,7 @@ export default defineConfig({
       "tests/unit/staff/**/*.test.ts",
       "tests/unit/reports/**/*.test.ts",
       "tests/unit/tax/**/*.test.ts",
+      "tests/unit/settings/**/*.test.ts",
     ],
     passWithNoTests: true,
     environment: "node",

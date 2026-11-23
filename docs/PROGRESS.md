@@ -127,6 +127,7 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 
 | Entry | Date | Title | Status | Milestone | Location |
 |-------|------|-------|--------|-----------|----------|
+| ENTRY-0255 | 2026-11-23 | Milestone 8.8 closed: Settings Expansion, 3-Tier Tax Hierarchy (D-4.13), Regional Compliance, Audience Audit Exports & Seed Snapshot (D-8.6) | PASS | Milestone 8.8 | §5.3 |
 | ENTRY-0254 | 2026-11-23 | Task 8.6.10 closed: Staff Presence D-3.2 Realignment, Manager Force End-Shift API, Decision D-3.14 & Prep for Milestone 8.8 | PASS | Milestone 8.6 | §5.3 |
 | ENTRY-0253 | 2026-11-22 | Master Report Dashboard Refinements, 10 Cross-View Invariants & Staff D-3.2 Presence Alignment | PASS | Milestone 8.7 | §5.3 |
 | ENTRY-0252 | 2026-11-22 | Milestone 8.7 closed: Reports & Operational Intelligence Hub (17 Views, Domain, APIs, CSV Streaming, Saved Reports, Full Sweep) | PASS | Milestone 8.7 | §5.3 |
@@ -154,13 +155,66 @@ A quick index of every entry this file has ever held. Format: ENTRY-XXXX — YYY
 | ENTRY-0230 | 2026-11-15 | Milestone 8.1 closed (with 8.1.5.FIX.3 correction) | PASS | Milestone 8.1 | §5.3 |
 | ENTRY-0229 | 2026-11-15 | 8.1.3 split into 8.1.3.A (shared map cells) and 8.1.3.B (dashboard page) | STRUCTURAL | Milestone 8.1 | §5.3 |
 
-Next entry number: 0255
+Next entry number: 0256
 
-### 5.3 Current Milestone — Phase 8, Milestone 8.8 (Settings). Current task: Task 8.8.1 — GET / PATCH /api/admin/settings (`withAudit`; PATCH + `withCsrf`).
+### 5.3 Current Milestone — Phase 8, Milestone 8.9 (Audit Log Viewer). Current task: Task 8.9.1 — The "Audit Log" tab in the admin shell.
 
 New entries go immediately below the ▼ marker, newest first.
 
 ▼ APPEND NEW ENTRIES HERE ▼
+
+### ENTRY-0255 — 2026-11-23 — Milestone 8.8 Closed: Settings Expansion, 3-Tier Tax Hierarchy (D-4.13), Regional Compliance, Audience-Filtered Audit Exports (D-9.17) & Disaster Recovery Snapshot (D-8.6)
+
+**Status:** PASS
+
+**Task:** Milestone 8.8 (Settings Expansion — Tasks 8.8.1 to 8.8.5).
+
+**Summary:**
+- Implemented full operator autonomy and self-sufficiency across all organizational settings in strict compliance with BUILD.md and DECISIONS.md.
+- Authoring & Schema Expansion: Locked decision records D-4.13, D-8.6, D-8.7, D-9.16, D-9.17, D-9.18, D-11.6. Applied migration `20261123040914_settings_expansion` adding `TaxRate` model with `Decimal(6,4)`, venue contact fields (`contactName`, `contactPhone`, `contactEmail`, `counterPhone`), receipt custom headers/footers (`receiptHeader`, `receiptFooter`), regional fields (`timeFormat`, `currencyLockedAt`, `taxRateId`), category/item tax rate override foreign keys, and `AuditEvent.audience` segmentation (`USER`, `STAFF`, `ADMIN`, `SYSTEM`).
+- Domain Layer:
+  - `src/domain/tax/resolve.ts`: Pure domain function implementing the 3-tier tax resolution hierarchy (Item override > Category override > Venue default > Venue fallback) and line-level exclusive/inclusive tax calculations.
+  - `src/domain/settings/`: Pure validation modules for regional compliance (`update-regional.ts` locking currency immutability after first order per D-11.6), contact/receipt sanitization (`update-contact.ts`), immutable tax rate validation (`update-tax-rates.ts`), and portable reference disaster recovery snapshot generator (`seed-snapshot.ts`).
+- API Surface:
+  - `GET / PATCH /api/admin/settings`: Retrieves and updates contact, regional, and default tax rate parameters with CSRF protection, admin auditing, and strict currency immutability enforcement.
+  - `GET / POST /api/admin/settings/tax-rates` & `PATCH /api/admin/settings/tax-rates/[id]`: Manages venue tax rates with usage counts, preventing rate mutation after creation per D-4.13.
+  - `GET /api/admin/settings/audit-export`: Streams RFC 4180 CSV audit extracts partitioned by audience (`USER`, `STAFF`, `ADMIN`, `SYSTEM`, `ALL`) with a maximum 180-day window per D-12.1 and logs runs to `ReportRun`.
+  - `GET / POST /api/admin/settings/seed-snapshot`: Downloads or generates the reference snapshot strictly free of guest PII, payment tokens, or order ledgers.
+  - `GET / PATCH /api/admin/modules` & `GET / PATCH /api/admin/services`: Toggles venue modules and hotel services per D-9.6.
+- Tooling:
+  - `scripts/seed-from-snapshot.ts` and `pnpm seed:from-snapshot`: Restores an operational venue from cold storage in under 5 seconds.
+- User Interface:
+  - `app/admin/(shell)/settings/page.tsx` & `_settings-view.tsx`: Complete settings management console with 6 dedicated tabs: General & Contact, Regional & Time, Tax Rates, Modules & Services, Audit Export, and Data & Recovery.
+- Verification:
+  - 321/321 unit tests passed (`pnpm test:unit`).
+  - 12/12 integration tests passed (`tests/integration/api/admin-settings.test.ts` and `admin-audit-export.test.ts`).
+  - Production build succeeded (`pnpm build`).
+
+**Files Changed:**
+- `docs/DECISIONS.md`: Added D-4.13, D-8.6, D-8.7, D-9.16, D-9.17, D-9.18, D-11.6; superseded D-4.3 and D-11.3.
+- `docs/ROADMAP.md`: Marked Milestone 8.8 (Tasks 8.8.1–8.8.5) as closed; Milestone 8.9 (Audit Log Viewer) next.
+- `docs/PROGRESS.md`: Added ENTRY-0255, updated table, updated Section 7 Snapshot to Milestone 8.9.
+- `prisma/schema.prisma` & migration `20261123040914_settings_expansion`: Schema updates for tax rates, venue contact, and audit audience.
+- `src/domain/tax/resolve.ts`: 3-tier tax resolution hierarchy.
+- `src/domain/settings/*`: Pure domain modules for regional, contact, tax rates, and seed snapshot.
+- `src/domain/organization/venue.repository.ts` & repo adapter: Updated Venue entity with contact and regional fields.
+- `src/infrastructure/auth/admin-context.ts`: Shared admin resolver and context utility.
+- `app/api/admin/settings/*`: API routes for settings, tax-rates, audit-export, seed-snapshot.
+- `app/api/admin/modules/route.ts` & `app/api/admin/services/route.ts`: Module and service toggle APIs.
+- `app/admin/(shell)/settings/page.tsx` & `_settings-view.tsx`: Client and server settings UI.
+- `scripts/seed-from-snapshot.ts`: Disaster-recovery cold restore script.
+- `tests/unit/tax/resolve.test.ts` & `tests/unit/settings/*`: 20 unit tests for tax and settings.
+- `tests/integration/api/admin-settings.test.ts`: 5 integration tests covering settings, tax rates, audit export, snapshot, and toggles.
+- `package.json`: Added `seed:from-snapshot` script.
+
+**Verification Evidence:**
+- `pnpm typecheck` (`tsc --noEmit`): 0 errors.
+- `pnpm test:unit`: 46 test files passed, 321/321 tests passed.
+- `pnpm test:integration`: 12/12 tests passed in `admin-settings.test.ts` and `admin-audit-export.test.ts`.
+- `pnpm seed:from-snapshot`: Restored venue, 12 tables, 8 rooms, 6 categories, 12 menu items, 7 staff in <5s.
+- `pnpm build`: Next.js 16.4.4 production build compiled successfully across all 69 routes.
+
+**Next:** Milestone 8.9 — Audit Log Viewer (Task 8.9.1 "Audit Log" tab in admin shell).
 
 ### ENTRY-0254 — 2026-11-23 — Staff Presence Realignment with D-3.2, Manager Force End-Shift API, Decision D-3.14 & Milestone 8.8 Readiness
 
