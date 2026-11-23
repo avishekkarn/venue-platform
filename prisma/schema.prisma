@@ -144,10 +144,21 @@ model Venue {
   currency       String   @default("USD")
   timezone       String   @default("Asia/Kathmandu")
   taxRate        Decimal  @db.Decimal(5, 4)
+  taxRateId      String?
+  contactName    String?
+  contactPhone   String?
+  contactEmail   String?
+  counterPhone   String?
+  timeFormat     String   @default("12h")
+  receiptHeader  String?
+  receiptFooter  String?
+  currencyLockedAt DateTime?
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  defaultTaxRate TaxRate? @relation("VenueDefaultTaxRate", fields: [taxRateId], references: [id], onDelete: SetNull)
+  taxRates       TaxRate[] @relation("VenueTaxRates")
   modules        VenueModuleToggle[]
   services       VenueServiceToggle[]
   tableCategories   TableCategory[]
@@ -194,6 +205,30 @@ model VenueServiceToggle {
 
   @@unique([venueId, service])
   @@map("venue_service_toggles")
+}
+
+// ------------------------------------------------------------
+// Tax Rates — Hierarchical tax rates (D-4.13)
+// ------------------------------------------------------------
+
+model TaxRate {
+  id          String   @id @default(uuid())
+  venueId     String
+  name        String
+  rate        Decimal  @db.Decimal(6, 4)
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  isInclusive Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  venue            Venue          @relation("VenueTaxRates", fields: [venueId], references: [id], onDelete: Cascade)
+  defaultForVenues Venue[]        @relation("VenueDefaultTaxRate")
+  menuCategories   MenuCategory[]
+  menuItems        MenuItem[]
+
+  @@index([venueId, isActive])
+  @@map("tax_rates")
 }
 
 // ------------------------------------------------------------
@@ -467,10 +502,12 @@ model MenuCategory {
   venueId   String
   name      String
   sortOrder Int      @default(0)
+  taxRateId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   venue              Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  taxRate            TaxRate?           @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
   menuItemCategories MenuItemCategory[]
 
   @@index([venueId, sortOrder])
@@ -487,9 +524,11 @@ model MenuItem {
   price         Decimal       @db.Decimal(10, 2)
   state         MenuItemState @default(AVAILABLE)
   sortOrder     Int           @default(0)
+  taxRateId     String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  taxRate        TaxRate?           @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
   categories     MenuItemCategory[]
   modifierGroups ModifierGroup[]
   orderItems     OrderItem[]

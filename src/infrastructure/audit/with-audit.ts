@@ -40,7 +40,17 @@
  */
 
 import type { NextRequest, NextResponse } from "next/server";
-import { actorFromSession, writeAudit, type ActorResolvers } from "./logger";
+import { actorFromSession, writeAudit, type ActorResolvers, type AuditAudience, type AuditActorType } from "./logger";
+
+/**
+ * Resolves the audit log audience classification (D-9.17).
+ */
+export function resolveAuditAudience(route: string, actorType: AuditActorType): AuditAudience {
+  if (actorType === "guest" || route.startsWith("/api/guest")) return "USER";
+  if (route.startsWith("/api/admin")) return "ADMIN";
+  if (route.startsWith("/api/staff") || route.startsWith("/api/kitchen")) return "STAFF";
+  return "SYSTEM";
+}
 
 /**
  * The shape a wrapped route handler must have. Next.js's route handlers are
@@ -115,6 +125,7 @@ export function withAudit(
 
     writeAudit({
       timestamp: new Date(start).toISOString(),
+      audience: resolveAuditAudience(meta.route, actor.actorType),
       actorType: actor.actorType,
       actorId: actor.actorId,
       actorRole: actor.actorRole,
@@ -189,6 +200,7 @@ export function withAuditedDynamicRoute<TParams>(
     const latencyMs = Date.now() - start;
     writeAudit({
       timestamp: new Date(start).toISOString(),
+      audience: resolveAuditAudience(meta.route, actor.actorType),
       actorType: actor.actorType,
       actorId: actor.actorId,
       actorRole: actor.actorRole,

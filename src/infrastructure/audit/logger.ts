@@ -39,6 +39,11 @@ import { join } from "node:path";
  */
 export type AuditActorType = "staff" | "guest" | "anonymous";
 
+/**
+ * Audit log audience classification (D-9.17).
+ */
+export type AuditAudience = "USER" | "STAFF" | "ADMIN" | "SYSTEM";
+
 export interface AuditActor {
   readonly actorType: AuditActorType;
   readonly actorId: string | null;
@@ -55,6 +60,7 @@ export interface AuditActor {
  */
 export interface AuditEvent {
   readonly timestamp: string; // ISO 8601, UTC
+  readonly audience?: AuditAudience;
   readonly actorType: AuditActorType;
   readonly actorId: string | null;
   readonly actorRole: string | null;
