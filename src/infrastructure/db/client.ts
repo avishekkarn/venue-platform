@@ -97,6 +97,14 @@ function readPoolMax(): number {
 const connectionString = process.env["DATABASE_URL"];
 assertProductionSsl(connectionString);
 
+if (
+  process.env["NODE_ENV"] !== "production" &&
+  globalForPrisma.prisma &&
+  !(globalForPrisma.prisma as any).taxRate
+) {
+  globalForPrisma.prisma = undefined;
+}
+
 const pool =
   globalForPrisma.pool ??
   new Pool({

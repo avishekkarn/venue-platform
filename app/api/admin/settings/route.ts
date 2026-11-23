@@ -43,12 +43,14 @@ const getHandler: AuditedRouteHandler = async (_request: NextRequest): Promise<N
   const [venueRecord, ordersCount] = await Promise.all([
     db.venue.findUnique({
       where: { id: auth.venue.id },
-      include: {
-        taxRates: {
-          where: { isDefault: true },
-          take: 1,
-        },
-      },
+      include: (db as any).taxRate
+        ? {
+            taxRates: {
+              where: { isDefault: true },
+              take: 1,
+            },
+          }
+        : undefined,
     }),
     db.order.count({
       where: { venueId: auth.venue.id },
@@ -62,7 +64,7 @@ const getHandler: AuditedRouteHandler = async (_request: NextRequest): Promise<N
     );
   }
 
-  const defaultTaxRate = venueRecord.taxRates[0] ?? null;
+  const defaultTaxRate = (venueRecord as any)?.taxRates?.[0] ?? null;
 
   const data: VenueSettings = {
     venueId: venueRecord.id,

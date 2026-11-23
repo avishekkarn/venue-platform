@@ -10,14 +10,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function validateContactUpdate(
   input: UpdateContactInput
 ): Result<UpdateContactInput> {
-  const sanitized: {
-    contactName?: string | null;
-    contactPhone?: string | null;
-    contactEmail?: string | null;
-    counterPhone?: string | null;
-    receiptHeader?: string | null;
-    receiptFooter?: string | null;
-  } = {};
+  const sanitized: Record<string, string | null> = {};
 
   if (input.contactName !== undefined) {
     sanitized.contactName = input.contactName ? input.contactName.trim() : null;
@@ -88,5 +81,6 @@ export function validateContactUpdate(
     }
   }
 
-  return ok(sanitized);
+  return ok(sanitized as UpdateContactInput);
 }
+

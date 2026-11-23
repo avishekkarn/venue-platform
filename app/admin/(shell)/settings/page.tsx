@@ -19,21 +19,8 @@ export default async function AdminSettingsPage(): Promise<JSX.Element> {
   }
   const venue = venueResult.value;
 
-  const [venueRecord, ordersCount, taxRates, moduleToggles, serviceToggles, recentAuditRuns] =
-    await Promise.all([
-      prisma.venue.findUnique({
-        where: { id: venue.id },
-        include: {
-          taxRates: {
-            where: { isDefault: true },
-            take: 1,
-          },
-        },
-      }),
-      prisma.order.count({
-        where: { venueId: venue.id },
-      }),
-      prisma.taxRate.findMany({
+  const taxRatesPromise = (prisma as any).taxRate?.findMany
+    ? prisma.taxRate.findMany({
         where: { venueId: venue.id },
         orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
         include: {
@@ -44,7 +31,26 @@ export default async function AdminSettingsPage(): Promise<JSX.Element> {
             },
           },
         },
+      })
+    : Promise.resolve([]);
+
+  const [venueRecord, ordersCount, taxRates, moduleToggles, serviceToggles, recentAuditRuns] =
+    await Promise.all([
+      prisma.venue.findUnique({
+        where: { id: venue.id },
+        include: (prisma as any).taxRate
+          ? {
+              taxRates: {
+                where: { isDefault: true },
+                take: 1,
+              },
+            }
+          : undefined,
       }),
+      prisma.order.count({
+        where: { venueId: venue.id },
+      }),
+      taxRatesPromise,
       prisma.venueModuleToggle.findMany({
         where: { venueId: venue.id },
       }),
@@ -67,7 +73,7 @@ export default async function AdminSettingsPage(): Promise<JSX.Element> {
     notFound();
   }
 
-  const defaultTaxRate = venueRecord.taxRates[0] ?? null;
+  const defaultTaxRate = (venueRecord as any)?.taxRates?.[0] ?? null;
 
   const initialSettings: VenueSettings = {
     venueId: venueRecord.id,

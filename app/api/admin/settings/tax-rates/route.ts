@@ -38,19 +38,23 @@ const getHandler: AuditedRouteHandler = async (_request: NextRequest): Promise<N
     return NextResponse.json({ error: { code: auth.code, message: auth.message } }, { status: auth.status });
   }
 
-  const [taxRates, venueRecord] = await Promise.all([
-    db.taxRate.findMany({
-      where: { venueId: auth.venue.id },
-      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
-      include: {
-        _count: {
-          select: {
-            menuItems: true,
-            menuCategories: true,
+  const taxRatesPromise = (db as any).taxRate
+    ? db.taxRate.findMany({
+        where: { venueId: auth.venue.id },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+        include: {
+          _count: {
+            select: {
+              menuItems: true,
+              menuCategories: true,
+            },
           },
         },
-      },
-    }),
+      })
+    : Promise.resolve([]);
+
+  const [taxRates, venueRecord] = await Promise.all([
+    taxRatesPromise,
     db.venue.findUnique({
       where: { id: auth.venue.id },
       select: { taxRateId: true },
